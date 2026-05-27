@@ -1,0 +1,32 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6B2DB8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B6DB8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A68BC7;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glassGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.3);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0.2);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.15);stop-opacity:1" />
+    </linearGradient>
+    <filter id="purpleGlow192">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="96" cy="96" r="90" fill="url(#glassGrad192)" opacity="0.85"/>
+  <circle cx="96" cy="96" r="90" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+  <circle cx="96" cy="96" r="84" fill="rgba(255,255,255,0.1)" opacity="0.6"/>
+  <path d="M 54 60 L 54 132 L 72 132 L 72 84 L 120 132 L 138 132 L 138 60 L 120 60 L 120 108 L 72 60 Z" fill="url(#purpleGrad192)" filter="url(#purpleGlow192)" opacity="0.95"/>
+  <g opacity="0.3">
+    <line x1="60" y1="66" x2="66" y2="60" stroke="#8B6DB8" stroke-width="3"/>
+    <line x1="132" y1="66" x2="126" y2="60" stroke="#8B6DB8" stroke-width="3"/>
+    <line x1="60" y1="126" x2="66" y2="132" stroke="#8B6DB8" stroke-width="3"/>
+    <line x1="132" y1="126" x2="126" y2="132" stroke="#8B6DB8" stroke-width="3"/>
+  </g>
+</svg>
+

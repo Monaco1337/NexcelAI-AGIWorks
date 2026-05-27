@@ -1,0 +1,18 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGrad16" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6B2DB8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B6DB8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A68BC7;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glassGrad16" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.25);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0.15);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.1);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="8" cy="8" r="7" fill="url(#glassGrad16)" opacity="0.8"/>
+  <circle cx="8" cy="8" r="7" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.3"/>
+  <path d="M 4.5 4 L 4.5 12 L 5.5 12 L 5.5 7 L 10 12 L 11.5 12 L 11.5 4 L 10 4 L 10 9 L 5.5 4 Z" fill="url(#purpleGrad16)" opacity="0.95"/>
+</svg>
+

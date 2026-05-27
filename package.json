@@ -1,0 +1,51 @@
+{
+  "name": "nexcel-ai-website",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001 -H 0.0.0.0",
+    "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
+    "build:budget": "next build && node scripts/performance-budget.js",
+    "start": "next start -p 3001",
+    "lint": "next lint",
+    "create-admin": "node scripts/create-admin.js",
+    "reset-admin-password": "node scripts/reset-admin-password.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/three": "^0.181.0",
+    "@upstash/redis": "^1.36.0",
+    "@vercel/kv": "^3.0.0",
+    "bcryptjs": "^3.0.3",
+    "framer-motion": "^11.3.19",
+    "jose": "^6.1.3",
+    "jsonwebtoken": "^9.0.3",
+    "next": "^14.2.5",
+    "postgres": "^3.4.7",
+    "prisma": "^7.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "resend": "^6.6.0",
+    "three": "^0.181.2"
+  },
+  "devDependencies": {
+    "@next/bundle-analyzer": "^14.2.35",
+    "@types/node": "^20.14.12",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "dotenv": "^17.2.3",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.5",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.7",
+    "typescript": "^5.5.4"
+  }
+}

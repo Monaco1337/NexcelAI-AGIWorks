@@ -1,0 +1,18 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGrad60" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6B2DB8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B6DB8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A68BC7;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glassGrad60" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.3);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0.2);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.15);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="60" height="60" rx="13" ry="13" fill="url(#glassGrad60)" opacity="0.85"/>
+  <rect x="1" y="1" width="58" height="58" rx="12" ry="12" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+  <path d="M 17 17 L 17 43 L 23 43 L 23 26 L 39 43 L 45 43 L 45 17 L 39 17 L 39 34 L 23 17 Z" fill="url(#purpleGrad60)" opacity="0.95"/>
+</svg>
+

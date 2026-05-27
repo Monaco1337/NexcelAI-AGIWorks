@@ -1,0 +1,53 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Purple Gradient for "N" -->
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6B2DB8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B6DB8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A68BC7;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glassmorphism Background -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.25);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0.15);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.1);stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glow Effect for Purple -->
+    <filter id="purpleGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Glass Blur Effect -->
+    <filter id="glassBlur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+    </filter>
+  </defs>
+  
+  <!-- Glassmorphism Background Circle - Frosted Glass Effect -->
+  <circle cx="32" cy="32" r="30" fill="url(#glassGrad)" opacity="0.8"/>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+  
+  <!-- Additional Glass Layers for Depth -->
+  <circle cx="32" cy="32" r="28" fill="rgba(255,255,255,0.1)" opacity="0.5"/>
+  
+  <!-- NEXCEL "N" Letter - Purple Gradient -->
+  <path d="M 18 20 L 18 44 L 24 44 L 24 28 L 40 44 L 46 44 L 46 20 L 40 20 L 40 36 L 24 20 Z" 
+        fill="url(#purpleGrad)" 
+        filter="url(#purpleGlow)"
+        opacity="0.95"/>
+  
+  <!-- Subtle Purple Accent Lines -->
+  <g opacity="0.4">
+    <line x1="20" y1="22" x2="22" y2="20" stroke="#8B6DB8" stroke-width="1.5"/>
+    <line x1="44" y1="22" x2="42" y2="20" stroke="#8B6DB8" stroke-width="1.5"/>
+    <line x1="20" y1="42" x2="22" y2="44" stroke="#8B6DB8" stroke-width="1.5"/>
+    <line x1="44" y1="42" x2="42" y2="44" stroke="#8B6DB8" stroke-width="1.5"/>
+  </g>
+</svg>
+

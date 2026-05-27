@@ -1,0 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ContactRequest {
+  id        String   @id @default(cuid())
+  vorname   String
+  nachname  String
+  email     String
+  telefon   String?
+  unternehmen String?
+  betreff   String
+  nachricht String   @db.Text
+  status    String   @default("open") // "open" | "read" | "archived"
+  read      Boolean  @default(false)
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([read])
+  @@index([archived])
+  @@index([status])
+  @@map("contact_requests")
+}

@@ -1,0 +1,45 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Purple Gradient for "N" -->
+    <linearGradient id="applePurpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6B2DB8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B6DB8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A68BC7;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glassmorphism Background -->
+    <linearGradient id="appleGlassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.3);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0.2);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.15);stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="applePurpleGlow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Glassmorphism Background with rounded corners (iOS style) -->
+  <rect x="0" y="0" width="180" height="180" rx="40" ry="40" fill="url(#appleGlassGrad)" opacity="0.85"/>
+  <rect x="2" y="2" width="176" height="176" rx="38" ry="38" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+  <rect x="4" y="4" width="172" height="172" rx="36" ry="36" fill="rgba(255,255,255,0.1)" opacity="0.6"/>
+  
+  <!-- NEXCEL "N" Letter - Purple Gradient -->
+  <path d="M 50 50 L 50 130 L 68 130 L 68 78 L 112 130 L 130 130 L 130 50 L 112 50 L 112 102 L 68 50 Z" 
+        fill="url(#applePurpleGrad)" 
+        filter="url(#applePurpleGlow)"
+        opacity="0.95"/>
+  
+  <!-- Subtle Purple accent lines -->
+  <g opacity="0.3">
+    <line x1="55" y1="55" x2="60" y2="50" stroke="#8B6DB8" stroke-width="2.5"/>
+    <line x1="125" y1="55" x2="120" y2="50" stroke="#8B6DB8" stroke-width="2.5"/>
+    <line x1="55" y1="125" x2="60" y2="130" stroke="#8B6DB8" stroke-width="2.5"/>
+    <line x1="125" y1="125" x2="120" y2="130" stroke="#8B6DB8" stroke-width="2.5"/>
+  </g>
+</svg>
+
