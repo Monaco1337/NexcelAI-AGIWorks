@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { usePathname } from "next/navigation";
 import { BrandConfig } from "@/types/brand";
-import { getBrandFromPathname } from "@/data/brands";
+import { getBrandFromPathname, agiworksBrand } from "@/data/brands";
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 
@@ -39,10 +39,17 @@ interface BrandProviderProps {
 export function BrandProvider({ children, override }: BrandProviderProps) {
   const pathname = usePathname();
 
-  const brand = useMemo(
-    () => override ?? getBrandFromPathname(pathname ?? "/"),
-    [pathname, override]
-  );
+  const brand = useMemo(() => {
+    if (override) return override;
+    // Host-based detection mirrors the middleware rewrite:
+    // when the URL hostname is agiworks.de the user-facing pathname is "/",
+    // but the active brand must still be AGI Works.
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname.toLowerCase();
+      if (host.includes("agiworks")) return agiworksBrand;
+    }
+    return getBrandFromPathname(pathname ?? "/");
+  }, [pathname, override]);
 
   // Inject CSS variables onto :root so all components with var(--accent) etc.
   // automatically pick up the brand's accent colors.

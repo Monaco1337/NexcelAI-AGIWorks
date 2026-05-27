@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BrandProvider } from "@/contexts/BrandContext";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
-import Navigation from "@/components/Navigation";
+import NavigationGate from "@/components/NavigationGate";
+import ClientOnly from "@/components/ClientOnly";
 
 // Headline Font - Future-Premium
 // Optimiert für Performance: preload, display swap, subset optimization
@@ -94,6 +95,10 @@ export default function RootLayout({
   return (
     <html lang="de" className={`dark ${generalSans.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
+        {/* Nur Poster preload: Das Hero-MP4 ist groß (~34MB) — Video-Preload blockiert
+            Bandbreite/Parsing und wirkt wie „Seite lädt nicht“. Poster reicht für LCP. */}
+        <link rel="preload" as="image" href="/images/hero/nexcel-system-architecture.png" />
+
         {/* Standard Favicons - SVG wird bevorzugt, ICO als Fallback */}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="alternate icon" type="image/x-icon" href="/favicon.ico" />
@@ -132,13 +137,87 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('theme') || 
-                    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  var saved = localStorage.getItem('theme');
+                  var theme = (saved === 'light' || saved === 'dark') ? saved : 'dark';
                   document.documentElement.classList.remove('dark', 'light');
                   document.documentElement.classList.add(theme);
                 } catch (e) {
-                  // Fallback to dark if error
                   document.documentElement.classList.add('dark');
+                }
+              })();
+            `,
+          }}
+        />
+        {/* Brand-Detection vor First Paint:
+            1. Setzt data-brand="agiworks" auf <html> → CSS-Tokens switchen.
+            2. Auf /agiworks: ersetzt ALLE NEXCEL-Favicon-Links durch das AGI-Works-Icon.
+               Läuft NACH den hardcoded <link>-Tags (siehe HTML-Reihenfolge), aber
+               BEVOR der Browser die Icons fetcht → kein NEXCEL-N im AGI-Works-Tab. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var p = window.location.pathname || "/";
+                  var h = (window.location.hostname || "").toLowerCase();
+                  var isAgiHost = h.indexOf("agiworks") !== -1;
+                  var isAgiPath = (p === "/agiworks" || p.indexOf("/agiworks/") === 0);
+                  var isAgi = isAgiHost || isAgiPath;
+                  var brand = isAgi ? "agiworks" : "nexcel";
+                  document.documentElement.setAttribute("data-brand", brand);
+
+                  if (isAgi) {
+                    var head = document.head;
+                    // Alle bestehenden Icon/Touch-Icon/Mask-Icon/Manifest-Links entfernen
+                    var SELECTORS = [
+                      'link[rel="icon"]',
+                      'link[rel="alternate icon"]',
+                      'link[rel="shortcut icon"]',
+                      'link[rel="apple-touch-icon"]',
+                      'link[rel="apple-touch-icon-precomposed"]',
+                      'link[rel="mask-icon"]',
+                      'link[rel="manifest"]',
+                      'meta[name="theme-color"]',
+                      'meta[name="msapplication-TileColor"]',
+                      'meta[name="msapplication-TileImage"]'
+                    ];
+                    SELECTORS.forEach(function(sel) {
+                      head.querySelectorAll(sel).forEach(function(el) { el.parentNode.removeChild(el); });
+                    });
+
+                    // AGI Works Favicon-Set injizieren
+                    function addLink(rel, href, type, sizes) {
+                      var l = document.createElement("link");
+                      l.rel = rel;
+                      l.href = href;
+                      if (type) l.type = type;
+                      if (sizes) l.setAttribute("sizes", sizes);
+                      head.appendChild(l);
+                    }
+                    function addMeta(name, content) {
+                      var m = document.createElement("meta");
+                      m.name = name;
+                      m.content = content;
+                      head.appendChild(m);
+                    }
+
+                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "any");
+                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "16x16");
+                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "32x32");
+                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "96x96");
+                    addLink("shortcut icon", "/favicons/agiworks.svg", "image/svg+xml");
+                    addLink("apple-touch-icon", "/favicons/agiworks.svg", null, "180x180");
+                    addLink("mask-icon", "/favicons/agiworks.svg");
+                    addMeta("theme-color", "#5BB8FF");
+                    addMeta("msapplication-TileColor", "#1E5A99");
+
+                    // Cache-Buster: Tab-Title-Touch triggert Favicon-Refresh in einigen Browsern
+                    var t = document.title;
+                    document.title = t + " ";
+                    document.title = t;
+                  }
+                } catch (e) {
+                  document.documentElement.setAttribute("data-brand", "nexcel");
                 }
               })();
             `,
@@ -204,21 +283,27 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`min-h-screen relative transition-colors duration-500 ${inter.className}`} style={{ 
-        position: "relative",
-        fontFamily: "var(--font-body)",
-        color: "var(--text-0)",
-      }}>
+      <body
+        className={`min-h-screen relative transition-colors duration-500 ${inter.className}`}
+        style={{
+          position: "relative",
+          fontFamily: "var(--font-body)",
+          color: "var(--text-0)",
+        }}
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <BrandProvider>
-          {/* Unified App Background - Consistent across all pages */}
-          <AppBackground />
-          
-          {/* Neural Cursor */}
-          <NeuralCursor />
+          {/* Nur-Client: vermeidet Hydration-Mismatch mit dynamic(..., { ssr: false }) */}
+          <ClientOnly>
+            <AppBackground />
+            <NeuralCursor />
+          </ClientOnly>
 
-          {/* Navigation: fix oben, z-[100], auf allen Seiten sichtbar */}
-          <Navigation />
+          {/* Navigation: fix oben, z-[100], auf allen Seiten sichtbar
+              außer auf der Diagnose-Plattform (`/`, `/diagnose/*`) — dort
+              übernimmt der Hero die Top-Leiste. */}
+          <NavigationGate />
           
           {/* Content */}
           <div
@@ -232,17 +317,12 @@ export default function RootLayout({
             {children}
           </div>
           
-          {/* DSGVO-konformes Cookie-Banner */}
-          <CookieBanner />
-          
-          {/* Analytics Tracker */}
-          <AnalyticsTracker />
-          
-          {/* Performance Monitor (Development only) */}
-          <PerformanceMonitor />
-          
-          {/* Performance Auditor (PERF_AUDIT mode) */}
-          <PerformanceAuditor />
+          <ClientOnly>
+            <CookieBanner />
+            <AnalyticsTracker />
+            <PerformanceMonitor />
+            <PerformanceAuditor />
+          </ClientOnly>
           </BrandProvider>
         </ThemeProvider>
       </body>
