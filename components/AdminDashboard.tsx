@@ -6,13 +6,77 @@ import { useRouter } from "next/navigation";
 
 const IS_PRODUCTION = process.env.NEXT_PUBLIC_VERCEL === "1" || process.env.NODE_ENV === "production";
 
+interface AnalyticsEventLite {
+  id: string;
+  type: string;
+  ts: string;
+  sessionId: string;
+  visitorId: string;
+  brand: "agiworks" | "nexcel";
+  page: string;
+  referrer?: string;
+  device?: string;
+  value?: number;
+  meta?: Record<string, unknown>;
+}
+
+interface SessionLite {
+  sessionId: string;
+  visitorId: string;
+  brand: "agiworks" | "nexcel";
+  firstSeen: string;
+  lastSeen: string;
+  pageViews: number;
+  events: number;
+  device?: string;
+  referrer?: string;
+  durationSec: number;
+  maxScroll: number;
+  converted: boolean;
+}
+
+interface BucketAgg {
+  pageViews: number;
+  contacts: number;
+  demoRequests: number;
+  sessions?: number;
+  pricingStarts?: number;
+  uploads?: number;
+}
+
 interface Stats {
   analytics: {
-    total: { pageViews: number; contacts: number; demoRequests: number };
-    last24h: { pageViews: number; contacts: number; demoRequests: number };
-    last7d: { pageViews: number; contacts: number; demoRequests: number };
-    last30d: { pageViews: number; contacts: number; demoRequests: number };
+    total: {
+      pageViews: number;
+      contacts: number;
+      demoRequests: number;
+      sessions?: number;
+      visitors?: number;
+      pricingStarts?: number;
+      pricingQuotes?: number;
+      pricingSubmits?: number;
+      uploads?: number;
+      events?: number;
+    };
+    last24h: BucketAgg;
+    last7d: BucketAgg;
+    last30d: BucketAgg;
     topPages: { page: string; count: number }[];
+    live?: { visitors: number };
+    funnel?: {
+      pageView: number;
+      pricingStart: number;
+      pricingQuote: number;
+      pricingSubmit: number;
+      contactSubmit: number;
+    };
+    topReferrers?: { referrer: string; count: number }[];
+    deviceMix?: { device: string; count: number }[];
+    brandSplit?: { brand: "agiworks" | "nexcel"; count: number }[];
+    scrollDepthHistogram?: { bucket: string; count: number }[];
+    topPagesDetailed?: { page: string; views: number; avgScroll: number; avgDwellSec: number }[];
+    recentSessions?: SessionLite[];
+    recentEvents?: AnalyticsEventLite[];
   };
   contacts: { total: number; unread: number; archived: number };
   demoRequests: { total: number; unread: number; pending: number; archived: number };
@@ -98,10 +162,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadData(true);
-    // Refresh every 1 second for INSTANT updates - optimiert für bessere Performance
-    const interval = setInterval(() => loadData(false), 1000);
+    // Refresh every 2 seconds — analytics data is quite chatty, keeps server cool.
+    const interval = setInterval(() => loadData(false), 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [brandFilter]);
 
   const loadData = async (isInitial = false) => {
     try {
@@ -113,10 +177,11 @@ export default function AdminDashboard() {
       
       // DIREKT ÜBER SERVER ACTIONS - KEINE API-CALLS!
       const { getAdminContacts } = await import("@/app/actions/admin");
+      const brandQuery = brandFilter === "all" ? "" : `?brand=${brandFilter}`;
       
       const [contactsData, statsRes, demoRes, userRes] = await Promise.all([
         getAdminContacts(), // Server Action für Posts
-        fetch("/api/admin/stats"), // Stats bleibt API (komplex)
+        fetch(`/api/admin/stats${brandQuery}`), // Stats inkl. Analytics
         fetch("/api/admin/demo-requests?archived=false"), // Demo bleibt API
         fetch("/api/admin/me"), // Auth bleibt API
       ]);
@@ -575,41 +640,11 @@ export default function AdminDashboard() {
 
         {/* Analytics Tab */}
         {activeTab === "analytics" && stats && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <GlassCard title="Letzte 24 Stunden">
-                <div className="space-y-4">
-                  <StatItem label="Seitenaufrufe" value={stats.analytics.last24h.pageViews} />
-                  <StatItem label="Kontakte" value={stats.analytics.last24h.contacts} />
-                  <StatItem label="Demo-Anfragen" value={stats.analytics.last24h.demoRequests} />
-                </div>
-              </GlassCard>
-              <GlassCard title="Letzte 7 Tage">
-                <div className="space-y-4">
-                  <StatItem label="Seitenaufrufe" value={stats.analytics.last7d.pageViews} />
-                  <StatItem label="Kontakte" value={stats.analytics.last7d.contacts} />
-                  <StatItem label="Demo-Anfragen" value={stats.analytics.last7d.demoRequests} />
-                </div>
-              </GlassCard>
-              <GlassCard title="Letzte 30 Tage">
-                <div className="space-y-4">
-                  <StatItem label="Seitenaufrufe" value={stats.analytics.last30d.pageViews} />
-                  <StatItem label="Kontakte" value={stats.analytics.last30d.contacts} />
-                  <StatItem label="Demo-Anfragen" value={stats.analytics.last30d.demoRequests} />
-                </div>
-              </GlassCard>
-            </div>
-            <GlassCard title="Top Seiten">
-              <div className="space-y-2">
-                {stats.analytics.topPages.map((page, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-[#E5E7EB]">{page.page}</span>
-                    <span className="text-[#A45CFF] font-semibold">{page.count}</span>
-                  </div>
-                ))}
-              </div>
-            </GlassCard>
-          </div>
+          <AnalyticsPanel
+            stats={stats}
+            brandAccent={sessionBrand.accent}
+            brandFilter={brandFilter}
+          />
         )}
       </div>
     </div>
@@ -923,6 +958,550 @@ function BrandChip({ brand }: { brand?: "agiworks" | "nexcel" }) {
     >
       {meta.label}
     </span>
+  );
+}
+
+/* ───────────────────────── Analytics Panel ────────────────────────── */
+
+const EVENT_LABEL: Record<string, { label: string; color: string }> = {
+  page_view: { label: "Page View", color: "#9CA3AF" },
+  scroll_depth: { label: "Scroll", color: "#5BB8FF" },
+  dwell: { label: "Dwell", color: "#9CA3AF" },
+  outbound_click: { label: "Outbound", color: "#F472B6" },
+  visibility_change: { label: "Visibility", color: "#6B7280" },
+  contact_submit: { label: "Contact ✓", color: "#22C55E" },
+  demo_request: { label: "Demo ✓", color: "#22C55E" },
+  lead_submit: { label: "Lead ✓", color: "#22C55E" },
+  pricing_start: { label: "Pricing Start", color: "#FBBF24" },
+  pricing_step: { label: "Pricing Step", color: "#FBBF24" },
+  pricing_quote: { label: "Quote", color: "#FBBF24" },
+  pricing_submit: { label: "Pricing ✓", color: "#22C55E" },
+  pricing_abandon: { label: "Abandon", color: "#EF4444" },
+  upload_start: { label: "Upload…", color: "#A45CFF" },
+  upload_complete: { label: "Upload ✓", color: "#22C55E" },
+  upload_fail: { label: "Upload ✗", color: "#EF4444" },
+  click: { label: "Click", color: "#9CA3AF" },
+  event: { label: "Event", color: "#9CA3AF" },
+};
+
+function relTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const sec = Math.round(diff / 1000);
+  if (sec < 5) return "gerade eben";
+  if (sec < 60) return `vor ${sec} s`;
+  if (sec < 3600) return `vor ${Math.floor(sec / 60)} min`;
+  if (sec < 86400) return `vor ${Math.floor(sec / 3600)} h`;
+  return new Date(iso).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function AnalyticsPanel({
+  stats,
+  brandAccent,
+  brandFilter,
+}: {
+  stats: Stats;
+  brandAccent: string;
+  brandFilter: BrandFilter;
+}) {
+  const a = stats.analytics;
+  const live = a.live?.visitors ?? 0;
+  const funnel = a.funnel ?? {
+    pageView: 0,
+    pricingStart: 0,
+    pricingQuote: 0,
+    pricingSubmit: 0,
+    contactSubmit: 0,
+  };
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const recentEvents = a.recentEvents ?? [];
+  const recentSessions = a.recentSessions ?? [];
+  const topPagesDetailed = a.topPagesDetailed ?? [];
+  const topReferrers = a.topReferrers ?? [];
+  const deviceMix = a.deviceMix ?? [];
+  const brandSplit = a.brandSplit ?? [];
+  const scrollHist = a.scrollDepthHistogram ?? [];
+
+  const totalDevice = deviceMix.reduce((acc, d) => acc + d.count, 0);
+  const totalBrand = brandSplit.reduce((acc, b) => acc + b.count, 0);
+  const maxScrollBar = Math.max(1, ...scrollHist.map((s) => s.count));
+
+  return (
+    <div className="space-y-4">
+      {/* Live-Header */}
+      <div
+        className="rounded-2xl px-5 py-4 flex items-center gap-4 flex-wrap"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, rgba(255,255,255,0.01) 100%)",
+          border: "1px solid rgba(34, 197, 94, 0.15)",
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="relative inline-flex w-3 h-3">
+            <span className="absolute inset-0 rounded-full bg-[#22C55E] animate-ping opacity-60" />
+            <span className="absolute inset-0 rounded-full bg-[#22C55E]" />
+          </span>
+          <span className="text-xs uppercase tracking-[0.18em] text-[#22C55E]">
+            Live · letzte 90 s
+          </span>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold text-white tabular-nums">{live}</span>
+          <span className="text-xs text-[#9CA3AF]">aktive Besucher</span>
+        </div>
+        <div className="ml-auto text-[11px] text-[#6B7280]">
+          {brandFilter === "all" ? "Alle Brands" : BRAND_META[brandFilter as "nexcel" | "agiworks"]?.label} · Auto-Refresh 2s
+        </div>
+      </div>
+
+      {/* KPI-Reihe */}
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <MiniKPI label="Page Views · 24h" value={a.last24h.pageViews} accent={brandAccent} />
+        <MiniKPI label="Sessions · 24h" value={a.last24h.sessions ?? 0} accent="#5BB8FF" />
+        <MiniKPI label="Pricing-Starts · 24h" value={a.last24h.pricingStarts ?? 0} accent="#FBBF24" />
+        <MiniKPI label="Uploads · 24h" value={a.last24h.uploads ?? 0} accent="#F472B6" />
+        <MiniKPI label="Kontakte · 24h" value={a.last24h.contacts} accent="#22C55E" />
+        <MiniKPI label="Demo · 24h" value={a.last24h.demoRequests} accent="#22C55E" />
+      </div>
+
+      {/* Funnel + Live Feed */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-1">
+          <GlassCard title="Conversion-Funnel · gesamt">
+            <Funnel funnel={funnel} accent={brandAccent} />
+          </GlassCard>
+        </div>
+        <div className="xl:col-span-2">
+          <GlassCard
+            title="Live-Event-Feed"
+            action={
+              <span className="text-[10px] text-[#6B7280]">
+                {recentEvents.length} Events
+              </span>
+            }
+          >
+            <div className="max-h-[420px] overflow-y-auto pr-2 space-y-1.5">
+              {recentEvents.length === 0 ? (
+                <EmptyState text="Noch keine Events erfasst" />
+              ) : (
+                recentEvents.map((e) => (
+                  <EventRow key={e.id} ev={e} onPickSession={setSelectedSession} />
+                ))
+              )}
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+
+      {/* Top Pages + Top Referrer */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <GlassCard title="Top Seiten · Views, Avg. Scroll & Dwell">
+          {topPagesDetailed.length === 0 ? (
+            <EmptyState text="Noch keine Page-Views" />
+          ) : (
+            <div className="space-y-2">
+              {topPagesDetailed.map((p) => (
+                <PageBar key={p.page} page={p} accent={brandAccent} />
+              ))}
+            </div>
+          )}
+        </GlassCard>
+        <GlassCard title="Top Referrer">
+          {topReferrers.length === 0 ? (
+            <EmptyState text="Keine Referrer-Daten" />
+          ) : (
+            <div className="space-y-2">
+              {topReferrers.map((r) => {
+                const total = topReferrers.reduce((a, b) => a + b.count, 0);
+                const pct = total > 0 ? (r.count / total) * 100 : 0;
+                return (
+                  <div key={r.referrer} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-white truncate max-w-[70%]">{r.referrer}</span>
+                      <span className="text-[#9CA3AF] tabular-nums">{r.count}</span>
+                    </div>
+                    <div
+                      className="h-1 rounded-full overflow-hidden"
+                      style={{ background: "rgba(255,255,255,0.04)" }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${pct}%`, background: brandAccent }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </GlassCard>
+      </div>
+
+      {/* Device, Brand, Scroll */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <GlassCard title="Device-Mix">
+          {deviceMix.length === 0 ? (
+            <EmptyState text="Keine Device-Daten" />
+          ) : (
+            <div className="space-y-3">
+              {deviceMix.map((d) => {
+                const pct = totalDevice > 0 ? (d.count / totalDevice) * 100 : 0;
+                return (
+                  <div key={d.device}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-white capitalize">{d.device}</span>
+                      <span className="text-[#9CA3AF] tabular-nums">{Math.round(pct)}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+                      <div className="h-full" style={{ width: `${pct}%`, background: "#5BB8FF" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </GlassCard>
+        <GlassCard title="Brand-Split">
+          {brandSplit.length === 0 ? (
+            <EmptyState text="Keine Brand-Daten" />
+          ) : (
+            <div className="space-y-3">
+              {brandSplit.map((b) => {
+                const pct = totalBrand > 0 ? (b.count / totalBrand) * 100 : 0;
+                const meta = BRAND_META[b.brand];
+                return (
+                  <div key={b.brand}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span style={{ color: meta.accent }}>{meta.label}</span>
+                      <span className="text-[#9CA3AF] tabular-nums">{Math.round(pct)}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+                      <div className="h-full" style={{ width: `${pct}%`, background: meta.accent }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </GlassCard>
+        <GlassCard title="Scroll-Tiefe (alle Pages)">
+          {scrollHist.every((s) => s.count === 0) ? (
+            <EmptyState text="Noch keine Scrolls" />
+          ) : (
+            <div className="space-y-2">
+              {scrollHist.map((s) => (
+                <div key={s.bucket} className="flex items-center gap-3">
+                  <span className="text-xs text-[#9CA3AF] w-14">{s.bucket}%</span>
+                  <div
+                    className="flex-1 h-2 rounded-full overflow-hidden"
+                    style={{ background: "rgba(255,255,255,0.04)" }}
+                  >
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${(s.count / maxScrollBar) * 100}%`,
+                        background: brandAccent,
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs text-white tabular-nums w-10 text-right">
+                    {s.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </GlassCard>
+      </div>
+
+      {/* Recent Sessions */}
+      <GlassCard
+        title="Sessions"
+        action={<span className="text-[10px] text-[#6B7280]">{recentSessions.length} angezeigt</span>}
+      >
+        {recentSessions.length === 0 ? (
+          <EmptyState text="Noch keine Sessions" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-[#6B7280] uppercase tracking-wider text-[10px]">
+                  <th className="text-left py-2 px-2 font-medium">Session</th>
+                  <th className="text-left py-2 px-2 font-medium">Brand</th>
+                  <th className="text-left py-2 px-2 font-medium">Device</th>
+                  <th className="text-right py-2 px-2 font-medium">Views</th>
+                  <th className="text-right py-2 px-2 font-medium">Events</th>
+                  <th className="text-right py-2 px-2 font-medium">Dauer</th>
+                  <th className="text-right py-2 px-2 font-medium">Scroll</th>
+                  <th className="text-left py-2 px-2 font-medium">Status</th>
+                  <th className="text-right py-2 px-2 font-medium">Letzte Aktivität</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentSessions.map((s) => (
+                  <tr
+                    key={s.sessionId}
+                    onClick={() =>
+                      setSelectedSession((cur) => (cur === s.sessionId ? null : s.sessionId))
+                    }
+                    className="cursor-pointer hover:bg-white/[0.02]"
+                    style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+                  >
+                    <td className="py-2 px-2 font-mono text-[10px] text-white">
+                      {s.sessionId.slice(0, 16)}…
+                    </td>
+                    <td className="py-2 px-2">
+                      <BrandChip brand={s.brand} />
+                    </td>
+                    <td className="py-2 px-2 text-[#9CA3AF] capitalize">{s.device ?? "—"}</td>
+                    <td className="py-2 px-2 text-right text-white tabular-nums">{s.pageViews}</td>
+                    <td className="py-2 px-2 text-right text-[#9CA3AF] tabular-nums">{s.events}</td>
+                    <td className="py-2 px-2 text-right text-[#9CA3AF] tabular-nums">
+                      {s.durationSec}s
+                    </td>
+                    <td className="py-2 px-2 text-right text-[#9CA3AF] tabular-nums">
+                      {s.maxScroll}%
+                    </td>
+                    <td className="py-2 px-2">
+                      {s.converted ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#22C55E]/15 text-[#22C55E]">
+                          Konvertiert
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-[#6B7280]">offen</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-2 text-right text-[#9CA3AF]">{relTime(s.lastSeen)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </GlassCard>
+
+      {/* Session-Drilldown */}
+      {selectedSession && (
+        <SessionDetail
+          sessionId={selectedSession}
+          events={recentEvents.filter((e) => e.sessionId === selectedSession)}
+          onClose={() => setSelectedSession(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MiniKPI({ label, value, accent }: { label: string; value: number; accent: string }) {
+  return (
+    <div
+      className="rounded-xl p-3 relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+      }}
+    >
+      <div
+        className="absolute top-0 left-0 w-full h-[2px]"
+        style={{ background: `linear-gradient(90deg, ${accent}AA, transparent 75%)` }}
+      />
+      <div className="text-[10px] uppercase tracking-[0.16em] text-[#6B7280] mb-1.5">
+        {label}
+      </div>
+      <div className="text-2xl font-bold tabular-nums text-white leading-none">{value}</div>
+    </div>
+  );
+}
+
+function Funnel({
+  funnel,
+  accent,
+}: {
+  funnel: {
+    pageView: number;
+    pricingStart: number;
+    pricingQuote: number;
+    pricingSubmit: number;
+    contactSubmit: number;
+  };
+  accent: string;
+}) {
+  const steps = [
+    { label: "Page Views", value: funnel.pageView, color: "#5BB8FF" },
+    { label: "Preiskalkulator gestartet", value: funnel.pricingStart, color: "#FBBF24" },
+    { label: "Angebot berechnet", value: funnel.pricingQuote, color: "#FBBF24" },
+    { label: "Angebot abgeschickt", value: funnel.pricingSubmit, color: "#22C55E" },
+    { label: "Kontaktanfrage", value: funnel.contactSubmit, color: "#22C55E" },
+  ];
+  const max = Math.max(1, ...steps.map((s) => s.value));
+  return (
+    <div className="space-y-2.5">
+      {steps.map((s, idx) => {
+        const pct = (s.value / max) * 100;
+        const prev = idx > 0 ? steps[idx - 1].value : 0;
+        const conv = idx > 0 && prev > 0 ? Math.round((s.value / prev) * 100) : null;
+        return (
+          <div key={s.label}>
+            <div className="flex justify-between items-baseline mb-1">
+              <span className="text-xs text-white">{s.label}</span>
+              <span className="text-xs tabular-nums">
+                <span className="text-white font-semibold">{s.value}</span>
+                {conv !== null && (
+                  <span className="text-[#6B7280] ml-2">{conv}% Conv.</span>
+                )}
+              </span>
+            </div>
+            <div
+              className="h-2 rounded-full overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.04)" }}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${pct}%`, background: s.color }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <div
+        className="text-[10px] text-[#6B7280] mt-2 pt-2 border-t"
+        style={{ borderColor: "rgba(255,255,255,0.04)" }}
+      >
+        Conv. = relative Conversion-Rate gegenüber dem vorherigen Schritt
+        <span style={{ color: accent }}> ·</span> sessions-übergreifend
+      </div>
+    </div>
+  );
+}
+
+function EventRow({
+  ev,
+  onPickSession,
+}: {
+  ev: AnalyticsEventLite;
+  onPickSession: (id: string) => void;
+}) {
+  const meta = EVENT_LABEL[ev.type] ?? { label: ev.type, color: "#9CA3AF" };
+  return (
+    <div
+      className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs hover:bg-white/[0.02] cursor-pointer"
+      onClick={() => onPickSession(ev.sessionId)}
+    >
+      <span className="w-[10px] h-[10px] rounded-full flex-shrink-0" style={{ background: meta.color }} />
+      <span
+        className="px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0"
+        style={{ background: `${meta.color}1A`, color: meta.color }}
+      >
+        {meta.label}
+      </span>
+      <span className="text-[#9CA3AF] truncate flex-1 font-mono text-[11px]">{ev.page}</span>
+      <BrandChip brand={ev.brand} />
+      {typeof ev.value === "number" && (
+        <span className="text-[#6B7280] tabular-nums text-[10px]">{ev.value}</span>
+      )}
+      <span className="text-[#6B7280] text-[10px] whitespace-nowrap">{relTime(ev.ts)}</span>
+    </div>
+  );
+}
+
+function PageBar({
+  page,
+  accent,
+}: {
+  page: { page: string; views: number; avgScroll: number; avgDwellSec: number };
+  accent: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-baseline text-xs">
+        <span className="text-white font-mono text-[11px] truncate max-w-[60%]">{page.page}</span>
+        <span className="text-[#9CA3AF] tabular-nums">
+          {page.views} Views · {page.avgScroll}% Scroll · {page.avgDwellSec}s
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+        <div className="h-full" style={{ width: `${Math.min(100, page.avgScroll)}%`, background: accent }} />
+      </div>
+    </div>
+  );
+}
+
+function SessionDetail({
+  sessionId,
+  events,
+  onClose,
+}: {
+  sessionId: string;
+  events: AnalyticsEventLite[];
+  onClose: () => void;
+}) {
+  const sorted = events.slice().sort((a, b) => a.ts.localeCompare(b.ts));
+  return (
+    <GlassCard
+      title={`Session-Journey · ${sessionId.slice(0, 18)}…`}
+      action={
+        <button
+          onClick={onClose}
+          className="text-xs text-[#9CA3AF] hover:text-white transition-colors"
+        >
+          Schließen ×
+        </button>
+      }
+    >
+      {sorted.length === 0 ? (
+        <EmptyState text="Keine geladenen Events für diese Session — sie liegt evtl. außerhalb der letzten 80 Events." />
+      ) : (
+        <div className="relative pl-6">
+          <div
+            className="absolute left-2 top-1 bottom-1 w-px"
+            style={{ background: "rgba(255,255,255,0.08)" }}
+          />
+          <div className="space-y-2">
+            {sorted.map((e) => {
+              const meta = EVENT_LABEL[e.type] ?? { label: e.type, color: "#9CA3AF" };
+              return (
+                <div key={e.id} className="relative">
+                  <span
+                    className="absolute -left-[18px] top-1.5 w-2.5 h-2.5 rounded-full"
+                    style={{ background: meta.color, border: "2px solid #0B0D12" }}
+                  />
+                  <div className="flex items-center gap-2 text-xs">
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                      style={{ background: `${meta.color}1A`, color: meta.color }}
+                    >
+                      {meta.label}
+                    </span>
+                    <span className="text-[#9CA3AF] font-mono text-[11px]">{e.page}</span>
+                    {typeof e.value === "number" && (
+                      <span className="text-[#6B7280] tabular-nums">{e.value}</span>
+                    )}
+                    <span className="text-[#6B7280] ml-auto">
+                      {new Date(e.ts).toLocaleTimeString("de-DE", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  {e.meta && Object.keys(e.meta).length > 0 && (
+                    <div className="ml-2 mt-1 text-[10px] text-[#6B7280] font-mono max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                      {JSON.stringify(e.meta).slice(0, 160)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </GlassCard>
   );
 }
 

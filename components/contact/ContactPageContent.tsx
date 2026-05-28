@@ -540,6 +540,18 @@ export default function ContactPageContent() {
         brand: formBrand,
         sourceHost: currentHost,
       });
+      try {
+        const { track } = await import("@/lib/track");
+        track("contact_submit", {
+          meta: {
+            betreff: formData.betreff,
+            hasPhone: !!formData.telefon,
+            hasCompany: !!formData.unternehmen,
+          },
+        });
+      } catch {
+        /* swallow */
+      }
     } catch {
       /* Post wird im Fallback gespeichert */
     }

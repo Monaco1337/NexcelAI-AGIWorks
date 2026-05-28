@@ -65,6 +65,14 @@ export default function DemoAnfordernPage() {
           email: "",
           unternehmen: "",
         });
+        try {
+          const { track } = await import("@/lib/track");
+          track("demo_request", {
+            meta: { hasCompany: !!formData.unternehmen },
+          });
+        } catch {
+          /* swallow */
+        }
       } else {
         setErrors({ submit: data.error || "Fehler beim Erstellen des Demo-Zugangs." });
       }

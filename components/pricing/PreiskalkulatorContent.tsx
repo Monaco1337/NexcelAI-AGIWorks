@@ -7,6 +7,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useBrand } from "@/contexts/BrandContext";
 import PremiumProductsShowcase from "@/components/pricing/PremiumProductsShowcase";
+import { track } from "@/lib/track";
 import {
   type WizardState,
   type ProjectType,
@@ -261,6 +262,63 @@ export default function PreiskalkulatorContent() {
     scrollToWizardTop();
   }, [step, scrollToWizardTop]);
 
+  // Fire one pricing_start when the user first interacts with the wizard
+  // (i.e. reaches step 1 or later), and a pricing_step event on every move.
+  const hasStartedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (step > 0 && !hasStartedRef.current) {
+      hasStartedRef.current = true;
+      track("pricing_start", { meta: { firstStep: step } });
+    }
+    track("pricing_step", {
+      value: step,
+      meta: {
+        step,
+        label: STEPS[step]?.label,
+        projectTypes: state.projectTypes,
+        scope: state.scope,
+        timeframe: state.timeframe,
+        quality: state.quality,
+        features: state.features,
+      },
+    });
+  }, [step, state]);
+
+  // Fire pricing_quote once the calculated quote becomes available.
+  const hasQuoteFiredRef = useRef(false);
+  useEffect(() => {
+    if (!quote || hasQuoteFiredRef.current) return;
+    hasQuoteFiredRef.current = true;
+    track("pricing_quote", {
+      value: quote.min,
+      meta: {
+        min: quote.min,
+        max: quote.max,
+        weeksMin: quote.weeksMin,
+        weeksMax: quote.weeksMax,
+        scopeSummary: quote.scopeSummary,
+      },
+    });
+  }, [quote]);
+
+  // Fire pricing_abandon on unload if the user opened the wizard but never submitted.
+  const hasSubmittedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onLeave = () => {
+      if (hasStartedRef.current && !hasSubmittedRef.current) {
+        track("pricing_abandon", { value: step, meta: { step, hasQuote: !!quote } });
+      }
+    };
+    window.addEventListener("pagehide", onLeave);
+    window.addEventListener("beforeunload", onLeave);
+    return () => {
+      window.removeEventListener("pagehide", onLeave);
+      window.removeEventListener("beforeunload", onLeave);
+    };
+  }, [step, quote]);
+
   const nextStep = useCallback(() => {
     if (step < 5) setStep((s) => s + 1);
   }, [step]);
@@ -346,6 +404,21 @@ export default function PreiskalkulatorContent() {
       if (!res.ok) throw new Error(data.error || "Fehler beim Senden.");
       setFormSuccess(true);
       form.reset();
+      hasSubmittedRef.current = true;
+      track("pricing_submit", {
+        value: quote?.min,
+        meta: {
+          name,
+          email,
+          company,
+          min: quote?.min,
+          max: quote?.max,
+          projectTypes: state.projectTypes,
+          features: state.features,
+          timeframe: state.timeframe,
+          quality: state.quality,
+        },
+      });
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.");
     } finally {

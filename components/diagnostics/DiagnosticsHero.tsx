@@ -95,6 +95,19 @@ export default function DiagnosticsHero() {
               return id;
             })()
           : null;
+      try {
+        const { track } = await import("@/lib/track");
+        track("event", {
+          meta: {
+            kind: "diagnostics_start",
+            url: cleanUrl,
+            fileCount: pendingFiles.length,
+            totalBytes: pendingFiles.reduce((a, f) => a + f.size, 0),
+          },
+        });
+      } catch {
+        /* swallow */
+      }
       const createRes = await fetch("/api/diagnostics/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,16 +130,28 @@ export default function DiagnosticsHero() {
       for (const f of pendingFiles) {
         const fd = new FormData();
         fd.append("file", f);
+        const { track } = await import("@/lib/track");
+        track("upload_start", {
+          value: f.size,
+          meta: { name: f.name, size: f.size, mime: f.type, analysisId: aid },
+        });
         const upRes = await fetch(
           `/api/diagnostics/upload?analysisId=${encodeURIComponent(aid)}`,
           { method: "POST", body: fd },
         );
         if (!upRes.ok) {
           const j = await safeJson(upRes);
+          track("upload_fail", {
+            meta: { name: f.name, size: f.size, mime: f.type, status: upRes.status },
+          });
           throw new Error(j?.error || `Upload fehlgeschlagen (${upRes.status})`);
         }
         const j = (await upRes.json()) as Upload;
         acceptedUploads.push(j);
+        track("upload_complete", {
+          value: f.size,
+          meta: { name: f.name, size: f.size, mime: f.type, analysisId: aid },
+        });
       }
       setUploads(acceptedUploads);
 
