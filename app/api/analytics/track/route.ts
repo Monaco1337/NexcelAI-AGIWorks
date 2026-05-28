@@ -55,12 +55,15 @@ function parseBody(raw: string | null): ClientPayload | null {
   }
 }
 
-function ingestOne(payload: ClientPayload, ctx: {
-  host: string;
-  ua: string;
-  ip: string | null;
-  fallbackBrand: "agiworks" | "nexcel";
-}) {
+async function ingestOne(
+  payload: ClientPayload,
+  ctx: {
+    host: string;
+    ua: string;
+    ip: string | null;
+    fallbackBrand: "agiworks" | "nexcel";
+  },
+): Promise<AnalyticsEvent> {
   const type = ALLOWED_TYPES.includes(payload.type as AnalyticsEventType)
     ? (payload.type as AnalyticsEventType)
     : "event";
@@ -92,7 +95,7 @@ function ingestOne(payload: ClientPayload, ctx: {
     value: typeof payload.value === "number" ? payload.value : undefined,
     meta: payload.meta && typeof payload.meta === "object" ? payload.meta : undefined,
   };
-  recordEvent(ev);
+  await recordEvent(ev);
   return ev;
 }
 
@@ -119,14 +122,16 @@ export async function POST(req: NextRequest) {
 
     let count = 0;
     if (Array.isArray(body.events)) {
+      const writes: Promise<unknown>[] = [];
       for (const item of body.events) {
         if (item && typeof item === "object") {
-          ingestOne(item, ctx);
+          writes.push(ingestOne(item, ctx));
           count++;
         }
       }
+      await Promise.all(writes);
     } else {
-      ingestOne(body, ctx);
+      await ingestOne(body, ctx);
       count = 1;
     }
 

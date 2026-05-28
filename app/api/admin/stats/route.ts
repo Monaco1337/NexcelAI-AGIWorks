@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const brand = parseBrand(searchParams.get("brand"));
 
-    const snapshot = getSnapshot(brand);
+    const snapshot = await getSnapshot(brand);
 
     // Contact + demo aggregates so the existing dashboard KPIs stay populated.
     const allContacts = getAllPosts();

@@ -75,17 +75,117 @@ const STORE_DIR = IS_SERVERLESS ? "/tmp/nx-analytics" : path.join(process.cwd(),
 const STORE_FILE = path.join(STORE_DIR, "analytics-events.ndjson");
 const MAX_MEMORY_EVENTS = 5000;
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB rotating log
+const REDIS_KEY = "nx:analytics:events";
+const REDIS_MAX_EVENTS = 50_000;
 
 declare global {
   // eslint-disable-next-line no-var
-  var __nxAnalytics: { events: AnalyticsEvent[]; loadedFromFile: boolean } | undefined;
+  var __nxAnalytics:
+    | {
+        events: AnalyticsEvent[];
+        loadedFromFile: boolean;
+        loadedFromRedis: number; // timestamp of last full pull
+      }
+    | undefined;
 }
 
 function getStore() {
   if (!globalThis.__nxAnalytics) {
-    globalThis.__nxAnalytics = { events: [], loadedFromFile: false };
+    globalThis.__nxAnalytics = { events: [], loadedFromFile: false, loadedFromRedis: 0 };
   }
   return globalThis.__nxAnalytics;
+}
+
+/* ───────────────────────── Upstash Redis (optional) ──────────────── */
+
+let redisClientPromise: Promise<unknown> | null = null;
+function redisAvailable(): boolean {
+  return (
+    !!process.env.UPSTASH_REDIS_REST_URL && !!process.env.UPSTASH_REDIS_REST_TOKEN
+  ) || (
+    !!process.env.KV_REST_API_URL && !!process.env.KV_REST_API_TOKEN
+  );
+}
+
+async function getRedis(): Promise<any | null> {
+  if (!redisAvailable()) return null;
+  if (!redisClientPromise) {
+    redisClientPromise = (async () => {
+      try {
+        const mod = await import("@upstash/redis");
+        const url =
+          process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL!;
+        const token =
+          process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN!;
+        const r = new mod.Redis({ url, token });
+        return r;
+      } catch (err) {
+        console.warn("[analytics-store] @upstash/redis init failed:", err);
+        return null;
+      }
+    })();
+  }
+  return redisClientPromise as Promise<any | null>;
+}
+
+async function pushToRedis(ev: AnalyticsEvent): Promise<void> {
+  try {
+    const r = await getRedis();
+    if (!r) return;
+    const score = new Date(ev.ts).getTime();
+    // Use sorted set: score = ts, member = JSON. Allows efficient range queries.
+    await r.zadd(REDIS_KEY, { score, member: JSON.stringify(ev) });
+    // Trim to last N entries
+    const count = await r.zcard(REDIS_KEY);
+    if (typeof count === "number" && count > REDIS_MAX_EVENTS) {
+      const excess = count - REDIS_MAX_EVENTS;
+      await r.zremrangebyrank(REDIS_KEY, 0, excess - 1);
+    }
+  } catch (err) {
+    console.warn("[analytics-store] redis push failed:", err);
+  }
+}
+
+async function pullFromRedis(): Promise<AnalyticsEvent[]> {
+  try {
+    const r = await getRedis();
+    if (!r) return [];
+    // Highest-scored first → newest first → reverse to chronological
+    const raw = (await r.zrange(REDIS_KEY, 0, MAX_MEMORY_EVENTS - 1, {
+      rev: true,
+    })) as unknown[];
+    const events: AnalyticsEvent[] = [];
+    for (const item of raw) {
+      try {
+        const parsed = typeof item === "string" ? JSON.parse(item) : (item as any);
+        if (parsed && parsed.id) events.push(parsed as AnalyticsEvent);
+      } catch {
+        /* skip */
+      }
+    }
+    return events.reverse(); // chronological
+  } catch (err) {
+    console.warn("[analytics-store] redis pull failed:", err);
+    return [];
+  }
+}
+
+async function syncFromRedisIfStale(maxStaleMs = 1500): Promise<void> {
+  const store = getStore();
+  if (!redisAvailable()) return;
+  if (Date.now() - store.loadedFromRedis < maxStaleMs) return;
+  const events = await pullFromRedis();
+  if (events.length === 0) {
+    store.loadedFromRedis = Date.now();
+    return;
+  }
+  const seen = new Set(store.events.map((e) => e.id));
+  for (const e of events) if (!seen.has(e.id)) store.events.push(e);
+  store.events.sort((a, b) => a.ts.localeCompare(b.ts));
+  if (store.events.length > MAX_MEMORY_EVENTS) {
+    store.events = store.events.slice(-MAX_MEMORY_EVENTS);
+  }
+  store.loadedFromRedis = Date.now();
 }
 
 function ensureDir() {
@@ -158,7 +258,7 @@ function appendToFile(ev: AnalyticsEvent) {
  * Public API
  * ------------------------------------------------------------------ */
 
-export function recordEvent(ev: AnalyticsEvent): void {
+export async function recordEvent(ev: AnalyticsEvent): Promise<void> {
   const store = getStore();
   loadFromFileOnce();
   // Avoid double inserts
@@ -168,6 +268,9 @@ export function recordEvent(ev: AnalyticsEvent): void {
     store.events = store.events.slice(-MAX_MEMORY_EVENTS);
   }
   appendToFile(ev);
+  // Best-effort persist to redis. Awaiting keeps the lambda warm long
+  // enough for the write to complete on Vercel.
+  await pushToRedis(ev);
 }
 
 export interface AnalyticsQuery {
@@ -177,9 +280,10 @@ export interface AnalyticsQuery {
   types?: AnalyticsEventType[];
 }
 
-export function listEvents(q: AnalyticsQuery = {}): AnalyticsEvent[] {
+export async function listEvents(q: AnalyticsQuery = {}): Promise<AnalyticsEvent[]> {
   const store = getStore();
   loadFromFileOnce();
+  await syncFromRedisIfStale();
   const sinceMs = q.since ? q.since.getTime() : 0;
   const filtered = store.events.filter((e) => {
     if (q.brand && q.brand !== "all" && e.brand !== q.brand) return false;
@@ -254,9 +358,12 @@ export interface SessionSummary {
   converted: boolean;
 }
 
-export function getSnapshot(brand: AnalyticsBrand | "all" = "all"): AnalyticsSnapshot {
+export async function getSnapshot(
+  brand: AnalyticsBrand | "all" = "all",
+): Promise<AnalyticsSnapshot> {
   const store = getStore();
   loadFromFileOnce();
+  await syncFromRedisIfStale();
   const all = store.events.filter((e) =>
     brand === "all" ? true : e.brand === brand,
   );
@@ -465,12 +572,15 @@ export function getSnapshot(brand: AnalyticsBrand | "all" = "all"): AnalyticsSna
   };
 }
 
-export function getSessionDetail(sessionId: string): {
+export async function getSessionDetail(
+  sessionId: string,
+): Promise<{
   session: SessionSummary | null;
   events: AnalyticsEvent[];
-} {
+}> {
   const store = getStore();
   loadFromFileOnce();
+  await syncFromRedisIfStale();
   const evs = store.events
     .filter((e) => e.sessionId === sessionId)
     .sort((a, b) => a.ts.localeCompare(b.ts));
