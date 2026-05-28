@@ -225,174 +225,275 @@ export default function AdminDashboard() {
     );
   }
 
+  const totalUnread =
+    filteredContacts.filter((c) => !c.read).length +
+    filteredDemoRequests.filter((r) => !r.read).length;
+
+  const tabs = [
+    { id: "overview" as const, label: "Übersicht", badge: null as number | null },
+    {
+      id: "contacts" as const,
+      label: "Kontakte",
+      badge: filteredContacts.filter((c) => !c.read).length,
+    },
+    {
+      id: "demo" as const,
+      label: "Demo-Anfragen",
+      badge: filteredDemoRequests.filter((r) => !r.read).length,
+    },
+    { id: "analytics" as const, label: "Analytics", badge: null as number | null },
+  ];
+
+  const brandOptions = [
+    { id: "all" as const, label: "Alle", accent: "#E5E7EB" },
+    { id: "nexcel" as const, label: BRAND_META.nexcel.label, accent: BRAND_META.nexcel.accent },
+    { id: "agiworks" as const, label: BRAND_META.agiworks.label, accent: BRAND_META.agiworks.accent },
+  ];
+
   return (
-    <div className="min-h-screen p-6" style={{
-      background: "radial-gradient(circle at center, rgba(164, 92, 255, 0.1) 0%, rgba(0, 0, 0, 0.95) 100%)",
-    }}>
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+    <div
+      className="min-h-screen text-white"
+      style={{
+        background:
+          "radial-gradient(120% 60% at 50% -10%, rgba(164, 92, 255, 0.18) 0%, rgba(11, 13, 18, 0.0) 60%), #0B0D12",
+      }}
+    >
+      {/* ─── STICKY TOP-BAR ───────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-50 backdrop-blur-xl"
+        style={{
+          background: "rgba(11, 13, 18, 0.72)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+        }}
+      >
+        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center gap-4">
+          {/* Brand-Identity links */}
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className="px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
               style={{
-                background: sessionBrand.glow,
-                color: sessionBrand.accent,
+                background: `linear-gradient(135deg, ${sessionBrand.accent}33, ${sessionBrand.accent}11)`,
                 border: `1px solid ${sessionBrand.accent}55`,
+                color: sessionBrand.accent,
               }}
             >
-              {sessionBrand.label} Admin
+              {(user?.name ?? "A").charAt(0).toUpperCase()}
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">CMS</h1>
-              <p className="text-[#E5E7EB]/80">
-                Willkommen zurück{user?.name ? `, ${user.name}` : ""}
-                <span className="text-[#9CA3AF] text-xs ml-2">({user?.email})</span>
-              </p>
+            <div className="hidden md:flex flex-col leading-tight min-w-0">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]">
+                {sessionBrand.label} · CMS
+              </span>
+              <span className="text-sm font-semibold text-white truncate">
+                {user?.name ?? "Admin"}
+                <span className="text-[#6B7280] font-normal ml-2 text-xs">
+                  {user?.email}
+                </span>
+              </span>
             </div>
           </div>
-          <motion.button
-            onClick={handleLogout}
-            className="px-6 py-3 rounded-xl font-semibold text-white"
-            style={{
-              background: "rgba(239, 68, 68, 0.2)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-            }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Abmelden
-          </motion.button>
-        </div>
 
-        {/* Brand-Filter Pills */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs uppercase tracking-widest text-[#9CA3AF] mr-2">Brand-Filter:</span>
-          {(
-            [
-              { id: "all" as const, label: "Alle", accent: "#E5E7EB" },
-              { id: "nexcel" as const, label: BRAND_META.nexcel.label, accent: BRAND_META.nexcel.accent },
-              { id: "agiworks" as const, label: BRAND_META.agiworks.label, accent: BRAND_META.agiworks.accent },
-            ] as const
-          ).map((opt) => {
-            const active = brandFilter === opt.id;
-            const count =
-              opt.id === "all"
-                ? contacts.length
-                : contacts.filter((c) => (c.brand ?? "nexcel") === opt.id).length;
-            return (
-              <motion.button
-                key={opt.id}
-                onClick={() => setBrandFilter(opt.id)}
-                className="px-4 py-1.5 rounded-full text-xs font-medium transition-all"
-                style={{
-                  background: active ? `${opt.accent}22` : "rgba(255, 255, 255, 0.04)",
-                  border: `1px solid ${active ? `${opt.accent}66` : "rgba(255,255,255,0.08)"}`,
-                  color: active ? opt.accent : "#E5E7EB",
-                }}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                {opt.label} <span className="opacity-60 ml-1">({count})</span>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          {[
-            { id: "overview", label: "Übersicht" },
-            {
-              id: "contacts",
-              label: `Kontakte (${filteredContacts.filter((c) => !c.read).length})`,
-            },
-            {
-              id: "demo",
-              label: `Demo-Anfragen (${filteredDemoRequests.filter((r) => !r.read).length})`,
-            },
-            { id: "analytics", label: "Analytics" },
-          ].map((tab) => (
-            <motion.button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className="px-6 py-3 rounded-xl font-semibold text-sm transition-all"
+          {/* Tab-Navigation Mitte */}
+          <nav className="flex-1 flex justify-center">
+            <div
+              className="flex items-center gap-1 p-1 rounded-full"
               style={{
-                background: activeTab === tab.id
-                  ? `linear-gradient(135deg, ${sessionBrand.accent} 0%, ${sessionBrand.accent}AA 100%)`
-                  : "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "white",
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
               }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
             >
-              {tab.label}
-            </motion.button>
-          ))}
-        </div>
-      </div>
+              {tabs.map((tab) => {
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="relative px-4 py-2 rounded-full text-sm font-medium transition-all"
+                    style={{
+                      background: active ? `${sessionBrand.accent}22` : "transparent",
+                      color: active ? sessionBrand.accent : "#9CA3AF",
+                    }}
+                  >
+                    {tab.label}
+                    {tab.badge !== null && tab.badge > 0 && (
+                      <span
+                        className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                        style={{
+                          background: active ? sessionBrand.accent : "#A45CFF",
+                          color: active ? "#0B0D12" : "white",
+                        }}
+                      >
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
 
-      <div className="max-w-7xl mx-auto">
+          {/* Aktionen rechts */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {totalUnread > 0 && (
+              <div
+                className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+                style={{
+                  background: "rgba(251, 191, 36, 0.1)",
+                  border: "1px solid rgba(251, 191, 36, 0.25)",
+                  color: "#FBBF24",
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FBBF24] animate-pulse" />
+                {totalUnread} ungelesen
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-lg text-xs font-medium transition-all hover:bg-red-500/15"
+              style={{
+                background: "rgba(239, 68, 68, 0.08)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                color: "#FCA5A5",
+              }}
+            >
+              Abmelden
+            </button>
+          </div>
+        </div>
+
+        {/* Brand-Filter Sub-Strip */}
+        <div
+          className="max-w-[1400px] mx-auto px-6 py-2 flex items-center gap-3 border-t"
+          style={{ borderColor: "rgba(255, 255, 255, 0.04)" }}
+        >
+          <span className="text-[10px] uppercase tracking-[0.18em] text-[#6B7280]">
+            Brand-Filter
+          </span>
+          <div className="flex items-center gap-1.5">
+            {brandOptions.map((opt) => {
+              const active = brandFilter === opt.id;
+              const count =
+                opt.id === "all"
+                  ? contacts.length
+                  : contacts.filter((c) => (c.brand ?? "nexcel") === opt.id).length;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setBrandFilter(opt.id)}
+                  className="px-3 py-1 rounded-full text-xs font-medium transition-all"
+                  style={{
+                    background: active ? `${opt.accent}1F` : "transparent",
+                    border: `1px solid ${active ? `${opt.accent}55` : "transparent"}`,
+                    color: active ? opt.accent : "#9CA3AF",
+                  }}
+                >
+                  {opt.label}
+                  <span className="opacity-50 ml-1.5">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="ml-auto text-[10px] text-[#6B7280]">
+            Auto-Refresh · alle 1s
+          </div>
+        </div>
+      </header>
+
+      {/* ─── CONTENT ──────────────────────────────────────────────────── */}
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Overview Tab */}
         {activeTab === "overview" && stats && (
           <div className="space-y-6">
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <KPICard
-                title="Seitenaufrufe (24h)"
+                label="Seitenaufrufe · 24h"
                 value={stats.analytics.last24h.pageViews}
-                change={`+${stats.analytics.last7d.pageViews - stats.analytics.last24h.pageViews} (7d)`}
-                icon="👁️"
+                hint={`${stats.analytics.last7d.pageViews} in 7T · ${stats.analytics.last30d.pageViews} in 30T`}
+                accent={sessionBrand.accent}
               />
               <KPICard
-                title="Kontakte (24h)"
+                label="Neue Kontakte · 24h"
                 value={stats.analytics.last24h.contacts}
-                change={`${stats.contacts.unread} ungelesen`}
-                icon="✉️"
+                hint={`${stats.contacts.unread} ungelesen · ${stats.contacts.total} gesamt`}
+                accent="#22C55E"
               />
               <KPICard
-                title="Demo-Anfragen (24h)"
+                label="Demo-Anfragen · 24h"
                 value={stats.analytics.last24h.demoRequests}
-                change={`${stats.demoRequests.pending} ausstehend`}
-                icon="🚀"
+                hint={`${stats.demoRequests.pending} ausstehend · ${stats.demoRequests.total} gesamt`}
+                accent="#FBBF24"
               />
               <KPICard
-                title="Gesamt Kontakte"
-                value={stats.contacts.total}
-                change={`${stats.contacts.archived} archiviert`}
-                icon="📊"
+                label="Archiv"
+                value={stats.contacts.archived + stats.demoRequests.archived}
+                hint={`${stats.contacts.archived} Kontakte · ${stats.demoRequests.archived} Demo`}
+                accent="#6B7280"
               />
             </div>
 
-            {/* Recent Contacts - POST-FEED */}
-            <GlassCard title={`Neueste Posts${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}>
-              <div className="space-y-0">
-                {filteredContacts.slice(0, 5).length === 0 ? (
-                  <div className="text-center py-8 text-[#9CA3AF] text-sm">
-                    Noch keine Posts vorhanden
+            {/* Two-column overview: contacts (left) + demos (right) */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+              <div className="xl:col-span-2">
+                <GlassCard
+                  title={`Neueste Kontakte${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}
+                  action={
+                    filteredContacts.length > 5 ? (
+                      <button
+                        onClick={() => setActiveTab("contacts")}
+                        className="text-xs text-[#9CA3AF] hover:text-white transition-colors"
+                      >
+                        Alle {filteredContacts.length} →
+                      </button>
+                    ) : null
+                  }
+                >
+                  <div className="space-y-0">
+                    {filteredContacts.slice(0, 4).length === 0 ? (
+                      <EmptyState text="Noch keine Posts vorhanden" />
+                    ) : (
+                      filteredContacts
+                        .slice(0, 4)
+                        .map((contact) => (
+                          <ContactRow
+                            key={contact.id}
+                            contact={contact}
+                            onMarkRead={() => markAsRead("contact", contact.id)}
+                          />
+                        ))
+                    )}
                   </div>
-                ) : (
-                  filteredContacts.slice(0, 5).map((contact) => (
-                    <ContactRow key={contact.id} contact={contact} onMarkRead={() => markAsRead("contact", contact.id)} />
-                  ))
-                )}
+                </GlassCard>
               </div>
-            </GlassCard>
 
-            {/* Recent Demo Requests */}
-            <GlassCard title={`Neueste Demo-Anfragen${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}>
-              <div className="space-y-3">
-                {filteredDemoRequests.slice(0, 5).map((request) => (
-                  <DemoRequestRow key={request.id} request={request} onMarkRead={() => markAsRead("demo", request.id)} />
-                ))}
-                {filteredDemoRequests.length === 0 && (
-                  <div className="text-center py-8 text-[#9CA3AF] text-sm">
-                    Noch keine Demo-Anfragen
+              <div className="xl:col-span-1">
+                <GlassCard
+                  title={`Demo-Anfragen${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}
+                  action={
+                    filteredDemoRequests.length > 5 ? (
+                      <button
+                        onClick={() => setActiveTab("demo")}
+                        className="text-xs text-[#9CA3AF] hover:text-white transition-colors"
+                      >
+                        Alle {filteredDemoRequests.length} →
+                      </button>
+                    ) : null
+                  }
+                >
+                  <div className="space-y-2">
+                    {filteredDemoRequests.slice(0, 5).map((request) => (
+                      <DemoRequestRow
+                        key={request.id}
+                        request={request}
+                        onMarkRead={() => markAsRead("demo", request.id)}
+                      />
+                    ))}
+                    {filteredDemoRequests.length === 0 && (
+                      <EmptyState text="Noch keine Demo-Anfragen" />
+                    )}
                   </div>
-                )}
+                </GlassCard>
               </div>
-            </GlassCard>
+            </div>
           </div>
         )}
 
@@ -515,48 +616,86 @@ export default function AdminDashboard() {
   );
 }
 
-function KPICard({ title, value, change, icon }: { title: string; value: number; change: string; icon: string }) {
+function KPICard({
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  accent: string;
+}) {
   return (
     <motion.div
-      className="rounded-2xl p-6"
+      className="rounded-2xl p-4 relative overflow-hidden"
       style={{
-        background: "rgba(255, 255, 255, 0.08)",
-        backdropFilter: "blur(40px) saturate(180%)",
-        WebkitBackdropFilter: "blur(40px) saturate(180%)",
-        border: "1px solid rgba(255, 255, 255, 0.18)",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px rgba(164, 92, 255, 0.15)",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+        boxShadow: "0 1px 0 rgba(255, 255, 255, 0.03) inset",
       }}
-      whileHover={{ scale: 1.02, y: -2 }}
+      whileHover={{ y: -1, borderColor: `${accent}33` as any }}
+      transition={{ duration: 0.18 }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-3xl">{icon}</span>
-        {value > 0 && (
-          <span className="text-xs px-2 py-1 rounded-full bg-[#A45CFF]/20 text-[#A45CFF]">
-            Neu
-          </span>
-        )}
+      <div
+        className="absolute top-0 left-0 w-full h-[2px]"
+        style={{ background: `linear-gradient(90deg, ${accent}AA, transparent 75%)` }}
+      />
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6B7280] mb-2">
+        {label}
       </div>
-      <div className="text-3xl font-bold text-white mb-1">{value}</div>
-      <div className="text-sm text-[#9CA3AF]">{title}</div>
-      <div className="text-xs text-[#9CA3AF] mt-2">{change}</div>
+      <div className="flex items-baseline gap-2 mb-2">
+        <span
+          className="text-3xl font-bold tabular-nums leading-none"
+          style={{ color: value > 0 ? "white" : "#6B7280" }}
+        >
+          {value}
+        </span>
+      </div>
+      <div className="text-[11px] text-[#9CA3AF] leading-relaxed">{hint}</div>
     </motion.div>
   );
 }
 
-function GlassCard({ title, children }: { title: string; children: React.ReactNode }) {
+function GlassCard({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
     <div
-      className="rounded-2xl p-6"
+      className="rounded-2xl p-5 h-full"
       style={{
-        background: "rgba(255, 255, 255, 0.08)",
-        backdropFilter: "blur(40px) saturate(180%)",
-        WebkitBackdropFilter: "blur(40px) saturate(180%)",
-        border: "1px solid rgba(255, 255, 255, 0.18)",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px rgba(164, 92, 255, 0.15)",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
       }}
     >
-      <h2 className="text-xl font-bold text-white mb-4">{title}</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold text-white tracking-wide">{title}</h2>
+        {action}
+      </div>
       {children}
+    </div>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="text-center py-10 px-4">
+      <div
+        className="w-10 h-10 rounded-full mx-auto mb-3 flex items-center justify-center"
+        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+      >
+        <span className="text-[#6B7280] text-lg">∅</span>
+      </div>
+      <p className="text-xs text-[#6B7280]">{text}</p>
     </div>
   );
 }
