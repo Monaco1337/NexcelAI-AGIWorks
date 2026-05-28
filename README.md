@@ -18,11 +18,13 @@ npm install
 
 ## Entwicklung
 
+**Dieses Repository nutzt Port `3030`.** `http://localhost:3001` ist oft ein anderes Projekt und kann dort mit Fehler antworten — für NEXCEL AI immer **`http://localhost:3030`** verwenden.
+
 ```bash
 npm run dev
 ```
 
-Die Webseite läuft dann auf [http://localhost:3001](http://localhost:3001) (Port 3000 ist für Immostripe belegt)
+Nach dem Start: **[http://localhost:3030](http://localhost:3030)**
 
 ## Build
 

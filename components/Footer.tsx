@@ -3,8 +3,8 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useBrand } from "@/contexts/BrandContext";
+import { resolveBrandNavHref } from "@/lib/brandNav";
 
 const socialLinks = [
   {
@@ -41,190 +41,155 @@ const socialLinks = [
 
 export default function Footer() {
   const pathname = usePathname();
-  const { theme } = useTheme();
   const brand = useBrand();
   const { footer } = brand;
-  const accentRgb = brand.theme.accentRgb;
   const accentColor = brand.theme.accentPrimary;
-
-  const isContactPage = pathname === "/kontakt" || pathname === "/blaze/kontakt";
+  const isContactPage = pathname === "/kontakt" || pathname === "/agiworks/kontakt";
   const isProjektePage = pathname === "/projekte";
   const isImpressumPage = pathname === "/impressum";
   const isDemoPage = pathname?.startsWith("/demo") || pathname === "/login" || pathname === "/demo-anfordern";
-  const isPreiskalkulatorPage = pathname === "/preiskalkulator";
+  const isPreiskalkulatorPage =
+    pathname === "/preiskalkulator" || pathname === "/agiworks/preiskalkulator";
   const isSystemanalysePage =
-    pathname === "/systemanalyse" || pathname?.startsWith("/blaze/systemanalyse");
+    pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse");
 
   return (
     <footer className="relative border-t border-[#A45CFF]/10 bg-gradient-to-b from-transparent to-[#0C0F1A]">
       {/* CTA Section */}
       {!isContactPage && !isProjektePage && !isImpressumPage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
-        <motion.div
-          className="relative py-16 px-6 border-b border-[#A45CFF]/10"
+        <motion.section
+          aria-labelledby="footer-cta-title"
+          className="relative overflow-hidden px-5 py-[clamp(5rem,11vw,7.5rem)] sm:px-8"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          viewport={{ once: true, margin: "-12%" }}
+          transition={{ duration: 0.9 }}
         >
-          <div className="max-w-4xl mx-auto text-center">
+          {/* Einzige Begrenzung: feine Hairline oben */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-[48rem] bg-gradient-to-r from-transparent via-white/[0.08] to-transparent"
+            aria-hidden
+          />
+
+          <div className="relative z-10 mx-auto flex max-w-[640px] flex-col items-center text-center">
+            {/* Headline — reine Typografie, kein Eyebrow, kein Dekor darüber */}
             <motion.h3
-              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-[#FFFFFF] mb-3 sm:mb-4 tracking-tight px-2"
-              initial={{ opacity: 0, y: 20 }}
+              id="footer-cta-title"
+              className="text-balance text-[clamp(1.75rem,4.8vw,2.75rem)] leading-[1.08] tracking-[-0.035em] text-white"
+              style={{
+                fontFamily: "var(--font-headline), system-ui, sans-serif",
+                fontWeight: 300,
+              }}
+              initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             >
-              {footer.ctaTitle}
+              <span
+                style={{
+                  background: "var(--brand-headline-gradient)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontWeight: 400,
+                }}
+              >
+                {footer.ctaTitle}
+              </span>
             </motion.h3>
+
             <motion.p
-              className="text-[#E5E7EB] text-sm sm:text-base md:text-lg font-light leading-relaxed mb-6 sm:mb-8 max-w-2xl mx-auto px-4"
-              initial={{ opacity: 0, y: 20 }}
+              className="mt-5 max-w-[38ch] text-pretty text-[14.5px] leading-[1.65] text-white/50 sm:text-[15px]"
+              style={{
+                fontFamily: "var(--font-headline), system-ui, sans-serif",
+                fontWeight: 300,
+              }}
+              initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              transition={{ duration: 0.85, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
             >
               {footer.ctaSubline}
             </motion.p>
+
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              className="mt-10 flex w-full flex-col items-center justify-center gap-5 sm:mt-11 sm:flex-row sm:gap-8"
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 0.85, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Link href={footer.ctaButtonHref} prefetch={true} className="w-full sm:w-auto">
-                <motion.button
-                  className="relative px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 md:py-5 rounded-[16px] sm:rounded-[18px] lg:rounded-[20px] font-semibold text-xs sm:text-sm md:text-base tracking-wide overflow-hidden group/cta-footer whitespace-nowrap w-full sm:w-auto"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  whileHover={{ scale: 1.06, y: -2 }}
-                  whileTap={{ scale: 0.96 }}
-                  style={{ willChange: "transform" }}
+              {/* Primary — Ghost-Pill, premium, ohne Fill */}
+              <Link
+                href={footer.ctaButtonHref}
+                prefetch={true}
+                className="group/cta-primary relative inline-flex items-center gap-3 rounded-full px-7 py-3.5 text-[12px] uppercase transition-all duration-500 hover:gap-4 sm:text-[12.5px]"
+                style={{
+                  color: "rgba(255,255,255,0.92)",
+                  background: "transparent",
+                  border: "1px solid var(--brand-card-border)",
+                  fontFamily: "var(--font-headline), system-ui, sans-serif",
+                  letterSpacing: "0.22em",
+                  fontWeight: 500,
+                }}
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-500 group-hover/cta-primary:opacity-100"
+                  style={{
+                    border: "1px solid var(--brand-line-mid)",
+                    boxShadow: "0 0 28px var(--brand-glow-mid)",
+                  }}
+                />
+                <span className="relative">{footer.ctaButtonText}</span>
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                  className="relative transition-transform duration-500 group-hover/cta-primary:translate-x-0.5"
                 >
-                  {/* Base Gradient Background - Apple Intelligence Style */}
-                  <div
-                    className="absolute inset-0 rounded-[20px] transition-all duration-500"
-                    style={{
-                      background: theme === "dark"
-                        ? "linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(139, 92, 246, 0.45) 25%, rgba(99, 102, 241, 0.40) 50%, rgba(139, 92, 246, 0.45) 75%, rgba(168, 85, 247, 0.35) 100%)"
-                        : "linear-gradient(135deg, rgba(124, 58, 237, 0.4) 0%, rgba(139, 92, 246, 0.5) 25%, rgba(99, 102, 241, 0.45) 50%, rgba(139, 92, 246, 0.5) 75%, rgba(124, 58, 237, 0.4) 100%)",
-                      backdropFilter: "blur(40px) saturate(200%)",
-                      WebkitBackdropFilter: "blur(40px) saturate(200%)",
-                    }}
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-
-                  {/* Glassmorphic Overlay */}
-                  <div
-                    className="absolute inset-0 rounded-[20px] transition-all duration-500"
-                    style={{
-                      background: theme === "dark"
-                        ? "linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.12) 30%, rgba(255, 255, 255, 0.08) 60%, rgba(255, 255, 255, 0.04) 100%)"
-                        : "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.90) 30%, rgba(255, 255, 255, 0.85) 60%, rgba(255, 255, 255, 0.80) 100%)",
-                      border: theme === "dark"
-                        ? "1px solid rgba(255, 255, 255, 0.25)"
-                        : "1px solid rgba(255, 255, 255, 0.4)",
-                      boxShadow: theme === "dark"
-                        ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.15) inset, 0 1px 3px rgba(255, 255, 255, 0.1) inset"
-                        : "0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 0.5px rgba(255, 255, 255, 0.3) inset, 0 1px 3px rgba(255, 255, 255, 0.2) inset",
-                    }}
-                  />
-
-                  {/* Pulsing Neon Outline - Ultra Subtle */}
-                  <motion.div
-                    className="absolute -inset-[2px] rounded-[22px] pointer-events-none -z-10"
-                    animate={{
-                      opacity: [0.5, 0.8, 0.5],
-                      boxShadow: [
-                        "0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(99, 102, 241, 0.2)",
-                        "0 0 35px rgba(168, 85, 247, 0.6), 0 0 70px rgba(139, 92, 246, 0.5), 0 0 100px rgba(99, 102, 241, 0.4)",
-                        "0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(99, 102, 241, 0.2)",
-                      ],
-                    }}
-                    transition={{
-                      duration: 3.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    style={{
-                      background: theme === "dark"
-                        ? "linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(139, 92, 246, 0.4), rgba(99, 102, 241, 0.3))"
-                        : "linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(139, 92, 246, 0.45), rgba(99, 102, 241, 0.35))",
-                      filter: "blur(8px)",
-                    }}
-                  />
-
-                  {/* Horizontal Highlight - Lying Effect - Ultra Refined */}
-                  <motion.div
-                    className="absolute top-0 left-0 h-full rounded-[20px] pointer-events-none"
-                    animate={{
-                      opacity: [0.3, 0.5, 0.3],
-                      x: ["-50%", "150%", "-50%"],
-                    }}
-                    transition={{
-                      duration: 5,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    style={{
-                      width: "40%",
-                      background: theme === "dark"
-                        ? "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.25), transparent)"
-                        : "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.4), transparent)",
-                      filter: "blur(6px)",
-                    }}
-                  />
-
-                  {/* Radial Glow from Center */}
-                  <motion.div
-                    className="absolute inset-0 rounded-[20px] pointer-events-none opacity-0 group-hover/cta-footer:opacity-100 transition-opacity duration-500"
-                    style={{
-                      background: theme === "dark"
-                        ? "radial-gradient(ellipse at center, rgba(168, 85, 247, 0.25), transparent 70%)"
-                        : "radial-gradient(ellipse at center, rgba(124, 58, 237, 0.2), transparent 70%)",
-                      filter: "blur(20px)",
-                    }}
-                  />
-
-                  {/* Content - Responsive Text */}
-                  <span className="relative z-10 flex items-center justify-center gap-1.5 lg:gap-2 xl:gap-2.5" style={{ color: "#FFFFFF" }}>
-                    <span className="font-semibold tracking-wide">{footer.ctaButtonText}</span>
-                    <motion.svg
-                      className="w-3.5 h-3.5 lg:w-4 lg:h-4 flex-shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                      initial={{ x: 0 }}
-                      whileHover={{ x: 3 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </motion.svg>
-                  </span>
-
-                  {/* Hover State Enhancement */}
-                  <motion.div
-                    className="absolute inset-0 rounded-[20px] pointer-events-none opacity-0 group-hover/cta-footer:opacity-100 transition-opacity duration-500"
-                    style={{
-                      boxShadow: theme === "dark"
-                        ? "0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.2) inset, 0 0 60px rgba(168, 85, 247, 0.3), 0 0 100px rgba(139, 92, 246, 0.2)"
-                        : "0 12px 48px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.4) inset, 0 0 50px rgba(124, 58, 237, 0.25), 0 0 80px rgba(139, 92, 246, 0.15)",
-                    }}
-                  />
-                </motion.button>
+                </svg>
               </Link>
-              {brand.id === "nexcel" && (
-                <Link href="/preiskalkulator" prefetch={true} className="inline-block mt-4 sm:mt-0 sm:ml-4">
-                  <span className="text-sm font-medium text-white/70 hover:text-white border border-white/20 hover:border-white/40 rounded-xl px-4 py-2.5 inline-flex items-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
+
+              {(brand.id === "nexcel" || brand.id === "agiworks") && (
+                <Link
+                  href={resolveBrandNavHref("/preiskalkulator", brand.id)}
+                  prefetch={true}
+                  className="group/secondary inline-flex items-center gap-2.5 text-[12px] uppercase transition-all duration-500 hover:gap-3 sm:text-[12.5px]"
+                  style={{
+                    color: "rgba(255,255,255,0.55)",
+                    fontFamily: "var(--font-headline), system-ui, sans-serif",
+                    letterSpacing: "0.18em",
+                    fontWeight: 500,
+                  }}
+                >
+                  <span className="relative transition-colors duration-500 group-hover/secondary:text-white/85">
                     Preis berechnen
-                    <span className="text-white/50 text-xs">(Im Vollbild öffnen)</span>
                   </span>
+                  <svg
+                    className="h-3 w-3 shrink-0 transition-transform duration-500 group-hover/secondary:translate-x-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    aria-hidden
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
                 </Link>
               )}
             </motion.div>
           </div>
-        </motion.div>
+        </motion.section>
       )}
 
       {/* Main Footer Content */}

@@ -11,58 +11,52 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Helper function to get initial theme
-function getInitialTheme(): Theme {
+/** Ohne gespeicherte Wahl: immer dunkel (Marken-Default, Hero-Video). */
+function readThemeFromEnvironment(): Theme {
   if (typeof window === "undefined") {
-    return "dark"; // Default for SSR
+    return "dark";
   }
-  
-  const savedTheme = localStorage.getItem("theme") as Theme;
-  if (savedTheme) {
-    return savedTheme;
+  try {
+    const saved = localStorage.getItem("theme") as Theme | null;
+    if (saved === "light" || saved === "dark") {
+      return saved;
+    }
+  } catch {
+    /* private mode */
   }
-  
-  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  return systemPrefersDark ? "dark" : "light";
+  return "dark";
 }
 
+function applyThemeToDom(theme: Theme) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.classList.remove("dark", "light");
+  root.classList.add(theme);
+  try {
+    localStorage.setItem("theme", theme);
+  } catch {
+    /* noop */
+  }
+}
+
+// Erster Render: immer „dark“ = identisch mit SSR (layout: html class dark).
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
-  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
-    setMounted(true);
-    const initialTheme = getInitialTheme();
-    setTheme(initialTheme);
-    updateTheme(initialTheme);
+    const next = readThemeFromEnvironment();
+    setTheme(next);
+    applyThemeToDom(next);
   }, []);
 
-  const updateTheme = (newTheme: Theme) => {
-    if (typeof document !== "undefined") {
-      const root = document.documentElement;
-      root.classList.remove("dark", "light");
-      root.classList.add(newTheme);
-      if (mounted) {
-        localStorage.setItem("theme", newTheme);
-      }
-    }
-  };
-
   const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    updateTheme(newTheme);
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      applyThemeToDom(next);
+      return next;
+    });
   };
 
-  // Update theme class when theme changes
-  useEffect(() => {
-    if (mounted) {
-      updateTheme(theme);
-    }
-  }, [theme, mounted]);
-
-  // Always provide the context, even before mounting
-  // This prevents the "useTheme must be used within a ThemeProvider" error
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
@@ -77,4 +71,3 @@ export function useTheme() {
   }
   return context;
 }
-

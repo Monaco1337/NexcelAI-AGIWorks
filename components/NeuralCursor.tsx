@@ -47,8 +47,8 @@ export default function NeuralCursor() {
     };
   }, [isDesktop]);
 
-  if (pathname === "/preiskalkulator") return null;
-  if (pathname === "/systemanalyse" || pathname?.startsWith("/blaze/systemanalyse")) return null;
+  if (pathname === "/preiskalkulator" || pathname === "/agiworks/preiskalkulator") return null;
+  if (pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse")) return null;
   if (!isDesktop || !isVisible) return null;
 
   return (

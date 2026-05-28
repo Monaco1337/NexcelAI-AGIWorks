@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1428"/>
+      <stop offset="100%" stop-color="#031024"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#7CCBFF" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#3A8EE6" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shoulder" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#1a3050"/>
+      <stop offset="100%" stop-color="#0c1828"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <ellipse cx="200" cy="340" rx="160" ry="80" fill="url(#glow)"/>
+  <!-- shoulders -->
+  <path d="M80 400 L80 280 Q120 240 200 250 Q280 240 320 280 L320 400 Z" fill="url(#shoulder)"/>
+  <!-- neck -->
+  <rect x="175" y="230" width="50" height="40" rx="8" fill="#142840"/>
+  <!-- head -->
+  <ellipse cx="200" cy="175" rx="72" ry="82" fill="#1a3050"/>
+  <!-- hair -->
+  <path d="M128 170 Q130 95 200 88 Q270 95 272 170 Q260 120 200 108 Q140 120 128 170 Z" fill="#0a1420"/>
+  <!-- subtle face shadow -->
+  <ellipse cx="200" cy="190" rx="52" ry="58" fill="#142840" opacity="0.6"/>
+</svg>

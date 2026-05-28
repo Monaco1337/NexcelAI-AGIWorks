@@ -11,22 +11,30 @@ import path from "path";
 // IMMER lokale Datei verwenden - auch in Production!
 const STORAGE_PATH = path.join(process.cwd(), "data", "contact-posts.json");
 
-// Globaler Store
+export type ContactBrand = "agiworks" | "nexcel";
+
+interface ContactPost {
+  id: string;
+  vorname: string;
+  nachname: string;
+  email: string;
+  telefon: string | null;
+  unternehmen: string | null;
+  betreff: string;
+  nachricht: string;
+  status: "open" | "read" | "archived";
+  read: boolean;
+  archived: boolean;
+  createdAt: string;
+  /** Brand the lead came in through. Optional for legacy entries. */
+  brand?: ContactBrand;
+  /** Originating host (e.g. www.agiworks.de) for forensics. */
+  sourceHost?: string;
+}
+
 declare global {
-  var __contactPosts: Array<{
-    id: string;
-    vorname: string;
-    nachname: string;
-    email: string;
-    telefon: string | null;
-    unternehmen: string | null;
-    betreff: string;
-    nachricht: string;
-    status: "open" | "read" | "archived";
-    read: boolean;
-    archived: boolean;
-    createdAt: string;
-  }> | undefined;
+  // eslint-disable-next-line no-var
+  var __contactPosts: ContactPost[] | undefined;
 }
 
 if (typeof globalThis.__contactPosts === "undefined") {
@@ -176,6 +184,10 @@ export async function submitContactForm(formData: {
   company?: string;
   subject: string;
   message: string;
+  /** Brand the form was submitted on. Optional — falls back to "nexcel". */
+  brand?: ContactBrand;
+  /** Hostname for forensics (e.g. "www.agiworks.de"). */
+  sourceHost?: string;
 }): Promise<{ success: boolean; id?: string; message?: string; error?: string }> {
   console.log("📝 [CONTACT] Form submitted:", { firstName: formData.firstName, email: formData.email });
   
@@ -190,7 +202,7 @@ export async function submitContactForm(formData: {
     let posts = await loadPosts();
     console.log(`📝 [CONTACT] Loaded ${posts.length} existing posts`);
     
-    const post = {
+    const post: ContactPost = {
       id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       vorname: firstName,
       nachname: lastName,
@@ -203,9 +215,11 @@ export async function submitContactForm(formData: {
       read: false,
       archived: false,
       createdAt: new Date().toISOString(),
+      brand: formData?.brand ?? "nexcel",
+      sourceHost: formData?.sourceHost,
     };
     
-    console.log("📝 [CONTACT] Created post:", post.id);
+    console.log("📝 [CONTACT] Created post:", post.id, "brand:", post.brand);
     posts.unshift(post);
     console.log(`📝 [CONTACT] Saving ${posts.length} posts...`);
     
@@ -242,7 +256,7 @@ export async function submitContactForm(formData: {
   } catch (error: any) {
     console.error("❌ [CONTACT] Error in submitContactForm:", error);
     try {
-      const fallbackPost = {
+      const fallbackPost: ContactPost = {
         id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         vorname: formData?.firstName ? String(formData.firstName).trim() : "Unbekannt",
         nachname: formData?.lastName ? String(formData.lastName).trim() : "Unbekannt",
@@ -255,6 +269,8 @@ export async function submitContactForm(formData: {
         read: false,
         archived: false,
         createdAt: new Date().toISOString(),
+        brand: formData?.brand ?? "nexcel",
+        sourceHost: formData?.sourceHost,
       };
       
       console.log("📝 [CONTACT] Using fallback post:", fallbackPost.id);

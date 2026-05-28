@@ -13,11 +13,9 @@ export default function PerformanceAuditor() {
   const marksRef = useRef<string[]>([]);
 
   useEffect(() => {
-    // Only run if PERF_AUDIT is enabled
-    if (
-      process.env.NODE_ENV !== "development" &&
-      process.env.NEXT_PUBLIC_PERF_AUDIT !== "1"
-    ) {
+    // Nur bei explizitem Flag (nicht automatisch in development): sonst dauerhafte
+    // rAF-/Observer-Last und in StrictMode doppelte Listener.
+    if (process.env.NEXT_PUBLIC_PERF_AUDIT !== "1") {
       return;
     }
 

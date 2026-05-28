@@ -49,6 +49,32 @@ const nextConfig = {
       config.cache = false;
     }
 
+    // ── Transformers.js (HuggingFace) ─────────────────────────
+    // Läuft nur clientseitig (WebGPU/WASM) — auf der Server-Seite
+    // bricht der Build sonst, weil Node-spezifische Submodule
+    // (z.B. onnxruntime-node, sharp) gefordert werden.
+    if (isServer) {
+      config.externals = config.externals || [];
+      // Prevent server-side bundling of @huggingface/transformers
+      config.externals.push({
+        '@huggingface/transformers': 'commonjs @huggingface/transformers',
+        'onnxruntime-node': 'commonjs onnxruntime-node',
+        sharp: 'commonjs sharp',
+      });
+    } else {
+      config.resolve = config.resolve || {};
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        fs: false,
+        path: false,
+        crypto: false,
+        stream: false,
+        util: false,
+        url: false,
+        zlib: false,
+      };
+    }
+
     // Production-only Optimierungen
     if (!dev && !isServer) {
       // Aggressives Bundle-Splitting

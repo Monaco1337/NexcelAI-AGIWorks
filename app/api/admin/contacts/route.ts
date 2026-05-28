@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform contacts to match AdminDashboard interface
-    const transformedContacts = contacts.map((contact) => ({
+    const transformedContacts = contacts.map((contact: any) => ({
       id: contact.id,
       name: `${contact.vorname} ${contact.nachname}`,
       email: contact.email,
@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
       createdAt: contact.createdAt,
       read: contact.read,
       archived: contact.archived,
+      brand: (contact.brand as "agiworks" | "nexcel" | undefined) ?? "nexcel",
+      sourceHost: contact.sourceHost ?? undefined,
     }));
 
     return NextResponse.json({ contacts: transformedContacts }, {

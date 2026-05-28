@@ -79,7 +79,7 @@ export default function AdminLogin() {
       >
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Admin Login</h1>
-          <p className="text-[#E5E7EB]/80 text-sm">NEXCEL AI CMS</p>
+          <p className="text-[#E5E7EB]/80 text-sm">NEXCEL AI · AGI Works · CMS</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

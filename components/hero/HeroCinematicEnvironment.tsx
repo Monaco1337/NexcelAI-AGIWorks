@@ -7,7 +7,7 @@ import type { BrandId } from "@/types/brand";
 
 const BRAND: Record<BrandId, { fog: number; lineOpacity: number; particleOpacity: number; traceOpacity: number }> = {
   nexcel: { fog: 0.0125, lineOpacity: 0.1, particleOpacity: 0.16, traceOpacity: 0.07 },
-  blaze: { fog: 0.0135, lineOpacity: 0.11, particleOpacity: 0.18, traceOpacity: 0.08 },
+  agiworks: { fog: 0.0135, lineOpacity: 0.11, particleOpacity: 0.18, traceOpacity: 0.08 },
 };
 
 function hexToColor(hex: string): THREE.Color {

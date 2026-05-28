@@ -16,14 +16,7 @@ export default function PreiskalkulatorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="ds-app"
-      style={{
-        background: "#0a0a0f",
-        minHeight: "100vh",
-        overflowX: "hidden",
-      }}
-    >
+    <div className="ds-app" style={{ minHeight: "100vh", overflowX: "hidden" }}>
       {children}
     </div>
   );

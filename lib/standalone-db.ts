@@ -95,9 +95,13 @@ export async function getAllContacts(): Promise<any[]> {
   if (IS_SERVERLESS) {
     try {
       // Versuche interne API-Route (funktioniert immer in Production)
-      const baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const localFallback = `http://127.0.0.1:${process.env.PORT || "3030"}`;
+      const baseUrl =
+        process.env.VERCEL_URL != null && process.env.VERCEL_URL !== ""
+          ? `https://${process.env.VERCEL_URL}`
+          : process.env.NEXT_PUBLIC_SITE_URL ||
+            process.env.NEXT_PUBLIC_BASE_URL ||
+            localFallback;
       
       try {
         const response = await fetch(`${baseUrl}/api/contacts-storage`, {
@@ -181,9 +185,13 @@ export async function saveContactStandalone(contact: {
   // Versuche zuerst API-Route (funktioniert in Production ohne externe DB)
   if (IS_SERVERLESS) {
     try {
-      const baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const localFallback = `http://127.0.0.1:${process.env.PORT || "3030"}`;
+      const baseUrl =
+        process.env.VERCEL_URL != null && process.env.VERCEL_URL !== ""
+          ? `https://${process.env.VERCEL_URL}`
+          : process.env.NEXT_PUBLIC_SITE_URL ||
+            process.env.NEXT_PUBLIC_BASE_URL ||
+            localFallback;
       
       try {
         const response = await fetch(`${baseUrl}/api/contacts-storage`, {

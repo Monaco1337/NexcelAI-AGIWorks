@@ -58,7 +58,7 @@ export interface HeroVideoClip {
 
 export const HERO_MOBILE_POSTER = {
   nexcel: "/images/hero/nexcel-system-architecture.png",
-  blaze: "/images/hero/blaze-system-architecture.png",
+  agiworks: "/images/hero/agiworks-system-architecture.png",
 } as const;
 
 /**

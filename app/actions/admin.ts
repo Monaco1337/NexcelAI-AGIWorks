@@ -7,21 +7,26 @@ import path from "path";
 // IMMER lokale Datei verwenden - auch in Production!
 const STORAGE_PATH = path.join(process.cwd(), "data", "contact-posts.json");
 
+interface ContactPost {
+  id: string;
+  vorname: string;
+  nachname: string;
+  email: string;
+  telefon: string | null;
+  unternehmen: string | null;
+  betreff: string;
+  nachricht: string;
+  status: "open" | "read" | "archived";
+  read: boolean;
+  archived: boolean;
+  createdAt: string;
+  brand?: "agiworks" | "nexcel";
+  sourceHost?: string;
+}
+
 declare global {
-  var __contactPosts: Array<{
-    id: string;
-    vorname: string;
-    nachname: string;
-    email: string;
-    telefon: string | null;
-    unternehmen: string | null;
-    betreff: string;
-    nachricht: string;
-    status: "open" | "read" | "archived";
-    read: boolean;
-    archived: boolean;
-    createdAt: string;
-  }> | undefined;
+  // eslint-disable-next-line no-var
+  var __contactPosts: ContactPost[] | undefined;
 }
 
 // Lade Posts - IMMER aus lokaler Datei! Sortiert nach createdAt DESC
@@ -183,7 +188,7 @@ export async function getAdminContacts() {
         return dateB - dateA; // DESC
       });
       
-      const transformedContacts = memoryPosts.map((post) => ({
+      const transformedContacts = memoryPosts.map((post: any) => ({
         id: post.id,
         name: `${post.vorname} ${post.nachname}`,
         email: post.email,
@@ -195,6 +200,8 @@ export async function getAdminContacts() {
         read: post.read,
         archived: post.archived,
         status: post.status,
+        brand: (post.brand as "agiworks" | "nexcel" | undefined) ?? "nexcel",
+        sourceHost: post.sourceHost ?? undefined,
       }));
       
       console.log(`✅ [ADMIN] Returning ${transformedContacts.length} contacts from memory`);
@@ -202,7 +209,7 @@ export async function getAdminContacts() {
     }
     
     // Transformiere Posts - KEINE Filterung, ALLE Posts werden zurückgegeben!
-    const transformedContacts = posts.map((post) => ({
+    const transformedContacts = posts.map((post: any) => ({
       id: post.id,
       name: `${post.vorname} ${post.nachname}`,
       email: post.email,
@@ -214,6 +221,8 @@ export async function getAdminContacts() {
       read: post.read,
       archived: post.archived,
       status: post.status,
+      brand: (post.brand as "agiworks" | "nexcel" | undefined) ?? "nexcel",
+      sourceHost: post.sourceHost ?? undefined,
     }));
 
     console.log(`✅ [ADMIN] Returning ${transformedContacts.length} contacts`);

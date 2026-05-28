@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useBrand } from "@/contexts/BrandContext";
 
-// Content comes from BrandContext – see data/brands/nexcel.ts and data/brands/blaze.ts
+// Content comes from BrandContext – see data/brands/nexcel.ts and data/brands/agiworks.ts
 
 // ═══════════════════════════════════════════════════════════════
 // ICONS (inline SVG, minimal)

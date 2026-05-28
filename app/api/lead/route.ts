@@ -5,6 +5,8 @@ import path from "path";
 const DATA_DIR = path.join(process.cwd(), "data");
 const LEADS_FILE = path.join(DATA_DIR, "leads.json");
 
+type LeadBrand = "agiworks" | "nexcel";
+
 interface LeadBody {
   name: string;
   email: string;
@@ -12,6 +14,12 @@ interface LeadBody {
   message?: string;
   state?: Record<string, unknown>;
   quote?: { min: number; max: number; weeksMin: number; weeksMax: number } | null;
+  brand?: LeadBrand;
+}
+
+function detectBrandFromHost(host: string | null | undefined): LeadBrand {
+  if (!host) return "nexcel";
+  return host.toLowerCase().includes("agiworks") ? "agiworks" : "nexcel";
 }
 
 function ensureDataDir() {
@@ -20,7 +28,14 @@ function ensureDataDir() {
   }
 }
 
-function loadLeads(): LeadBody[] {
+type StoredLead = LeadBody & {
+  id: string;
+  createdAt: string;
+  brand?: LeadBrand;
+  sourceHost?: string;
+};
+
+function loadLeads(): StoredLead[] {
   ensureDataDir();
   if (!fs.existsSync(LEADS_FILE)) return [];
   try {
@@ -32,7 +47,7 @@ function loadLeads(): LeadBody[] {
   }
 }
 
-function saveLead(lead: LeadBody & { id: string; createdAt: string }) {
+function saveLead(lead: StoredLead) {
   const leads = loadLeads();
   leads.push(lead);
   ensureDataDir();
@@ -65,6 +80,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const host = req.headers.get("host") || req.headers.get("x-forwarded-host");
+    const brand: LeadBrand = body.brand ?? detectBrandFromHost(host);
+
     const lead = {
       id: `lead_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       createdAt: new Date().toISOString(),
@@ -74,6 +92,8 @@ export async function POST(req: NextRequest) {
       message: message?.trim() || undefined,
       state: state ?? undefined,
       quote: quote ?? undefined,
+      brand,
+      sourceHost: host ?? undefined,
     };
 
     saveLead(lead);

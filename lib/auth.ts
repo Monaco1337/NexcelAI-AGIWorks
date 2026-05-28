@@ -18,6 +18,8 @@ export async function createSession(user: DemoUser) {
     userId: user.id,
     email: user.email,
     role: user.role,
+    brand: user.brand ?? null,
+    name: user.name,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -27,7 +29,15 @@ export async function createSession(user: DemoUser) {
   return session;
 }
 
-export async function verifySession(): Promise<{ userId: string; email: string; role: string } | null> {
+export interface SessionPayload {
+  userId: string;
+  email: string;
+  role: string;
+  brand: "agiworks" | "nexcel" | null;
+  name?: string;
+}
+
+export async function verifySession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 
@@ -41,6 +51,8 @@ export async function verifySession(): Promise<{ userId: string; email: string; 
       userId: payload.userId as string,
       email: payload.email as string,
       role: payload.role as string,
+      brand: (payload.brand as SessionPayload["brand"]) ?? null,
+      name: payload.name as string | undefined,
     };
   } catch {
     return null;

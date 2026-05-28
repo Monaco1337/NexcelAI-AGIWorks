@@ -38,8 +38,16 @@ function generatePassword(): string {
   return password;
 }
 
-async function sendDemoEmail(email: string, name: string, password: string, expiresAt: string) {
-  const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001"}/login`;
+async function sendDemoEmail(
+  email: string,
+  name: string,
+  password: string,
+  expiresAt: string,
+  siteOrigin: string,
+) {
+  // Login-Link: explizites NEXT_PUBLIC_BASE_URL, sonst echte Aufruf-Origin (korrekt bei beliebigem Dev-Port).
+  const base = (process.env.NEXT_PUBLIC_BASE_URL || siteOrigin).replace(/\/$/, "");
+  const loginUrl = `${base}/login`;
   const expiresDate = new Date(expiresAt).toLocaleDateString("de-DE", {
     day: "2-digit",
     month: "2-digit",
@@ -137,7 +145,7 @@ export async function POST(req: NextRequest) {
       expiresAt: expiresAt.toISOString(),
     });
 
-    await sendDemoEmail(user.email, user.name, password, user.expiresAt);
+    await sendDemoEmail(user.email, user.name, password, user.expiresAt, req.nextUrl.origin);
 
     // Save demo request to database
     const { saveDemoRequest } = await import("@/lib/database");

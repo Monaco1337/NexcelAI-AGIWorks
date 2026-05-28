@@ -1,25 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { BrandId } from "@/types/brand";
 import {
   HERO_MOBILE_POSTER,
   PRIMARY_HERO_SRC,
-  selectCuratedHeroPlaylist,
 } from "@/lib/hero-video-config";
 
 /**
- * Cinematic hero video field:
- * — kuratierter Multi-Branchen-Pool (siehe lib/hero-video-config.ts)
- * — langsame Crossfades, Ken-Burns nur bei voller Motion
- * — Mobile / prefers-reduced-motion: ein Clip + Poster, kein Bandbreiten-Rotationsspiel
+ * Sicheres Auto-Play: ein einmaliger play()-Aufruf, falls der Browser
+ * das `autoplay`-Attribut in einem Edge-Case blockiert (z.B. Safari iOS,
+ * wenn das Element noch nicht im aktiven Tab war). Da das Video `muted`
+ * ist, ist autoplay erlaubt; play() ist hier nur Versicherung.
  */
+function tryPlay(el: HTMLVideoElement | null) {
+  if (!el) return;
+  const p = el.play();
+  if (p && typeof p.catch === "function") {
+    p.catch(() => {
+      /* Autoplay-Blockade ist tolerierbar — Poster bleibt sichtbar. */
+    });
+  }
+}
 
-const CLIP_HOLD_MS = 12_000;
-const PRIMARY_HOLD_MS = 18_000;
-const FADE_MS = 2800;
-const PLAYLIST_SIZE = 8;
-const KEN_BURNS_S = 28;
+/**
+ * Hero video background:
+ * — exklusiv ein einziger Clip (PRIMARY_HERO_SRC)
+ * — kein Pool, keine Rotation, keine Crossfades
+ * — kein transform/CSS-Keyframe am Video (WebKit/GPU-Streifen)
+ */
 
 interface Props {
   brandAccentRgb?: string;
@@ -29,44 +38,47 @@ interface Props {
 function OverlayStack({ brandAccentRgb }: { brandAccentRgb: string }) {
   return (
     <>
+      {/* Subtle brand bloom — top left */}
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 130% 90% at 50% 18%, rgba(${brandAccentRgb},0.065) 0%, transparent 55%)`,
-          mixBlendMode: "screen",
+          background: `radial-gradient(ellipse 110% 70% at 28% 28%, rgba(${brandAccentRgb},0.12) 0%, transparent 60%)`,
         }}
       />
+
+      {/* Light, even darkening — keeps video clearly visible */}
       <div
         className="absolute inset-0"
         style={{
-          background:
-            "linear-gradient(90deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.64) 32%, rgba(0,0,0,0.3) 58%, rgba(0,0,0,0.12) 100%)",
+          background: "rgba(0,0,0,0.42)",
         }}
       />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.18) 45%, rgba(0,0,0,0.78) 100%)",
-        }}
-      />
-      <div
-        className="absolute inset-x-0 top-0 h-48"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.62) 0%, transparent 100%)",
-        }}
-      />
+
+      {/* Reading gradient — slightly stronger on the left for headline contrast */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 82% 72% at 50% 48%, transparent 28%, rgba(0,0,0,0.52) 100%)",
+            "linear-gradient(90deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.22) 28%, rgba(0,0,0,0.06) 58%, rgba(0,0,0,0) 100%)",
         }}
       />
+
+      {/* Soft cinema vignette (subtle) */}
       <div
-        className="hero-noise absolute inset-0"
-        style={{ opacity: 0.026, mixBlendMode: "overlay" }}
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 110% 90% at 50% 50%, transparent 50%, rgba(0,0,0,0.32) 100%)",
+        }}
+      />
+
+      {/* Light bloom — soft brand glow (ohne mix-blend: vermeidet WebKit-Streifen-Artefakte) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 55% 42% at 72% 36%, rgba(${brandAccentRgb},0.12) 0%, transparent 65%)`,
+          opacity: 0.85,
+        }}
       />
     </>
   );
@@ -76,206 +88,82 @@ export default function HeroVideoBackground({
   brandAccentRgb = "139,92,246",
   brandId = "nexcel",
 }: Props) {
-  const playlist = useMemo(
-    () => selectCuratedHeroPlaylist(PLAYLIST_SIZE),
-    [],
-  );
-
   const poster =
-    brandId === "blaze"
-      ? HERO_MOBILE_POSTER.blaze
-      : HERO_MOBILE_POSTER.nexcel;
+    brandId === "agiworks" ? HERO_MOBILE_POSTER.agiworks : HERO_MOBILE_POSTER.nexcel;
 
-  const [activeSlot, setActiveSlot] = useState<0 | 1>(0);
-  const [slotSrc, setSlotSrc] = useState<[string, string]>(() => [
-    playlist[0]?.src ?? "",
-    playlist[Math.min(1, playlist.length - 1)]?.src ?? "",
-  ]);
-  const clipIdxRef = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
-  const [primaryReady, setPrimaryReady] = useState(false);
-  const videoA = useRef<HTMLVideoElement>(null);
-  const videoB = useRef<HTMLVideoElement>(null);
-  const [env, setEnv] = useState({
-    mobile: false,
-    reducedMotion: false,
-  });
 
+  // Sofort beim Mount: Auto-Play sichern + bereits gepufferte Frames erkennen.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mqReduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const read = () =>
-      setEnv({
-        mobile: window.innerWidth < 768,
-        reducedMotion: mqReduce.matches,
-      });
-    read();
-    window.addEventListener("resize", read);
-    mqReduce.addEventListener("change", read);
-    return () => {
-      window.removeEventListener("resize", read);
-      mqReduce.removeEventListener("change", read);
-    };
+    const el = videoRef.current;
+    if (!el) return;
+
+    // Falls das Video bereits beim Mount lieferbereit ist (Cache, schnelle Verbindung),
+    // direkt einblenden — ohne auf canplay-Event warten zu müssen.
+    if (el.readyState >= 2) {
+      setReady(true);
+    }
+    tryPlay(el);
   }, []);
 
-  const enableRotation =
-    playlist.length > 1 && !env.mobile && !env.reducedMotion;
-
-  const handleFirstReady = useCallback(() => {
-    setReady(true);
-    if (playlist[0]?.src === PRIMARY_HERO_SRC) {
-      setTimeout(() => setPrimaryReady(true), 200);
-    } else {
-      setPrimaryReady(true);
-    }
-  }, [playlist]);
-
+  // Sobald das Tab in den Vordergrund kommt, sicherstellen, dass das Video läuft.
   useEffect(() => {
-    if (!enableRotation) return;
-
-    const isPrimary = playlist[clipIdxRef.current]?.src === PRIMARY_HERO_SRC;
-    const holdMs = isPrimary ? PRIMARY_HOLD_MS : CLIP_HOLD_MS;
-
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const scheduleNext = (delay: number) => {
-      timeoutId = setTimeout(() => {
-        setActiveSlot((prev) => {
-          const next: 0 | 1 = prev === 0 ? 1 : 0;
-
-          setTimeout(() => {
-            clipIdxRef.current =
-              (clipIdxRef.current + 1) % playlist.length;
-            const preloadIdx =
-              (clipIdxRef.current + 1) % playlist.length;
-            const preloadSrc = playlist[preloadIdx]!.src;
-
-            setSlotSrc((s) => {
-              const copy: [string, string] = [...s];
-              copy[prev] = preloadSrc;
-              return copy;
-            });
-
-            const nextIsPrimary =
-              playlist[clipIdxRef.current]?.src === PRIMARY_HERO_SRC;
-            scheduleNext(nextIsPrimary ? PRIMARY_HOLD_MS : CLIP_HOLD_MS);
-          }, FADE_MS + 450);
-
-          return next;
-        });
-      }, delay);
+    if (typeof document === "undefined") return;
+    const onVisible = () => {
+      if (!document.hidden) tryPlay(videoRef.current);
     };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
-    scheduleNext(holdMs);
-    return () => clearTimeout(timeoutId);
-  }, [playlist, enableRotation]);
+  const handleReady = useCallback(() => {
+    setReady(true);
+    tryPlay(videoRef.current);
+  }, []);
 
-  useEffect(() => {
-    const v = activeSlot === 0 ? videoA.current : videoB.current;
-    void v?.play().catch(() => {});
-  }, [activeSlot]);
+  /**
+   * Keine CSS-Keyframe-Animation auf dem <video>-Tag: Auf Safari/WebKit machen
+   * `transform`-Animation + Video-Layer oft die klassischen vertikalen Streifen.
+   * Optional: sehr subtile Bewegung später nur auf einem Wrapper ohne Video-Transform.
+   */
+  const motionStyle = { animation: "none" as const };
 
-  const kenBurns =
-    env.reducedMotion || env.mobile
-      ? "none"
-      : `heroKenBurns ${KEN_BURNS_S}s ease-in-out infinite alternate`;
-
-  const firstSrc = playlist[0]?.src ?? "";
-
-  if (!playlist.length) {
-    return (
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-[#030308]">
-        <OverlayStack brandAccentRgb={brandAccentRgb} />
-      </div>
-    );
-  }
-
-  if (!enableRotation && firstSrc) {
-    const isPrimary = firstSrc === PRIMARY_HERO_SRC;
-    return (
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <video
-          ref={videoA}
-          src={firstSrc}
-          poster={poster}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          onCanPlay={handleFirstReady}
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{
-            opacity: primaryReady ? 1 : 0,
-            transition: isPrimary
-              ? "opacity 2.4s cubic-bezier(0.16, 1, 0.3, 1)"
-              : "opacity 1.4s ease-out",
-            animation: kenBurns,
-            willChange: "opacity, transform",
-          }}
-        />
-        <div
-          className="absolute inset-0 bg-[#030308] transition-opacity duration-[1800ms]"
-          style={{ opacity: primaryReady ? 0 : 1, pointerEvents: "none" }}
-        />
-        <OverlayStack brandAccentRgb={brandAccentRgb} />
-      </div>
-    );
-  }
-
+  /* Kein blur()/filter auf dem Video: verhindert GPU-Streifen auf manchen GPUs. */
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-      <video
-        key={`a-${slotSrc[0]}`}
-        ref={videoA}
-        src={slotSrc[0]}
-        poster={poster}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        onCanPlay={handleFirstReady}
-        className="absolute inset-0 h-full w-full object-cover"
-        style={{
-          opacity: activeSlot === 0 && primaryReady ? 1 : 0,
-          transition:
-            slotSrc[0] === PRIMARY_HERO_SRC
-              ? "opacity 2.4s cubic-bezier(0.16, 1, 0.3, 1)"
-              : `opacity ${FADE_MS}ms cubic-bezier(0.45, 0, 0.2, 1)`,
-          animation: kenBurns,
-          willChange: "opacity, transform",
-        }}
-      />
-
-      <video
-        key={`b-${slotSrc[1]}`}
-        ref={videoB}
-        src={slotSrc[1]}
-        poster={poster}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className="absolute inset-0 h-full w-full object-cover"
-        style={{
-          opacity: activeSlot === 1 && primaryReady ? 1 : 0,
-          transition:
-            slotSrc[1] === PRIMARY_HERO_SRC
-              ? "opacity 2.4s cubic-bezier(0.16, 1, 0.3, 1)"
-              : `opacity ${FADE_MS}ms cubic-bezier(0.45, 0, 0.2, 1)`,
-          animation: kenBurns,
-          animationDelay: env.reducedMotion ? "0s" : "-10s",
-          willChange: "opacity, transform",
-        }}
-      />
-
+      {/* Sofort sichtbares Poster als visueller Anker, bis das erste Video-Frame da ist.
+          Liegt unter dem Video — das Video überdeckt es, sobald es eingeblendet ist. */}
       <div
-        className="absolute inset-0 bg-[#030308] transition-opacity duration-[1800ms]"
-        style={{ opacity: primaryReady ? 0 : 1, pointerEvents: "none" }}
+        className="absolute inset-0 h-full w-full bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${poster})`,
+          opacity: ready ? 0 : 1,
+          transition: "opacity 600ms cubic-bezier(0.16, 1, 0.3, 1)",
+          willChange: "opacity",
+        }}
+        aria-hidden
       />
-
+      <video
+        ref={videoRef}
+        src={PRIMARY_HERO_SRC}
+        poster={poster}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        disableRemotePlayback
+        onLoadedData={handleReady}
+        onCanPlay={handleReady}
+        onPlaying={handleReady}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          opacity: ready ? 1 : 0,
+          transition: "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1)",
+          ...motionStyle,
+        }}
+      />
       <OverlayStack brandAccentRgb={brandAccentRgb} />
     </div>
   );

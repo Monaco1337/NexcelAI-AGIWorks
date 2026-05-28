@@ -18,6 +18,8 @@ interface Stats {
   demoRequests: { total: number; unread: number; pending: number; archived: number };
 }
 
+type BrandFilter = "all" | "nexcel" | "agiworks";
+
 interface Contact {
   id: string;
   name: string;
@@ -30,6 +32,8 @@ interface Contact {
   read: boolean;
   archived: boolean;
   status: "open" | "read" | "archived";
+  brand?: "agiworks" | "nexcel";
+  sourceHost?: string;
 }
 
 interface DemoRequest {
@@ -42,7 +46,27 @@ interface DemoRequest {
   expiresAt?: string;
   read: boolean;
   archived: boolean;
+  brand?: "agiworks" | "nexcel";
 }
+
+interface SessionUser {
+  name: string;
+  email: string;
+  brand?: "agiworks" | "nexcel" | null;
+}
+
+const BRAND_META: Record<"nexcel" | "agiworks", { label: string; accent: string; glow: string }> = {
+  nexcel: {
+    label: "NEXCEL AI",
+    accent: "#A45CFF",
+    glow: "rgba(164, 92, 255, 0.25)",
+  },
+  agiworks: {
+    label: "AGI Works",
+    accent: "#5BB8FF",
+    glow: "rgba(91, 184, 255, 0.25)",
+  },
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -50,10 +74,27 @@ export default function AdminDashboard() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [demoRequests, setDemoRequests] = useState<DemoRequest[]>([]);
   const [activeTab, setActiveTab] = useState<"overview" | "contacts" | "demo" | "analytics">("overview");
+  const [brandFilter, setBrandFilter] = useState<BrandFilter>("all");
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<any>(null);
+
+  // Filtered views derived from brandFilter. Legacy entries without a
+  // brand tag default to "nexcel" so they remain visible under the
+  // NEXCEL filter and never disappear.
+  const filteredContacts = contacts.filter((c) => {
+    if (brandFilter === "all") return true;
+    return (c.brand ?? "nexcel") === brandFilter;
+  });
+  const filteredDemoRequests = demoRequests.filter((r) => {
+    if (brandFilter === "all") return true;
+    return (r.brand ?? "nexcel") === brandFilter;
+  });
+
+  const sessionBrandKey: "nexcel" | "agiworks" =
+    user?.brand === "agiworks" ? "agiworks" : "nexcel";
+  const sessionBrand = BRAND_META[sessionBrandKey];
 
   useEffect(() => {
     loadData(true);
@@ -86,10 +127,6 @@ export default function AdminDashboard() {
       if (statsRes.ok) setStats(await statsRes.json());
       
       // Kontakte aus Server Action - MIT DETAILLIERTER FEHLERANZEIGE!
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/42fed8ac-c59f-4f44-bda3-7be9ba8d0144',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/AdminDashboard.tsx:87',message:'Processing contactsData',data:{hasData:!!contactsData,hasContacts:!!contactsData?.contacts,isArray:Array.isArray(contactsData?.contacts),hasError:!!contactsData?.error,error:contactsData?.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'L'})}).catch(()=>{});
-      // #endregion
-      
       if (contactsData && contactsData.contacts && Array.isArray(contactsData.contacts)) {
         console.log("✅ [ADMIN DASHBOARD] Setting contacts:", contactsData.contacts.length);
         if (contactsData.contacts.length > 0) {
@@ -104,9 +141,6 @@ export default function AdminDashboard() {
         setError(null);
         setErrorDetails(null);
       } else if (contactsData && contactsData.error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/42fed8ac-c59f-4f44-bda3-7be9ba8d0144',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/AdminDashboard.tsx:100',message:'Setting error state',data:{error:contactsData.error,fullData:contactsData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'M'})}).catch(()=>{});
-        // #endregion
         // FEHLER ANZEIGEN - DETAILLIERT!
         const errorDetailsObj = {
           type: "contacts_load_error",
@@ -198,11 +232,24 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">NEXCEL AI CMS</h1>
-            <p className="text-[#E5E7EB]/80">
-              Willkommen zurück{user?.name ? `, ${user.name}` : ""}
-            </p>
+          <div className="flex items-center gap-4">
+            <div
+              className="px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase"
+              style={{
+                background: sessionBrand.glow,
+                color: sessionBrand.accent,
+                border: `1px solid ${sessionBrand.accent}55`,
+              }}
+            >
+              {sessionBrand.label} Admin
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">CMS</h1>
+              <p className="text-[#E5E7EB]/80">
+                Willkommen zurück{user?.name ? `, ${user.name}` : ""}
+                <span className="text-[#9CA3AF] text-xs ml-2">({user?.email})</span>
+              </p>
+            </div>
           </div>
           <motion.button
             onClick={handleLogout}
@@ -218,12 +265,52 @@ export default function AdminDashboard() {
           </motion.button>
         </div>
 
+        {/* Brand-Filter Pills */}
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xs uppercase tracking-widest text-[#9CA3AF] mr-2">Brand-Filter:</span>
+          {(
+            [
+              { id: "all" as const, label: "Alle", accent: "#E5E7EB" },
+              { id: "nexcel" as const, label: BRAND_META.nexcel.label, accent: BRAND_META.nexcel.accent },
+              { id: "agiworks" as const, label: BRAND_META.agiworks.label, accent: BRAND_META.agiworks.accent },
+            ] as const
+          ).map((opt) => {
+            const active = brandFilter === opt.id;
+            const count =
+              opt.id === "all"
+                ? contacts.length
+                : contacts.filter((c) => (c.brand ?? "nexcel") === opt.id).length;
+            return (
+              <motion.button
+                key={opt.id}
+                onClick={() => setBrandFilter(opt.id)}
+                className="px-4 py-1.5 rounded-full text-xs font-medium transition-all"
+                style={{
+                  background: active ? `${opt.accent}22` : "rgba(255, 255, 255, 0.04)",
+                  border: `1px solid ${active ? `${opt.accent}66` : "rgba(255,255,255,0.08)"}`,
+                  color: active ? opt.accent : "#E5E7EB",
+                }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                {opt.label} <span className="opacity-60 ml-1">({count})</span>
+              </motion.button>
+            );
+          })}
+        </div>
+
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
           {[
             { id: "overview", label: "Übersicht" },
-            { id: "contacts", label: `Kontakte (${contacts.filter((c) => !c.read).length})` },
-            { id: "demo", label: `Demo-Anfragen (${demoRequests.filter((r) => !r.read).length})` },
+            {
+              id: "contacts",
+              label: `Kontakte (${filteredContacts.filter((c) => !c.read).length})`,
+            },
+            {
+              id: "demo",
+              label: `Demo-Anfragen (${filteredDemoRequests.filter((r) => !r.read).length})`,
+            },
             { id: "analytics", label: "Analytics" },
           ].map((tab) => (
             <motion.button
@@ -232,7 +319,7 @@ export default function AdminDashboard() {
               className="px-6 py-3 rounded-xl font-semibold text-sm transition-all"
               style={{
                 background: activeTab === tab.id
-                  ? "linear-gradient(135deg, #A45CFF 0%, #C084FC 100%)"
+                  ? `linear-gradient(135deg, ${sessionBrand.accent} 0%, ${sessionBrand.accent}AA 100%)`
                   : "rgba(255, 255, 255, 0.05)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
                 color: "white",
@@ -279,14 +366,14 @@ export default function AdminDashboard() {
             </div>
 
             {/* Recent Contacts - POST-FEED */}
-            <GlassCard title="Neueste Posts">
+            <GlassCard title={`Neueste Posts${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}>
               <div className="space-y-0">
-                {contacts.slice(0, 5).length === 0 ? (
+                {filteredContacts.slice(0, 5).length === 0 ? (
                   <div className="text-center py-8 text-[#9CA3AF] text-sm">
                     Noch keine Posts vorhanden
                   </div>
                 ) : (
-                  contacts.slice(0, 5).map((contact) => (
+                  filteredContacts.slice(0, 5).map((contact) => (
                     <ContactRow key={contact.id} contact={contact} onMarkRead={() => markAsRead("contact", contact.id)} />
                   ))
                 )}
@@ -294,11 +381,16 @@ export default function AdminDashboard() {
             </GlassCard>
 
             {/* Recent Demo Requests */}
-            <GlassCard title="Neueste Demo-Anfragen">
+            <GlassCard title={`Neueste Demo-Anfragen${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}>
               <div className="space-y-3">
-                {demoRequests.slice(0, 5).map((request) => (
+                {filteredDemoRequests.slice(0, 5).map((request) => (
                   <DemoRequestRow key={request.id} request={request} onMarkRead={() => markAsRead("demo", request.id)} />
                 ))}
+                {filteredDemoRequests.length === 0 && (
+                  <div className="text-center py-8 text-[#9CA3AF] text-sm">
+                    Noch keine Demo-Anfragen
+                  </div>
+                )}
               </div>
             </GlassCard>
           </div>
@@ -306,7 +398,7 @@ export default function AdminDashboard() {
 
         {/* Contacts Tab - POST-FEED wie Bewertungen */}
         {activeTab === "contacts" && (
-          <GlassCard title="Kontakt-Posts">
+          <GlassCard title={`Kontakt-Posts${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}>
             {/* FEHLERANZEIGE - DETAILLIERT! */}
             {error && (
               <motion.div
@@ -341,12 +433,17 @@ export default function AdminDashboard() {
             )}
             
             <div className="space-y-0">
-              {contacts.length === 0 && !error ? (
+              {filteredContacts.length === 0 && !error ? (
                 <div className="text-center py-12 text-[#9CA3AF]">
                   Noch keine Posts vorhanden
+                  {brandFilter !== "all" && (
+                    <span className="block text-xs mt-2 opacity-70">
+                      (Filter aktiv: {BRAND_META[brandFilter].label})
+                    </span>
+                  )}
                 </div>
               ) : (
-                contacts.map((contact) => (
+                filteredContacts.map((contact) => (
                   <ContactRow key={contact.id} contact={contact} onMarkRead={() => markAsRead("contact", contact.id)} />
                 ))
               )}
@@ -356,11 +453,21 @@ export default function AdminDashboard() {
 
         {/* Demo Requests Tab */}
         {activeTab === "demo" && (
-          <GlassCard title="Alle Demo-Anfragen">
+          <GlassCard title={`Demo-Anfragen${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}>
             <div className="space-y-3">
-              {demoRequests.map((request) => (
+              {filteredDemoRequests.map((request) => (
                 <DemoRequestRow key={request.id} request={request} onMarkRead={() => markAsRead("demo", request.id)} />
               ))}
+              {filteredDemoRequests.length === 0 && (
+                <div className="text-center py-12 text-[#9CA3AF]">
+                  Noch keine Demo-Anfragen
+                  {brandFilter !== "all" && (
+                    <span className="block text-xs mt-2 opacity-70">
+                      (Filter aktiv: {BRAND_META[brandFilter].label})
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </GlassCard>
         )}
@@ -495,11 +602,12 @@ function ContactRow({ contact, onMarkRead }: { contact: Contact; onMarkRead: () 
 
         {/* Post-Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-semibold text-white text-base">{contact.name}</span>
             {!contact.read && (
               <span className="w-2 h-2 rounded-full bg-[#A45CFF] animate-pulse" />
             )}
+            <BrandChip brand={contact.brand} />
             <span className="text-xs text-[#9CA3AF]">•</span>
             <span className="text-xs text-[#9CA3AF]">{timeAgo(contact.createdAt)}</span>
           </div>
@@ -599,11 +707,12 @@ function DemoRequestRow({ request, onMarkRead }: { request: DemoRequest; onMarkR
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-semibold text-white">{request.name}</span>
             {!request.read && (
               <span className="w-2 h-2 rounded-full bg-[#A45CFF]" />
             )}
+            <BrandChip brand={request.brand} />
             <span
               className="px-2 py-0.5 rounded text-xs font-medium"
               style={{
@@ -658,6 +767,23 @@ function StatItem({ label, value }: { label: string; value: number }) {
       <span className="text-[#9CA3AF]">{label}</span>
       <span className="text-2xl font-bold text-white">{value}</span>
     </div>
+  );
+}
+
+function BrandChip({ brand }: { brand?: "agiworks" | "nexcel" }) {
+  const key = brand === "agiworks" ? "agiworks" : "nexcel";
+  const meta = BRAND_META[key];
+  return (
+    <span
+      className="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase"
+      style={{
+        background: meta.glow,
+        color: meta.accent,
+        border: `1px solid ${meta.accent}55`,
+      }}
+    >
+      {meta.label}
+    </span>
   );
 }
 

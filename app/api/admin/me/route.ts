@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
       email: user.email,
       name: user.name,
       role: user.role,
+      brand: user.brand ?? session.brand ?? null,
     });
   } catch (error) {
     console.error("Error fetching user:", error);

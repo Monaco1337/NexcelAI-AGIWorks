@@ -12,26 +12,9 @@ const STORAGE_PATH = IS_PRODUCTION
   ? "/tmp/contact-posts.json"
   : path.join(process.cwd(), "data", "contact-posts.json");
 
-// Globaler Singleton für warme Lambdas (nur für createPost)
-declare global {
-  var __contactPostsStore: Array<{
-    id: string;
-    vorname: string;
-    nachname: string;
-    email: string;
-    telefon: string | null;
-    unternehmen: string | null;
-    betreff: string;
-    nachricht: string;
-    status: "open" | "read" | "archived";
-    read: boolean;
-    archived: boolean;
-    createdAt: string;
-  }> | undefined;
-}
+export type ContactStoreBrand = "agiworks" | "nexcel";
 
-// Lade Posts - IMMER aus File, KEIN Cache für getAllPosts!
-function loadPostsFromFile(): Array<{
+interface ContactStorePost {
   id: string;
   vorname: string;
   nachname: string;
@@ -44,7 +27,17 @@ function loadPostsFromFile(): Array<{
   read: boolean;
   archived: boolean;
   createdAt: string;
-}> {
+  brand?: ContactStoreBrand;
+  sourceHost?: string;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __contactPostsStore: ContactStorePost[] | undefined;
+}
+
+// Lade Posts - IMMER aus File, KEIN Cache für getAllPosts!
+function loadPostsFromFile(): ContactStorePost[] {
   // IMMER aus File laden - garantiert aktuell!
   try {
     if (fs.existsSync(STORAGE_PATH)) {
@@ -65,20 +58,7 @@ function loadPostsFromFile(): Array<{
 }
 
 // Speichere Posts - ATOMIC mit Retry, wirft KEINE Fehler!
-function savePostsToFile(posts: Array<{
-  id: string;
-  vorname: string;
-  nachname: string;
-  email: string;
-  telefon: string | null;
-  unternehmen: string | null;
-  betreff: string;
-  nachricht: string;
-  status: "open" | "read" | "archived";
-  read: boolean;
-  archived: boolean;
-  createdAt: string;
-}>): boolean {
+function savePostsToFile(posts: ContactStorePost[]): boolean {
   // Update globalen Store (nur für warme Lambdas)
   globalThis.__contactPostsStore = posts;
   
@@ -138,12 +118,14 @@ export function createPost(data: {
   unternehmen?: string | null;
   betreff: string;
   nachricht: string;
+  brand?: ContactStoreBrand;
+  sourceHost?: string;
 }) {
   try {
     // Lade aktuelle Posts IMMER aus File
     const posts = loadPostsFromFile();
     
-    const post = {
+    const post: ContactStorePost = {
       id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       vorname: data.vorname.trim(),
       nachname: data.nachname.trim(),
@@ -156,6 +138,8 @@ export function createPost(data: {
       read: false,
       archived: false,
       createdAt: new Date().toISOString(),
+      brand: data.brand ?? "nexcel",
+      sourceHost: data.sourceHost,
     };
     
     // Füge Post hinzu (neueste zuerst)
@@ -168,10 +152,8 @@ export function createPost(data: {
       console.log(`✅ [STORE] Post erstellt: ${post.id}`);
       console.log(`✅ [STORE] Name: ${post.vorname} ${post.nachname}`);
       console.log(`✅ [STORE] Email: ${post.email}`);
-      console.log(`✅ [STORE] Telefon: ${post.telefon || "keine"}`);
-      console.log(`✅ [STORE] Unternehmen: ${post.unternehmen || "keine"}`);
+      console.log(`✅ [STORE] Brand: ${post.brand}`);
       console.log(`✅ [STORE] Betreff: ${post.betreff}`);
-      console.log(`✅ [STORE] Nachricht: ${post.nachricht.substring(0, 50)}...`);
       console.log(`✅ [STORE] Total posts: ${posts.length}`);
       console.log(`✅ [STORE] Sofort im Admin-Panel sichtbar!`);
     } else {
@@ -184,7 +166,7 @@ export function createPost(data: {
   } catch (error) {
     // Fallback: Erstelle Post auch bei Fehler
     console.error("❌ [STORE] createPost error:", error);
-    const fallbackPost = {
+    const fallbackPost: ContactStorePost = {
       id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       vorname: data.vorname.trim(),
       nachname: data.nachname.trim(),
@@ -197,6 +179,8 @@ export function createPost(data: {
       read: false,
       archived: false,
       createdAt: new Date().toISOString(),
+      brand: data.brand ?? "nexcel",
+      sourceHost: data.sourceHost,
     };
     console.warn(`⚠️ [STORE] Fallback post created: ${fallbackPost.id}`);
     return fallbackPost;

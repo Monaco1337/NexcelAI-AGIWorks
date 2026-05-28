@@ -25,7 +25,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 
 # vercel
 .vercel
@@ -42,5 +44,41 @@ next-env.d.ts
 # large zip files
 *.zip
 
-
+# generated prisma client
 /lib/generated/prisma
+
+# internal setup notes (may contain secrets)
+CONNECTION_STRING_TEMPLATE.md
+DATABASE_SETUP.md
+DATABASE_SETUP_PRODUCTION.md
+EMAIL_SETUP.md
+FAVICON_DOCUMENTATION.md
+FAVICON_ICO_FIX.md
+FINAL_SETUP.md
+FIX_CONNECTION.md
+GET_CONNECTION_STRING.md
+GOOGLE_FAVICON_FIX.md
+HERO_DIAGNOSIS.md
+LOCAL_STORAGE_INFO.md
+LOCKED-HOMEPAGE-RULES.md
+NEUES_PROJEKT_SETUP.md
+PERFORMANCE_AUDIT_REPORT.md
+PERFORMANCE_OPTIMIZATIONS.md
+PRODUCTION_SETUP.md
+RESEND_LIMITATIONS.md
+SETUP_DATABASE_URL.md
+SETUP_EMAIL.md
+SUPABASE_KEYS.md
+SUPABASE_SETUP.md
+SUPABASE_TROUBLESHOOTING.md
+UPSTASH_SETUP.md
+USE_POOLING.md
+
+# old project backup folder
+/NEXCEL AI Webseite 2/
+
+# connection test scripts (contain credentials)
+/test-*.js
+
+# editor / debug
+.cursor/debug.log

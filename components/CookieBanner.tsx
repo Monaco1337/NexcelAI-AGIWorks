@@ -58,6 +58,15 @@ export default function CookieBanner() {
     }
   }, [isAdminPage]);
 
+  // Allow reopening the cookie settings from anywhere
+  // (z.B. später aus dem Footer / Datenschutz-Seite via window.dispatchEvent(new Event("open-cookie-settings")))
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reopen = () => setShowModal(true);
+    window.addEventListener("open-cookie-settings", reopen);
+    return () => window.removeEventListener("open-cookie-settings", reopen);
+  }, []);
+
   const handleEssentialOnly = () => {
     setEssentialOnly();
     setHasConsent(true);
@@ -88,19 +97,24 @@ export default function CookieBanner() {
 
   return (
     <>
-      {/* Cookie Floating Button - Apple iOS 26 Style - Always Visible */}
-      <motion.div
-        data-cookie-banner
-        className="cookie-floating-button"
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ 
-          type: "spring", 
-          stiffness: 300, 
-          damping: 25,
-          delay: 0.5 
-        }}
-      >
+      {/* Cookie Floating Button — nur sichtbar bis zum ersten Consent.
+          Danach kann der Dialog über das Custom-Event "open-cookie-settings"
+          wieder geöffnet werden (z.B. via Footer-Link). */}
+      <AnimatePresence>
+        {!hasConsent && (
+          <motion.div
+            data-cookie-banner
+            className="cookie-floating-button"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.4, y: 20 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 25,
+              delay: 0.5,
+            }}
+          >
           <motion.button
             onClick={handleOpenModal}
             className="cookie-button"
@@ -167,18 +181,18 @@ export default function CookieBanner() {
               </svg>
             </motion.div>
 
-            {/* Badge when no consent - Always visible indicator */}
-            {!hasConsent && (
-              <motion.div
-                className="cookie-badge"
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <span className="cookie-badge-text">!</span>
-              </motion.div>
-            )}
+            {/* Badge when no consent - pulsiert solange ungeklärt */}
+            <motion.div
+              className="cookie-badge"
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <span className="cookie-badge-text">!</span>
+            </motion.div>
           </motion.button>
         </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Cookie Modal - High-End Glassmorphism */}
       <AnimatePresence>

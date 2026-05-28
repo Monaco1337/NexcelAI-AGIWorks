@@ -1,32 +1,34 @@
 import type { BrandId } from "@/types/brand";
 
-const BLAZE_PREFIX = "/blaze";
+const AGIWORKS_PREFIX = "/agiworks";
 
 /**
- * Path segments that exist under the Blaze site tree (mirror of main IA where needed).
- * Routes not listed here stay on the global app (e.g. /preiskalkulator, /impressum).
+ * Path segments that exist under the AGI Works site tree (mirror of main IA where needed).
+ * Routes not listed here stay on the global app (e.g. /impressum, /datenschutz).
  */
-const BLAZE_OWNED_FIRST_SEGMENTS = new Set([
+const AGIWORKS_OWNED_FIRST_SEGMENTS = new Set([
   "systeme",
   "kontakt",
   "arbeitsweise",
   "systemanalyse",
+  "ueber-mich",
+  "preiskalkulator",
 ]);
 
 /**
- * Rewrites internal hrefs when the active brand is Blaze so navbar and search stay in /blaze.
+ * Rewrites internal hrefs when the active brand is AGI Works so navbar and search stay in /agiworks.
  */
 export function resolveBrandNavHref(href: string, brandId: BrandId): string {
-  if (brandId !== "blaze") return href;
+  if (brandId !== "agiworks") return href;
   if (!href || href === "#") return href;
   if (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:")) {
     return href;
   }
-  if (href.startsWith(BLAZE_PREFIX)) return href;
+  if (href.startsWith(AGIWORKS_PREFIX)) return href;
 
-  // /#anchor → /blaze#anchor
+  // /#anchor → /agiworks#anchor
   if (href.startsWith("/#")) {
-    return `${BLAZE_PREFIX}${href.slice(1)}`;
+    return `${AGIWORKS_PREFIX}${href.slice(1)}`;
   }
 
   const hashIndex = href.indexOf("#");
@@ -35,13 +37,13 @@ export function resolveBrandNavHref(href: string, brandId: BrandId): string {
 
   const cleanPath = pathPart || "/";
   if (cleanPath === "/") {
-    return `${BLAZE_PREFIX}${hash}`;
+    return `${AGIWORKS_PREFIX}${hash}`;
   }
 
   const segments = cleanPath.replace(/^\//, "").split("/").filter(Boolean);
   const first = segments[0];
-  if (first && BLAZE_OWNED_FIRST_SEGMENTS.has(first)) {
-    return `${BLAZE_PREFIX}/${segments.join("/")}${hash}`;
+  if (first && AGIWORKS_OWNED_FIRST_SEGMENTS.has(first)) {
+    return `${AGIWORKS_PREFIX}/${segments.join("/")}${hash}`;
   }
 
   return href;

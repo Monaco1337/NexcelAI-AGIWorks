@@ -3,25 +3,27 @@
 import { useEffect } from "react";
 
 /**
- * Performance Monitor Component
- * Tracks Core Web Vitals and Performance Metrics
- * Only runs in development mode or when explicitly enabled
+ * Performance Monitor — nur Development oder NEXT_PUBLIC_ENABLE_PERF_MONITOR.
+ * Sauberes Teardown: verhindert doppelte rAF-Schleifen / Observer unter Strict Mode.
  */
 export default function PerformanceMonitor() {
   useEffect(() => {
-    // Only run in development or if explicitly enabled
-    if (process.env.NODE_ENV !== "development" && !process.env.NEXT_PUBLIC_ENABLE_PERF_MONITOR) {
+    if (
+      process.env.NODE_ENV !== "development" &&
+      !process.env.NEXT_PUBLIC_ENABLE_PERF_MONITOR
+    ) {
       return;
     }
 
-    // Check if Performance API is available
     if (typeof window === "undefined" || !("performance" in window)) {
       return;
     }
 
-    // Track Core Web Vitals
+    const observers: PerformanceObserver[] = [];
+    let fpsRaf = 0;
+    let cancelled = false;
+
     const trackWebVitals = () => {
-      // FCP - First Contentful Paint
       const paintEntries = performance.getEntriesByType("paint");
       paintEntries.forEach((entry) => {
         if (entry.name === "first-contentful-paint") {
@@ -29,26 +31,33 @@ export default function PerformanceMonitor() {
         }
       });
 
-      // LCP - Largest Contentful Paint
       if ("PerformanceObserver" in window) {
         try {
           const lcpObserver = new PerformanceObserver((list) => {
             const entries = list.getEntries();
-            const lastEntry = entries[entries.length - 1] as any;
-            console.log(`📊 LCP: ${lastEntry.renderTime?.toFixed(2) || lastEntry.loadTime?.toFixed(2)}ms`);
+            const lastEntry = entries[entries.length - 1] as {
+              renderTime?: number;
+              loadTime?: number;
+            };
+            console.log(
+              `📊 LCP: ${lastEntry.renderTime?.toFixed(2) || lastEntry.loadTime?.toFixed(2)}ms`,
+            );
           });
           lcpObserver.observe({ entryTypes: ["largest-contentful-paint"] });
-        } catch (e) {
-          // PerformanceObserver not supported
+          observers.push(lcpObserver);
+        } catch {
+          /* unsupported */
         }
       }
 
-      // CLS - Cumulative Layout Shift
       if ("PerformanceObserver" in window) {
         try {
           let clsValue = 0;
           const clsObserver = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries() as any[]) {
+            for (const entry of list.getEntries() as unknown as Array<{
+              hadRecentInput?: boolean;
+              value: number;
+            }>) {
               if (!entry.hadRecentInput) {
                 clsValue += entry.value;
               }
@@ -56,61 +65,58 @@ export default function PerformanceMonitor() {
             console.log(`📐 CLS: ${clsValue.toFixed(4)}`);
           });
           clsObserver.observe({ entryTypes: ["layout-shift"] });
-        } catch (e) {
-          // PerformanceObserver not supported
+          observers.push(clsObserver);
+        } catch {
+          /* unsupported */
         }
       }
 
-      // TTI - Time to Interactive (approximation)
       if ("PerformanceObserver" in window) {
         try {
           const ttiObserver = new PerformanceObserver((list) => {
-            const entries = list.getEntries();
-            entries.forEach((entry: any) => {
+            for (const entry of list.getEntries() as Array<{
+              entryType: string;
+              name?: string;
+              duration?: number;
+            }>) {
               if (entry.entryType === "measure" && entry.name === "tti") {
-                console.log(`⚡ TTI: ${entry.duration.toFixed(2)}ms`);
+                console.log(`⚡ TTI: ${entry.duration?.toFixed(2)}ms`);
               }
-            });
+            }
           });
           ttiObserver.observe({ entryTypes: ["measure"] });
-        } catch (e) {
-          // PerformanceObserver not supported
+          observers.push(ttiObserver);
+        } catch {
+          /* unsupported */
         }
       }
 
-      // FPS Monitor (Development only)
       if (process.env.NODE_ENV === "development") {
         let lastTime = performance.now();
         let frames = 0;
-        let fps = 0;
 
         const measureFPS = () => {
+          if (cancelled) return;
           frames++;
           const currentTime = performance.now();
           if (currentTime >= lastTime + 1000) {
-            fps = Math.round((frames * 1000) / (currentTime - lastTime));
+            const fps = Math.round((frames * 1000) / (currentTime - lastTime));
             if (fps < 55) {
               console.warn(`⚠️ Low FPS: ${fps} fps`);
             }
             frames = 0;
             lastTime = currentTime;
           }
-          requestAnimationFrame(measureFPS);
+          fpsRaf = requestAnimationFrame(measureFPS);
         };
-        requestAnimationFrame(measureFPS);
+        fpsRaf = requestAnimationFrame(measureFPS);
       }
     };
 
-    // Wait for page load
-    if (document.readyState === "complete") {
-      trackWebVitals();
-    } else {
-      window.addEventListener("load", trackWebVitals);
-    }
-
-    // Track navigation timing
     const trackNavigationTiming = () => {
-      const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
+      const navigation = performance.getEntriesByType(
+        "navigation",
+      )[0] as PerformanceNavigationTiming | undefined;
       if (navigation) {
         console.log("📈 Navigation Timing:", {
           DNS: `${(navigation.domainLookupEnd - navigation.domainLookupStart).toFixed(2)}ms`,
@@ -123,11 +129,34 @@ export default function PerformanceMonitor() {
       }
     };
 
+    const onLoadVitals = () => trackWebVitals();
+    const onLoadNav = () => trackNavigationTiming();
+
+    if (document.readyState === "complete") {
+      trackWebVitals();
+    } else {
+      window.addEventListener("load", onLoadVitals);
+    }
+
     if (document.readyState === "complete") {
       trackNavigationTiming();
     } else {
-      window.addEventListener("load", trackNavigationTiming);
+      window.addEventListener("load", onLoadNav);
     }
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(fpsRaf);
+      window.removeEventListener("load", onLoadVitals);
+      window.removeEventListener("load", onLoadNav);
+      observers.forEach((o) => {
+        try {
+          o.disconnect();
+        } catch {
+          /* noop */
+        }
+      });
+    };
   }, []);
 
   return null;
