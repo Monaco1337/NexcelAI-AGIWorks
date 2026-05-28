@@ -215,30 +215,57 @@ function rotateIfNeeded() {
   }
 }
 
+// Tracks how many bytes of the NDJSON log we've already consumed in this
+// lambda. New requests only re-read the tail of the file, so writes from a
+// concurrent request to the *same* warm lambda become visible without a cold
+// boot. With single-region + low traffic this gives near-realtime sync.
+let lastFileSize = 0;
+
 function loadFromFileOnce() {
   const store = getStore();
-  if (store.loadedFromFile) return;
-  store.loadedFromFile = true;
   try {
-    if (!fs.existsSync(STORE_FILE)) return;
-    const raw = fs.readFileSync(STORE_FILE, "utf-8");
-    const lines = raw.split("\n").filter(Boolean);
-    const events: AnalyticsEvent[] = [];
-    for (const line of lines) {
-      try {
-        const ev = JSON.parse(line) as AnalyticsEvent;
-        if (ev && ev.id && ev.type && ev.ts) events.push(ev);
-      } catch {
-        /* skip malformed */
+    if (!fs.existsSync(STORE_FILE)) {
+      lastFileSize = 0;
+      store.loadedFromFile = true;
+      return;
+    }
+    const { size } = fs.statSync(STORE_FILE);
+    if (store.loadedFromFile && size === lastFileSize) return;
+
+    const startOffset = store.loadedFromFile ? lastFileSize : 0;
+    if (size < startOffset) {
+      // File was rotated → reload from scratch.
+      store.events = [];
+      lastFileSize = 0;
+    }
+    const fd = fs.openSync(STORE_FILE, "r");
+    try {
+      const len = size - (store.loadedFromFile ? lastFileSize : 0);
+      if (len > 0) {
+        const buf = Buffer.alloc(len);
+        fs.readSync(fd, buf, 0, len, store.loadedFromFile ? lastFileSize : 0);
+        const lines = buf.toString("utf-8").split("\n").filter(Boolean);
+        const seen = new Set(store.events.map((e) => e.id));
+        for (const line of lines) {
+          try {
+            const ev = JSON.parse(line) as AnalyticsEvent;
+            if (ev && ev.id && ev.type && ev.ts && !seen.has(ev.id)) {
+              store.events.push(ev);
+            }
+          } catch {
+            /* skip malformed */
+          }
+        }
+        store.events.sort((a, b) => a.ts.localeCompare(b.ts));
+        if (store.events.length > MAX_MEMORY_EVENTS) {
+          store.events = store.events.slice(-MAX_MEMORY_EVENTS);
+        }
       }
+    } finally {
+      fs.closeSync(fd);
     }
-    // Merge file-events into memory, dedupe by id, keep newest MAX
-    const seen = new Set(store.events.map((e) => e.id));
-    for (const e of events) if (!seen.has(e.id)) store.events.push(e);
-    store.events.sort((a, b) => a.ts.localeCompare(b.ts));
-    if (store.events.length > MAX_MEMORY_EVENTS) {
-      store.events = store.events.slice(-MAX_MEMORY_EVENTS);
-    }
+    lastFileSize = size;
+    store.loadedFromFile = true;
   } catch (err) {
     console.warn("[analytics-store] file load failed:", err);
   }
