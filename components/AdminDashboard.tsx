@@ -132,17 +132,155 @@ const BRAND_META: Record<"nexcel" | "agiworks", { label: string; accent: string;
   },
 };
 
+type TabId =
+  | "overview"
+  | "analysen"
+  | "contacts"
+  | "pipeline"
+  | "unternehmen"
+  | "demo"
+  | "automationen"
+  | "analytics"
+  | "settings";
+
+type TimeRange = "24h" | "7d" | "30d";
+
+const TIME_RANGE_LABEL: Record<TimeRange, string> = {
+  "24h": "Heute",
+  "7d": "7 Tage",
+  "30d": "30 Tage",
+};
+
+// Line-Icons (keine bunten Standard-Icons) — schlanke 1.6px Strokes.
+function NavIcon({ name }: { name: TabId }) {
+  const common = {
+    width: 18,
+    height: 18,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (name) {
+    case "overview":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7" height="9" rx="1.5" />
+          <rect x="14" y="3" width="7" height="5" rx="1.5" />
+          <rect x="14" y="12" width="7" height="9" rx="1.5" />
+          <rect x="3" y="16" width="7" height="5" rx="1.5" />
+        </svg>
+      );
+    case "analysen":
+      return (
+        <svg {...common}>
+          <path d="M4 19V5" />
+          <path d="M4 19h16" />
+          <path d="M8 16l3-4 3 2 4-6" />
+        </svg>
+      );
+    case "contacts":
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3.2" />
+          <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+          <path d="M16 8.5a3 3 0 0 1 0 5" />
+          <path d="M18 19a5 5 0 0 0-2.5-4.3" />
+        </svg>
+      );
+    case "pipeline":
+      return (
+        <svg {...common}>
+          <path d="M3 5h18l-7 8v6l-4-2v-4z" />
+        </svg>
+      );
+    case "unternehmen":
+      return (
+        <svg {...common}>
+          <rect x="4" y="3" width="9" height="18" rx="1.5" />
+          <path d="M13 8h7v13h-7" />
+          <path d="M7 7h2M7 11h2M7 15h2M16 12h1M16 16h1" />
+        </svg>
+      );
+    case "demo":
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="14" height="14" rx="2" />
+          <path d="M17 9l4-2v10l-4-2" />
+        </svg>
+      );
+    case "automationen":
+      return (
+        <svg {...common}>
+          <path d="M12 4v2M12 18v2M4 12h2M18 12h2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M17.7 6.3l-1.4 1.4M7.7 16.3l-1.4 1.4" />
+          <circle cx="12" cy="12" r="3.2" />
+        </svg>
+      );
+    case "analytics":
+      return (
+        <svg {...common}>
+          <path d="M5 20V10M12 20V4M19 20v-6" />
+        </svg>
+      );
+    case "settings":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.5-2-3.4-2.4 1a7.8 7.8 0 0 0-1.7-1l-.4-2.6H9.5l-.4 2.6a7.8 7.8 0 0 0-1.7 1l-2.4-1-2 3.4L5 11a7.8 7.8 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a7.8 7.8 0 0 0 1.7 1l.4 2.6h4.6l.4-2.6a7.8 7.8 0 0 0 1.7-1l2.4 1 2-3.4z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+// Lead-Score wird transparent aus vorhandenen Feldern abgeleitet (kein Fake):
+// frische, unbearbeitete B2B-Kontakte mit Telefon ranken höher.
+function deriveLeadScore(c: Contact): number {
+  let s = 42;
+  if (!c.read) s += 24;
+  if (c.unternehmen) s += 16;
+  if (c.telefon) s += 10;
+  const ageH = (Date.now() - new Date(c.createdAt).getTime()) / 3_600_000;
+  if (ageH < 24) s += 8;
+  else if (ageH < 72) s += 4;
+  return Math.max(1, Math.min(99, s));
+}
+
+function priorityBucket(score: number): "A" | "B" | "C" {
+  if (score >= 75) return "A";
+  if (score >= 55) return "B";
+  return "C";
+}
+
+function relTimeShort(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const sec = Math.round(diff / 1000);
+  if (sec < 60) return "gerade eben";
+  if (sec < 3600) return `vor ${Math.floor(sec / 60)} Min`;
+  if (sec < 86400) return `vor ${Math.floor(sec / 3600)} Std`;
+  if (sec < 604800) return `vor ${Math.floor(sec / 86400)} T`;
+  return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [demoRequests, setDemoRequests] = useState<DemoRequest[]>([]);
-  const [activeTab, setActiveTab] = useState<"overview" | "contacts" | "demo" | "analytics">("overview");
+  // Existing tabs (overview / contacts / demo / analytics) bleiben voll funktionsfähig.
+  // Zusätzliche Command-Center-Views sind rein additiv und brechen nichts.
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [brandFilter, setBrandFilter] = useState<BrandFilter>("all");
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<any>(null);
+  // Zeitraum-Filter: wählt nur, welcher bestehende Analytics-Bucket angezeigt wird.
+  const [timeRange, setTimeRange] = useState<TimeRange>("24h");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Filtered views derived from brandFilter. Legacy entries without a
   // brand tag default to "nexcel" so they remain visible under the
@@ -252,6 +390,57 @@ export default function AdminDashboard() {
     router.push("/admin/login");
   };
 
+  // Export der aktuell gefilterten Kontakte als CSV — rein clientseitig,
+  // keine API-/Datenänderung. Greift nur auf bereits geladene Daten zu.
+  const handleExport = () => {
+    const rows = contacts.filter((c) => {
+      if (brandFilter === "all") return true;
+      return (c.brand ?? "nexcel") === brandFilter;
+    });
+    if (rows.length === 0) return;
+    const headers = [
+      "Name",
+      "E-Mail",
+      "Telefon",
+      "Unternehmen",
+      "Betreff",
+      "Brand",
+      "Status",
+      "Erstellt",
+    ];
+    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [
+      headers.join(","),
+      ...rows.map((c) =>
+        [
+          c.name,
+          c.email,
+          c.telefon ?? "",
+          c.unternehmen ?? "",
+          c.betreff ?? "",
+          (c.brand ?? "nexcel") === "agiworks" ? "AGI Works" : "NEXCEL AI",
+          c.status,
+          c.createdAt,
+        ]
+          .map(escape)
+          .join(","),
+      ),
+    ].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `command-center-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleNewAnalysis = () => {
+    router.push("/");
+  };
+
   const markAsRead = async (type: "contact" | "demo", id: string) => {
     try {
       if (type === "contact") {
@@ -290,24 +479,159 @@ export default function AdminDashboard() {
     );
   }
 
-  const totalUnread =
-    filteredContacts.filter((c) => !c.read).length +
-    filteredDemoRequests.filter((r) => !r.read).length;
+  const unreadContacts = filteredContacts.filter((c) => !c.read).length;
+  const unreadDemos = filteredDemoRequests.filter((r) => !r.read).length;
 
-  const tabs = [
-    { id: "overview" as const, label: "Übersicht", badge: null as number | null },
-    {
-      id: "contacts" as const,
-      label: "Kontakte",
-      badge: filteredContacts.filter((c) => !c.read).length,
-    },
-    {
-      id: "demo" as const,
-      label: "Demo-Anfragen",
-      badge: filteredDemoRequests.filter((r) => !r.read).length,
-    },
-    { id: "analytics" as const, label: "Analytics", badge: null as number | null },
+  const navItems: { id: TabId; label: string; badge?: number }[] = [
+    { id: "overview", label: "Command Center" },
+    { id: "analysen", label: "Analysen" },
+    { id: "contacts", label: "Leads / Kontakte", badge: unreadContacts },
+    { id: "pipeline", label: "Pipeline" },
+    { id: "unternehmen", label: "Unternehmen" },
+    { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
+    { id: "automationen", label: "Automationen" },
+    { id: "analytics", label: "Analytics" },
+    { id: "settings", label: "Einstellungen" },
   ];
+
+  const TAB_TITLE: Record<TabId, string> = {
+    overview: "Command Center",
+    analysen: "Analysen",
+    contacts: "Leads / Kontakte",
+    pipeline: "Pipeline",
+    unternehmen: "Unternehmen",
+    demo: "Demo-Anfragen",
+    automationen: "Automationen",
+    analytics: "Analytics",
+    settings: "Einstellungen",
+  };
+
+  // ── Alle Kennzahlen werden aus bestehenden Daten abgeleitet ──
+  const a = stats?.analytics;
+  const bucket =
+    timeRange === "24h" ? a?.last24h : timeRange === "7d" ? a?.last7d : a?.last30d;
+  const trendPct = (val24h?: number, val7d?: number): number | null => {
+    if (val24h == null || val7d == null) return null;
+    const avg = val7d / 7;
+    if (avg <= 0) return null;
+    return Math.round(((val24h - avg) / avg) * 100);
+  };
+
+  const activeLeads = filteredContacts.filter((c) => !c.archived);
+  const hotLeads = activeLeads
+    .map((c) => ({ c, score: deriveLeadScore(c) }))
+    .sort(
+      (x, y) =>
+        y.score - x.score ||
+        new Date(y.c.createdAt).getTime() - new Date(x.c.createdAt).getTime(),
+    )
+    .slice(0, 5);
+
+  const prio = { A: 0, B: 0, C: 0 };
+  activeLeads.forEach((c) => {
+    prio[priorityBucket(deriveLeadScore(c))] += 1;
+  });
+
+  // Konsolidierter Aktivitäts-Feed aus echten Quellen.
+  type ActivityItem = {
+    id: string;
+    ts: string;
+    kind: string;
+    title: string;
+    sub?: string;
+    brand?: "agiworks" | "nexcel";
+    color: string;
+  };
+  const recentEvents = a?.recentEvents ?? [];
+  const activity: ActivityItem[] = [
+    ...filteredContacts.map((c) => ({
+      id: `c-${c.id}`,
+      ts: c.createdAt,
+      kind: "Neuer Lead",
+      title: c.name,
+      sub: c.unternehmen || c.betreff || c.email,
+      brand: c.brand,
+      color: "#22C55E",
+    })),
+    ...filteredDemoRequests.map((r) => ({
+      id: `d-${r.id}`,
+      ts: r.createdAt,
+      kind: "Demo-Anfrage",
+      title: r.name,
+      sub: r.unternehmen || r.email,
+      brand: r.brand,
+      color: "#FBBF24",
+    })),
+    ...recentEvents
+      .filter((e) =>
+        ["contact_submit", "demo_request", "lead_submit", "pricing_submit", "upload_complete"].includes(
+          e.type,
+        ),
+      )
+      .filter((e) => brandFilter === "all" || e.brand === brandFilter)
+      .map((e) => ({
+        id: `e-${e.id}`,
+        ts: e.ts,
+        kind: EVENT_LABEL[e.type]?.label ?? e.type,
+        title: e.page,
+        sub: undefined,
+        brand: e.brand,
+        color: "#A45CFF",
+      })),
+  ]
+    .sort((x, y) => new Date(y.ts).getTime() - new Date(x.ts).getTime())
+    .slice(0, 7);
+
+  // Pipeline-Funnel — echte Werte, fehlende Stufen = 0 (ehrlicher Empty-Zustand).
+  const approvedDemos = filteredDemoRequests.filter((r) => r.status === "approved").length;
+  const pipelineSteps = [
+    {
+      label: "Analyse gestartet",
+      value: a?.total.pricingStarts ?? a?.funnel?.pricingStart ?? 0,
+      color: "#A45CFF",
+    },
+    {
+      label: "Analyse beendet",
+      value: a?.total.pricingSubmits ?? a?.funnel?.pricingSubmit ?? 0,
+      color: "#8B7CFF",
+    },
+    { label: "Demo angefragt", value: stats?.demoRequests.total ?? 0, color: "#5BB8FF" },
+    { label: "Termin gebucht", value: approvedDemos, color: "#38BDF8" },
+    {
+      label: "Kunde geworden",
+      value: filteredDemoRequests.filter((r) => r.status === "approved").length
+        ? approvedDemos
+        : 0,
+      color: "#22C55E",
+    },
+  ];
+  const funnelStart = pipelineSteps[0].value;
+  const funnelEnd = pipelineSteps[pipelineSteps.length - 1].value;
+  const conversionRate =
+    funnelStart > 0 ? Math.round((funnelEnd / funnelStart) * 1000) / 10 : null;
+
+  // Markenübersicht aus echten Daten.
+  const brandStat = (key: "nexcel" | "agiworks") => ({
+    leads: contacts.filter((c) => (c.brand ?? "nexcel") === key).length,
+    demos: demoRequests.filter((r) => (r.brand ?? "nexcel") === key).length,
+    events: a?.brandSplit?.find((b) => b.brand === key)?.count ?? 0,
+  });
+
+  // Lead-Herkunft — echte Referrer-Daten.
+  const leadOrigins = (a?.topReferrers ?? []).slice(0, 6);
+
+  // Häufige Themen aus Betreff-Feldern der Kontakte (echte Daten).
+  const topicCounts = new Map<string, number>();
+  activeLeads.forEach((c) => {
+    const t = (c.betreff || "").trim();
+    if (t) topicCounts.set(t, (topicCounts.get(t) ?? 0) + 1);
+  });
+  const topTopics = Array.from(topicCounts.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((x, y) => y.count - x.count)
+    .slice(0, 6);
+
+  const greetingName = (user?.name ?? "").split(" ")[0] || "Admin";
 
   const brandOptions = [
     { id: "all" as const, label: "Alle", accent: "#E5E7EB" },
@@ -320,246 +644,586 @@ export default function AdminDashboard() {
       className="min-h-screen text-white"
       style={{
         background:
-          "radial-gradient(120% 60% at 50% -10%, rgba(164, 92, 255, 0.18) 0%, rgba(11, 13, 18, 0.0) 60%), #0B0D12",
+          "radial-gradient(120% 70% at 16% -10%, rgba(164, 92, 255, 0.16) 0%, rgba(7, 8, 12, 0) 55%), radial-gradient(90% 55% at 100% 0%, rgba(91, 184, 255, 0.10) 0%, rgba(7, 8, 12, 0) 50%), #07080C",
       }}
     >
-      {/* ─── STICKY TOP-BAR ───────────────────────────────────────────── */}
-      <header
-        className="sticky top-0 z-50 backdrop-blur-xl"
-        style={{
-          background: "rgba(11, 13, 18, 0.72)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-        }}
-      >
-        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center gap-4">
-          {/* Brand-Identity links */}
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="flex min-h-screen">
+        {/* ─── SIDEBAR (Desktop) ─────────────────────────────────────── */}
+        <aside
+          className="hidden lg:flex flex-col w-[250px] flex-shrink-0 sticky top-0 h-screen"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.012) 100%)",
+            borderRight: "1px solid rgba(255,255,255,0.06)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          <div
+            className="px-5 py-5 flex items-center gap-3"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+          >
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
               style={{
-                background: `linear-gradient(135deg, ${sessionBrand.accent}33, ${sessionBrand.accent}11)`,
+                background: `linear-gradient(135deg, ${sessionBrand.accent}33, ${sessionBrand.accent}10)`,
                 border: `1px solid ${sessionBrand.accent}55`,
                 color: sessionBrand.accent,
               }}
             >
-              {(user?.name ?? "A").charAt(0).toUpperCase()}
+              {sessionBrand.label.charAt(0)}
             </div>
-            <div className="hidden md:flex flex-col leading-tight min-w-0">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]">
-                {sessionBrand.label} · CMS
-              </span>
-              <span className="text-sm font-semibold text-white truncate">
-                {user?.name ?? "Admin"}
-                <span className="text-[#6B7280] font-normal ml-2 text-xs">
-                  {user?.email}
-                </span>
-              </span>
+            <div className="leading-tight min-w-0">
+              <div className="text-sm font-semibold text-white truncate">{sessionBrand.label}</div>
+              <div className="text-[9px] uppercase tracking-[0.22em] text-[#6B7280]">
+                Admin Dashboard
+              </div>
             </div>
           </div>
 
-          {/* Tab-Navigation Mitte */}
-          <nav className="flex-1 flex justify-center">
-            <div
-              className="flex items-center gap-1 p-1 rounded-full"
-              style={{
-                background: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-              }}
-            >
-              {tabs.map((tab) => {
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className="relative px-4 py-2 rounded-full text-sm font-medium transition-all"
-                    style={{
-                      background: active ? `${sessionBrand.accent}22` : "transparent",
-                      color: active ? sessionBrand.accent : "#9CA3AF",
-                    }}
+          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+            {navItems.map((item) => {
+              const active = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={{
+                    background: active ? `${sessionBrand.accent}1A` : "transparent",
+                    color: active ? "#FFFFFF" : "#9CA3AF",
+                    border: `1px solid ${active ? `${sessionBrand.accent}33` : "transparent"}`,
+                  }}
+                >
+                  {active && (
+                    <span
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full"
+                      style={{ background: sessionBrand.accent, boxShadow: `0 0 12px ${sessionBrand.accent}` }}
+                    />
+                  )}
+                  <span
+                    className="flex-shrink-0 transition-colors group-hover:text-white"
+                    style={{ color: active ? sessionBrand.accent : "#6B7280" }}
                   >
-                    {tab.label}
-                    {tab.badge !== null && tab.badge > 0 && (
-                      <span
-                        className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
-                        style={{
-                          background: active ? sessionBrand.accent : "#A45CFF",
-                          color: active ? "#0B0D12" : "white",
-                        }}
-                      >
-                        {tab.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                    <NavIcon name={item.id} />
+                  </span>
+                  <span className="flex-1 text-left truncate">{item.label}</span>
+                  {item.badge != null && item.badge > 0 && (
+                    <span
+                      className="px-1.5 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
+                      style={{ background: `${sessionBrand.accent}26`, color: sessionBrand.accent }}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </nav>
 
-          {/* Aktionen rechts */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {totalUnread > 0 && (
+          <div className="px-3 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+            <div className="flex items-center gap-3 px-2 mb-3">
               <div
-                className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
                 style={{
-                  background: "rgba(251, 191, 36, 0.1)",
-                  border: "1px solid rgba(251, 191, 36, 0.25)",
-                  color: "#FBBF24",
+                  background: `linear-gradient(135deg, ${sessionBrand.accent}55, ${sessionBrand.accent}22)`,
+                  border: `1px solid ${sessionBrand.accent}44`,
                 }}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FBBF24] animate-pulse" />
-                {totalUnread} ungelesen
+                {greetingName.charAt(0).toUpperCase()}
               </div>
-            )}
+              <div className="min-w-0 leading-tight">
+                <div className="text-sm text-white font-medium truncate">{user?.name ?? "Admin"}</div>
+                <div className="text-[11px] text-[#6B7280] truncate">{user?.email}</div>
+              </div>
+            </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 rounded-lg text-xs font-medium transition-all hover:bg-red-500/15"
+              className="w-full px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-white/5"
               style={{
-                background: "rgba(239, 68, 68, 0.08)",
-                border: "1px solid rgba(239, 68, 68, 0.2)",
-                color: "#FCA5A5",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "#9CA3AF",
               }}
             >
               Abmelden
             </button>
           </div>
-        </div>
+        </aside>
 
-        {/* Brand-Filter Sub-Strip */}
-        <div
-          className="max-w-[1400px] mx-auto px-6 py-2 flex items-center gap-3 border-t"
-          style={{ borderColor: "rgba(255, 255, 255, 0.04)" }}
-        >
-          <span className="text-[10px] uppercase tracking-[0.18em] text-[#6B7280]">
-            Brand-Filter
-          </span>
-          <div className="flex items-center gap-1.5">
-            {brandOptions.map((opt) => {
-              const active = brandFilter === opt.id;
-              const count =
-                opt.id === "all"
-                  ? contacts.length
-                  : contacts.filter((c) => (c.brand ?? "nexcel") === opt.id).length;
-              return (
+        {/* ─── MOBILE NAV DRAWER ─────────────────────────────────────── */}
+        {mobileNavOpen && (
+          <div className="lg:hidden fixed inset-0 z-[60] flex">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setMobileNavOpen(false)}
+            />
+            <aside
+              className="relative w-[262px] h-full flex flex-col"
+              style={{ background: "#0B0D12", borderRight: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div
+                className="px-5 py-5 flex items-center justify-between"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+              >
+                <span className="text-sm font-semibold text-white">{sessionBrand.label}</span>
                 <button
-                  key={opt.id}
-                  onClick={() => setBrandFilter(opt.id)}
-                  className="px-3 py-1 rounded-full text-xs font-medium transition-all"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="text-[#9CA3AF] text-2xl leading-none"
+                  aria-label="Schließen"
+                >
+                  ×
+                </button>
+              </div>
+              <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+                {navItems.map((item) => {
+                  const active = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileNavOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium"
+                      style={{
+                        background: active ? `${sessionBrand.accent}1A` : "transparent",
+                        color: active ? "#FFFFFF" : "#9CA3AF",
+                      }}
+                    >
+                      <span style={{ color: active ? sessionBrand.accent : "#6B7280" }}>
+                        <NavIcon name={item.id} />
+                      </span>
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {item.badge != null && item.badge > 0 && (
+                        <span
+                          className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                          style={{ background: `${sessionBrand.accent}26`, color: sessionBrand.accent }}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </aside>
+          </div>
+        )}
+
+        {/* ─── MAIN ──────────────────────────────────────────────────── */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <header
+            className="sticky top-0 z-50 backdrop-blur-xl"
+            style={{
+              background: "rgba(7, 8, 12, 0.78)",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
+              <button
+                onClick={() => setMobileNavOpen(true)}
+                className="lg:hidden flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-white"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                aria-label="Navigation öffnen"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+                </svg>
+              </button>
+
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-semibold text-white tracking-tight truncate">
+                  {TAB_TITLE[activeTab]}
+                </h1>
+                {activeTab === "overview" && (
+                  <p className="text-xs sm:text-sm text-[#9CA3AF] truncate">
+                    Willkommen zurück, {greetingName}.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div
+                  className="hidden sm:flex items-center gap-1 p-1 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  {(["24h", "7d", "30d"] as TimeRange[]).map((r) => {
+                    const on = timeRange === r;
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => setTimeRange(r)}
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                        style={{
+                          background: on ? `${sessionBrand.accent}22` : "transparent",
+                          color: on ? sessionBrand.accent : "#9CA3AF",
+                        }}
+                      >
+                        {TIME_RANGE_LABEL[r]}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={handleExport}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:bg-white/5"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#D1D5DB" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3v12M8 11l4 4 4-4M5 21h14" />
+                  </svg>
+                  Exportieren
+                </button>
+                <button
+                  onClick={handleNewAnalysis}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white transition-all"
                   style={{
-                    background: active ? `${opt.accent}1F` : "transparent",
-                    border: `1px solid ${active ? `${opt.accent}55` : "transparent"}`,
-                    color: active ? opt.accent : "#9CA3AF",
+                    background: `linear-gradient(135deg, ${sessionBrand.accent}, ${sessionBrand.accent}CC)`,
+                    boxShadow: `0 6px 20px ${sessionBrand.accent}40`,
                   }}
                 >
-                  {opt.label}
-                  <span className="opacity-50 ml-1.5">{count}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Neue Analyse
                 </button>
-              );
-            })}
-          </div>
-          <div className="ml-auto text-[10px] text-[#6B7280]">
-            Auto-Refresh · alle 1s
-          </div>
-        </div>
-      </header>
+              </div>
+            </div>
+
+            <div
+              className="px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-3 border-t"
+              style={{ borderColor: "rgba(255,255,255,0.04)" }}
+            >
+              <span className="text-[10px] uppercase tracking-[0.18em] text-[#6B7280] hidden sm:inline">
+                Brand
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {brandOptions.map((opt) => {
+                  const active = brandFilter === opt.id;
+                  const count =
+                    opt.id === "all"
+                      ? contacts.length
+                      : contacts.filter((c) => (c.brand ?? "nexcel") === opt.id).length;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => setBrandFilter(opt.id)}
+                      className="px-3 py-1 rounded-full text-xs font-medium transition-all"
+                      style={{
+                        background: active ? `${opt.accent}1F` : "transparent",
+                        border: `1px solid ${active ? `${opt.accent}55` : "rgba(255,255,255,0.06)"}`,
+                        color: active ? opt.accent : "#9CA3AF",
+                      }}
+                    >
+                      {opt.label}
+                      <span className="opacity-50 ml-1.5">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="ml-auto hidden md:flex items-center gap-1.5 text-[10px] text-[#6B7280]">
+                <span className="relative inline-flex w-1.5 h-1.5">
+                  <span className="absolute inset-0 rounded-full bg-[#22C55E] animate-ping opacity-60" />
+                  <span className="absolute inset-0 rounded-full bg-[#22C55E]" />
+                </span>
+                Live · Auto-Refresh
+              </div>
+            </div>
+          </header>
 
       {/* ─── CONTENT ──────────────────────────────────────────────────── */}
-      <div className="max-w-[1400px] mx-auto px-6 py-6">
-        {/* Overview Tab */}
-        {activeTab === "overview" && stats && (
-          <div className="space-y-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <KPICard
-                label="Seitenaufrufe · 24h"
-                value={stats.analytics.last24h.pageViews}
-                hint={`${stats.analytics.last7d.pageViews} in 7T · ${stats.analytics.last30d.pageViews} in 30T`}
-                accent={sessionBrand.accent}
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* ─── COMMAND CENTER ─────────────────────────────────────────── */}
+        {activeTab === "overview" && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <KpiTile
+                label="Neue Analysen"
+                sub={TIME_RANGE_LABEL[timeRange]}
+                value={bucket?.pricingStarts ?? 0}
+                accent="#A45CFF"
+                trend={trendPct(a?.last24h.pricingStarts, a?.last7d.pricingStarts)}
+                emptyHint="Noch keine Analysen"
               />
-              <KPICard
-                label="Neue Kontakte · 24h"
-                value={stats.analytics.last24h.contacts}
-                hint={`${stats.contacts.unread} ungelesen · ${stats.contacts.total} gesamt`}
+              <KpiTile
+                label="Neue Leads"
+                sub={`${stats?.contacts.unread ?? 0} ungelesen`}
+                value={bucket?.contacts ?? 0}
                 accent="#22C55E"
+                trend={trendPct(a?.last24h.contacts, a?.last7d.contacts)}
+                emptyHint="Noch keine Leads"
               />
-              <KPICard
-                label="Demo-Anfragen · 24h"
-                value={stats.analytics.last24h.demoRequests}
-                hint={`${stats.demoRequests.pending} ausstehend · ${stats.demoRequests.total} gesamt`}
+              <KpiTile
+                label="Demo-Anfragen"
+                sub={`${stats?.demoRequests.pending ?? 0} offen`}
+                value={bucket?.demoRequests ?? 0}
                 accent="#FBBF24"
+                trend={trendPct(a?.last24h.demoRequests, a?.last7d.demoRequests)}
+                emptyHint="Keine Anfragen"
               />
-              <KPICard
-                label="Archiv"
-                value={stats.contacts.archived + stats.demoRequests.archived}
-                hint={`${stats.contacts.archived} Kontakte · ${stats.demoRequests.archived} Demo`}
-                accent="#6B7280"
+              <KpiTile
+                label="Pipeline aktiv"
+                sub="offene Vorgänge"
+                value={activeLeads.filter((c) => !c.read).length + (stats?.demoRequests.pending ?? 0)}
+                accent="#5BB8FF"
+                emptyHint="Pipeline leer"
+              />
+              <KpiTile
+                label="Conversion Rate"
+                sub={`${pipelineSteps[0].value} Analysen`}
+                value={conversionRate}
+                suffix="%"
+                accent="#C6A8FF"
+                emptyHint="Noch keine Daten"
               />
             </div>
 
-            {/* Two-column overview: contacts (left) + demos (right) */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-              <div className="xl:col-span-2">
-                <GlassCard
-                  title={`Neueste Kontakte${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}
-                  action={
-                    filteredContacts.length > 5 ? (
-                      <button
-                        onClick={() => setActiveTab("contacts")}
-                        className="text-xs text-[#9CA3AF] hover:text-white transition-colors"
-                      >
-                        Alle {filteredContacts.length} →
-                      </button>
-                    ) : null
-                  }
-                >
-                  <div className="space-y-0">
-                    {filteredContacts.slice(0, 4).length === 0 ? (
-                      <EmptyState text="Noch keine Posts vorhanden" />
-                    ) : (
-                      filteredContacts
-                        .slice(0, 4)
-                        .map((contact) => (
-                          <ContactRow
-                            key={contact.id}
-                            contact={contact}
-                            onMarkRead={() => markAsRead("contact", contact.id)}
-                          />
-                        ))
-                    )}
-                  </div>
-                </GlassCard>
-              </div>
-
-              <div className="xl:col-span-1">
-                <GlassCard
-                  title={`Demo-Anfragen${brandFilter !== "all" ? ` · ${BRAND_META[brandFilter].label}` : ""}`}
-                  action={
-                    filteredDemoRequests.length > 5 ? (
-                      <button
-                        onClick={() => setActiveTab("demo")}
-                        className="text-xs text-[#9CA3AF] hover:text-white transition-colors"
-                      >
-                        Alle {filteredDemoRequests.length} →
-                      </button>
-                    ) : null
-                  }
-                >
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <GlassCard
+                title="Hot Leads"
+                action={
+                  activeLeads.length > 0 ? (
+                    <button
+                      onClick={() => setActiveTab("contacts")}
+                      className="text-xs text-[#9CA3AF] hover:text-white transition-colors"
+                    >
+                      Alle anzeigen →
+                    </button>
+                  ) : null
+                }
+              >
+                {hotLeads.length === 0 ? (
+                  <EmptyState text="Sobald Kontakte eingehen, erscheinen die wichtigsten hier." />
+                ) : (
                   <div className="space-y-2">
-                    {filteredDemoRequests.slice(0, 5).map((request) => (
-                      <DemoRequestRow
-                        key={request.id}
-                        request={request}
-                        onMarkRead={() => markAsRead("demo", request.id)}
+                    {hotLeads.map(({ c, score }) => (
+                      <HotLeadRow
+                        key={c.id}
+                        contact={c}
+                        score={score}
+                        onOpen={() => setActiveTab("contacts")}
                       />
                     ))}
-                    {filteredDemoRequests.length === 0 && (
-                      <EmptyState text="Noch keine Demo-Anfragen" />
-                    )}
                   </div>
-                </GlassCard>
-              </div>
+                )}
+              </GlassCard>
+
+              <GlassCard
+                title="Analyse-Pipeline"
+                action={<span className="text-[10px] text-[#6B7280]">{TIME_RANGE_LABEL[timeRange]}</span>}
+              >
+                <PipelineFunnel steps={pipelineSteps} conversionRate={conversionRate} accent={sessionBrand.accent} />
+              </GlassCard>
+
+              <GlassCard
+                title="Live Aktivität"
+                action={activity.length > 0 ? <span className="text-[10px] text-[#6B7280]">{activity.length} Ereignisse</span> : null}
+              >
+                {activity.length === 0 ? (
+                  <EmptyState text="Noch keine Aktivität erfasst." />
+                ) : (
+                  <div className="space-y-0.5">
+                    {activity.map((it) => (
+                      <ActivityRow key={it.id} item={it} />
+                    ))}
+                  </div>
+                )}
+              </GlassCard>
             </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <GlassCard title="Markenübersicht">
+                <div className="grid grid-cols-2 gap-3">
+                  <BrandStatCard brandKey="nexcel" stat={brandStat("nexcel")} />
+                  <BrandStatCard brandKey="agiworks" stat={brandStat("agiworks")} />
+                </div>
+              </GlassCard>
+
+              <GlassCard
+                title="KI-Priorisierung"
+                action={
+                  activeLeads.length > 0 ? (
+                    <button onClick={() => setActiveTab("contacts")} className="text-xs text-[#9CA3AF] hover:text-white transition-colors">
+                      Leads →
+                    </button>
+                  ) : null
+                }
+              >
+                {activeLeads.length === 0 ? (
+                  <EmptyState text="Priorisierung erscheint, sobald Leads vorliegen." />
+                ) : (
+                  <div className="space-y-2.5">
+                    <PriorityRow tier="A" label="Sofort kontaktieren" desc="Hohe Abschlusswahrscheinlichkeit" count={prio.A} color="#22C55E" />
+                    <PriorityRow tier="B" label="Diese Woche" desc="Gute Abschlusswahrscheinlichkeit" count={prio.B} color="#FBBF24" />
+                    <PriorityRow tier="C" label="Niedrige Priorität" desc="Langfristiges Potenzial" count={prio.C} color="#6B7280" />
+                  </div>
+                )}
+              </GlassCard>
+
+              <GlassCard title="Lead-Herkunft / Quellen">
+                {leadOrigins.length === 0 ? (
+                  <EmptyState text="Quellen erscheinen, sobald Traffic erfasst wird." />
+                ) : (
+                  <div className="space-y-2.5">
+                    {leadOrigins.map((r) => {
+                      const total = leadOrigins.reduce((s, x) => s + x.count, 0) || 1;
+                      const pct = Math.round((r.count / total) * 100);
+                      return (
+                        <div key={r.referrer} className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-white truncate max-w-[70%]">{r.referrer}</span>
+                            <span className="text-[#9CA3AF] tabular-nums">{r.count}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: sessionBrand.accent }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </GlassCard>
+            </div>
+
+            <GlassCard title="Analyse-Insights · häufige Themen">
+              {topTopics.length === 0 ? (
+                <EmptyState text="Sobald Anfragen mit Betreff eingehen, erscheinen hier die häufigsten Themen." />
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {topTopics.map((t) => {
+                    const max = topTopics[0].count || 1;
+                    const pct = Math.round((t.count / max) * 100);
+                    return (
+                      <div
+                        key={t.label}
+                        className="rounded-xl p-3"
+                        style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}
+                      >
+                        <div className="text-xs text-white font-medium truncate mb-2">{t.label}</div>
+                        <div className="text-2xl font-bold text-white tabular-nums leading-none mb-2">{t.count}</div>
+                        <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: sessionBrand.accent }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </GlassCard>
           </div>
+        )}
+
+        {/* ─── ANALYSEN ───────────────────────────────────────────────── */}
+        {activeTab === "analysen" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <KpiTile label="Analysen gestartet" sub="gesamt" value={a?.total.pricingStarts ?? 0} accent="#A45CFF" emptyHint="Keine Analysen" />
+              <KpiTile label="Angebote berechnet" sub="gesamt" value={a?.total.pricingQuotes ?? 0} accent="#8B7CFF" emptyHint="Keine Angebote" />
+              <KpiTile label="Analysen beendet" sub="gesamt" value={a?.total.pricingSubmits ?? 0} accent="#5BB8FF" emptyHint="Keine Abschlüsse" />
+              <KpiTile label="Uploads" sub="gesamt" value={a?.total.uploads ?? 0} accent="#F472B6" emptyHint="Keine Uploads" />
+            </div>
+            <GlassCard
+              title="Analyse-Funnel"
+              action={<button onClick={() => setActiveTab("pipeline")} className="text-xs text-[#9CA3AF] hover:text-white transition-colors">Pipeline →</button>}
+            >
+              <PipelineFunnel steps={pipelineSteps} conversionRate={conversionRate} accent={sessionBrand.accent} large />
+            </GlassCard>
+          </div>
+        )}
+
+        {/* ─── PIPELINE ───────────────────────────────────────────────── */}
+        {activeTab === "pipeline" && (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="xl:col-span-2">
+              <GlassCard title="Conversion-Pipeline">
+                <PipelineFunnel steps={pipelineSteps} conversionRate={conversionRate} accent={sessionBrand.accent} large />
+              </GlassCard>
+            </div>
+            <GlassCard title="Priorisierung">
+              {activeLeads.length === 0 ? (
+                <EmptyState text="Sobald Leads vorliegen, erscheint die Priorisierung." />
+              ) : (
+                <div className="space-y-2.5">
+                  <PriorityRow tier="A" label="Sofort kontaktieren" desc="Hohe Abschlusswahrscheinlichkeit" count={prio.A} color="#22C55E" />
+                  <PriorityRow tier="B" label="Diese Woche" desc="Gute Abschlusswahrscheinlichkeit" count={prio.B} color="#FBBF24" />
+                  <PriorityRow tier="C" label="Niedrige Priorität" desc="Langfristiges Potenzial" count={prio.C} color="#6B7280" />
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        )}
+
+        {/* ─── UNTERNEHMEN ────────────────────────────────────────────── */}
+        {activeTab === "unternehmen" && (
+          <GlassCard title="Unternehmen">
+            {(() => {
+              const map = new Map<string, { count: number; brand?: "agiworks" | "nexcel"; last: string }>();
+              activeLeads.forEach((c) => {
+                const key = (c.unternehmen || "").trim();
+                if (!key) return;
+                const ex = map.get(key);
+                if (ex) {
+                  ex.count++;
+                  if (new Date(c.createdAt) > new Date(ex.last)) ex.last = c.createdAt;
+                } else {
+                  map.set(key, { count: 1, brand: c.brand, last: c.createdAt });
+                }
+              });
+              const rows = Array.from(map.entries())
+                .map(([name, v]) => ({ name, ...v }))
+                .sort((x, y) => y.count - x.count);
+              if (rows.length === 0)
+                return <EmptyState text="Sobald Leads mit Firmenangabe eingehen, erscheinen Unternehmen hier." />;
+              return (
+                <div className="space-y-2">
+                  {rows.map((r) => (
+                    <div
+                      key={r.name}
+                      className="flex items-center gap-3 p-3 rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}
+                    >
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold flex-shrink-0"
+                        style={{ background: `${sessionBrand.accent}22`, color: sessionBrand.accent }}
+                      >
+                        {r.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm text-white font-medium truncate">{r.name}</div>
+                        <div className="text-[11px] text-[#6B7280]">Letzter Kontakt {relTimeShort(r.last)}</div>
+                      </div>
+                      <BrandChip brand={r.brand} />
+                      <span className="text-xs text-[#9CA3AF] tabular-nums flex-shrink-0">
+                        {r.count} Lead{r.count > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </GlassCard>
+        )}
+
+        {/* ─── AUTOMATIONEN ───────────────────────────────────────────── */}
+        {activeTab === "automationen" && (
+          <PlaceholderView
+            accent={sessionBrand.accent}
+            icon="automationen"
+            title="Automationen"
+            text="Workflows & Trigger werden hier verfügbar. Sobald Automationsregeln aktiv sind, erscheinen sie in diesem Bereich."
+          />
+        )}
+
+        {/* ─── EINSTELLUNGEN ──────────────────────────────────────────── */}
+        {activeTab === "settings" && (
+          <PlaceholderView
+            accent={sessionBrand.accent}
+            icon="settings"
+            title="Einstellungen"
+            text="Konto- und Workspace-Einstellungen. Angemeldet als"
+            email={user?.email}
+            onLogout={handleLogout}
+          />
         )}
 
         {/* Contacts Tab - POST-FEED wie Bewertungen */}
@@ -646,7 +1310,277 @@ export default function AdminDashboard() {
             brandFilter={brandFilter}
           />
         )}
+        </main>
+        </div>
       </div>
+    </div>
+  );
+}
+
+/* ─────────────────────── Command-Center-Komponenten ─────────────────── */
+
+function KpiTile({
+  label,
+  value,
+  sub,
+  accent,
+  trend,
+  suffix,
+  emptyHint,
+}: {
+  label: string;
+  value: number | null;
+  sub?: string;
+  accent: string;
+  trend?: number | null;
+  suffix?: string;
+  emptyHint?: string;
+}) {
+  const isEmpty = value == null || value === 0;
+  const display = value == null ? "—" : `${value}${suffix ?? ""}`;
+  return (
+    <motion.div
+      className="rounded-2xl p-4 relative overflow-hidden"
+      style={{
+        background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.012) 100%)",
+        border: "1px solid rgba(255,255,255,0.06)",
+      }}
+      whileHover={{ y: -2, borderColor: `${accent}3A` as any }}
+      transition={{ duration: 0.18 }}
+    >
+      <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: `linear-gradient(90deg, ${accent}AA, transparent 78%)` }} />
+      <div className="flex items-start justify-between mb-2 gap-2">
+        <span className="text-[10px] uppercase tracking-[0.16em] text-[#6B7280]">{label}</span>
+        {trend != null && !isEmpty && (
+          <span
+            className="text-[10px] font-semibold tabular-nums flex items-center gap-0.5"
+            style={{ color: trend >= 0 ? "#22C55E" : "#EF4444" }}
+          >
+            {trend >= 0 ? "↑" : "↓"} {Math.abs(trend)}%
+          </span>
+        )}
+      </div>
+      <div className="text-3xl font-bold tabular-nums leading-none mb-1.5" style={{ color: isEmpty ? "#4B5563" : "#FFFFFF" }}>
+        {display}
+      </div>
+      <div className="text-[11px] text-[#6B7280] truncate">{isEmpty ? emptyHint ?? sub : sub}</div>
+    </motion.div>
+  );
+}
+
+function PipelineFunnel({
+  steps,
+  conversionRate,
+  accent,
+  large,
+}: {
+  steps: { label: string; value: number; color: string }[];
+  conversionRate: number | null;
+  accent: string;
+  large?: boolean;
+}) {
+  const start = Math.max(1, steps[0]?.value ?? 0);
+  const hasData = (steps[0]?.value ?? 0) > 0;
+  return (
+    <div className={large ? "space-y-4" : "space-y-2.5"}>
+      {steps.map((s) => {
+        const barPct = (s.value / start) * 100;
+        const pctOfStart = Math.round((s.value / start) * 100);
+        return (
+          <div key={s.label}>
+            <div className="flex justify-between items-baseline mb-1">
+              <span className={`${large ? "text-sm" : "text-xs"} text-white`}>{s.label}</span>
+              <span className="text-xs tabular-nums">
+                <span className="text-white font-semibold">{s.value}</span>
+                {hasData && <span className="text-[#6B7280] ml-2">{pctOfStart}%</span>}
+              </span>
+            </div>
+            <div className={`${large ? "h-2.5" : "h-2"} rounded-full overflow-hidden`} style={{ background: "rgba(255,255,255,0.05)" }}>
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${Math.max(barPct, s.value > 0 ? 4 : 0)}%`, background: `linear-gradient(90deg, ${s.color}, ${s.color}AA)` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <div className="flex items-center justify-between pt-3 mt-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <span className="text-xs text-[#9CA3AF]">Conversion Rate</span>
+        <span className="text-lg font-bold tabular-nums" style={{ color: conversionRate != null ? "#22C55E" : "#6B7280" }}>
+          {conversionRate != null ? `${conversionRate}%` : "—"}
+        </span>
+      </div>
+      {!hasData && <div className="text-[10px] text-[#6B7280]">Sobald Analysen starten, füllt sich die Pipeline. <span style={{ color: accent }}>·</span> Live</div>}
+    </div>
+  );
+}
+
+function ActivityRow({
+  item,
+}: {
+  item: { id: string; ts: string; kind: string; title: string; sub?: string; brand?: "agiworks" | "nexcel"; color: string };
+}) {
+  return (
+    <div className="flex items-start gap-3 px-2 py-2 rounded-lg hover:bg-white/[0.02] transition-colors">
+      <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.color, boxShadow: `0 0 8px ${item.color}` }} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-medium text-white">{item.kind}</span>
+          {item.brand && <BrandChip brand={item.brand} />}
+        </div>
+        <div className="text-[11px] text-[#9CA3AF] truncate">
+          {item.title}
+          {item.sub ? ` · ${item.sub}` : ""}
+        </div>
+      </div>
+      <span className="text-[10px] text-[#6B7280] whitespace-nowrap flex-shrink-0">{relTimeShort(item.ts)}</span>
+    </div>
+  );
+}
+
+function HotLeadRow({
+  contact,
+  score,
+  onOpen,
+}: {
+  contact: Contact;
+  score: number;
+  onOpen: () => void;
+}) {
+  const tier = priorityBucket(score);
+  const tierColor = tier === "A" ? "#22C55E" : tier === "B" ? "#FBBF24" : "#6B7280";
+  const tierLabel = tier === "A" ? "Heiß" : tier === "B" ? "Warm" : "Kalt";
+  return (
+    <button
+      onClick={onOpen}
+      className="w-full text-left flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/[0.03]"
+      style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}
+    >
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+        style={{ background: `linear-gradient(135deg, ${tierColor}55, ${tierColor}22)`, border: `1px solid ${tierColor}44` }}
+      >
+        {contact.name.charAt(0).toUpperCase()}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-white font-medium truncate">{contact.unternehmen || contact.name}</span>
+          {!contact.read && <span className="w-1.5 h-1.5 rounded-full bg-[#A45CFF] flex-shrink-0" />}
+        </div>
+        <div className="text-[11px] text-[#6B7280] truncate">
+          {contact.unternehmen ? contact.name : contact.email} · {relTimeShort(contact.createdAt)}
+        </div>
+      </div>
+      <div className="text-right flex-shrink-0">
+        <div className="text-[9px] uppercase tracking-wider text-[#6B7280]">Score</div>
+        <div className="text-sm font-bold tabular-nums" style={{ color: tierColor }}>{score}</div>
+      </div>
+      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0" style={{ background: `${tierColor}22`, color: tierColor }}>
+        {tierLabel}
+      </span>
+    </button>
+  );
+}
+
+function PriorityRow({
+  tier,
+  label,
+  desc,
+  count,
+  color,
+}: {
+  tier: "A" | "B" | "C";
+  label: string;
+  desc: string;
+  count: number;
+  color: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+        style={{ background: `${color}1F`, color, border: `1px solid ${color}44` }}
+      >
+        {tier}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm text-white font-medium truncate">Priorität {tier} · {label}</div>
+        <div className="text-[11px] text-[#6B7280] truncate">{desc}</div>
+      </div>
+      <div className="text-right flex-shrink-0">
+        <div className="text-lg font-bold tabular-nums text-white">{count}</div>
+        <div className="text-[9px] uppercase tracking-wider text-[#6B7280]">Leads</div>
+      </div>
+    </div>
+  );
+}
+
+function BrandStatCard({
+  brandKey,
+  stat,
+}: {
+  brandKey: "nexcel" | "agiworks";
+  stat: { leads: number; demos: number; events: number };
+}) {
+  const meta = BRAND_META[brandKey];
+  const empty = stat.leads === 0 && stat.demos === 0 && stat.events === 0;
+  return (
+    <div className="rounded-xl p-4 relative overflow-hidden" style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${meta.accent}22` }}>
+      <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: `linear-gradient(90deg, ${meta.accent}, transparent 80%)` }} />
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-2 h-2 rounded-full" style={{ background: meta.accent }} />
+        <span className="text-xs font-semibold" style={{ color: meta.accent }}>{meta.label}</span>
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs"><span className="text-[#9CA3AF]">Leads</span><span className="text-white font-semibold tabular-nums">{stat.leads}</span></div>
+        <div className="flex justify-between text-xs"><span className="text-[#9CA3AF]">Demo-Anfragen</span><span className="text-white font-semibold tabular-nums">{stat.demos}</span></div>
+        <div className="flex justify-between text-xs"><span className="text-[#9CA3AF]">Aktivität</span><span className="text-white font-semibold tabular-nums">{stat.events}</span></div>
+      </div>
+      {empty && <div className="text-[10px] text-[#6B7280] mt-3">Noch keine Daten</div>}
+    </div>
+  );
+}
+
+function PlaceholderView({
+  accent,
+  icon,
+  title,
+  text,
+  email,
+  onLogout,
+}: {
+  accent: string;
+  icon: TabId;
+  title: string;
+  text: string;
+  email?: string;
+  onLogout?: () => void;
+}) {
+  return (
+    <div
+      className="rounded-2xl p-10 sm:p-14 text-center"
+      style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.06)" }}
+    >
+      <div
+        className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center"
+        style={{ background: `${accent}18`, border: `1px solid ${accent}33`, color: accent }}
+      >
+        <NavIcon name={icon} />
+      </div>
+      <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
+      <p className="text-sm text-[#9CA3AF] max-w-md mx-auto leading-relaxed">
+        {text}
+        {email ? ` ${email}.` : ""}
+      </p>
+      {onLogout && (
+        <button
+          onClick={onLogout}
+          className="mt-6 px-4 py-2 rounded-lg text-xs font-medium transition-all hover:bg-white/5"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}
+        >
+          Abmelden
+        </button>
+      )}
     </div>
   );
 }

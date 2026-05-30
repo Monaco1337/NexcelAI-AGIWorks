@@ -59,23 +59,46 @@ export default function Footer() {
       {!isContactPage && !isProjektePage && !isImpressumPage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
         <motion.section
           aria-labelledby="footer-cta-title"
-          className="relative overflow-hidden px-5 py-[clamp(5rem,11vw,7.5rem)] sm:px-8"
+          className="relative overflow-hidden px-5 py-[clamp(6rem,13vw,9.5rem)] sm:px-8"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: "-12%" }}
           transition={{ duration: 0.9 }}
         >
-          {/* Einzige Begrenzung: feine Hairline oben */}
+          {/* Atmosphäre — feine Hairline oben */}
           <div
             className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-[48rem] bg-gradient-to-r from-transparent via-white/[0.08] to-transparent"
             aria-hidden
           />
+          {/* Radialer Brand-Glow */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[150%] w-[120%] -translate-x-1/2 -translate-y-1/2"
+            style={{
+              background:
+                "radial-gradient(45% 55% at 50% 42%, var(--brand-glow-mid) 0%, var(--brand-plateau-1) 30%, transparent 68%)",
+              filter: "blur(8px)",
+            }}
+          />
+          {/* Dezentes Raster */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+              backgroundSize: "56px 56px",
+              maskImage:
+                "radial-gradient(ellipse 60% 60% at 50% 45%, #000 20%, transparent 75%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 60% 60% at 50% 45%, #000 20%, transparent 75%)",
+            }}
+          />
 
-          <div className="relative z-10 mx-auto flex max-w-[640px] flex-col items-center text-center">
-            {/* Headline — reine Typografie, kein Eyebrow, kein Dekor darüber */}
+          <div className="relative z-10 mx-auto flex max-w-[680px] flex-col items-center text-center">
             <motion.h3
               id="footer-cta-title"
-              className="text-balance text-[clamp(1.75rem,4.8vw,2.75rem)] leading-[1.08] tracking-[-0.035em] text-white"
+              className="text-balance text-[clamp(2rem,5.4vw,3.25rem)] leading-[1.06] tracking-[-0.04em] text-white"
               style={{
                 fontFamily: "var(--font-headline), system-ui, sans-serif",
                 fontWeight: 300,
@@ -83,7 +106,7 @@ export default function Footer() {
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.85, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
             >
               <span
                 style={{
@@ -92,6 +115,7 @@ export default function Footer() {
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                   fontWeight: 400,
+                  filter: "drop-shadow(0 0 32px var(--brand-glow-strong))",
                 }}
               >
                 {footer.ctaTitle}
@@ -99,7 +123,7 @@ export default function Footer() {
             </motion.h3>
 
             <motion.p
-              className="mt-5 max-w-[38ch] text-pretty text-[14.5px] leading-[1.65] text-white/50 sm:text-[15px]"
+              className="mt-5 max-w-[42ch] text-pretty text-[15px] leading-[1.65] text-white/55 sm:text-[16px]"
               style={{
                 fontFamily: "var(--font-headline), system-ui, sans-serif",
                 fontWeight: 300,
@@ -107,38 +131,39 @@ export default function Footer() {
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.85, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.85, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
             >
               {footer.ctaSubline}
             </motion.p>
 
             <motion.div
-              className="mt-10 flex w-full flex-col items-center justify-center gap-5 sm:mt-11 sm:flex-row sm:gap-8"
+              className="mt-11 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5"
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.85, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.85, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* Primary — Ghost-Pill, premium, ohne Fill */}
+              {/* Primary — gefüllter Gradient-Button, clean & edel */}
               <Link
                 href={footer.ctaButtonHref}
                 prefetch={true}
-                className="group/cta-primary relative inline-flex items-center gap-3 rounded-full px-7 py-3.5 text-[12px] uppercase transition-all duration-500 hover:gap-4 sm:text-[12.5px]"
+                className="group/cta-primary relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-full px-9 py-[15px] text-[12.5px] font-medium uppercase text-white transition-all duration-300 hover:-translate-y-0.5 sm:w-auto sm:text-[13px]"
                 style={{
-                  color: "rgba(255,255,255,0.92)",
-                  background: "transparent",
-                  border: "1px solid var(--brand-card-border)",
+                  background: "var(--brand-gradient)",
                   fontFamily: "var(--font-headline), system-ui, sans-serif",
-                  letterSpacing: "0.22em",
-                  fontWeight: 500,
+                  letterSpacing: "0.16em",
+                  border: "1px solid color-mix(in srgb, #ffffff 16%, transparent)",
+                  boxShadow:
+                    "0 10px 30px var(--brand-glow-mid), inset 0 1px 0 rgba(255,255,255,0.18)",
                 }}
               >
+                {/* Feiner Top-Glanz statt grellem Sheen */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-500 group-hover/cta-primary:opacity-100"
+                  className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full"
                   style={{
-                    border: "1px solid var(--brand-line-mid)",
-                    boxShadow: "0 0 28px var(--brand-glow-mid)",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 100%)",
                   }}
                 />
                 <span className="relative">{footer.ctaButtonText}</span>
@@ -147,13 +172,13 @@ export default function Footer() {
                   height="13"
                   viewBox="0 0 24 24"
                   aria-hidden
-                  className="relative transition-transform duration-500 group-hover/cta-primary:translate-x-0.5"
+                  className="relative transition-transform duration-500 group-hover/cta-primary:translate-x-1"
                 >
                   <path
                     d="M5 12h14M13 6l6 6-6 6"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="1.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -164,19 +189,27 @@ export default function Footer() {
                 <Link
                   href={resolveBrandNavHref("/preiskalkulator", brand.id)}
                   prefetch={true}
-                  className="group/secondary inline-flex items-center gap-2.5 text-[12px] uppercase transition-all duration-500 hover:gap-3 sm:text-[12.5px]"
+                  className="group/secondary relative inline-flex w-full items-center justify-center gap-2.5 rounded-full px-8 py-4 text-[12.5px] uppercase transition-all duration-500 hover:gap-3.5 sm:w-auto sm:text-[13px]"
                   style={{
-                    color: "rgba(255,255,255,0.55)",
+                    color: "rgba(255,255,255,0.9)",
+                    background: "transparent",
+                    border: "1px solid var(--brand-card-border)",
                     fontFamily: "var(--font-headline), system-ui, sans-serif",
                     letterSpacing: "0.18em",
                     fontWeight: 500,
                   }}
                 >
-                  <span className="relative transition-colors duration-500 group-hover/secondary:text-white/85">
-                    Preis berechnen
-                  </span>
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-500 group-hover/secondary:opacity-100"
+                    style={{
+                      border: "1px solid var(--brand-line-mid)",
+                      boxShadow: "0 0 28px var(--brand-glow-mid)",
+                    }}
+                  />
+                  <span className="relative">Preis berechnen</span>
                   <svg
-                    className="h-3 w-3 shrink-0 transition-transform duration-500 group-hover/secondary:translate-x-0.5"
+                    className="relative h-3 w-3 shrink-0 transition-transform duration-500 group-hover/secondary:translate-x-0.5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -188,6 +221,46 @@ export default function Footer() {
                 </Link>
               )}
             </motion.div>
+
+            {/* Trust-Zeile — Conversion-Reassurance */}
+            <motion.ul
+              className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3"
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.85, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {[
+                "Unverbindlich & kostenlos",
+                "Antwort innerhalb von 24 Stunden",
+                "Direkt mit den Gründern",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-2 text-[12px] text-white/45 sm:text-[12.5px]"
+                  style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                    className="shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="9" stroke="var(--accent)" strokeWidth="1.4" opacity="0.85" />
+                    <path
+                      d="m8.5 12 2.5 2.5 4.5-5"
+                      stroke="var(--accent)"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {item}
+                </li>
+              ))}
+            </motion.ul>
           </div>
         </motion.section>
       )}

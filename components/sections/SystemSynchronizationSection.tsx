@@ -1,232 +1,150 @@
 "use client";
 
-import {
-  motion,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
-import { useId, useRef } from "react";
+import { motion } from "framer-motion";
+import { useId } from "react";
 
 /* ════════════════════════════════════════════════════════════════════
- *  System Synchronization — Section 3
+ *  System Synchronization — „Alles kommt zusammen"
  *  ════════════════════════════════════════════════════════════════
- *  High-End, leicht verständliche Visualisierung der Operating-Story:
+ *  High-End, premium, ruhig: eingehende Kanäle (echte App-Icons)
+ *  → ein zentrales System → strukturierte Module (Symbol-Karten)
+ *  → strategische Kooperation NEXCEL AI × AGI Works.
  *
- *    ┌────────────────────────────────────────────────────────┐
- *    │  VORHER · 6 isolierte Tools                            │
- *    │  [WhatsApp] [E-Mail] [Excel] [Termine] [Drive] [Trello]│
- *    │       │       │       │        │       │       │      │
- *    │       └───────┴───────┐│┌──────┴───────┴───────┘      │
- *    │                       ▼▼▼                              │
- *    │                ╔═══════════╗                           │
- *    │                ║ OPERATING ║   ● SYSTEM ACTIVE         │
- *    │                ║   CORE    ║                           │
- *    │                ╚═══════════╝                           │
- *    │                  │ │ │ │ │ │                           │
- *    │       ┌──────────┘ │ │ │ │ └──────────┐                │
- *    │       ▼            ▼ ▼ ▼ ▼            ▼                │
- *    │  [Kunden] [Nachrichten] … [Überblick]                  │
- *    │  NACHHER · 1 zentrales System                          │
- *    └────────────────────────────────────────────────────────┘
- *
- *  • Brand-aware: NEXCEL = Violett, AGI Works = Cyan
- *  • Scroll-tied Choreografie via useScroll + useTransform
- *  • Sticky Stage über die gesamte Section
- *  • Keine Stockfotos, keine organischen Formen — präzise
- *    Hardware-Sprache (Hexagon, Konzentrik, Rings)
- *  ════════════════════════════════════════════════════════════ */
-
-/* ════════════════════════════════════════════════════════════════════
- *  DATA
+ *  • Brand-aware Theme über CSS-Variablen (NEXCEL Violett / AGI Cyan)
+ *  • Kanal- & Marken-Logos behalten ihre eigene Identität
+ *  • Scroll-Reveal via whileInView, keine technische Optik
  *  ════════════════════════════════════════════════════════════════ */
 
-interface ToolDef {
-  key: ToolKey;
-  label: string;
-  sub: string;
-}
-type ToolKey =
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+/* ─────────────────────────── DATA ─────────────────────────── */
+
+type ChannelKey =
   | "whatsapp"
   | "email"
-  | "excel"
+  | "phone"
   | "calendar"
-  | "drive"
-  | "trello";
-
-const TOOLS: ToolDef[] = [
-  { key: "whatsapp", label: "WhatsApp", sub: "Chat" },
-  { key: "email",    label: "E-Mail",   sub: "Outlook · Gmail" },
-  { key: "excel",    label: "Excel",    sub: "Tabellen" },
-  { key: "calendar", label: "Termine",  sub: "Calendar" },
-  { key: "drive",    label: "Drive",    sub: "Dokumente" },
-  { key: "trello",   label: "Trello",   sub: "Boards" },
-];
-
-interface ModuleDef {
-  key: ModuleKey;
-  label: string;
-  sub: string;
-}
-type ModuleKey =
-  | "crm"
-  | "messages"
   | "documents"
-  | "processes"
-  | "tasks"
-  | "analytics";
+  | "forms";
 
-const MODULES: ModuleDef[] = [
-  { key: "crm",        label: "Kunden",      sub: "1 Profil pro Person" },
-  { key: "messages",   label: "Nachrichten", sub: "1 Posteingang" },
-  { key: "documents",  label: "Unterlagen",  sub: "Schnell griffbereit" },
-  { key: "processes",  label: "Abläufe",     sub: "Läuft von alleine" },
-  { key: "tasks",      label: "Aufgaben",    sub: "Nichts geht verloren" },
-  { key: "analytics",  label: "Überblick",   sub: "Immer wissen, was läuft" },
+const CHANNELS: { key: ChannelKey; label: string; color: string }[] = [
+  { key: "whatsapp", label: "WhatsApp", color: "#25D366" },
+  { key: "email", label: "E-Mail", color: "#5B8DEF" },
+  { key: "phone", label: "Telefon", color: "#2DD4BF" },
+  { key: "calendar", label: "Kalender", color: "#FB7185" },
+  { key: "documents", label: "Dokumente", color: "#60A5FA" },
+  { key: "forms", label: "Formulare", color: "#A78BFA" },
 ];
 
-/* ════════════════════════════════════════════════════════════════════
- *  MAIN COMPONENT
- *  ════════════════════════════════════════════════════════════════ */
+type FeatureKey =
+  | "customers"
+  | "comms"
+  | "documents"
+  | "automation"
+  | "tasks"
+  | "control";
+
+const FEATURES: { key: FeatureKey; title: string; desc: string }[] = [
+  { key: "customers", title: "Kunden", desc: "Alle Kontakte und Informationen zentral an einem Ort." },
+  { key: "comms", title: "Kommunikation", desc: "E-Mails, WhatsApp und Anfragen strukturiert und nachvollziehbar." },
+  { key: "documents", title: "Dokumente", desc: "Verträge, Angebote und Dateien jederzeit verfügbar." },
+  { key: "automation", title: "Automatisierung", desc: "Wiederkehrende Aufgaben werden automatisch erledigt." },
+  { key: "tasks", title: "Aufgaben", desc: "Nichts geht verloren. Alles hat einen klaren Status." },
+  { key: "control", title: "Kontrolle", desc: "Jederzeit wissen, was im Unternehmen passiert." },
+];
+
+/* ─────────────────────── MAIN COMPONENT ────────────────────── */
 
 export default function SystemSynchronizationSection() {
-  const sectionRef = useRef<HTMLElement | null>(null);
   const headlineId = useId();
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  // ────────────────────────────────────────────────────────────────
-  //  CHOREOGRAFIE
-  //  Reihenfolge: Header → Tools → Flow-In → Core → Flow-Out → Module
-  //  → PoweredBy. Alles scroll-tied innerhalb der Sticky-Stage.
-  // ────────────────────────────────────────────────────────────────
-  const headerOpacity     = useTransform(scrollYProgress, [0.00, 0.10, 0.62], [0.4, 1, 1]);
-  const toolsOpacity      = useTransform(scrollYProgress, [0.04, 0.14],       [0, 1]);
-  const toolsY            = useTransform(scrollYProgress, [0.04, 0.14],       [12, 0]);
-  const flowInOpacity     = useTransform(scrollYProgress, [0.10, 0.22],       [0, 1]);
-  const flowInLength      = useTransform(scrollYProgress, [0.10, 0.24],       [0, 1]);
-  const coreOpacity       = useTransform(scrollYProgress, [0.16, 0.26],       [0, 1]);
-  const coreScale         = useTransform(scrollYProgress, [0.16, 0.32],       [0.75, 1]);
-  const coreActiveOpacity = useTransform(scrollYProgress, [0.20, 0.30],       [0, 1]);
-  const flowOutOpacity    = useTransform(scrollYProgress, [0.22, 0.34],       [0, 1]);
-  const flowOutLength     = useTransform(scrollYProgress, [0.22, 0.36],       [0, 1]);
-  const modulesOpacity    = useTransform(scrollYProgress, [0.26, 0.38],       [0, 1]);
-  const modulesY          = useTransform(scrollYProgress, [0.26, 0.40],       [14, 0]);
-  const poweredOpacity    = useTransform(scrollYProgress, [0.34, 0.46],       [0, 1]);
-  const poweredY          = useTransform(scrollYProgress, [0.34, 0.46],       [10, 0]);
-
-  // Atmosphere — Lokaler Glow um den Core (kein full-section purple)
-  const atmosphereOpacity = useTransform(
-    scrollYProgress,
-    [0.0, 0.30, 0.50, 0.75, 1.0],
-    [0, 0, 0.35, 0.40, 0.20]
-  );
 
   return (
     <section
-      ref={sectionRef}
       aria-labelledby={headlineId}
       className="relative isolate overflow-hidden"
       style={{
         background:
-          "linear-gradient(180deg, var(--brand-bg-bottom) 0%, color-mix(in srgb, var(--brand-bg-bottom) 55%, var(--brand-bg-mid)) 22%, var(--brand-bg-mid) 60%, var(--brand-bg-mid) 100%)",
-        minHeight: "150vh",
+          "linear-gradient(180deg, var(--brand-bg-bottom) 0%, color-mix(in srgb, var(--brand-bg-bottom) 55%, var(--brand-bg-mid)) 18%, var(--brand-bg-mid) 55%, var(--brand-bg-mid) 100%)",
       }}
     >
-      <SectionAtmosphere opacity={atmosphereOpacity} />
+      <Atmosphere />
 
-      <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-between px-5 py-[clamp(20px,3.2vh,48px)] sm:px-8 sm:py-[clamp(28px,4vh,56px)]">
-        <Header id={headlineId} opacity={headerOpacity} />
-
-        <Stage
-          toolsOpacity={toolsOpacity}
-          toolsY={toolsY}
-          flowInOpacity={flowInOpacity}
-          flowInLength={flowInLength}
-          coreOpacity={coreOpacity}
-          coreScale={coreScale}
-          coreActiveOpacity={coreActiveOpacity}
-          flowOutOpacity={flowOutOpacity}
-          flowOutLength={flowOutLength}
-          modulesOpacity={modulesOpacity}
-          modulesY={modulesY}
-        />
-
-        <PoweredBy opacity={poweredOpacity} y={poweredY} />
+      <div className="relative z-10 mx-auto w-full max-w-[1180px] px-5 py-[clamp(72px,12vh,150px)] sm:px-8">
+        <Header id={headlineId} />
+        <Channels />
+        <Converging />
+        <CentralSystem />
+        <FeatureGrid />
+        <Cooperation />
       </div>
     </section>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════
- *  ATMOSPHERE — sehr dezenter Glow um den Core herum
- *  ════════════════════════════════════════════════════════════════ */
-function SectionAtmosphere({ opacity }: { opacity: MotionValue<number> }) {
+/* ─────────────────────────── ATMOSPHERE ─────────────────────── */
+function Atmosphere() {
   return (
     <>
-      <motion.div
-        aria-hidden
-        style={{ opacity }}
-        className="pointer-events-none absolute inset-0"
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 36% 22% at 50% 50%, var(--brand-glow-strong) 0%, transparent 65%),
-              radial-gradient(ellipse 18% 12% at 24% 42%, var(--brand-glow-soft) 0%, transparent 70%),
-              radial-gradient(ellipse 18% 12% at 76% 58%, var(--brand-glow-soft) 0%, transparent 70%)
-            `,
-          }}
-        />
-      </motion.div>
-
-      {/* Faintes Grid */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.14]"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `
+            radial-gradient(ellipse 50% 30% at 50% 38%, var(--brand-glow-mid) 0%, transparent 70%),
+            radial-gradient(ellipse 40% 24% at 50% 62%, var(--brand-glow-soft) 0%, transparent 72%)
+          `,
+          opacity: 0.5,
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.12]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)
+            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
           `,
-          backgroundSize: "160px 160px",
-          maskImage:
-            "radial-gradient(ellipse 55% 45% at 50% 50%, #000 5%, transparent 80%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse 55% 45% at 50% 50%, #000 5%, transparent 80%)",
+          backgroundSize: "150px 150px",
+          maskImage: "radial-gradient(ellipse 60% 50% at 50% 40%, #000 5%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 40%, #000 5%, transparent 80%)",
         }}
       />
     </>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════
- *  HEADER
- *  ════════════════════════════════════════════════════════════════ */
-function Header({ id, opacity }: { id: string; opacity: MotionValue<number> }) {
+/* ─────────────────────────── HEADER ─────────────────────────── */
+function Header({ id }: { id: string }) {
   return (
-    <motion.div
-      style={{ opacity }}
-      className="relative z-10 mx-auto w-full max-w-[720px] text-center"
-    >
+    <div className="mx-auto max-w-[760px] text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-15% 0px" }}
+        transition={{ duration: 0.7, ease: EASE }}
+        className="flex items-center justify-center gap-3 text-white/45"
+      >
+        <span aria-hidden className="h-px w-[26px] sm:w-[40px]" style={{ background: "linear-gradient(90deg, transparent, var(--brand-line-mid))" }} />
+        <span
+          className="text-[10px] font-medium uppercase tracking-[0.34em] sm:text-[11px]"
+          style={{ color: "var(--brand-line-bright)", fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+        >
+          Alles kommt zusammen
+        </span>
+        <span aria-hidden className="h-px w-[26px] sm:w-[40px]" style={{ background: "linear-gradient(90deg, var(--brand-line-mid), transparent)" }} />
+      </motion.div>
+
       <motion.h2
         id={id}
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
-        transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
-        className="text-[1.85rem] leading-[1.06] text-white sm:text-[2.4rem] md:text-[2.9rem]"
-        style={{
-          fontFamily: "var(--font-headline), system-ui, sans-serif",
-          fontWeight: 300,
-          letterSpacing: "-0.035em",
-        }}
+        viewport={{ once: true, margin: "-15% 0px" }}
+        transition={{ duration: 0.9, ease: EASE, delay: 0.05 }}
+        className="mt-5 text-[2rem] leading-[1.07] text-white sm:text-[2.7rem] md:text-[3.2rem]"
+        style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300, letterSpacing: "-0.035em" }}
       >
-        Alles arbeitet endlich{" "}
+        Ein System. Alle Informationen.
+        <br />
         <span
           style={{
             background: "var(--brand-headline-gradient)",
@@ -235,851 +153,789 @@ function Header({ id, opacity }: { id: string; opacity: MotionValue<number> }) {
             color: "transparent",
             WebkitTextFillColor: "transparent",
             fontWeight: 400,
-            filter: "drop-shadow(0 0 22px var(--brand-glow-strong))",
+            filter: "drop-shadow(0 0 26px var(--brand-glow-strong))",
           }}
         >
-          zusammen.
+          Volle Kontrolle.
         </span>
       </motion.h2>
 
       <motion.p
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
-        transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
-        className="mx-auto mt-4 max-w-[520px] text-[13.5px] leading-[1.6] text-white/55 sm:mt-5 sm:text-[14.5px]"
+        viewport={{ once: true, margin: "-15% 0px" }}
+        transition={{ duration: 0.85, ease: EASE, delay: 0.15 }}
+        className="mx-auto mt-5 max-w-[540px] text-[14px] leading-[1.65] text-white/55 sm:text-[15px]"
       >
-        Aus 6 getrennten Tools wird 1 zentrales System.
-        <br className="hidden sm:block" />
-        <span className="sm:hidden"> </span>
-        Kommunikation, Daten und Prozesse — vereint.
+        Anfragen, Nachrichten und Daten kommen aus vielen Kanälen. Unser System bringt
+        alles zusammen — automatisch, sicher und übersichtlich.
       </motion.p>
-    </motion.div>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════════
- *  STAGE — die eigentliche 3-Zonen-Visualisierung
- *  ════════════════════════════════════════════════════════════════ */
-interface StageProps {
-  toolsOpacity: MotionValue<number>;
-  toolsY: MotionValue<number>;
-  flowInOpacity: MotionValue<number>;
-  flowInLength: MotionValue<number>;
-  coreOpacity: MotionValue<number>;
-  coreScale: MotionValue<number>;
-  coreActiveOpacity: MotionValue<number>;
-  flowOutOpacity: MotionValue<number>;
-  flowOutLength: MotionValue<number>;
-  modulesOpacity: MotionValue<number>;
-  modulesY: MotionValue<number>;
-}
-
-function Stage(p: StageProps) {
-  return (
-    <div className="relative z-10 mx-auto flex w-full max-w-[1100px] flex-col items-center gap-[clamp(16px,2.4vh,30px)]">
-      {/* ── ZONE 1 — Eingehende Quellen (Typografie-Pills) ───────────── */}
-      <ToolsRow opacity={p.toolsOpacity} y={p.toolsY} />
-
-      {/* ── ZONE 2 — Flow in + CORE + Flow out ──────────────────────── */}
-      <div className="relative mx-auto flex w-full max-w-[860px] flex-col items-center">
-        <FlowLines
-          opacity={p.flowInOpacity}
-          length={p.flowInLength}
-          direction="down"
-          count={TOOLS.length}
-        />
-        <OperatingCore
-          opacity={p.coreOpacity}
-          scale={p.coreScale}
-          activeOpacity={p.coreActiveOpacity}
-        />
-        <FlowLines
-          opacity={p.flowOutOpacity}
-          length={p.flowOutLength}
-          direction="down"
-          count={MODULES.length}
-        />
-      </div>
-
-      {/* ── ZONE 3 — Strukturierte Module (nummerierte Tiles) ───────── */}
-      <ModulesRow opacity={p.modulesOpacity} y={p.modulesY} />
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════
- *  TOOLS ROW — 6 Quell-Pills, reine Typografie
- *  ════════════════════════════════════════════════════════════════ */
-function ToolsRow({
-  opacity,
-  y,
-}: {
-  opacity: MotionValue<number>;
-  y: MotionValue<number>;
-}) {
+/* ─────────────────────────── CHANNELS ───────────────────────── */
+function Channels() {
   return (
     <motion.div
-      style={{ opacity, y }}
-      className="relative flex w-full flex-col items-center gap-2.5"
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-12% 0px" }}
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+      className="mx-auto mt-[clamp(40px,7vh,72px)] flex flex-wrap items-start justify-center gap-3 sm:gap-4 md:gap-5"
     >
-      {/* Architectural Header — minimaler System-Tick + Caption */}
-      <div className="flex items-center gap-3 text-white/35">
-        <span
-          aria-hidden
-          className="h-px w-[28px] sm:w-[48px]"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.22) 100%)",
-          }}
-        />
-        <span
-          className="text-[9.5px] font-medium uppercase tracking-[0.36em] sm:text-[10px]"
-          style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-        >
-          Eingehende Quellen
-        </span>
-        <span
-          aria-hidden
-          className="h-px w-[28px] sm:w-[48px]"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(255,255,255,0.22) 0%, transparent 100%)",
-          }}
-        />
-      </div>
-
-      {/* Pill-Reihe — reine Typografie, Status-Dot, Hairline-Glas */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5">
-        {TOOLS.map((tool, i) => (
-          <ToolPill key={tool.key} tool={tool} index={i} />
-        ))}
-      </div>
+      {CHANNELS.map((c) => (
+        <ChannelTile key={c.key} channel={c} />
+      ))}
+      <MoreTile />
     </motion.div>
   );
 }
 
-function ToolPill({ tool, index }: { tool: ToolDef; index: number }) {
+function ChannelTile({ channel }: { channel: { key: ChannelKey; label: string; color: string } }) {
   return (
     <motion.div
-      className="relative"
-      animate={{ opacity: [0.65, 0.92, 0.65] }}
-      transition={{
-        duration: 3.4 + (index % 3) * 0.6,
-        delay: index * 0.18,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
+      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
+      transition={{ duration: 0.6, ease: EASE }}
+      className="group flex w-[64px] flex-col items-center gap-2 sm:w-[76px]"
     >
-      <div
-        className="flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:gap-2 sm:px-3.5 sm:py-1.5"
+      <motion.div
+        whileHover={{ y: -4 }}
+        transition={{ duration: 0.25, ease: EASE }}
+        className="relative flex h-[52px] w-[52px] items-center justify-center rounded-[16px] sm:h-[60px] sm:w-[60px]"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
-          border: "1px solid rgba(255,255,255,0.10)",
+          background: `linear-gradient(160deg, ${channel.color}26 0%, rgba(255,255,255,0.02) 100%)`,
+          border: `1px solid ${channel.color}40`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.10), 0 10px 26px rgba(0,0,0,0.45), 0 0 22px ${channel.color}1F`,
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
-          boxShadow:
-            "inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 12px rgba(0,0,0,0.18)",
         }}
       >
         <span
           aria-hidden
-          className="inline-block h-[4px] w-[4px] rounded-full sm:h-[5px] sm:w-[5px]"
-          style={{
-            background: "rgba(255,255,255,0.50)",
-            boxShadow: "0 0 4px rgba(255,255,255,0.30)",
-          }}
+          className="pointer-events-none absolute inset-x-2 top-0 h-[42%] rounded-t-[16px]"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.16), transparent)" }}
         />
-        <span
-          className="text-[10px] font-medium leading-none text-white/80 sm:text-[11.5px]"
-          style={{
-            fontFamily: "var(--font-headline), system-ui, sans-serif",
-            letterSpacing: "0.04em",
-          }}
-        >
-          {tool.label}
+        <span style={{ color: channel.color }} className="relative">
+          <ChannelIcon k={channel.key} />
         </span>
+      </motion.div>
+      <span className="text-[10px] font-medium text-white/55 sm:text-[11px]" style={{ letterSpacing: "0.02em" }}>
+        {channel.label}
+      </span>
+    </motion.div>
+  );
+}
+
+function MoreTile() {
+  return (
+    <motion.div
+      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
+      transition={{ duration: 0.6, ease: EASE }}
+      className="flex w-[64px] flex-col items-center gap-2 sm:w-[76px]"
+    >
+      <div
+        className="flex h-[52px] w-[52px] items-center justify-center rounded-[16px] sm:h-[60px] sm:w-[60px]"
+        style={{
+          background: "linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015))",
+          border: "1px dashed rgba(255,255,255,0.18)",
+        }}
+      >
+        <span className="flex gap-[3px]">
+          <span className="h-[4px] w-[4px] rounded-full bg-white/40" />
+          <span className="h-[4px] w-[4px] rounded-full bg-white/40" />
+          <span className="h-[4px] w-[4px] rounded-full bg-white/40" />
+        </span>
+      </div>
+      <span className="text-[10px] font-medium text-white/35 sm:text-[11px]">mehr</span>
+    </motion.div>
+  );
+}
+
+/* ─────────────────── CONVERGING LINES (dekorativ) ───────────── */
+function Converging() {
+  return (
+    <div
+      aria-hidden
+      className="relative mx-auto w-full max-w-[640px]"
+      style={{ height: "clamp(48px, 8vh, 84px)" }}
+    >
+      <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="sync-flow" x1="0.5" y1="0" x2="0.5" y2="1">
+            <stop offset="0%" stopColor="var(--brand-line-dim)" stopOpacity="0.0" />
+            <stop offset="40%" stopColor="var(--brand-line-mid)" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="var(--brand-line-bright)" stopOpacity="0.95" />
+          </linearGradient>
+        </defs>
+        {[8, 26, 42, 58, 74, 92].map((sx, i) => {
+          const d = `M ${sx},0 C ${sx},42 50,70 50,100`;
+          return (
+            <motion.path
+              key={i}
+              d={d}
+              fill="none"
+              stroke="url(#sync-flow)"
+              strokeWidth="0.4"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true, margin: "-10% 0px" }}
+              transition={{ duration: 1, ease: EASE, delay: 0.1 + i * 0.05 }}
+            />
+          );
+        })}
+        <circle cx="50" cy="100" r="1.1" fill="var(--brand-line-bright)" style={{ filter: "drop-shadow(0 0 4px var(--brand-glow-strong))" }} />
+        <g>
+          <circle r="0.9" fill="var(--brand-glow-strong)" style={{ filter: "blur(0.4px)" }}>
+            <animateMotion dur="3s" repeatCount="indefinite" path="M 50,0 C 50,42 50,70 50,100" />
+          </circle>
+          <circle r="0.4" fill="#FFFFFF">
+            <animateMotion dur="3s" repeatCount="indefinite" path="M 50,0 C 50,42 50,70 50,100" />
+          </circle>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+/* ─────────────────────── CENTRAL SYSTEM ─────────────────────── */
+function CentralSystem() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18, scale: 0.96 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-12% 0px" }}
+      transition={{ duration: 0.9, ease: EASE }}
+      className="relative mx-auto w-full max-w-[520px]"
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-[-30%] rounded-full"
+        style={{
+          background: "radial-gradient(ellipse 50% 50% at 50% 50%, var(--brand-glow-strong) 0%, var(--brand-glow-mid) 38%, transparent 75%)",
+          filter: "blur(40px)",
+          opacity: 0.7,
+        }}
+      />
+      <div
+        className="relative overflow-hidden rounded-[26px] px-7 py-8 text-center sm:px-10 sm:py-10"
+        style={{
+          background: "linear-gradient(180deg, rgba(24,18,46,0.92) 0%, rgba(10,8,22,0.96) 100%)",
+          border: "1px solid var(--brand-card-border)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 30px 70px rgba(0,0,0,0.55), 0 0 50px var(--brand-card-glow)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        }}
+      >
         <span
           aria-hidden
-          className="hidden h-[10px] w-px sm:inline-block"
-          style={{ background: "rgba(255,255,255,0.10)" }}
+          className="pointer-events-none absolute inset-x-6 top-0 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, var(--brand-line-bright), transparent)" }}
         />
-        <span
-          className="hidden text-[9px] font-light leading-none text-white/35 sm:inline sm:text-[10px]"
-          style={{ letterSpacing: "0.08em" }}
+        <div className="flex justify-center">
+          <SystemMark />
+        </div>
+        <div className="mt-5 flex items-center justify-center gap-2 text-white/40">
+          <span className="h-px w-[14px]" style={{ background: "rgba(255,255,255,0.3)" }} />
+          <span
+            className="text-[8.5px] font-medium uppercase tracking-[0.4em] sm:text-[9.5px]"
+            style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+          >
+            Ihr Unternehmen
+          </span>
+          <span className="h-px w-[14px]" style={{ background: "rgba(255,255,255,0.3)" }} />
+        </div>
+        <h3
+          className="mt-2 text-[1.4rem] leading-none text-white sm:text-[1.7rem]"
+          style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 400, letterSpacing: "-0.02em" }}
         >
-          {tool.sub}
-        </span>
+          Ein zentrales System
+        </h3>
+        <p className="mt-2.5 text-[12.5px] text-white/50 sm:text-[13.5px]">
+          Alle Informationen. Ein Ort. Volle Kontrolle.
+        </p>
+        <div className="mt-5 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <motion.span
+            aria-hidden
+            className="inline-block h-[5px] w-[5px] rounded-full"
+            style={{ background: "var(--brand-line-bright)", boxShadow: "0 0 8px var(--brand-glow-strong)" }}
+            animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <span className="text-[9px] font-medium uppercase tracking-[0.28em] text-white/55 sm:text-[10px]">
+            Live · Synchronisiert
+          </span>
+        </div>
       </div>
     </motion.div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════
- *  FLOW LINES — präzise vertikale Datenströme mit wandernden Lichtpunkten
- *  ════════════════════════════════════════════════════════════════ */
-function FlowLines({
-  opacity,
-  length,
-  direction,
-  count,
-}: {
-  opacity: MotionValue<number>;
-  length: MotionValue<number>;
-  direction: "down" | "up";
-  count: number;
-}) {
-  // Konvergiert nach unten zum Center; Up-Direction wäre Divergenz vom Center.
-  // Wir nutzen immer "down" — die Linien beginnen oben gespreizt und enden
-  // alle exakt am Center (50%, 100%). Symmetrisches Fächern.
-  const SPREAD = 90; // %, wie weit die Linien oben gespreizt sind
-
-  const startXs = Array.from({ length: count }, (_, i) => {
-    const t = count === 1 ? 0.5 : i / (count - 1);
-    return 50 - SPREAD / 2 + t * SPREAD;
-  });
-
+function SystemMark() {
   return (
     <div
-      className="relative w-full"
-      style={{ height: "clamp(36px, 5vh, 64px)" }}
+      className="relative flex h-[64px] w-[64px] items-center justify-center rounded-[18px]"
+      style={{
+        background: "linear-gradient(155deg, var(--brand-glow-strong) 0%, rgba(12,8,26,0.9) 70%)",
+        border: "1px solid var(--brand-card-border)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 28px rgba(0,0,0,0.5), 0 0 28px var(--brand-glow-mid)",
+      }}
     >
-      <svg
-        aria-hidden
-        className="absolute inset-0 h-full w-full overflow-visible"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id={`flow-${direction}`} x1="0.5" y1="0" x2="0.5" y2="1">
-            <stop offset="0%"   stopColor="var(--brand-line-dim)"    stopOpacity="0.55" />
-            <stop offset="55%"  stopColor="var(--brand-line-mid)"    stopOpacity="0.95" />
-            <stop offset="100%" stopColor="var(--brand-line-bright)" stopOpacity="1" />
-          </linearGradient>
-          <linearGradient id={`flow-${direction}-glow`} x1="0.5" y1="0" x2="0.5" y2="1">
-            <stop offset="0%"   stopColor="var(--brand-glow-mid)"    stopOpacity="0.05" />
-            <stop offset="100%" stopColor="var(--brand-glow-strong)" stopOpacity="0.45" />
-          </linearGradient>
-        </defs>
-
-        {startXs.map((sx, i) => {
-          // Bezier von (sx, 0) zu (50, 100) — sanftes Fächern
-          const cx1 = sx;
-          const cy1 = 38;
-          const cx2 = 50 + (sx - 50) * 0.16;
-          const cy2 = 82;
-          const d = `M ${sx},0 C ${cx1},${cy1} ${cx2},${cy2} 50,100`;
-          return (
-            <g key={i}>
-              {/* Glow-Underlay (sehr dezent) */}
-              <motion.path
-                d={d}
-                fill="none"
-                stroke={`url(#flow-${direction}-glow)`}
-                strokeWidth="0.38"
-                strokeLinecap="round"
-                style={{
-                  pathLength: length,
-                  opacity,
-                  filter: "blur(0.7px)",
-                }}
-              />
-              {/* Scharfe Hairline */}
-              <motion.path
-                d={d}
-                fill="none"
-                stroke={`url(#flow-${direction})`}
-                strokeWidth="0.10"
-                strokeLinecap="round"
-                style={{ pathLength: length, opacity }}
-              />
-              {/* Terminal-Knoten oben (Tool-Ankerpunkt) */}
-              <motion.circle
-                cx={sx}
-                cy={0}
-                r="0.55"
-                fill="var(--brand-line-bright)"
-                style={{ opacity, filter: "drop-shadow(0 0 2px var(--brand-glow-strong))" }}
-              />
-            </g>
-          );
-        })}
-
-        {/* Zentraler Konvergenz-Knoten */}
-        <motion.circle
-          cx={50}
-          cy={100}
-          r="0.95"
-          fill="var(--brand-line-bright)"
-          style={{
-            opacity,
-            filter: "drop-shadow(0 0 4px var(--brand-glow-strong))",
-          }}
+      <svg width="34" height="34" viewBox="0 0 32 32" fill="none" aria-hidden>
+        <path
+          d="M16 3 L27 9 V23 L16 29 L5 23 V9 Z"
+          stroke="var(--brand-line-bright)"
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+          fill="rgba(255,255,255,0.03)"
         />
-
-        {/* EIN eleganter Light-Pulse pro Reihe (nicht überfrachtet) */}
-        <FlowPulse
-          path={`M ${startXs[Math.floor(startXs.length / 2)]},0 C ${startXs[Math.floor(startXs.length / 2)]},38 50,82 50,100`}
-          opacity={opacity}
+        <path
+          d="M11.5 21 V12 L20.5 20 V11"
+          stroke="#FFFFFF"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ filter: "drop-shadow(0 0 6px var(--brand-glow-strong))" }}
         />
       </svg>
     </div>
   );
 }
 
-function FlowPulse({
-  path,
-  opacity,
-}: {
-  path: string;
-  opacity: MotionValue<number>;
-}) {
+/* ─────────────────────────── FEATURES ───────────────────────── */
+function FeatureGrid() {
   return (
-    <motion.g style={{ opacity }}>
-      <circle r="0.85" fill="var(--brand-glow-strong)" style={{ filter: "blur(0.5px)" }}>
-        <animateMotion dur="2.8s" repeatCount="indefinite" path={path} />
-      </circle>
-      <circle r="0.36" fill="#FFFFFF" fillOpacity="0.98">
-        <animateMotion dur="2.8s" repeatCount="indefinite" path={path} />
-      </circle>
-    </motion.g>
+    <div className="mt-[clamp(44px,7vh,76px)] grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+      {FEATURES.map((f, i) => (
+        <FeatureCard key={f.key} feature={f} index={i} />
+      ))}
+    </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════
- *  OPERATING CORE — premium hexagonales Glas-Element
- *  ════════════════════════════════════════════════════════════════ */
-function OperatingCore({
-  opacity,
-  scale,
-  activeOpacity,
-}: {
-  opacity: MotionValue<number>;
-  scale: MotionValue<number>;
-  activeOpacity: MotionValue<number>;
-}) {
+function FeatureCard({ feature, index }: { feature: { key: FeatureKey; title: string; desc: string }; index: number }) {
   return (
     <motion.div
-      className="relative"
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-8% 0px" }}
+      transition={{ duration: 0.6, ease: EASE, delay: (index % 3) * 0.06 }}
+      whileHover={{ y: -4 }}
+      className="group relative overflow-hidden rounded-[20px] p-5 sm:p-6"
       style={{
-        opacity,
-        scale,
-        width: "clamp(240px, 30vh, 300px)",
-        height: "clamp(108px, 14vh, 134px)",
+        background: "linear-gradient(180deg, rgba(22,16,42,0.6) 0%, rgba(10,8,22,0.72) 100%)",
+        border: "1px solid var(--brand-card-border)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 40px rgba(0,0,0,0.4)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
       }}
     >
-      {/* Außen-Aura */}
       <span
         aria-hidden
-        className="absolute inset-[-46%] rounded-full"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 60% at 50% 50%, var(--brand-glow-strong) 0%, var(--brand-glow-mid) 38%, transparent 78%)",
-          filter: "blur(32px)",
-        }}
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{ boxShadow: "inset 0 0 30px var(--brand-card-glow)", borderRadius: "20px" }}
       />
-
-      {/* Hexagon-Keystone */}
-      <div className="relative h-full w-full">
-        <svg
-          aria-hidden
-          className="absolute inset-0 h-full w-full"
-          viewBox="0 0 320 140"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <defs>
-            {/* Tiefen-Fill (Obsidian + Brand-Tiefenton) */}
-            <linearGradient id="core-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="rgba(32,22,58,0.94)" />
-              <stop offset="50%"  stopColor="rgba(14,10,30,0.96)" />
-              <stop offset="100%" stopColor="rgba(6,4,16,0.99)" />
-            </linearGradient>
-            {/* Edge-Stroke (Brillant → Brand) */}
-            <linearGradient id="core-edge" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%"   stopColor="#FFFFFF" stopOpacity="0.95" />
-              <stop offset="45%"  stopColor="var(--brand-line-bright)" stopOpacity="0.55" />
-              <stop offset="100%" stopColor="var(--brand-line-mid)" stopOpacity="0.30" />
-            </linearGradient>
-            {/* Top-Glass Reflection */}
-            <linearGradient id="core-glass" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="rgba(255,255,255,0.22)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-            </linearGradient>
-            {/* Innen-Vignette */}
-            <radialGradient id="core-inner-glow" cx="0.5" cy="0.5" r="0.55">
-              <stop offset="0%"   stopColor="var(--brand-glow-strong)" stopOpacity="0.32" />
-              <stop offset="100%" stopColor="var(--brand-glow-strong)" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-
-          {/* Hexagon-Außenkontur */}
-          <path
-            d="M 28,10 L 292,10 L 316,70 L 292,130 L 28,130 L 4,70 Z"
-            fill="url(#core-fill)"
-            stroke="url(#core-edge)"
-            strokeWidth="1.1"
-          />
-          {/* Innere Glasreflexion oben */}
-          <path
-            d="M 30,12 L 290,12 L 308,42 L 12,42 Z"
-            fill="url(#core-glass)"
-          />
-          {/* Innere Hex-Linie (doppelter Rahmen) */}
-          <path
-            d="M 38,22 L 282,22 L 302,70 L 282,118 L 38,118 L 18,70 Z"
-            fill="none"
-            stroke="var(--brand-line-mid)"
-            strokeWidth="0.35"
-            strokeOpacity="0.32"
-          />
-          {/* Innen-Vignetten-Glow */}
-          <rect x="0" y="0" width="320" height="140" fill="url(#core-inner-glow)" />
-
-          {/* Eck-Akzente (Brillant-Tickmarks) */}
-          {[
-            ["M 28,10 L 40,10 M 28,10 L 28,22",  "tl"],
-            ["M 292,10 L 280,10 M 292,10 L 292,22", "tr"],
-            ["M 28,130 L 40,130 M 28,130 L 28,118", "bl"],
-            ["M 292,130 L 280,130 M 292,130 L 292,118", "br"],
-          ].map(([d, k]) => (
-            <path
-              key={k as string}
-              d={d as string}
-              stroke="var(--brand-line-bright)"
-              strokeWidth="0.9"
-              strokeLinecap="round"
-              fill="none"
-              opacity="0.95"
-            />
-          ))}
-
-          {/* Mikro-Indexstriche an Ober-/Unterkante (Architektur-Detail) */}
-          {Array.from({ length: 7 }).map((_, i) => (
-            <g key={i} stroke="rgba(255,255,255,0.20)" strokeWidth="0.4">
-              <line x1={80 + i * 26} y1="10" x2={80 + i * 26} y2="14" />
-              <line x1={80 + i * 26} y1="130" x2={80 + i * 26} y2="126" />
-            </g>
-          ))}
-        </svg>
-
-        {/* Inhalt — minimalistische Komposition */}
-        <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-center"
-          style={{ opacity: activeOpacity }}
-        >
-          {/* Top-Mikro-Caption */}
-          <div className="absolute top-[12%] flex items-center gap-1.5 text-white/35">
-            <span className="h-px w-[10px]" style={{ background: "rgba(255,255,255,0.35)" }} />
-            <span
-              className="text-[7px] font-medium uppercase tracking-[0.40em] sm:text-[7.5px]"
-              style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-            >
-              Operating Core
-            </span>
-            <span className="h-px w-[10px]" style={{ background: "rgba(255,255,255,0.35)" }} />
-          </div>
-
-          {/* Center-Wortmarke — schlicht, premium */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            <span
-              className="text-[17px] font-light leading-none sm:text-[19px]"
-              style={{
-                background:
-                  "linear-gradient(155deg, #FFFFFF 0%, #F1ECFF 55%, #C4B5FD 100%)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                WebkitTextFillColor: "transparent",
-                fontFamily: "var(--font-headline), system-ui, sans-serif",
-                letterSpacing: "0.06em",
-              }}
-            >
-              NEXCEL
-            </span>
-            <span
-              className="inline-block h-[12px] w-px sm:h-[14px]"
-              style={{
-                background:
-                  "linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)",
-              }}
-              aria-hidden
-            />
-            <span
-              className="text-[17px] font-light leading-none sm:text-[19px]"
-              style={{
-                background:
-                  "linear-gradient(155deg, var(--brand-line-bright) 0%, var(--brand-line-mid) 100%)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                WebkitTextFillColor: "transparent",
-                fontFamily: "var(--font-headline), system-ui, sans-serif",
-                letterSpacing: "0.06em",
-                filter: "drop-shadow(0 0 8px var(--brand-glow-strong))",
-              }}
-            >
-              AGI
-            </span>
-          </div>
-
-          {/* Bottom-Status — gepulster Indikator */}
-          <div className="absolute bottom-[12%] flex items-center gap-1.5">
-            <motion.span
-              aria-hidden
-              className="inline-block h-[5px] w-[5px] rounded-full"
-              style={{
-                background: "var(--brand-line-bright)",
-                boxShadow: "0 0 8px var(--brand-glow-strong)",
-              }}
-              animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.15, 1] }}
-              transition={{ duration: 2.0, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <span
-              className="text-[7.5px] font-medium uppercase tracking-[0.34em] text-white/55 sm:text-[8px]"
-              style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-            >
-              Live · Synchronisiert
-            </span>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════════
- *  MODULES ROW — 6 strukturierte Module-Karten
- *  ════════════════════════════════════════════════════════════════ */
-function ModulesRow({
-  opacity,
-  y,
-}: {
-  opacity: MotionValue<number>;
-  y: MotionValue<number>;
-}) {
-  return (
-    <motion.div
-      style={{ opacity, y }}
-      className="relative flex w-full flex-col items-center gap-3 sm:gap-3.5"
-    >
-      {/* Architectural Header — symmetrisch zu „Eingehende Quellen" */}
-      <div className="flex items-center gap-3 text-white/35">
-        <span
-          aria-hidden
-          className="h-px w-[28px] sm:w-[48px]"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, var(--brand-line-mid) 100%)",
-            opacity: 0.85,
-          }}
-        />
-        <span
-          className="text-[9.5px] font-medium uppercase tracking-[0.36em] sm:text-[10px]"
-          style={{
-            color: "var(--brand-line-bright)",
-            fontFamily: "var(--font-headline), system-ui, sans-serif",
-            filter: "drop-shadow(0 0 6px var(--brand-glow-strong))",
-          }}
-        >
-          Strukturierte Module
-        </span>
-        <span
-          aria-hidden
-          className="h-px w-[28px] sm:w-[48px]"
-          style={{
-            background:
-              "linear-gradient(90deg, var(--brand-line-mid) 0%, transparent 100%)",
-            opacity: 0.85,
-          }}
-        />
-      </div>
-
-      {/* Numbered-Tile-Grid — 3×2 mobile, 6×1 desktop */}
-      <div className="grid w-full grid-cols-3 gap-2 px-2 sm:gap-3 md:grid-cols-6 md:gap-3.5">
-        {MODULES.map((m, i) => (
-          <NumberedTile key={m.key} module={m} index={i} />
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-function NumberedTile({
-  module: m,
-  index,
-}: {
-  module: ModuleDef;
-  index: number;
-}) {
-  const number = String(index + 1).padStart(2, "0");
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10% 0px" }}
-      transition={{
-        duration: 0.65,
-        delay: index * 0.07,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      className="relative"
-    >
       <div
-        className="relative overflow-hidden rounded-[14px] px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-3.5 sm:pt-3"
+        className="relative flex h-[46px] w-[46px] items-center justify-center rounded-[13px]"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(22,16,42,0.88) 0%, rgba(10,8,22,0.92) 100%)",
+          background: "linear-gradient(160deg, var(--brand-glow-mid) 0%, rgba(255,255,255,0.02) 100%)",
           border: "1px solid var(--brand-card-border)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          boxShadow:
-            "inset 0 1px 0 rgba(255,255,255,0.06), 0 14px 28px rgba(0,0,0,0.42), 0 0 22px var(--brand-card-glow)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
         }}
       >
-        {/* Top-Hairline (Brand-Bright) */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-3 top-0 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, var(--brand-line-bright), transparent)",
-          }}
-        />
-
-        {/* Soft Top-Glow Reflektion */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-2 top-0 h-[40%] rounded-t-[14px]"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
-          }}
-        />
-
-        {/* Header: Nummer + Live-Dot */}
-        <div className="relative flex items-center justify-between">
-          <span
-            className="text-[20px] font-extralight leading-none sm:text-[24px]"
-            style={{
-              background:
-                "linear-gradient(155deg, #FFFFFF 0%, #E9E3FF 55%, var(--brand-line-bright) 100%)",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              color: "transparent",
-              WebkitTextFillColor: "transparent",
-              fontFamily: "var(--font-headline), system-ui, sans-serif",
-              letterSpacing: "-0.03em",
-            }}
-          >
-            {number}
-          </span>
-          <motion.span
-            aria-hidden
-            className="inline-block h-[4px] w-[4px] rounded-full sm:h-[5px] sm:w-[5px]"
-            style={{
-              background: "var(--brand-line-bright)",
-              boxShadow: "0 0 6px var(--brand-glow-strong)",
-            }}
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{
-              duration: 2 + (index % 3) * 0.4,
-              delay: index * 0.18,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        </div>
-
-        {/* Body: Modul-Name + Sub */}
-        <div className="relative mt-2 sm:mt-2.5">
-          <p
-            className="text-[11px] font-medium leading-tight text-white sm:text-[12.5px]"
-            style={{
-              fontFamily: "var(--font-headline), system-ui, sans-serif",
-              letterSpacing: "0.005em",
-            }}
-          >
-            {m.label}
-          </p>
-          <p
-            className="mt-1 text-[8.5px] font-light leading-snug text-white/45 sm:text-[9.5px]"
-            style={{ letterSpacing: "0.025em" }}
-          >
-            {m.sub}
-          </p>
-        </div>
-
-        {/* Bottom-Hairline (sehr dezent) */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-3 bottom-0 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
-          }}
-        />
+        <span style={{ color: "var(--brand-line-bright)" }}>
+          <FeatureIcon k={feature.key} />
+        </span>
       </div>
+      <h4
+        className="relative mt-4 text-[15px] font-medium text-white sm:text-[16px]"
+        style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", letterSpacing: "-0.01em" }}
+      >
+        {feature.title}
+      </h4>
+      <p className="relative mt-1.5 text-[12.5px] leading-[1.55] text-white/50 sm:text-[13px]">
+        {feature.desc}
+      </p>
     </motion.div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════
- *  POWERED BY — Kooperations-Block (unverändert in der Story)
- *  ════════════════════════════════════════════════════════════════ */
-function PoweredBy({
-  opacity,
-  y,
-}: {
-  opacity: MotionValue<number>;
-  y: MotionValue<number>;
-}) {
+/* ──────────────────────── COOPERATION ───────────────────────── */
+function Cooperation() {
   return (
     <motion.div
-      style={{ opacity, y }}
-      className="relative z-10 mx-auto flex flex-col items-center"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10% 0px" }}
+      transition={{ duration: 0.85, ease: EASE }}
+      className="relative mx-auto mt-[clamp(64px,11vh,128px)] w-full max-w-[840px]"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-center gap-3.5 text-white/45">
+        <span aria-hidden className="h-px w-[36px] sm:w-[56px]" style={{ background: "linear-gradient(90deg, transparent, var(--brand-line-mid))" }} />
         <span
-          aria-hidden
-          className="h-px w-[44px] sm:w-[60px]"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, var(--brand-line-mid) 100%)",
-          }}
-        />
-        <span
-          className="text-[9px] font-medium uppercase tracking-[0.36em] sm:text-[10px]"
-          style={{
-            color: "var(--brand-line-mid)",
-            fontFamily: "var(--font-headline), system-ui, sans-serif",
-          }}
+          className="text-[10px] font-medium uppercase tracking-[0.42em] sm:text-[11px]"
+          style={{ color: "var(--brand-line-mid)", fontFamily: "var(--font-headline), system-ui, sans-serif" }}
         >
           Strategische Kooperation
         </span>
+        <span aria-hidden className="h-px w-[36px] sm:w-[56px]" style={{ background: "linear-gradient(90deg, var(--brand-line-mid), transparent)" }} />
+      </div>
+
+      <h3
+        className="mt-5 text-center text-[1.55rem] leading-[1.12] text-white sm:text-[2rem]"
+        style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300, letterSpacing: "-0.03em" }}
+      >
+        Zwei Unternehmen.{" "}
         <span
-          aria-hidden
-          className="h-px w-[44px] sm:w-[60px]"
           style={{
-            background:
-              "linear-gradient(90deg, var(--brand-line-mid) 0%, transparent 100%)",
+            background: "var(--brand-headline-gradient)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+            WebkitTextFillColor: "transparent",
+            fontWeight: 400,
           }}
+        >
+          Eine Umsetzung.
+        </span>
+      </h3>
+
+      <div className="mt-[clamp(36px,5vh,56px)] grid grid-cols-1 items-stretch gap-y-12 sm:grid-cols-[1fr_auto_1fr] sm:gap-y-0">
+        <BrandColumn
+          mark={<NexcelMark />}
+          name="NEXCEL AI"
+          tagline="Gestaltet das System"
+          nameGradient="linear-gradient(120deg, #FFFFFF 0%, #F5F3FF 45%, #C4B5FD 100%)"
+          accent="#A78BFA"
+          align="end"
+          capabilities={[
+            { label: "Unternehmenssysteme", icon: "system" },
+            { label: "Prozessdesign", icon: "process" },
+            { label: "Branding & Customer Experience", icon: "brand" },
+            { label: "Automatisierung", icon: "automation" },
+          ]}
+        />
+
+        {/* Trenner mit ×-Glyphe — offen, ohne Kasten */}
+        <div className="flex items-center justify-center sm:h-full sm:flex-col sm:px-[clamp(28px,5vw,64px)]">
+          <span aria-hidden className="h-px w-12 sm:h-full sm:w-px sm:min-h-[180px]" style={{ background: "rgba(255,255,255,0.10)" }} />
+          <span
+            className="mx-4 my-0 text-[15px] font-light leading-none text-white/35 sm:mx-0 sm:my-4"
+            style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+          >
+            ×
+          </span>
+          <span aria-hidden className="h-px w-12 sm:h-full sm:w-px sm:min-h-[180px]" style={{ background: "rgba(255,255,255,0.10)" }} />
+        </div>
+
+        <BrandColumn
+          mark={<AgiMark />}
+          name="AGI Works"
+          tagline="Baut das System"
+          nameGradient="linear-gradient(120deg, #FFFFFF 0%, #DBEAFE 45%, #60A5FA 100%)"
+          accent="#5BB8FF"
+          align="start"
+          capabilities={[
+            { label: "Softwarearchitektur", icon: "code" },
+            { label: "Plattformen", icon: "layers" },
+            { label: "Infrastruktur", icon: "server" },
+            { label: "Entwicklung", icon: "build" },
+          ]}
         />
       </div>
 
-      <div
-        className="mt-3 flex items-center gap-3 rounded-full px-4 py-2 sm:mt-3.5 sm:gap-4 sm:px-5 sm:py-2.5"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(20,16,38,0.85) 0%, rgba(10,8,22,0.85) 100%)",
-          border: "1px solid var(--brand-card-border)",
-          boxShadow:
-            "inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 38px rgba(0,0,0,0.55), 0 0 24px var(--brand-glow-mid)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-        }}
-      >
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <BrandMark letter="N" />
-          <span
-            className="text-[11.5px] font-medium tracking-[0.18em] sm:text-[13px]"
-            style={{
-              background:
-                "linear-gradient(120deg, #FFFFFF 0%, #F5F3FF 50%, #C4B5FD 100%)",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              color: "transparent",
-              WebkitTextFillColor: "transparent",
-              fontFamily: "var(--font-headline), system-ui, sans-serif",
-            }}
-          >
-            NEXCEL&nbsp;AI
-          </span>
-        </div>
-
-        <span
-          aria-hidden
-          className="text-[14px] font-light leading-none text-white/70 sm:text-[16px]"
-          style={{
-            fontFamily: "var(--font-headline), system-ui, sans-serif",
-            filter: "drop-shadow(0 0 8px var(--brand-glow-strong))",
-          }}
+      {/* Gemeinsam — ein durchgängiger Prozess */}
+      <div className="mt-[clamp(44px,7vh,72px)]">
+        <div className="mx-auto mb-7 h-px max-w-xs" aria-hidden style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)" }} />
+        <p
+          className="text-center text-[10px] font-medium uppercase tracking-[0.34em] text-white/45 sm:text-[11px]"
+          style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
         >
-          ×
-        </span>
-
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <span
-            className="text-[11.5px] font-medium tracking-[0.18em] sm:text-[13px]"
-            style={{
-              background:
-                "linear-gradient(120deg, #C4B5FD 0%, #A78BFA 55%, #8B5CF6 100%)",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              color: "transparent",
-              WebkitTextFillColor: "transparent",
-              fontFamily: "var(--font-headline), system-ui, sans-serif",
-            }}
-          >
-            AGI&nbsp;WORKS
-          </span>
-          <BrandMark letter="A" variant="agi" />
+          Gemeinsam — von der Idee bis zum Betrieb
+        </p>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 sm:gap-x-6">
+          {["Analyse", "Konzeption", "Entwicklung", "Implementierung", "Betreuung"].map((step, i) => (
+            <div key={step} className="flex items-center gap-x-4 sm:gap-x-6">
+              {i > 0 && (
+                <span aria-hidden className="text-white/25" style={{ color: "var(--brand-line-mid)" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 6l6 6-6 6" />
+                  </svg>
+                </span>
+              )}
+              <span
+                className="text-[13.5px] font-light text-white/80 sm:text-[14.5px]"
+                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", letterSpacing: "0.005em" }}
+              >
+                {step}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
+
+      <p className="mx-auto mt-[clamp(40px,6vh,64px)] max-w-[620px] text-center text-[14px] font-light leading-[1.7] text-white/45 sm:text-[15px]">
+        Zusammen entsteht daraus ein vollständiges{" "}
+        <span className="text-white/80" style={{ fontWeight: 400 }}>Betriebssystem für Unternehmen</span> —
+        das Prozesse, Menschen und Technologie in einer funktionierenden Struktur zusammenführt.
+      </p>
     </motion.div>
   );
 }
 
-function BrandMark({
-  letter,
-  variant = "nexcel",
+function BrandColumn({
+  mark,
+  name,
+  tagline,
+  nameGradient,
+  accent,
+  align,
+  capabilities,
 }: {
-  letter: string;
-  variant?: "nexcel" | "agi";
+  mark: React.ReactNode;
+  name: string;
+  tagline: string;
+  nameGradient: string;
+  accent: string;
+  align: "start" | "end";
+  capabilities: { label: string; icon: CapabilityIconKey }[];
 }) {
-  const bgGradient =
-    variant === "nexcel"
-      ? "linear-gradient(155deg, rgba(34,26,62,0.96) 0%, rgba(16,12,34,0.97) 60%, rgba(8,6,20,0.98) 100%)"
-      : "linear-gradient(155deg, rgba(46,28,80,0.96) 0%, rgba(28,18,52,0.97) 60%, rgba(12,8,26,0.98) 100%)";
-  const letterGradient =
-    variant === "nexcel"
-      ? "linear-gradient(155deg, #FFFFFF 0%, #E9E3FF 60%, #C4B5FD 100%)"
-      : "linear-gradient(155deg, #DDD6FE 0%, #A78BFA 55%, #7C3AED 100%)";
+  const desktopAlign = align === "end" ? "sm:items-end sm:text-right" : "sm:items-start sm:text-left";
+  return (
+    <div className={`flex flex-col items-center text-center ${desktopAlign}`}>
+      <div className={`flex items-center gap-3.5 ${align === "end" ? "sm:flex-row-reverse" : ""}`}>
+        {mark}
+        <span
+          className="text-[22px] font-medium leading-none sm:text-[27px]"
+          style={{
+            background: nameGradient,
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+            WebkitTextFillColor: "transparent",
+            fontFamily: "var(--font-headline), system-ui, sans-serif",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {name}
+        </span>
+      </div>
+      <span
+        className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.2em]"
+        style={{ color: accent }}
+      >
+        {tagline}
+      </span>
+      <ul className="mt-6 flex flex-col gap-3.5">
+        {capabilities.map((cap) => (
+          <li key={cap.label} className={`flex items-center gap-3 ${align === "end" ? "sm:flex-row-reverse" : ""}`}>
+            <span style={{ color: accent, filter: `drop-shadow(0 0 6px ${accent}55)` }} className="flex-shrink-0">
+              <CapabilityIcon k={cap.icon} />
+            </span>
+            <span
+              className="text-[15px] font-light text-white/80 sm:text-[15.5px]"
+              style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", letterSpacing: "0.005em" }}
+            >
+              {cap.label}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
+/* ─────────────────────── LOGO MARKS ─────────────────────────── */
+function NexcelMark() {
   return (
     <span
-      className="relative inline-flex h-[24px] w-[24px] items-center justify-center overflow-hidden rounded-[7px] sm:h-[26px] sm:w-[26px]"
+      className="relative flex h-[42px] w-[42px] items-center justify-center overflow-hidden rounded-[12px]"
       style={{
-        background: bgGradient,
-        border: "1px solid rgba(255,255,255,0.14)",
-        boxShadow:
-          "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -8px 14px rgba(0,0,0,0.40), 0 6px 14px rgba(0,0,0,0.40), 0 0 18px var(--brand-glow-mid)",
+        background: "linear-gradient(155deg, #2A1E54 0%, #15102E 60%, #0A0718 100%)",
+        border: "1px solid rgba(167,139,250,0.4)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 8px 18px rgba(0,0,0,0.45), 0 0 22px rgba(139,92,246,0.4)",
       }}
     >
       <span
         aria-hidden
-        className="absolute inset-x-1 top-[1px] h-[40%]"
-        style={{
-          borderRadius: "6px 6px 18px 18px",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 70%, transparent 100%)",
-          filter: "blur(0.6px)",
-        }}
+        className="absolute inset-x-1 top-[1px] h-[42%]"
+        style={{ borderRadius: "10px 10px 18px 18px", background: "linear-gradient(180deg, rgba(255,255,255,0.18), transparent)" }}
       />
-      <span
-        className="relative text-[12.5px] font-semibold leading-none sm:text-[13.5px]"
-        style={{
-          background: letterGradient,
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          color: "transparent",
-          WebkitTextFillColor: "transparent",
-          fontFamily: "var(--font-headline), system-ui, sans-serif",
-        }}
-      >
-        {letter}
-      </span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden className="relative">
+        <path
+          d="M6 18 V6 L18 18 V6"
+          stroke="url(#nx-grad)"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <defs>
+          <linearGradient id="nx-grad" x1="6" y1="6" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="55%" stopColor="#C4B5FD" />
+            <stop offset="100%" stopColor="#8B5CF6" />
+          </linearGradient>
+        </defs>
+      </svg>
     </span>
   );
 }
 
+function AgiMark() {
+  return (
+    <span
+      className="relative flex h-[42px] w-[42px] items-center justify-center overflow-hidden rounded-[12px]"
+      style={{
+        background: "linear-gradient(155deg, #102444 0%, #0A1730 60%, #040A1A 100%)",
+        border: "1px solid rgba(91,184,255,0.4)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 8px 18px rgba(0,0,0,0.45), 0 0 22px rgba(31,122,224,0.4)",
+      }}
+    >
+      <span
+        aria-hidden
+        className="absolute inset-x-1 top-[1px] h-[42%]"
+        style={{ borderRadius: "10px 10px 18px 18px", background: "linear-gradient(180deg, rgba(255,255,255,0.18), transparent)" }}
+      />
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden className="relative">
+        <path
+          d="M6 19 L12 5 L18 19 M8.5 14 H15.5"
+          stroke="url(#ag-letter)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M4 13.5 C8 10.5, 16 10.5, 20 13.5"
+          stroke="url(#ag-swoosh)"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <defs>
+          <linearGradient id="ag-letter" x1="6" y1="5" x2="18" y2="19" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="100%" stopColor="#BFD9F2" />
+          </linearGradient>
+          <linearGradient id="ag-swoosh" x1="4" y1="11" x2="20" y2="14" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#9BD0FF" />
+            <stop offset="100%" stopColor="#1F7AE0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </span>
+  );
+}
+
+/* ─────────────────────── ICON LIBRARY ───────────────────────── */
+function ChannelIcon({ k }: { k: ChannelKey }) {
+  switch (k) {
+    case "whatsapp":
+      return (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M19.05 4.91A9.82 9.82 0 0 0 12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.97L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.004c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.02ZM12.04 20.15h-.003a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.69 8.23-8.22 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.42l-.48-.01c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07s.89 2.4 1.01 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29Z" />
+        </svg>
+      );
+    case "email":
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <rect x="3" y="5.5" width="18" height="13" rx="2.2" />
+          <path d="M4 7l8 5.5L20 7" />
+        </svg>
+      );
+    case "phone":
+      return (
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M6.6 2.5a1.4 1.4 0 0 1 1.36.96l1.1 3.05a1.4 1.4 0 0 1-.37 1.5l-1.4 1.27a12.5 12.5 0 0 0 4.78 4.78l1.27-1.4a1.4 1.4 0 0 1 1.5-.37l3.05 1.1a1.4 1.4 0 0 1 .96 1.36V19a2.5 2.5 0 0 1-2.7 2.5C9.2 20.9 3.1 14.8 2.5 6.7A2.5 2.5 0 0 1 5 4h1.6Z" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <rect x="3.5" y="4.5" width="17" height="16" rx="2.4" />
+          <path d="M3.5 9.5h17M8 2.5v4M16 2.5v4" />
+          <circle cx="8.5" cy="14" r="1.1" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "documents":
+      return (
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+          <path d="M14 3v4h4M9.5 13h5M9.5 16.5h5" />
+        </svg>
+      );
+    case "forms":
+      return (
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <rect x="5" y="4" width="14" height="17" rx="2.2" />
+          <path d="M9 3.5h6v3H9zM8.5 12h7M8.5 16h4" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function FeatureIcon({ k }: { k: FeatureKey }) {
+  const common = {
+    width: 22,
+    height: 22,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (k) {
+    case "customers":
+      return (
+        <svg {...common} aria-hidden>
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+          <path d="M16 6.2a3 3 0 0 1 0 5.6" />
+          <path d="M18.5 19a5 5 0 0 0-2.7-4.4" />
+        </svg>
+      );
+    case "comms":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M4 5h11a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8l-4 3z" />
+          <path d="M20 9v6a2 2 0 0 1-2 2h-1" />
+        </svg>
+      );
+    case "documents":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+          <path d="M14 3v4h4M9.5 13h5M9.5 16.5h5" />
+        </svg>
+      );
+    case "automation":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M13 2 4 14h7l-1 8 9-12h-7z" />
+        </svg>
+      );
+    case "tasks":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M4 6.5l1.5 1.5L8 5.5M4 12.5l1.5 1.5L8 11.5M4 18.5l1.5 1.5L8 17.5" />
+          <path d="M11 7h9M11 13h9M11 19h9" />
+        </svg>
+      );
+    case "control":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M4 20V4" />
+          <path d="M4 20h16" />
+          <path d="M8 17v-5M12.5 17V8M17 17v-7" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+type CapabilityIconKey =
+  | "ai"
+  | "analytics"
+  | "automation"
+  | "code"
+  | "layers"
+  | "server"
+  | "system"
+  | "process"
+  | "brand"
+  | "build";
+
+function CapabilityIcon({ k }: { k: CapabilityIconKey }) {
+  const common = {
+    width: 16,
+    height: 16,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (k) {
+    case "ai":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z" />
+          <path d="M18 15l.8 1.8L20.5 17.5 18.7 18.3 18 20l-.8-1.7L15.5 17.5 17.2 16.8z" />
+        </svg>
+      );
+    case "analytics":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M4 20V4M4 20h16" />
+          <path d="M8 16l3-4 3 2 4-6" />
+        </svg>
+      );
+    case "automation":
+      return (
+        <svg {...common} aria-hidden>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 4v2M12 18v2M4 12h2M18 12h2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M17.7 6.3l-1.4 1.4M7.7 16.3l-1.4 1.4" />
+        </svg>
+      );
+    case "code":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 5l-2 14" />
+        </svg>
+      );
+    case "layers":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M12 3l9 5-9 5-9-5z" />
+          <path d="M3 13l9 5 9-5" />
+        </svg>
+      );
+    case "server":
+      return (
+        <svg {...common} aria-hidden>
+          <rect x="3.5" y="4" width="17" height="6" rx="1.5" />
+          <rect x="3.5" y="14" width="17" height="6" rx="1.5" />
+          <path d="M7 7h.01M7 17h.01" />
+        </svg>
+      );
+    case "system":
+      return (
+        <svg {...common} aria-hidden>
+          <rect x="3.5" y="3.5" width="7" height="7" rx="1.4" />
+          <rect x="13.5" y="3.5" width="7" height="7" rx="1.4" />
+          <rect x="3.5" y="13.5" width="7" height="7" rx="1.4" />
+          <rect x="13.5" y="13.5" width="7" height="7" rx="1.4" />
+        </svg>
+      );
+    case "process":
+      return (
+        <svg {...common} aria-hidden>
+          <circle cx="5" cy="6" r="2" />
+          <circle cx="5" cy="18" r="2" />
+          <circle cx="19" cy="12" r="2" />
+          <path d="M7 6h6a3 3 0 0 1 3 3v.5M7 18h6a3 3 0 0 0 3-3v-.5" />
+        </svg>
+      );
+    case "brand":
+      return (
+        <svg {...common} aria-hidden>
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+          <circle cx="12" cy="12" r="3.2" />
+        </svg>
+      );
+    case "build":
+      return (
+        <svg {...common} aria-hidden>
+          <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" />
+          <path d="M4 7.5l8 4.5 8-4.5M12 12v9" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
