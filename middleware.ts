@@ -14,8 +14,6 @@ const SHARED_TOP_LEVEL = [
   "/demo-anfordern",
   "/api",
   "/diagnose",
-  "/datenschutz",
-  "/impressum",
   "/verify-email",
 ];
 
