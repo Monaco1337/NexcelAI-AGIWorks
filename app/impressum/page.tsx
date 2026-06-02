@@ -28,17 +28,17 @@ export default function ImpressumPage() {
         <div className="space-y-4">
           <div className="p-5 rounded-xl group hover:scale-[1.02] transition-all duration-300" style={{ background: "rgba(164, 92, 255, 0.05)", border: "1px solid rgba(164, 92, 255, 0.15)", boxShadow: "0 4px 20px rgba(164, 92, 255, 0.1)" }}>
             <p className="text-sm font-semibold text-[#A45CFF] mb-2 uppercase tracking-wider">Unternehmen</p>
-            <p className="text-xl font-bold text-[#FFFFFF]">NEXCEL AI</p>
+            <p className="text-xl font-bold text-[#FFFFFF]">AGI Works</p>
           </div>
           <div className="p-5 rounded-xl group hover:scale-[1.02] transition-all duration-300" style={{ background: "rgba(164, 92, 255, 0.05)", border: "1px solid rgba(164, 92, 255, 0.15)", boxShadow: "0 4px 20px rgba(164, 92, 255, 0.1)" }}>
-            <p className="text-sm font-semibold text-[#A45CFF] mb-2 uppercase tracking-wider">Inhaberin</p>
-            <p className="text-lg font-semibold text-[#FFFFFF]">Celina Siebeneicher</p>
+            <p className="text-sm font-semibold text-[#A45CFF] mb-2 uppercase tracking-wider">Inhaber</p>
+            <p className="text-lg font-semibold text-[#FFFFFF]">Kevin Blazevic</p>
           </div>
           <div className="p-5 rounded-xl group hover:scale-[1.02] transition-all duration-300" style={{ background: "rgba(164, 92, 255, 0.05)", border: "1px solid rgba(164, 92, 255, 0.15)", boxShadow: "0 4px 20px rgba(164, 92, 255, 0.1)" }}>
             <p className="text-sm font-semibold text-[#A45CFF] mb-2 uppercase tracking-wider">Anschrift</p>
             <p className="text-[#E5E7EB] leading-relaxed">
-              Hemmerder Dorfstraße 111<br />
-              59427 Unna<br />
+              Hansastraße 34<br />
+              59423 Unna<br />
               Deutschland
             </p>
           </div>
@@ -67,28 +67,22 @@ export default function ImpressumPage() {
             <p className="text-sm font-semibold text-[#A45CFF] mb-3 uppercase tracking-wider">E-Mail</p>
             <div className="space-y-2.5">
               <a
-                href="mailto:info@nexcelai.com"
+                href="mailto:info@agiworks.de"
                 className="block text-[#E5E7EB] hover:text-[#A45CFF] transition-all duration-300 hover:translate-x-1 transform font-medium"
               >
-                info@nexcelai.com
+                info@agiworks.de
               </a>
               <a
-                href="mailto:kontakt@nexcelai.com"
+                href="mailto:kontakt@agiworks.de"
                 className="block text-[#E5E7EB] hover:text-[#A45CFF] transition-all duration-300 hover:translate-x-1 transform font-medium"
               >
-                kontakt@nexcelai.com
-              </a>
-              <a
-                href="mailto:support@nexcelai.com"
-                className="block text-[#E5E7EB] hover:text-[#A45CFF] transition-all duration-300 hover:translate-x-1 transform font-medium"
-              >
-                support@nexcelai.com
+                kontakt@agiworks.de
               </a>
             </div>
           </div>
           <div className="p-5 rounded-xl group hover:scale-[1.02] transition-all duration-300" style={{ background: "rgba(164, 92, 255, 0.05)", border: "1px solid rgba(164, 92, 255, 0.15)", boxShadow: "0 4px 20px rgba(164, 92, 255, 0.1)" }}>
             <p className="text-sm font-semibold text-[#A45CFF] mb-2 uppercase tracking-wider">Website</p>
-            <p className="text-lg font-semibold text-[#FFFFFF]">www.nexcelai.com</p>
+            <p className="text-lg font-semibold text-[#FFFFFF]">www.agiworks.de</p>
           </div>
         </div>
       ),
@@ -118,9 +112,9 @@ export default function ImpressumPage() {
       content: (
         <div className="p-6 rounded-xl" style={{ background: "rgba(164, 92, 255, 0.05)", border: "1px solid rgba(164, 92, 255, 0.15)", boxShadow: "0 4px 20px rgba(164, 92, 255, 0.1)" }}>
           <p className="text-[#E5E7EB] leading-relaxed text-lg">
-            Celina Siebeneicher<br />
-            Hemmerder Dorfstraße 111<br />
-            59427 Unna<br />
+            Kevin Blazevic<br />
+            Hansastraße 34<br />
+            59423 Unna<br />
             Deutschland
           </p>
         </div>
@@ -381,7 +375,7 @@ export default function ImpressumPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            <p className="text-sm text-[#9CA3AF] mb-6">Stand: Dezember 2025</p>
+            <p className="text-sm text-[#9CA3AF] mb-6">Stand: Juni 2026</p>
             <Link
               href="/"
               className="inline-flex items-center gap-2 text-[#A45CFF] hover:text-[#CBA6FF] transition-all duration-300 font-medium group"
