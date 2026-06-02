@@ -82,7 +82,7 @@ export default function DatenschutzPage() {
             Bundesdatenschutzgesetz (BDSG), dem Telekommunikation-Digitale-Dienste-Datenschutz-Gesetz
             (TDDDG) sowie weiteren anwendbaren europäischen und nationalen Bestimmungen. Soweit
             KI-Systeme eingesetzt werden, berücksichtigen wir zusätzlich die Vorgaben der
-            Verordnung (EU) 2024/1689 (EU-KI-Verordnung / „AI Act").
+            Verordnung (EU) 2024/1689 (EU-KI-Verordnung bzw. AI Act).
           </Para>
           <div className="mt-4">
             <Para>
@@ -212,7 +212,7 @@ export default function DatenschutzPage() {
           <Card>
             <Label>Schriftarten (Self-Hosting)</Label>
             <Para>
-              Wir verwenden die Schriftarten „Inter" und „Plus Jakarta Sans". Diese werden zum
+              Wir verwenden die Schriftarten Inter und Plus Jakarta Sans. Diese werden zum
               Erstellungszeitpunkt lokal eingebunden und ausschließlich von unserer eigenen
               Infrastruktur ausgeliefert. Es findet <span className="text-white">keine</span>{" "}
               Verbindung zu Google-Servern und keine Übermittlung Ihrer IP-Adresse an Dritte zum
@@ -343,7 +343,7 @@ export default function DatenschutzPage() {
         <Card>
           <Para>
             Teile der Analyse können direkt in Ihrem Browser ausgeführt werden. Hierfür laden wir
-            quelloffene KI-Modelle (über die Bibliothek „Transformers.js" von Hugging Face) einmalig
+            quelloffene KI-Modelle (über die Bibliothek Transformers.js von Hugging Face) einmalig
             herunter und führen die Auswertung anschließend <span className="text-white">lokal auf
             Ihrem Endgerät</span> aus.
           </Para>
