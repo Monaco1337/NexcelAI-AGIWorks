@@ -32,11 +32,13 @@ export default function AgbView({
       content: (
         <div className="space-y-4">
           <Para>
-            Diese Allgemeinen Geschäftsbedingungen (nachfolgend „AGB") gelten für
-            alle Verträge über die Entwicklung, Bereitstellung und Betreuung
-            digitaler Systeme zwischen {entity.ownerWithBrand}, {entity.street},{" "}
-            {entity.zipCity}, {entity.country} (nachfolgend „{entity.brandName}")
-            und dem Auftraggeber (nachfolgend „Kunde").
+            Diese Allgemeinen Geschäftsbedingungen (nachfolgend {"\u201eAGB\u201c"})
+            gelten für alle Verträge über die Entwicklung, Bereitstellung und
+            Betreuung digitaler Systeme zwischen {entity.ownerWithBrand},{" "}
+            {entity.street}, {entity.zipCity}, {entity.country} (nachfolgend{" "}
+            {"\u201e"}
+            {entity.brandName}
+            {"\u201c"}) und dem Auftraggeber (nachfolgend {"\u201eKunde\u201c"}).
           </Para>
           <Para>
             Die AGB gelten ausschließlich gegenüber Unternehmern im Sinne von § 14
