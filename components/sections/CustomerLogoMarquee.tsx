@@ -40,18 +40,18 @@ const customerLogos: CustomerLogo[] = [
     style: { filter: "invert(1) brightness(0.88) opacity(0.78)" },
   },
   {
-    // Transparent, navy blau — leicht aufhellen
+    // Weißer Hintergrund → brightness(0) invert(1) = sauberes weißes Monochrom, kein Kasten
     name: "PflegeNest Bochum",
     src: "/pflegenest-bochum.png",
-    className: "max-h-[62px] max-w-[62px] sm:max-h-[72px] sm:max-w-[72px]",
-    style: { filter: "brightness(1.20) opacity(0.78)" },
+    className: "max-h-[64px] max-w-[64px] sm:max-h-[76px] sm:max-w-[76px]",
+    style: { filter: "brightness(0) invert(1) opacity(0.78)" },
   },
   {
-    // Transparent, silber/orange Metallic — auf dark stark
+    // Dunkler Hintergrund — direkt nutzbar
     name: "Borne-Run",
     src: "/borne-run.png",
-    className: "max-h-[50px] max-w-[120px] sm:max-h-[58px] sm:max-w-[136px]",
-    style: { filter: "brightness(1.05) opacity(0.82)" },
+    className: "max-h-[40px] max-w-[160px] sm:max-h-[46px] sm:max-w-[184px] rounded-lg",
+    style: { filter: "brightness(1.05) opacity(0.88)" },
   },
   {
     // brightness(0) invert(1) → sauberes weißes Monochrom-Logo, maximal lesbar auf dark
@@ -61,11 +61,11 @@ const customerLogos: CustomerLogo[] = [
     style: { filter: "brightness(0) invert(1) opacity(0.75)" },
   },
   {
-    // Transparent, weiß+türkis Wortmarke — auf dark sehr gut lesbar
+    // Dunkler Hintergrund — direkt nutzbar, dezent aufgehellt
     name: "AGI Energy",
     src: "/agi-energy.png",
-    className: "max-h-[28px] max-w-[185px] sm:max-h-[32px] sm:max-w-[210px]",
-    style: { filter: "brightness(1.10) opacity(0.78)" },
+    className: "max-h-[36px] max-w-[168px] sm:max-h-[42px] sm:max-w-[192px] rounded-lg",
+    style: { filter: "brightness(1.08) opacity(0.90)" },
   },
   {
     // Transparent, dunkelgrün — brightness boost nötig
@@ -75,19 +75,19 @@ const customerLogos: CustomerLogo[] = [
     style: { filter: "brightness(1.35) opacity(0.80)" },
   },
   {
-    // Transparent, schwarz/grau Wappen — aufhellen damit Details sichtbar
+    // Freigestelltes Wappen, dunkles Grau → stark aufhellen für dunklen BG
     name: "Cannabbros",
     src: "/cannabbros.png",
-    className: "max-h-[58px] max-w-[58px] sm:max-h-[68px] sm:max-w-[68px]",
-    style: { filter: "brightness(1.90) contrast(0.85) opacity(0.78)" },
+    className: "max-h-[64px] max-w-[64px] sm:max-h-[76px] sm:max-w-[76px]",
+    style: { filter: "brightness(2.2) contrast(0.80) opacity(0.80)" },
   },
   {
-    // Transparent, feine goldene Linien — drop-shadow für Präsenz
+    // Dunkler Hintergrund — direkt nutzbar, leicht aufgehellt für Premium-Wirkung
     name: "Anatoly Mook",
     src: "/anatoly-mook.png",
-    className: "max-h-[48px] max-w-[188px] sm:max-h-[56px] sm:max-w-[214px]",
+    className: "max-h-[52px] max-w-[156px] sm:max-h-[62px] sm:max-w-[178px] rounded-lg",
     style: {
-      filter: "brightness(1.25) drop-shadow(0 0 5px rgba(210,160,40,0.35)) opacity(0.85)",
+      filter: "brightness(1.10) opacity(0.88)",
     },
   },
 ];
