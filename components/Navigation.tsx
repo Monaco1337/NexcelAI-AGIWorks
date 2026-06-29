@@ -125,8 +125,9 @@ export default function Navigation() {
       const r = (h: string) => resolveBrandNavHref(h, brand.id);
       return [
         { label: "Start", href: r("/") },
+        { label: "Projekte", href: r("/projekte") },
+        { label: "Preise", href: r("/preiskalkulator") },
         { label: "Über uns", href: r("/ueber-mich") },
-        { label: "Preiskalkulator", href: r("/preiskalkulator") },
         { label: "Kontakt", href: r("/kontakt") },
       ];
     },
@@ -513,33 +514,49 @@ export default function Navigation() {
                             draggable={false}
                           />
                         )}
-                        <span
-                          className="text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-150"
-                          style={{
-                            fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                            letterSpacing: "-0.02em",
-                            background: brand.navigation.logoTextGradient,
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                            color: theme === "dark" ? "#E5E7EB" : "#111827",
-                          }}
-                        >
-                          {brand.navigation.logoText}
-                        </span>
-                        <span
-                          className="ml-0.5 sm:ml-1 text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-300"
-                          style={{
-                            fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                            letterSpacing: "-0.02em",
-                            background: brand.navigation.logoAccentGradient,
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                            color: "var(--accent)",
-                          }}
-                        >
-                          {brand.navigation.logoTextAccent}
+                        {/* Dual-Brand-Lockup (Mobile): Wortmarke + feine Partnerzeile */}
+                        <span className="flex flex-col justify-center leading-none">
+                          <span className="flex items-baseline">
+                            <span
+                              className="text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-150"
+                              style={{
+                                fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                                letterSpacing: "-0.02em",
+                                background: brand.navigation.logoTextGradient,
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                backgroundClip: "text",
+                                color: theme === "dark" ? "#E5E7EB" : "#111827",
+                              }}
+                            >
+                              {brand.navigation.logoText}
+                            </span>
+                            <span
+                              className="ml-0.5 sm:ml-1 text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-300"
+                              style={{
+                                fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                                letterSpacing: "-0.02em",
+                                background: brand.navigation.logoAccentGradient,
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                backgroundClip: "text",
+                                color: "var(--accent)",
+                              }}
+                            >
+                              {brand.navigation.logoTextAccent}
+                            </span>
+                          </span>
+                          {brand.navigation.partnerName && (
+                            <span
+                              className="mt-[2px] text-[8px] sm:text-[9px] font-medium uppercase tracking-[0.14em] whitespace-nowrap"
+                              style={{ color: "rgba(255,255,255,0.36)" }}
+                            >
+                              {brand.navigation.partnerLabel}{" "}
+                              <span style={{ color: "rgba(255,255,255,0.62)" }}>
+                                {brand.navigation.partnerName}
+                              </span>
+                            </span>
+                          )}
                         </span>
                       </motion.div>
                     </Link>
@@ -696,26 +713,42 @@ export default function Navigation() {
                         draggable={false}
                       />
                     )}
-                    <span
-                      className="text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
-                      style={{
-                        fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                        letterSpacing: "-0.02em",
-                        color: "#E5E7EB",
-                      }}
-                    >
-                      {brand.navigation.logoText}
-                    </span>
-                    <span
-                      className="ml-0.5 lg:ml-1 text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
-                      style={{
-                        fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                        letterSpacing: "-0.02em",
-                        color: "var(--accent)",
-                        textShadow: "0 0 12px color-mix(in srgb, var(--accent) 40%, transparent)",
-                      }}
-                    >
-                      {brand.navigation.logoTextAccent}
+                    {/* Dual-Brand-Lockup: dominante Wortmarke + feine Partnerzeile */}
+                    <span className="flex flex-col justify-center leading-none">
+                      <span className="flex items-baseline">
+                        <span
+                          className="text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
+                          style={{
+                            fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                            letterSpacing: "-0.02em",
+                            color: "#E5E7EB",
+                          }}
+                        >
+                          {brand.navigation.logoText}
+                        </span>
+                        <span
+                          className="ml-0.5 lg:ml-1 text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
+                          style={{
+                            fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                            letterSpacing: "-0.02em",
+                            color: "var(--accent)",
+                            textShadow: "0 0 12px color-mix(in srgb, var(--accent) 40%, transparent)",
+                          }}
+                        >
+                          {brand.navigation.logoTextAccent}
+                        </span>
+                      </span>
+                      {brand.navigation.partnerName && (
+                        <span
+                          className="mt-[3px] text-[9px] lg:text-[10px] font-medium uppercase tracking-[0.16em] whitespace-nowrap"
+                          style={{ color: "rgba(255,255,255,0.38)" }}
+                        >
+                          {brand.navigation.partnerLabel}{" "}
+                          <span style={{ color: "rgba(255,255,255,0.66)" }}>
+                            {brand.navigation.partnerName}
+                          </span>
+                        </span>
+                      )}
                     </span>
                   </motion.div>
                   </Link>
@@ -832,6 +865,55 @@ export default function Navigation() {
                       </span>
                     </motion.button>
                   </motion.nav>
+
+                  {/* Primärer CTA: Systemanalyse starten */}
+                  <Link
+                    href={resolveBrandNavHref("/systemanalyse", brand.id)}
+                    prefetch={true}
+                    className="group/cta ml-2.5 xl:ml-3 flex-shrink-0"
+                  >
+                    <motion.span
+                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full px-4 lg:px-5 xl:px-6 py-2.5 lg:py-3 text-[11px] lg:text-xs xl:text-sm font-semibold whitespace-nowrap"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      whileHover={{ scale: 1.03, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                      style={{
+                        background: "var(--brand-gradient)",
+                        color: "#FFFFFF",
+                        letterSpacing: "0.01em",
+                        boxShadow:
+                          "0 10px 28px var(--brand-glow-strong), inset 0 1px 0 rgba(255,255,255,0.25)",
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-out group-hover/cta:translate-x-full"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent)",
+                        }}
+                      />
+                      <span className="relative">Systemanalyse starten</span>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                        className="relative transition-transform duration-300 group-hover/cta:translate-x-0.5"
+                      >
+                        <path
+                          d="M5 12h14M13 6l6 6-6 6"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </motion.span>
+                  </Link>
                 </div>
 
               </div>
@@ -1154,7 +1236,7 @@ export default function Navigation() {
               <div className="flex flex-col h-full p-6">
                 {/* Logo + X-Button oben */}
                 <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center text-xl font-bold tracking-tight">
+                  <div className="flex items-center">
                     {brand.navigation.logoMark && (
                       <img
                         src={brand.navigation.logoMark.src}
@@ -1169,18 +1251,33 @@ export default function Navigation() {
                         draggable={false}
                       />
                     )}
-                    <span style={{
-                      background: brand.navigation.logoTextGradient,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}>{brand.navigation.logoText}</span>
-                    <span className="ml-1" style={{
-                      background: brand.navigation.logoAccentGradient,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}>{brand.navigation.logoTextAccent}</span>
+                    <span className="flex flex-col justify-center leading-none">
+                      <span className="flex items-baseline text-xl font-bold tracking-tight">
+                        <span style={{
+                          background: brand.navigation.logoTextGradient,
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                        }}>{brand.navigation.logoText}</span>
+                        <span className="ml-1" style={{
+                          background: brand.navigation.logoAccentGradient,
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                        }}>{brand.navigation.logoTextAccent}</span>
+                      </span>
+                      {brand.navigation.partnerName && (
+                        <span
+                          className="mt-[3px] text-[9px] font-medium uppercase tracking-[0.14em] whitespace-nowrap"
+                          style={{ color: "rgba(255,255,255,0.4)" }}
+                        >
+                          {brand.navigation.partnerLabel}{" "}
+                          <span style={{ color: "rgba(255,255,255,0.66)" }}>
+                            {brand.navigation.partnerName}
+                          </span>
+                        </span>
+                      )}
+                    </span>
                   </div>
                   <motion.button
                     className="w-10 h-10 flex items-center justify-center rounded-lg"
@@ -1456,6 +1553,40 @@ export default function Navigation() {
                     </motion.div>
                   ))}
                 </nav>
+
+                {/* Mobile CTA: Systemanalyse starten */}
+                <Link
+                  href={resolveBrandNavHref("/systemanalyse", brand.id)}
+                  prefetch={true}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="group/mcta block"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    whileTap={{ scale: 0.98 }}
+                    className="relative flex items-center justify-center gap-2 overflow-hidden rounded-2xl px-5 py-4 text-sm font-semibold"
+                    style={{
+                      background: "var(--brand-gradient)",
+                      color: "#FFFFFF",
+                      boxShadow:
+                        "0 12px 30px var(--brand-glow-strong), inset 0 1px 0 rgba(255,255,255,0.25)",
+                    }}
+                  >
+                    <span className="relative">Systemanalyse starten</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden className="relative">
+                      <path
+                        d="M5 12h14M13 6l6 6-6 6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </motion.div>
+                </Link>
               </div>
             </motion.div>
           </>

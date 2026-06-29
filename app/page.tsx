@@ -3,30 +3,50 @@
 import { useTheme } from "@/contexts/ThemeContext";
 import dynamic from "next/dynamic";
 import Footer from "@/components/Footer";
-import DiagnosticsHero from "@/components/diagnostics/DiagnosticsHero";
+import PremiumHero from "@/components/sections/PremiumHero";
+import ReferenceBar from "@/components/sections/ReferenceBar";
 import { SectionErrorBoundary } from "@/components/ErrorBoundaries";
 
-// Reihenfolge:
-//   DiagnosticsHero            (Hero — Unternehmensdiagnostik)
-//   → OperatingTransformation  (Section 2 — Chaos)
-//   → SystemSynchronization    (Section 3 — Synchronisation, Übergang)
-//   → SystemsInDeployment      (Section 4 — Systeme im Einsatz)
+// Premium-Enterprise-Startseite — Reihenfolge:
+//   PremiumHero            (Hero — Gründerbild + Dual-Brand-Card)
+//   → ReferenceBar         (Referenzleiste)
+//   → ProblemSolution      (Problem / Lösung)
+//   → SystemsGrid          (Systeme · #systeme)
+//   → ProjectsShowcase     (Projekte · #projekte)
+//   → TrustKpis            (Vertrauens-Kennzahlen)
+//   → PricingSection       (Preise · #preise)
+//   → FoundersCta          (Gründerkontakt)
 //   → Footer
 
-const OperatingTransformationSection = dynamic(
-  () => import("@/components/sections/OperatingTransformationSection"),
+const ProblemSolutionSection = dynamic(
+  () => import("@/components/sections/ProblemSolutionSection"),
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
 
-const SystemSynchronizationSection = dynamic(
-  () => import("@/components/sections/SystemSynchronizationSection"),
+const SystemsGrid = dynamic(() => import("@/components/sections/SystemsGrid"), {
+  ssr: true,
+  loading: () => <div className="h-64 bg-transparent" />,
+});
+
+const ProjectsShowcase = dynamic(
+  () => import("@/components/sections/ProjectsShowcase"),
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
 
-const SystemsInDeployment = dynamic(
-  () => import("@/components/sections/SystemsInDeployment"),
+const TrustKpis = dynamic(() => import("@/components/sections/TrustKpis"), {
+  ssr: true,
+  loading: () => <div className="h-40 bg-transparent" />,
+});
+
+const PricingSection = dynamic(
+  () => import("@/components/sections/PricingSection"),
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
+
+const FoundersCta = dynamic(() => import("@/components/sections/FoundersCta"), {
+  ssr: true,
+  loading: () => <div className="h-64 bg-transparent" />,
+});
 
 export default function Home() {
   const { theme } = useTheme();
@@ -41,15 +61,29 @@ export default function Home() {
         minHeight: "100vh",
       }}
     >
-      <DiagnosticsHero />
-      <SectionErrorBoundary sectionName="Operating Transformation">
-        <OperatingTransformationSection />
+      <SectionErrorBoundary sectionName="Premium Hero">
+        <PremiumHero />
       </SectionErrorBoundary>
-      <SectionErrorBoundary sectionName="System Synchronisation">
-        <SystemSynchronizationSection />
+      <SectionErrorBoundary sectionName="Referenzleiste">
+        <ReferenceBar />
       </SectionErrorBoundary>
-      <SectionErrorBoundary sectionName="Systeme im Einsatz">
-        <SystemsInDeployment />
+      <SectionErrorBoundary sectionName="Problem / Lösung">
+        <ProblemSolutionSection />
+      </SectionErrorBoundary>
+      <SectionErrorBoundary sectionName="Systeme">
+        <SystemsGrid />
+      </SectionErrorBoundary>
+      <SectionErrorBoundary sectionName="Projekte">
+        <ProjectsShowcase />
+      </SectionErrorBoundary>
+      <SectionErrorBoundary sectionName="Trust KPIs">
+        <TrustKpis />
+      </SectionErrorBoundary>
+      <SectionErrorBoundary sectionName="Preise">
+        <PricingSection />
+      </SectionErrorBoundary>
+      <SectionErrorBoundary sectionName="Gründerkontakt">
+        <FoundersCta />
       </SectionErrorBoundary>
       <Footer />
     </main>

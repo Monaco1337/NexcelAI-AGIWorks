@@ -343,7 +343,7 @@ export default function Footer() {
             </div>
           </motion.div>
 
-          {/* Produkte */}
+          {/* Systeme */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -351,35 +351,10 @@ export default function Footer() {
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
-              Produkte
+              Systeme
             </h4>
             <ul className="space-y-2 sm:space-y-3">
               {footer.links.products.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-[#9CA3AF] transition-colors duration-300 text-xs sm:text-sm font-light group flex items-center gap-2 hover:text-[var(--accent)]"
-                  >
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>→</span>
-                    <span>{link.label}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Lösungen */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
-              Lösungen
-            </h4>
-            <ul className="space-y-2 sm:space-y-3">
-              {footer.links.solutions.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
@@ -398,13 +373,38 @@ export default function Footer() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
             <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
               Unternehmen
             </h4>
             <ul className="space-y-2 sm:space-y-3">
               {footer.links.company.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-[#9CA3AF] transition-colors duration-300 text-xs sm:text-sm font-light group flex items-center gap-2 hover:text-[var(--accent)]"
+                  >
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>→</span>
+                    <span>{link.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Ressourcen */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+              Ressourcen
+            </h4>
+            <ul className="space-y-2 sm:space-y-3">
+              {footer.links.solutions.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}

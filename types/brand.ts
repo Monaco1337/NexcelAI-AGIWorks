@@ -100,6 +100,13 @@ export interface BrandNavigation {
    * AGI WORKS: silberner Ring + blaues Swoosh-A.
    */
   logoMark?: BrandLogoMark;
+  /**
+   * Partner-Lockup (Dual-Brand). Erscheint fein und untergeordnet unter dem
+   * dominanten Wortmark — z. B. „in Kooperation mit AGI Works".
+   * NEXCEL AI → partnerName: "AGI Works"; AGI Works → partnerName: "NEXCEL AI".
+   */
+  partnerLabel?: string;
+  partnerName?: string;
 }
 
 export interface BrandHeroProofStat {
