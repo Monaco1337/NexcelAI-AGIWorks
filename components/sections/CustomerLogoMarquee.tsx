@@ -33,11 +33,11 @@ const customerLogos: CustomerLogo[] = [
     style: { filter: "brightness(0.95) opacity(0.80)" },
   },
   {
-    // Transparent, türkis+rot+schwarz — lesbar auf dark
+    // Schwarzer Text auf Transparent → invert(1) = weiße Schrift, Farben invertiert aber lesbar
     name: "Impuls Ambulanter Pflegedienst",
     src: "/impuls-pflegedienst.png",
-    className: "max-h-[36px] max-w-[168px] sm:max-h-[42px] sm:max-w-[192px]",
-    style: { filter: "brightness(0.92) opacity(0.78)" },
+    className: "max-h-[36px] max-w-[180px] sm:max-h-[42px] sm:max-w-[206px]",
+    style: { filter: "invert(1) brightness(0.88) opacity(0.78)" },
   },
   {
     // Transparent, navy blau — leicht aufhellen
@@ -54,11 +54,11 @@ const customerLogos: CustomerLogo[] = [
     style: { filter: "brightness(1.05) opacity(0.82)" },
   },
   {
-    // Transparent, gold+dunkelgrau — sehr gut auf dark
+    // brightness(0) invert(1) → sauberes weißes Monochrom-Logo, maximal lesbar auf dark
     name: "Immobilien Weissleder",
     src: "/immobilien-weissleder.png",
-    className: "max-h-[38px] max-w-[185px] sm:max-h-[44px] sm:max-w-[210px]",
-    style: { filter: "brightness(1.05) opacity(0.80)" },
+    className: "max-h-[38px] max-w-[200px] sm:max-h-[44px] sm:max-w-[228px]",
+    style: { filter: "brightness(0) invert(1) opacity(0.75)" },
   },
   {
     // Transparent, weiß+türkis Wortmarke — auf dark sehr gut lesbar
