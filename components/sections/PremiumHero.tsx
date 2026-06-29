@@ -3,16 +3,15 @@
 /**
  * NEXCEL AI / AGI WORKS · PremiumHero
  *
- * Marketing-Hero auf Enterprise-Niveau (Dark Premium).
- *   Links:  Eyebrow · Headline · Subheadline · CTAs · Trustline
- *   Rechts: gemeinsames Gründerbild (Celina + Kevin) mit dunklem Overlay,
- *           subtilen Systemlinien und einer Glassmorphism-Dual-Brand-Card:
- *             NEXCEL AI  = gestaltet das System
- *             AGI Works  = baut das System
+ * Layer-Layout — kein Grid, das das Duo wegdrückt.
  *
- * Brand-aware über CSS-Tokens (--accent / --brand-*), identisch lauffähig für
- * NEXCEL AI (violett) und AGI Works (cyan/blau). Das Analyse-Tool liegt jetzt
- * unter /systemanalyse — der Primär-CTA verlinkt dorthin.
+ * Desktop
+ *   ├─ Hintergrund (z-0)  HeroBg + Orbit-Glow
+ *   ├─ Personen   (z-10)  absolut, right-[4vw] top-[120px], w-[min(52vw,820px)]
+ *   └─ Content    (z-20)  Text · CTAs · Feature-Bar · Coop-Card  (links, unabhängig)
+ *
+ * Mobile  (< lg)
+ *   Text → Founders (relative, max-w-[440px]) → Feature-Bar → Coop-Card
  */
 
 import Link from "next/link";
@@ -20,419 +19,450 @@ import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 
-const TRUST_ITEMS = [
-  "Website",
-  "Buchungssystem",
-  "CRM",
-  "Adminpanel",
-  "Lead-Funnel",
-  "Automatisierung",
-  "ERP",
+/* ── Feature icons ─────────────────────────────────────────────────── */
+function Ico({ d, extra }: { d?: string; extra?: React.ReactNode }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.65"
+      strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden className="shrink-0">
+      {d ? <path d={d} /> : extra}
+    </svg>
+  );
+}
+
+const FEATURES = [
+  { label: "Website",        icon: <Ico extra={<><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18"/></>} /> },
+  { label: "Buchungssystem", icon: <Ico extra={<><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></>} /> },
+  { label: "CRM",            icon: <Ico extra={<><circle cx="9" cy="8" r="3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M21 19c0-2.2-1.4-3.9-3.4-4.6"/></>} /> },
+  { label: "Adminpanel",     icon: <Ico extra={<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></>} /> },
+  { label: "Lead-Funnel",    icon: <Ico d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" /> },
+  { label: "Automatisierung",icon: <Ico d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" /> },
+  { label: "ERP",            icon: <Ico extra={<><path d="M12 3l8 4.5-8 4.5-8-4.5L12 3Z"/><path d="M4 12l8 4.5 8-4.5M4 16.5 12 21l8-4.5"/></>} /> },
 ];
 
+/* ── Main component ─────────────────────────────────────────────────── */
 export default function PremiumHero() {
-  const brand = useBrand();
+  const brand       = useBrand();
   const analyseHref = resolveBrandNavHref("/systemanalyse", brand.id);
 
   return (
     <section
       id="hero"
-      className="relative w-full overflow-hidden"
+      className="relative w-full overflow-hidden min-h-[680px] lg:min-h-[720px]"
       style={{
         background:
-          "radial-gradient(ellipse 75% 55% at 50% 12%, #0c0820 0%, #050410 55%, #020205 100%)",
+          "radial-gradient(ellipse 80% 60% at 55% 8%, #0d0924 0%, #050412 55%, #020206 100%)",
       }}
     >
-      <HeroBackground />
+      {/* ── z-0  Background grid + animated glow ─────────────────── */}
+      <HeroBg />
 
-      {/* Reservierter Whitespace für die fixed Premium-Navigation oben. */}
+      {/* ── Nav spacer ───────────────────────────────────────────── */}
+      <div aria-hidden style={{ height: "calc(env(safe-area-inset-top,0px) + 116px)" }} />
+
+      {/* ══════════════════════════════════════════════════════════
+          DESKTOP: Founders + Orbit  — absolute, z-10
+          Completely independent of text flow.
+      ══════════════════════════════════════════════════════════ */}
+
+      {/* Orbit / Glow — strictly behind founders (z-[5]) */}
       <div
         aria-hidden
-        className="shrink-0"
-        style={{ height: "calc(env(safe-area-inset-top, 0px) + 104px)" }}
+        className="pointer-events-none hidden lg:block absolute z-[5]"
+        style={{
+          right: "calc(4vw - 100px)",
+          top: "30px",
+          width: "min(60vw, 960px)",
+          height: "min(60vw, 960px)",
+        }}
+      >
+        {/* deep core glow — largest, most diffuse */}
+        <div className="absolute inset-[10%] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 48%, var(--brand-glow-mid) 0%, rgba(91,33,182,0.08) 52%, transparent 72%)",
+            filter: "blur(38px)",
+          }}
+        />
+        {/* mid halo */}
+        <div className="absolute inset-[22%] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 46%, var(--brand-glow-strong) 0%, transparent 60%)",
+            filter: "blur(18px)",
+            opacity: 0.45,
+          }}
+        />
+        {/* SVG orbital rings */}
+        <svg aria-hidden className="absolute inset-0 h-full w-full"
+          viewBox="0 0 500 500" fill="none">
+          <defs>
+            {/* primary ring gradient — bright arc on upper-left, fades out */}
+            <linearGradient id="phOrb1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stopColor="#C4B5FD" stopOpacity="0"   />
+              <stop offset="28%"  stopColor="#C4B5FD" stopOpacity="0.72"/>
+              <stop offset="55%"  stopColor="#A78BFA" stopOpacity="0.55"/>
+              <stop offset="78%"  stopColor="#7C3AED" stopOpacity="0.28"/>
+              <stop offset="100%" stopColor="#7C3AED" stopOpacity="0"   />
+            </linearGradient>
+            {/* secondary ring */}
+            <linearGradient id="phOrb2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%"   stopColor="#93C5FD" stopOpacity="0"   />
+              <stop offset="35%"  stopColor="#93C5FD" stopOpacity="0.38"/>
+              <stop offset="65%"  stopColor="#7C3AED" stopOpacity="0.22"/>
+              <stop offset="100%" stopColor="#7C3AED" stopOpacity="0"   />
+            </linearGradient>
+            {/* node dot glow */}
+            <radialGradient id="phDot" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stopColor="#E9D5FF" stopOpacity="1"  />
+              <stop offset="100%" stopColor="#A78BFA" stopOpacity="0"  />
+            </radialGradient>
+          </defs>
+
+          {/* outer main ring */}
+          <circle cx="250" cy="250" r="235"
+            stroke="url(#phOrb1)" strokeWidth="1.1" />
+
+          {/* inner ring — slightly tilted ellipse for depth */}
+          <ellipse cx="250" cy="250" rx="168" ry="176"
+            stroke="url(#phOrb2)" strokeWidth="0.8" opacity="0.7"
+            transform="rotate(-18 250 250)" />
+
+          {/* subtle innermost ring */}
+          <circle cx="250" cy="250" r="108"
+            stroke="#A78BFA" strokeWidth="0.5" opacity="0.18" />
+
+          {/* node dots — accent points on outer ring */}
+          <circle cx="250" cy="15"  r="3.5" fill="url(#phDot)" opacity="0.9" />
+          <circle cx="484" cy="250" r="2.8" fill="url(#phDot)" opacity="0.65"/>
+          <circle cx="250" cy="485" r="2.2" fill="url(#phDot)" opacity="0.4" />
+          <circle cx="16"  cy="250" r="2.2" fill="url(#phDot)" opacity="0.4" />
+
+          {/* small accent arc — gives technical / system feel */}
+          <path
+            d="M 250 15 A 235 235 0 0 1 462 362"
+            stroke="#C4B5FD" strokeWidth="0.6" opacity="0.22"
+            strokeDasharray="6 10"
+          />
+        </svg>
+      </div>
+
+      {/* Founders image — absolute on desktop, hidden here on mobile */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/team/founders-cutout.png"
+        alt="Celina Siebeneicher und Kevin Blazevic — Gründer von NEXCEL AI und AGI Works"
+        draggable={false}
+        className="
+          pointer-events-none select-none
+          hidden lg:block
+          absolute z-10
+          object-contain object-bottom
+        "
+        style={{
+          right: "4vw",
+          top: "100px",
+          width: "min(52vw, 820px)",
+          minWidth: "600px",
+          /* tall enough to show both people fully */
+          height: "auto",
+          maxHeight: "calc(100% - 100px)",
+          filter:
+            "drop-shadow(0 28px 55px rgba(0,0,0,0.58)) drop-shadow(0 6px 18px rgba(0,0,0,0.42))",
+        }}
       />
 
-      <div className="relative z-10 mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-12 px-5 pb-20 pt-4 sm:px-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16 lg:pb-28 lg:pt-6">
-        {/* ── Linke Spalte: Text ─────────────────────────────────── */}
-        <div className="flex flex-col">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="flex w-fit items-center gap-2 text-[11px] font-medium uppercase tracking-[0.30em]"
-            style={{ color: "var(--accent)" }}
-          >
-            <span
-              aria-hidden
-              className="inline-block h-1.5 w-1.5 rounded-full"
-              style={{
-                background: "var(--accent)",
-                boxShadow: "0 0 12px var(--brand-glow-strong)",
-              }}
-            />
-            Individuell · Sicher · Skalierbar
-          </motion.div>
+      {/* ══════════════════════════════════════════════════════════
+          CONTENT  — z-20, left-aligned, independent of founders
+      ══════════════════════════════════════════════════════════ */}
+      <div className="relative z-20 mx-auto w-full max-w-[1300px] px-5 sm:px-8">
 
-          <motion.h1
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-6 text-[2.6rem] leading-[1.04] tracking-[-0.035em] text-white sm:text-[3.1rem] sm:leading-[1.02] md:text-[3.5rem] lg:text-[3.8rem]"
-            style={{
-              fontFamily: "var(--font-headline), system-ui, sans-serif",
-              fontWeight: 300,
-            }}
-          >
-            Digitale Betriebssysteme
-            <br />
-            <span style={{ fontWeight: 400 }}>für </span>
+        {/* Eyebrow */}
+        <motion.p
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="text-[11px] font-semibold uppercase tracking-[0.34em]"
+          style={{ color: "var(--accent)" }}
+        >
+          Individuell · Sicher · Skalierbar
+        </motion.p>
+
+        {/* Headline */}
+        <motion.h1
+          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+          className="
+            mt-5 max-w-[680px]
+            text-[2.65rem] font-[300] leading-[1.03] tracking-[-0.038em] text-white
+            sm:text-[3.1rem] md:text-[3.5rem] lg:text-[3.9rem]
+          "
+          style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+        >
+          Digitale Betriebssysteme{" "}
+          <span style={{ fontWeight: 400 }}>für </span>
+          <span style={{
+            background: "var(--brand-headline-gradient)",
+            WebkitBackgroundClip: "text", backgroundClip: "text",
+            color: "transparent", WebkitTextFillColor: "transparent",
+            fontWeight: 400,
+            filter: "drop-shadow(0 0 26px var(--brand-glow-strong))",
+          }}>
+            Unternehmen.
+          </span>
+        </motion.h1>
+
+        {/* Sub */}
+        <motion.p
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.13, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-5 max-w-[480px] text-[15px] leading-[1.72] text-white/65 sm:text-[16px]"
+        >
+          Wir entwickeln individuelle Systeme für Kunden, Buchungen, Leads,
+          Verwaltung, Kommunikation, Dokumente und Automatisierung — von der
+          Premium-Webseite bis zum ERP-ähnlichen Unternehmenssystem.
+        </motion.p>
+
+        {/* CTAs */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.19, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
+        >
+          <Link href={analyseHref} prefetch className="group/cta">
             <span
+              className="relative flex w-fit items-center gap-2.5 overflow-hidden rounded-2xl px-7 py-[16px] text-[14px] font-semibold text-white transition-transform duration-300 group-hover/cta:-translate-y-0.5"
               style={{
-                background: "var(--brand-headline-gradient)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                WebkitTextFillColor: "transparent",
-                fontWeight: 400,
-                filter: "drop-shadow(0 0 28px var(--brand-glow-strong))",
+                background: "var(--brand-gradient)",
+                fontFamily: "var(--font-headline), system-ui, sans-serif",
+                boxShadow: "0 18px 44px var(--brand-glow-strong), inset 0 1px 0 rgba(255,255,255,0.28)",
               }}
             >
-              Unternehmen.
+              <span aria-hidden
+                className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-out group-hover/cta:translate-x-full"
+                style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.26),transparent)" }}
+              />
+              <span className="relative">Systemanalyse starten</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden
+                className="relative transition-transform duration-300 group-hover/cta:translate-x-0.5">
+                <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </span>
-          </motion.h1>
+          </Link>
 
-          <motion.p
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-6 max-w-[560px] text-[15.5px] leading-[1.65] text-white/65 sm:text-[17px]"
-          >
-            Wir entwickeln individuelle Systeme für Kunden, Buchungen, Leads,
-            Verwaltung, Kommunikation, Dokumente und Automatisierung — von der
-            Premium-Webseite bis zum ERP-ähnlichen Unternehmenssystem.
-          </motion.p>
+          <a href="#systeme" className="group/sec">
+            <span
+              className="flex w-fit items-center gap-2 rounded-2xl px-7 py-[16px] text-[14px] font-medium text-white/85 backdrop-blur-sm transition-all duration-300 hover:text-white"
+              style={{
+                fontFamily: "var(--font-headline), system-ui, sans-serif",
+                background: "linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.025) 100%)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)",
+              }}
+            >
+              Lösungen ansehen
+              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden
+                className="transition-transform duration-300 group-hover/sec:translate-y-0.5">
+                <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </a>
+        </motion.div>
 
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <Link href={analyseHref} prefetch className="group/cta">
-              <span
-                className="relative flex items-center justify-center gap-2.5 overflow-hidden rounded-2xl px-7 py-[16px] text-[14px] font-semibold text-white transition-transform duration-300 group-hover/cta:-translate-y-0.5"
-                style={{
-                  background: "var(--brand-gradient)",
-                  fontFamily: "var(--font-headline), system-ui, sans-serif",
-                  boxShadow:
-                    "0 16px 40px var(--brand-glow-strong), inset 0 1px 0 rgba(255,255,255,0.26)",
-                }}
-              >
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-out group-hover/cta:translate-x-full"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.24), transparent)",
-                  }}
-                />
-                <span className="relative">Systemanalyse starten</span>
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  aria-hidden
-                  className="relative transition-transform duration-300 group-hover/cta:translate-x-0.5"
-                >
-                  <path
-                    d="M5 12h14M13 6l6 6-6 6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </Link>
-
-            <a href="#systeme" className="group/sec">
-              <span
-                className="relative flex items-center justify-center gap-2 rounded-2xl px-7 py-[16px] text-[14px] font-medium text-white/85 transition-all duration-300 group-hover/sec:text-white"
-                style={{
-                  fontFamily: "var(--font-headline), system-ui, sans-serif",
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-                }}
-              >
-                Lösungen ansehen
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  aria-hidden
-                  className="transition-transform duration-300 group-hover/sec:translate-y-0.5"
-                >
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </a>
-          </motion.div>
-
-          {/* Trustline */}
-          <motion.ul
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.7, delay: 0.28 }}
-            className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12.5px] text-white/45"
-          >
-            {TRUST_ITEMS.map((item, i) => (
-              <li key={item} className="flex items-center gap-3">
-                {i > 0 && (
-                  <span aria-hidden className="text-white/20">
-                    ·
-                  </span>
-                )}
-                <span>{item}</span>
-              </li>
-            ))}
-          </motion.ul>
+        {/* ── Mobile founders — in flow, after CTAs ──────────────── */}
+        <div className="lg:hidden mt-10 flex justify-center">
+          {/* mobile orbit glow */}
+          <div className="relative w-full max-w-[440px]">
+            <div aria-hidden className="pointer-events-none absolute inset-[-12%] rounded-full"
+              style={{
+                background: "radial-gradient(circle, var(--brand-glow-mid) 0%, transparent 68%)",
+                filter: "blur(20px)",
+                zIndex: 0,
+              }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/team/founders-cutout.png"
+              alt="Celina Siebeneicher und Kevin Blazevic"
+              draggable={false}
+              className="relative z-10 block w-full select-none object-contain"
+              style={{
+                filter:
+                  "drop-shadow(0 22px 44px rgba(0,0,0,0.55)) drop-shadow(0 4px 14px rgba(0,0,0,0.4))",
+              }}
+            />
+          </div>
         </div>
 
-        {/* ── Rechte Spalte: Gründerbild + Dual-Brand-Card ─────────── */}
+        {/* ══ Feature-Leiste + Coop-Card — ein zusammenhängendes System ══ */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.98, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto w-full max-w-[560px] lg:max-w-none"
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-8 mb-4 sm:mb-6 lg:mb-8"
         >
-          <div
-            className="relative overflow-hidden rounded-[28px]"
+          {/* ── Feature-Glass-Leiste ─────────────────────────────── */}
+          <ul
+            className="flex flex-wrap items-center gap-y-0 rounded-[16px] px-2 py-2 backdrop-blur sm:flex-nowrap"
             style={{
-              border: "1px solid var(--brand-card-border)",
-              boxShadow:
-                "0 50px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.06)",
+              background: "linear-gradient(180deg,rgba(255,255,255,0.052) 0%,rgba(255,255,255,0.018) 100%)",
+              border: "1px solid rgba(255,255,255,0.09)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07), 0 8px 24px rgba(0,0,0,0.28)",
+              width: "fit-content",
+              maxWidth: "100%",
             }}
           >
-            {/* Gründerbild */}
-            <div className="relative aspect-[4/5] w-full sm:aspect-[5/5] lg:aspect-[4/4.4]">
-              <img
-                src="/images/team/founders.png"
-                alt="Celina Siebeneicher und Kevin Blazevic — Gründer von NEXCEL AI und AGI Works"
-                className="absolute inset-0 h-full w-full select-none object-cover object-top"
-                draggable={false}
-              />
-              {/* Dunkles Overlay + Brand-Tint */}
-              <div
-                aria-hidden
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(5,4,16,0.18) 0%, rgba(5,4,16,0.34) 46%, rgba(5,4,16,0.92) 100%)",
-                }}
-              />
-              <div
-                aria-hidden
-                className="absolute inset-0 mix-blend-soft-light"
-                style={{
-                  background:
-                    "radial-gradient(70% 60% at 80% 12%, var(--brand-glow-mid), transparent 60%)",
-                }}
-              />
-              {/* subtile Systemlinien */}
-              <SystemLines />
-            </div>
-
-            {/* Glassmorphism Dual-Brand-Card */}
-            <div className="absolute inset-x-4 bottom-4 sm:inset-x-5 sm:bottom-5">
-              <div
-                className="relative overflow-hidden rounded-2xl p-4 sm:p-5"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  backdropFilter: "blur(26px) saturate(160%)",
-                  WebkitBackdropFilter: "blur(26px) saturate(160%)",
-                  boxShadow:
-                    "0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
-                }}
-              >
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute -top-px left-1/2 h-px w-2/3 -translate-x-1/2"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, transparent, var(--brand-line-bright), transparent)",
-                    opacity: 0.6,
-                  }}
-                />
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4">
-                  <BrandStatement
-                    mark={
-                      <span
-                        className="text-[12px] font-bold tracking-tight"
-                        style={{ color: "#E5E7EB" }}
-                      >
-                        NEXCEL{" "}
-                        <span style={{ color: "#8B5CF6" }}>AI</span>
-                      </span>
-                    }
-                    statement="gestaltet das System"
+            {FEATURES.map((f, i) => (
+              <li key={f.label} className="flex items-center">
+                {i > 0 && (
+                  <span aria-hidden
+                    className="mx-0.5 hidden h-[13px] w-px sm:block"
+                    style={{ background: "rgba(255,255,255,0.12)" }}
                   />
+                )}
+                <span
+                  className="flex items-center gap-[6px] rounded-xl px-2.5 py-[6px] text-[11.5px] font-medium text-white/56 transition-colors duration-300 hover:text-white/92 sm:px-3"
+                  style={{ cursor: "default" }}
+                >
+                  <span style={{ color: "var(--accent)" }}>{f.icon}</span>
+                  <span className="whitespace-nowrap">{f.label}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
 
-                  {/* Connector */}
-                  <div className="hidden items-center justify-center sm:flex">
-                    <span
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-white/80"
-                      style={{
-                        background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.14)",
-                      }}
-                    >
-                      <svg width="20" height="14" viewBox="0 0 28 18" fill="none" aria-hidden>
-                        <path
-                          d="M9 9a4.5 4.5 0 1 1-4.5-4.5C7 4.5 9 9 9 9s2 4.5 4.5 4.5A4.5 4.5 0 1 0 9 9Zm10 0a4.5 4.5 0 1 1 4.5 4.5C21 13.5 19 9 19 9s-2-4.5-4.5-4.5A4.5 4.5 0 0 0 19 9Z"
-                          fill="currentColor"
-                          opacity="0.85"
-                        />
-                      </svg>
-                    </span>
-                  </div>
+          {/* subtle glow bridge — visually connects bar to card */}
+          <div aria-hidden className="pointer-events-none relative h-[2px] w-full max-w-[460px] lg:ml-auto"
+            style={{
+              background: "linear-gradient(90deg,transparent 0%,rgba(139,92,246,0.18) 40%,rgba(147,197,253,0.12) 70%,transparent 100%)",
+              filter: "blur(1px)",
+            }}
+          />
 
-                  {/* Divider mobile */}
-                  <div
-                    aria-hidden
-                    className="h-px w-full sm:hidden"
-                    style={{ background: "rgba(255,255,255,0.10)" }}
+          {/* ── Coop Glass-Card ───────────────────────────────────── */}
+          {/*   Desktop: ml-auto → right-aligned, docks under Founder-Duo */}
+          <div
+            className="w-full max-w-[500px] lg:ml-auto lg:max-w-[480px]"
+          >
+          <div
+            className="relative overflow-hidden rounded-[18px] px-4 py-3.5 sm:px-5 sm:py-4"
+            style={{
+              background: "linear-gradient(160deg,rgba(255,255,255,0.09) 0%,rgba(255,255,255,0.035) 100%)",
+              border: "1px solid rgba(255,255,255,0.13)",
+              backdropFilter: "blur(32px) saturate(160%)",
+              WebkitBackdropFilter: "blur(32px) saturate(160%)",
+              boxShadow: "0 24px 56px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.14)",
+            }}
+          >
+            {/* top shimmer */}
+            <div aria-hidden
+              className="pointer-events-none absolute -top-px left-1/2 h-px w-1/2 -translate-x-1/2"
+              style={{
+                background: "linear-gradient(90deg,transparent,var(--brand-line-bright),transparent)",
+                opacity: 0.55,
+              }}
+            />
+
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
+              {/* NEXCEL AI */}
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[12.5px] font-bold tracking-tight text-white/90">
+                  NEXCEL <span style={{ color: "#A78BFA" }}>AI</span>
+                </span>
+                <span className="text-[10.5px] leading-snug text-white/48">
+                  Strategie, Systeme & Wachstum
+                </span>
+              </div>
+
+              {/* Infinity — bare symbol, no circle container */}
+              <div className="flex items-center justify-center px-1">
+                <svg
+                  width="36" height="20" viewBox="0 0 40 22" fill="none"
+                  aria-hidden className="shrink-0"
+                  style={{ filter: "drop-shadow(0 0 8px var(--brand-glow-strong))" }}
+                >
+                  {/* stroke version — clean, premium */}
+                  <path
+                    d="M14 11c0 0-2-6-7-6a6 6 0 0 0 0 12c5 0 6.5-3.5 10-6
+                       c3.5-2.5 5-6 10-6a6 6 0 0 1 0 12c-5 0-7-6-7-6"
+                    stroke="url(#infG)" strokeWidth="1.9"
+                    strokeLinecap="round" strokeLinejoin="round"
+                    fill="none"
                   />
+                  <defs>
+                    <linearGradient id="infG" x1="0%" y1="50%" x2="100%" y2="50%">
+                      <stop offset="0%"   stopColor="#7C3AED" stopOpacity="0.7" />
+                      <stop offset="45%"  stopColor="#C4B5FD" stopOpacity="1"   />
+                      <stop offset="100%" stopColor="#93C5FD" stopOpacity="0.8" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
 
-                  <BrandStatement
-                    align="right"
-                    mark={
-                      <span className="flex items-center gap-1.5">
-                        <img
-                          src="/favicons/agiworks.svg"
-                          alt=""
-                          width={16}
-                          height={16}
-                          className="h-4 w-4"
-                          draggable={false}
-                        />
-                        <span
-                          className="text-[12px] font-bold tracking-tight"
-                          style={{ color: "#E5E7EB" }}
-                        >
-                          AGI Works
-                        </span>
-                      </span>
-                    }
-                    statement="baut das System"
-                  />
-                </div>
+              {/* AGI Works */}
+              <div className="flex min-w-0 flex-col items-end gap-1 text-right">
+                <span className="flex items-center gap-1.5 text-[12.5px] font-bold tracking-tight text-white/90">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/favicons/agiworks.svg" alt="" width={13} height={13} className="h-[13px] w-[13px] opacity-80" draggable={false} />
+                  AGI Works
+                </span>
+                <span className="text-[10.5px] leading-snug text-white/48">
+                  Architektur, Systeme & Skalierung
+                </span>
               </div>
             </div>
+
+            {/* subline */}
+            <div aria-hidden className="mx-auto mt-3 h-px w-10" style={{ background: "rgba(255,255,255,0.09)" }} />
+            <p className="mt-2.5 text-center text-[10px] font-medium uppercase tracking-[0.20em] text-white/36">
+              Zwei Partner. Eine Umsetzung.
+            </p>
           </div>
+          {/* /card inner glass */}
+          </div>
+          {/* /card outer wrapper */}
         </motion.div>
+        {/* /feature+card group */}
       </div>
     </section>
   );
 }
 
-function BrandStatement({
-  mark,
-  statement,
-  align = "left",
-}: {
-  mark: React.ReactNode;
-  statement: string;
-  align?: "left" | "right";
-}) {
-  return (
-    <div
-      className={`flex flex-col gap-1 ${
-        align === "right" ? "sm:items-end sm:text-right" : ""
-      }`}
-    >
-      {mark}
-      <span className="text-[12.5px] leading-snug text-white/60">{statement}</span>
-    </div>
-  );
-}
-
-function SystemLines() {
-  return (
-    <svg
-      aria-hidden
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      viewBox="0 0 400 480"
-      preserveAspectRatio="xMidYMid slice"
-      fill="none"
-    >
-      <defs>
-        <linearGradient id="hero-line" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="var(--brand-line-bright)" stopOpacity="0.0" />
-          <stop offset="50%" stopColor="var(--brand-line-bright)" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="var(--brand-line-bright)" stopOpacity="0.0" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M-20 90 C 120 70, 220 150, 420 110"
-        stroke="url(#hero-line)"
-        strokeWidth="1"
-      />
-      <path
-        d="M-20 160 C 140 150, 260 210, 420 175"
-        stroke="url(#hero-line)"
-        strokeWidth="1"
-        opacity="0.7"
-      />
-      <circle cx="86" cy="84" r="2.2" fill="var(--brand-line-bright)" opacity="0.7" />
-      <circle cx="300" cy="128" r="2.2" fill="var(--brand-line-bright)" opacity="0.6" />
-      <circle cx="220" cy="186" r="1.8" fill="var(--brand-line-bright)" opacity="0.5" />
-    </svg>
-  );
-}
-
-function HeroBackground() {
+/* ── Background ─────────────────────────────────────────────────────── */
+function HeroBg() {
   return (
     <>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0"
+      {/* grid */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px)
-          `,
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.021) 1px,transparent 1px)," +
+            "linear-gradient(90deg,rgba(255,255,255,0.021) 1px,transparent 1px)",
           backgroundSize: "64px 64px",
-          maskImage:
-            "radial-gradient(ellipse 85% 70% at 40% 30%, #000 25%, transparent 85%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse 85% 70% at 40% 30%, #000 25%, transparent 85%)",
+          maskImage: "radial-gradient(ellipse 85% 70% at 40% 30%,#000 25%,transparent 85%)",
+          WebkitMaskImage: "radial-gradient(ellipse 85% 70% at 40% 30%,#000 25%,transparent 85%)",
         }}
       />
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0"
+      {/* animated glow */}
+      <motion.div aria-hidden className="pointer-events-none absolute inset-0 z-0"
         animate={{ backgroundPosition: ["0% 0%", "100% 50%", "0% 0%"] }}
         transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
         style={{
-          background: `
-            radial-gradient(42% 36% at 16% 26%, var(--brand-glow-strong) 0%, transparent 65%),
-            radial-gradient(36% 30% at 84% 70%, rgba(91,33,182,0.16) 0%, transparent 65%)
-          `,
+          background:
+            "radial-gradient(42% 36% at 16% 26%,var(--brand-glow-strong) 0%,transparent 65%)," +
+            "radial-gradient(40% 34% at 86% 64%,rgba(91,33,182,0.18) 0%,transparent 65%)",
           backgroundSize: "220% 220%",
           filter: "blur(2px)",
+        }}
+      />
+      {/* bottom-fade — melts Hero into the section below (body bg #0b0d12) */}
+      <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 right-0 z-30 h-40"
+        style={{
+          background:
+            "linear-gradient(to bottom," +
+            "transparent 0%," +
+            "rgba(5,4,16,0.55) 45%," +
+            "rgba(7,5,14,0.82) 70%," +
+            "#0b0d12 100%)",
         }}
       />
     </>

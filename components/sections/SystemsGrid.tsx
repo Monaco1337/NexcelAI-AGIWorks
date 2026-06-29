@@ -62,7 +62,14 @@ const CARDS: SystemCard[] = [
 
 export default function SystemsGrid() {
   return (
-    <section id="systeme" className="relative w-full scroll-mt-[108px] py-20 sm:py-28">
+    <section
+      id="systeme"
+      className="relative w-full overflow-hidden scroll-mt-[108px] py-20 sm:py-28"
+      style={{
+        background:
+          "linear-gradient(to bottom, rgba(5,3,14,0.92) 0%, transparent 15%, transparent 85%, rgba(5,3,14,0.92) 100%)",
+      }}
+    >
       <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8">
         <SectionHeading
           eyebrow="Systeme"
