@@ -19,11 +19,11 @@ type CustomerLogo = {
 
 const customerLogos: CustomerLogo[] = [
   {
-    // Schwarzes Monogramm auf Transparent → invert für dunklen BG (Dark-Mode Standard)
+    // Transparenter BG, schwarzes Monogramm → invert = sauberes Weiß auf dark
     name: "Lulu's Beauty",
     src: "/lulus-beauty.png",
-    className: "max-h-[42px] max-w-[42px] sm:max-h-[50px] sm:max-w-[50px]",
-    style: { filter: "invert(1) brightness(0.82) opacity(0.72)" },
+    className: "max-h-[50px] max-w-[50px] sm:max-h-[60px] sm:max-w-[60px]",
+    style: { filter: "invert(1) brightness(0.90) opacity(0.78)" },
   },
   {
     // Transparent, lila+gold Kreis — Originalfarben auf dunklem BG
@@ -68,11 +68,11 @@ const customerLogos: CustomerLogo[] = [
     style: { filter: "brightness(1.08) opacity(0.90)" },
   },
   {
-    // Transparent, dunkelgrün — brightness boost nötig
+    // Weißer Hintergrund → brightness(0) invert(1) = sauberes Weiß, kein Kasten
     name: "Lokführerzentrum",
     src: "/lokfuehrerzentrum.png",
-    className: "max-h-[44px] max-w-[198px] sm:max-h-[50px] sm:max-w-[226px]",
-    style: { filter: "brightness(1.35) opacity(0.80)" },
+    className: "max-h-[40px] max-w-[200px] sm:max-h-[46px] sm:max-w-[228px] rounded-sm",
+    style: { filter: "brightness(0) invert(1) opacity(0.78)" },
   },
   {
     // Freigestelltes Wappen, dunkles Grau → stark aufhellen für dunklen BG
