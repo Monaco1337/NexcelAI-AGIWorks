@@ -243,6 +243,7 @@ export default function SystemanalyseWizard() {
             dispatch={dispatch}
             accentRgb={accentRgb}
             brandName={brand.name}
+            brandId={brand.id}
             signatureProduct={brand.wizardSignatureProduct}
             onStartIntro={isIntro ? next : undefined}
             analysisSummary={analysisSummary}

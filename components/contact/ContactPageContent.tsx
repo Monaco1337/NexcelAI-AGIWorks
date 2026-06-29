@@ -476,6 +476,7 @@ export default function ContactPageContent() {
   const brand = useBrand();
   const { contactPage } = brand;
   const homeHref = brand.navigation.baseHref || "/";
+  const privacyHref = brand.id === "agiworks" ? "/agiworks/datenschutz" : "/datenschutz";
 
   const [formData, setFormData] = useState({
     vorname: "",
@@ -769,7 +770,7 @@ export default function ContactPageContent() {
                           setFormData({ ...formData, datenschutz: e.target.checked })
                         }
                         error={errors.datenschutz}
-                        privacyHref="/datenschutz"
+                        privacyHref={privacyHref}
                       />
 
                       <GhostSubmitButton

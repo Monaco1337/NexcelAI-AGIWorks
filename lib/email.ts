@@ -28,7 +28,7 @@ interface ContactFormData {
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string; debugInfo?: any }> {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const FROM_EMAIL = process.env.FROM_EMAIL;
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "kontakt@nexcel-ai.de";
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@nexcelai.de";
 
   // Hard error if RESEND_API_KEY missing
   if (!RESEND_API_KEY) {
@@ -42,7 +42,7 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
   
   // If FROM_EMAIL contains a custom domain that might not be verified, 
   // we'll try it first and catch the error to use fallback
-  const useFallbackDomain = !FROM_EMAIL || FROM_EMAIL.includes("nexcelai.de") || FROM_EMAIL.includes("nexcel-ai.de");
+  const useFallbackDomain = !FROM_EMAIL || FROM_EMAIL.includes("nexcelai.de");
   const fallbackEmail = "onboarding@resend.dev"; // Resend's verified test domain
 
   try {
@@ -246,7 +246,7 @@ function generateConfirmationEmailHTML(contactData: ContactFormData, verificatio
               <div style="background: rgba(0, 225, 255, 0.05); border: 1px solid rgba(0, 225, 255, 0.2); border-radius: 16px; padding: 24px; text-align: center;">
                 <p style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #00E1FF; text-transform: uppercase; letter-spacing: 1px;">Direkter Kontakt</p>
                 <p style="margin: 0 0 8px; font-size: 16px; color: #FFFFFF;">
-                  <a href="mailto:kontakt@nexcel-ai.de" style="color: #00E1FF; text-decoration: none;">kontakt@nexcel-ai.de</a>
+                  <a href="mailto:info@nexcelai.de" style="color: #00E1FF; text-decoration: none;">info@nexcelai.de</a>
                 </p>
                 <p style="margin: 0; font-size: 16px; color: #FFFFFF;">
                   <a href="tel:+491639166073" style="color: #00E1FF; text-decoration: none;">+49 163 916 6073</a>
@@ -262,9 +262,9 @@ function generateConfirmationEmailHTML(contactData: ContactFormData, verificatio
                 Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht direkt auf diese E-Mail.
               </p>
               <p style="margin: 0; font-size: 12px; color: #6B7280; text-align: center;">
-                <a href="https://nexcel-ai.de" style="color: #A45CFF; text-decoration: none;">nexcel-ai.de</a> | 
-                <a href="https://nexcel-ai.de/datenschutz" style="color: #A45CFF; text-decoration: none;">Datenschutz</a> | 
-                <a href="https://nexcel-ai.de/impressum" style="color: #A45CFF; text-decoration: none;">Impressum</a>
+                <a href="https://www.nexcelai.de" style="color: #A45CFF; text-decoration: none;">nexcelai.de</a> | 
+                <a href="https://www.nexcelai.de/datenschutz" style="color: #A45CFF; text-decoration: none;">Datenschutz</a> | 
+                <a href="https://www.nexcelai.de/impressum" style="color: #A45CFF; text-decoration: none;">Impressum</a>
               </p>
             </td>
           </tr>
@@ -436,7 +436,7 @@ export async function sendConfirmationEmail(contactData: ContactFormData, verifi
  * Send notification email to admin
  */
 export async function sendAdminNotification(contactData: ContactFormData, contactId: string): Promise<{ success: boolean; error?: string }> {
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "kontakt@nexcel-ai.de";
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@nexcelai.de";
   const subject = `🔔 Neue Kontaktanfrage: ${contactData.betreff} - ${contactData.vorname} ${contactData.nachname}`;
   const html = generateAdminNotificationHTML(contactData, contactId);
 
@@ -444,7 +444,7 @@ export async function sendAdminNotification(contactData: ContactFormData, contac
     to: ADMIN_EMAIL,
     subject,
     html,
-    from: process.env.FROM_EMAIL || "noreply@nexcel-ai.de",
+    from: process.env.FROM_EMAIL || "noreply@nexcelai.de",
   });
 }
 

@@ -10,6 +10,7 @@ import {
   setAllCookies,
   type CookieConsent,
 } from "@/lib/cookieConsent";
+import { useBrand } from "@/contexts/BrandContext";
 
 /**
  * Cookie Consent — Premium, dezent.
@@ -19,6 +20,8 @@ import {
  * - Brand-aware über CSS-Variablen (--accent, --brand-*)
  */
 export default function CookieBanner() {
+  const brand = useBrand();
+  const privacyHref = brand.id === "agiworks" ? "/agiworks/datenschutz" : "/datenschutz";
   const [showModal, setShowModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isAdminPage, setIsAdminPage] = useState(false);
@@ -310,7 +313,7 @@ export default function CookieBanner() {
                 </AnimatePresence>
 
                 <footer className="cookie-dialog-footer">
-                  <Link href="/datenschutz" className="cookie-dialog-link">
+                  <Link href={privacyHref} className="cookie-dialog-link">
                     Datenschutzerklärung
                   </Link>
                 </footer>

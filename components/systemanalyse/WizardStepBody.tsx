@@ -34,6 +34,7 @@ type Props = {
   dispatch: Dispatch<SystemanalyseAction>;
   accentRgb: string;
   brandName: string;
+  brandId: "nexcel" | "agiworks";
   signatureProduct: string;
   onStartIntro?: () => void;
   analysisSummary?: AnalysisSummary | null;
@@ -306,11 +307,13 @@ export function WizardStepBody({
   dispatch,
   accentRgb,
   brandName,
+  brandId,
   signatureProduct,
   onStartIntro,
   analysisSummary,
   analysisSummaryLoading,
 }: Props) {
+  const privacyHref = brandId === "agiworks" ? "/agiworks/datenschutz" : "/datenschutz";
   const profileStage1Ready =
     state.companyName.trim().length > 1 &&
     state.contactName.trim().length > 1 &&
@@ -878,7 +881,7 @@ export function WizardStepBody({
             <span className="text-sm text-white/55">
               Ich willige ein, dass meine Angaben zur Bearbeitung der Systemanalyse durch {brandName} gespeichert werden und ich
               zwecks Rückfragen kontaktiert werde. Hinweise zur Datenverarbeitung finden Sie in der{" "}
-              <Link href="/datenschutz" className="underline decoration-white/30 underline-offset-2 hover:text-white/80">
+              <Link href={privacyHref} className="underline decoration-white/30 underline-offset-2 hover:text-white/80">
                 Datenschutzerklärung
               </Link>
               .
