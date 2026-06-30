@@ -568,17 +568,24 @@ export default function ContactPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Vorauswahl aus ?system=<slug> (z. B. Klick auf „Anfrage stellen" einer Systemseite).
+  // Vorauswahl aus URL-Parametern:
+  //  ?system=<slug>  → Klick auf „Anfrage stellen" einer Systemseite
+  //  ?betreff=<text> → z. B. Beratungs-CTA aus dem Preisbereich
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const slug = new URLSearchParams(window.location.search).get("system");
-    if (!slug) return;
-    const match = SYSTEMS.find((s) => s.slug === slug);
-    if (!match) return;
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("system");
+    const betreffParam = params.get("betreff");
+    const match = slug ? SYSTEMS.find((s) => s.slug === slug) : undefined;
+
+    if (!match && !betreffParam) return;
+
     setFormData((prev) => ({
       ...prev,
-      system: match.slug,
-      betreff: prev.betreff || `Systemanfrage: ${match.title}`,
+      system: match ? match.slug : prev.system,
+      betreff:
+        prev.betreff ||
+        (match ? `Systemanfrage: ${match.title}` : betreffParam || ""),
     }));
   }, []);
 

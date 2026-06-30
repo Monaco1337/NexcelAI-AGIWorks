@@ -33,7 +33,10 @@ const PRICES: Price[] = [
 
 export default function PricingSection() {
   const brand = useBrand();
-  const analyseHref = resolveBrandNavHref("/systemanalyse", brand.id);
+  const preiskalkulatorHref = resolveBrandNavHref("/preiskalkulator", brand.id);
+  const beratungHref = `${resolveBrandNavHref("/kontakt", brand.id)}?betreff=${encodeURIComponent(
+    "Beratung: Passendes System finden"
+  )}`;
 
   return (
     <section id="preise" className="relative w-full scroll-mt-[108px] py-20 sm:py-28">
@@ -101,12 +104,12 @@ export default function PricingSection() {
               </div>
 
               <Link
-                href={analyseHref}
+                href={preiskalkulatorHref}
                 prefetch
                 className="group/pl mt-6 inline-flex items-center gap-1.5 text-[12.5px] font-medium transition-colors"
                 style={{ color: "var(--accent)" }}
               >
-                Projektkorridor anfragen
+                Projektkorridor berechnen
                 <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden className="transition-transform duration-300 group-hover/pl:translate-x-0.5">
                   <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -114,6 +117,53 @@ export default function PricingSection() {
             </motion.div>
           ))}
         </div>
+
+        {/* ── Beratungs-CTA · für Unentschlossene ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-8%" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative mt-5 flex flex-col items-start gap-6 overflow-hidden rounded-2xl p-7 sm:p-9 md:flex-row md:items-center md:justify-between"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 100%)",
+            border: "1px solid var(--brand-card-border)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-60"
+            style={{
+              background:
+                "radial-gradient(70% 120% at 0% 0%, var(--brand-card-glow), transparent 60%)",
+            }}
+          />
+          <div className="relative max-w-2xl">
+            <h3
+              className="text-[1.15rem] leading-snug text-white sm:text-[1.35rem]"
+              style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300 }}
+            >
+              Sie wissen nicht, welches System zu Ihnen passt?
+            </h3>
+            <p className="mt-2.5 text-[13.5px] leading-[1.65] text-white/55">
+              Kein Problem. Beschreiben Sie uns kurz Ihr Unternehmen und woran es
+              hakt — wir melden uns zeitnah mit einer klaren Empfehlung, welches
+              System für Sie wirklich Sinn ergibt. Unverbindlich und ehrlich.
+            </p>
+          </div>
+          <Link
+            href={beratungHref}
+            className="group relative inline-flex shrink-0 items-center gap-2.5 rounded-full px-7 py-3.5 text-[13px] font-semibold text-white transition-all hover:gap-3.5"
+            style={{ background: "var(--accent)", boxShadow: "0 10px 36px rgba(0,0,0,0.4)" }}
+          >
+            Kostenlos beraten lassen
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
