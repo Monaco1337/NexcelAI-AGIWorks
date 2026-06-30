@@ -126,7 +126,7 @@ export default function CustomerLogoMarquee() {
                   loading="lazy"
                   draggable={false}
                   aria-hidden={i >= logos.length}
-                  className={`h-auto w-auto select-none object-contain transition duration-500 ease-out will-change-transform hover:translate-y-[-1px] hover:opacity-100 hover:brightness-110 ${logo.className}`}
+                  className="nxl-logo-img select-none transition duration-500 ease-out will-change-transform hover:translate-y-[-1px] hover:opacity-100 hover:brightness-110"
                   style={logo.style}
                 />
               </div>
@@ -136,6 +136,22 @@ export default function CustomerLogoMarquee() {
       </div>
 
       <style jsx global>{`
+        /* Einheitliche, immer perfekte Logo-Größe im Slider — unabhängig von
+           Original-Auflösung oder Tailwind-Purge. object-contain hält das
+           Seitenverhältnis, Höhe + Breite werden hart begrenzt. */
+        .nxl-logo-img {
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          max-height: 40px;
+          max-width: 132px;
+        }
+        @media (min-width: 640px) {
+          .nxl-logo-img {
+            max-height: 48px;
+            max-width: 160px;
+          }
+        }
         @keyframes nxl-logo-scroll {
           from { transform: translate3d(0, 0, 0); }
           to   { transform: translate3d(-50%, 0, 0); }
