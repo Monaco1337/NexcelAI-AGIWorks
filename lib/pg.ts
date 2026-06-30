@@ -46,14 +46,10 @@ export function getSql(): Sql | null {
   if (sql) return sql;
 
   try {
-    // Passwort URL-encoden (Sonderzeichen), wie im bestehenden Layer.
-    const encodedUrl = CONNECTION_STRING.replace(
-      /([^:/]+):([^@]+)@/,
-      (_match, user, password) =>
-        `${user}:${encodeURIComponent(password)}@`,
-    );
-
-    sql = postgres(encodedUrl, {
+    // Vercel/Neon liefert eine bereits korrekt kodierte Connection-URL —
+    // direkt verwenden, keine eigene Manipulation (zerschießt sonst das
+    // Schema "postgres://").
+    sql = postgres(CONNECTION_STRING, {
       max: 5,
       idle_timeout: 20,
       connect_timeout: 15,
