@@ -40,6 +40,9 @@ next-env.d.ts
 /data/*
 # Aber contact-posts.json soll gespeichert werden
 !/data/contact-posts.json
+# Brand-Konfiguration ist Quellcode (kein Runtime-Data) und muss deployt werden
+!/data/brands
+!/data/brands/**
 
 # large zip files
 *.zip
