@@ -3,10 +3,16 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { submitContactForm } from "@/app/actions/contact";
 import { useBrand } from "@/contexts/BrandContext";
+import { SYSTEMS } from "@/lib/systems-data";
 import Link from "next/link";
+
+const SYSTEM_OPTIONS = [
+  { value: "", label: "Allgemeine Anfrage" },
+  ...SYSTEMS.map((s) => ({ value: s.slug, label: s.title })),
+];
 
 function glassPanelStyle(): React.CSSProperties {
   return {
@@ -131,6 +137,75 @@ function PremiumInput({
           </motion.p>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function PremiumSelect({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: { value: string; label: string }[];
+}) {
+  const [isFocused, setIsFocused] = useState(false);
+
+  return (
+    <div className="relative group">
+      <label
+        htmlFor={id}
+        className="block text-[11px] uppercase tracking-[0.22em] mb-3 transition-colors duration-300"
+        style={{
+          color: isFocused ? "var(--brand-primary)" : "rgba(255,255,255,0.55)",
+          fontFamily: "var(--font-headline), system-ui, sans-serif",
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </label>
+
+      <div
+        className="relative rounded-2xl overflow-hidden transition-all duration-300"
+        style={{
+          background: "rgba(255,255,255,0.03)",
+          border: `1px solid ${isFocused ? "var(--brand-line-mid)" : "rgba(255,255,255,0.08)"}`,
+          boxShadow: isFocused
+            ? "0 0 28px var(--brand-glow-mid), inset 0 0 20px var(--brand-glow-soft)"
+            : "none",
+        }}
+      >
+        <select
+          id={id}
+          value={value}
+          onChange={onChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className="w-full appearance-none bg-transparent px-5 py-4 pr-12 text-[15px] font-light text-white focus:outline-none"
+          style={{ colorScheme: "dark" }}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value} style={{ background: "#0C0F1A", color: "#fff" }}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden
+          className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-white/45"
+        >
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
     </div>
   );
 }
@@ -484,6 +559,7 @@ export default function ContactPageContent() {
     email: "",
     telefon: "",
     unternehmen: "",
+    system: "",
     betreff: "",
     nachricht: "",
     datenschutz: false,
@@ -491,6 +567,20 @@ export default function ContactPageContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Vorauswahl aus ?system=<slug> (z. B. Klick auf „Anfrage stellen" einer Systemseite).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const slug = new URLSearchParams(window.location.search).get("system");
+    if (!slug) return;
+    const match = SYSTEMS.find((s) => s.slug === slug);
+    if (!match) return;
+    setFormData((prev) => ({
+      ...prev,
+      system: match.slug,
+      betreff: prev.betreff || `Systemanfrage: ${match.title}`,
+    }));
+  }, []);
 
   const validateEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -530,6 +620,10 @@ export default function ContactPageContent() {
         typeof window !== "undefined" ? window.location.hostname : undefined;
       const formBrand: "agiworks" | "nexcel" =
         brand.id === "agiworks" ? "agiworks" : "nexcel";
+      const selectedSystem = SYSTEMS.find((s) => s.slug === formData.system);
+      const messageWithSystem = selectedSystem
+        ? `Gewünschtes System: ${selectedSystem.title}\n\n${formData.nachricht}`
+        : formData.nachricht;
       await submitContactForm({
         firstName: formData.vorname,
         lastName: formData.nachname,
@@ -537,7 +631,7 @@ export default function ContactPageContent() {
         phone: formData.telefon,
         company: formData.unternehmen,
         subject: formData.betreff,
-        message: formData.nachricht,
+        message: messageWithSystem,
         brand: formBrand,
         sourceHost: currentHost,
       });
@@ -568,6 +662,7 @@ export default function ContactPageContent() {
         email: "",
         telefon: "",
         unternehmen: "",
+        system: "",
         betreff: "",
         nachricht: "",
         datenschutz: false,
@@ -584,6 +679,7 @@ export default function ContactPageContent() {
       email: "",
       telefon: "",
       unternehmen: "",
+      system: "",
       betreff: "",
       nachricht: "",
       datenschutz: false,
@@ -717,6 +813,24 @@ export default function ContactPageContent() {
                         }
                         error={errors.unternehmen}
                         placeholder="Ihr Unternehmen"
+                      />
+
+                      <PremiumSelect
+                        id="system"
+                        label="Gewünschtes System"
+                        value={formData.system}
+                        onChange={(e) => {
+                          const slug = e.target.value;
+                          const match = SYSTEMS.find((s) => s.slug === slug);
+                          setFormData((prev) => ({
+                            ...prev,
+                            system: slug,
+                            betreff: match
+                              ? `Systemanfrage: ${match.title}`
+                              : prev.betreff,
+                          }));
+                        }}
+                        options={SYSTEM_OPTIONS}
                       />
 
                       <PremiumInput
