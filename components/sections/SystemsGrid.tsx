@@ -9,58 +9,107 @@
  */
 
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 type SystemCard = {
+  /** Stabiler Schlüssel — Bildzuordnung läuft über slug, nicht über Index. */
+  slug: string;
   title: string;
   desc: string;
   icon: ReactNode;
+  /** Finales Systemvisual (16:10) unter /public/images/system-visuals/ */
+  image: string;
+  alt: string;
 };
 
 const CARDS: SystemCard[] = [
   {
+    slug: "premium-websysteme",
     title: "Premium-Websysteme",
     desc: "Maßgeschneiderte Webseiten und Portale mit Fokus auf Performance, Design und Conversion.",
     icon: <GlobeIcon />,
+    image: "/images/system-visuals/premium-websysteme.png",
+    alt: "Premium-Websystem — Hero-Landingpage mit Erstberatungs-Formular und Lead-Strecke",
   },
   {
+    slug: "buchungs-beauty-systeme",
     title: "Buchungs- & Beauty-Systeme",
     desc: "Intelligente Buchungssysteme für Dienstleister, Studios und Salons.",
     icon: <CalendarIcon />,
+    image: "/images/system-visuals/buchungs-beauty-systeme.png",
+    alt: "Buchungs- & Beauty-System — Terminbuchung mit Kalender, Leistungen und Kundenverwaltung",
   },
   {
+    slug: "lead-funnels-crm",
     title: "Lead-Funnels & CRM",
     desc: "Leadgenerierung, Funnels und CRM für messbares Wachstum und starke Kundenbeziehungen.",
     icon: <FunnelIcon />,
+    image: "/images/system-visuals/lead-funnels-crm.png",
+    alt: "Lead-Funnel & CRM — Landingpage, CRM-Cockpit mit Pipeline und automatischer Lead-Strecke",
   },
   {
+    slug: "mitglieder-clubverwaltung",
     title: "Mitglieder- & Clubverwaltung",
     desc: "Mitgliederbereiche, Abläufe, Rollen und Community-Management auf hohem Niveau.",
     icon: <UsersIcon />,
+    image: "/images/system-visuals/mitglieder-clubverwaltung.png",
+    alt: "Mitglieder- & Clubverwaltung — Dashboard mit Mitgliedern, Rollen, Standorten und Freigaben",
   },
   {
+    slug: "branchen-plattformen",
     title: "Branchen-Plattformen",
     desc: "Digitale Plattformen und Marktplätze für Ihre Branche und Zielgruppen.",
     icon: <PlatformIcon />,
+    image: "/images/system-visuals/branchen-plattformen.png",
+    alt: "Branchen-Plattform — Such- und Listing-Portal mit Karte, Detailansicht und Admin-Bereich",
   },
   {
+    slug: "erp-systeme",
     title: "Individuelle ERP-Systeme",
     desc: "Warenwirtschaft, Finanzen, Projekte und Ressourcen in einem System.",
     icon: <ErpIcon />,
+    image: "/images/system-visuals/erp-systeme.png",
+    alt: "Individuelles ERP-System — Betriebszentrale mit Kunden, Projekten, Finanzen und Reports",
   },
   {
+    slug: "ki-automatisierung",
     title: "KI & Automatisierung",
     desc: "Intelligente Automatisierungen und KI-gestützte Prozesse, die Zeit und Kosten sparen.",
     icon: <SparkIcon />,
+    image: "/images/system-visuals/ki-automatisierung.png",
+    alt: "KI & Automatisierung — KI-Core mit Eingangsquellen, Aktionen und Automatisierungs-Studio",
   },
   {
+    slug: "schnittstellen-integrationen",
     title: "Schnittstellen & Integrationen",
     desc: "Nahtlose Anbindungen an Zahlungsanbieter, CRM, Tools und APIs.",
     icon: <PlugIcon />,
+    image: "/images/system-visuals/schnittstellen-integrationen.png",
+    alt: "Schnittstellen & Integrationen — Integrations-Hub verbindet externe Systeme mit dem Unternehmenssystem",
   },
 ];
 
 export default function SystemsGrid() {
+  const [active, setActive] = useState<SystemCard | null>(null);
+
+  const close = useCallback(() => setActive(null), []);
+
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    // Scroll sperren, solange Modal offen ist
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [active, close]);
+
   return (
     <section
       id="systeme"
@@ -79,12 +128,22 @@ export default function SystemsGrid() {
         <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {CARDS.map((card, i) => (
             <motion.article
-              key={card.title}
+              key={card.slug}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-8%" }}
               transition={{ duration: 0.5, delay: (i % 4) * 0.06, ease: [0.22, 1, 0.36, 1] }}
-              className="group relative flex flex-col overflow-hidden rounded-2xl p-5"
+              onClick={() => setActive(card)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setActive(card);
+                }
+              }}
+              aria-label={`${card.title} — Systemvisual vergrößern`}
+              className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl p-5 outline-none transition-transform duration-500 ease-out will-change-transform hover:scale-[1.015] focus-visible:ring-2"
               style={{
                 background:
                   "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.012) 100%)",
@@ -124,39 +183,105 @@ export default function SystemsGrid() {
                 {card.desc}
               </p>
 
-              {/* Elegant austauschbarer Screenshot-Platzhalter */}
-              <ScreenshotPlaceholder />
+              {/* Finales Systemvisual · 16:10 */}
+              <div
+                className="relative mt-5 aspect-[16/10] w-full overflow-hidden rounded-xl"
+                style={{ border: "1px solid var(--brand-card-border)" }}
+              >
+                <Image
+                  src={card.image}
+                  alt={card.alt}
+                  fill
+                  sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 90vw"
+                  className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                />
+              </div>
             </motion.article>
           ))}
         </div>
       </div>
+
+      {active && (
+        <SystemVisualModal card={active} onClose={close} />
+      )}
     </section>
   );
 }
 
-function ScreenshotPlaceholder() {
+function SystemVisualModal({
+  card,
+  onClose,
+}: {
+  card: SystemCard;
+  onClose: () => void;
+}) {
   return (
-    <div
-      className="relative mt-5 flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-xl"
-      style={{
-        background:
-          "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
-        border: "1px dashed rgba(255,255,255,0.12)",
-      }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={card.title}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8"
+      style={{ background: "rgba(3,2,10,0.86)", backdropFilter: "blur(8px)" }}
     >
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)`,
-          backgroundSize: "22px 22px",
-        }}
-      />
-      <span className="relative text-[10px] font-medium uppercase tracking-[0.22em] text-white/30">
-        Platzhalter · Screenshot
-      </span>
-    </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex w-full max-w-[1180px] flex-col"
+      >
+        <div className="mb-3 flex items-center justify-between gap-4 px-1">
+          <div>
+            <span
+              className="text-[10px] font-medium uppercase tracking-[0.28em]"
+              style={{ color: "var(--accent)" }}
+            >
+              Systemvisual
+            </span>
+            <h3
+              className="mt-1 text-[1.15rem] leading-tight text-white sm:text-[1.4rem]"
+              style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300 }}
+            >
+              {card.title}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Schließen"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            style={{ border: "1px solid var(--brand-card-border)" }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div
+          className="relative overflow-hidden rounded-2xl"
+          style={{
+            background: "rgba(8,6,18,0.6)",
+            border: "1px solid var(--brand-card-border)",
+          }}
+        >
+          <Image
+            src={card.image}
+            alt={card.alt}
+            width={1280}
+            height={800}
+            sizes="(min-width: 1024px) 1180px, 92vw"
+            className="h-auto max-h-[82vh] w-full object-contain"
+            priority
+          />
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

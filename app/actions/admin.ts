@@ -1,8 +1,32 @@
 "use server";
 
 import { verifySession } from "@/lib/auth";
+import { isDbEnabled } from "@/lib/pg";
+import {
+  listContactsPg,
+  updateContactPg,
+  deleteContactPg,
+} from "@/lib/contacts-store";
 import fs from "fs";
 import path from "path";
+
+function transformContact(post: any) {
+  return {
+    id: post.id,
+    name: `${post.vorname} ${post.nachname}`,
+    email: post.email,
+    telefon: post.telefon || undefined,
+    unternehmen: post.unternehmen || undefined,
+    betreff: post.betreff,
+    nachricht: post.nachricht,
+    createdAt: post.createdAt,
+    read: post.read,
+    archived: post.archived,
+    status: post.status,
+    brand: (post.brand as "agiworks" | "nexcel" | undefined) ?? "nexcel",
+    sourceHost: post.sourceHost ?? undefined,
+  };
+}
 
 // IMMER lokale Datei verwenden - auch in Production!
 const STORAGE_PATH = path.join(process.cwd(), "data", "contact-posts.json");
@@ -173,6 +197,15 @@ export async function getAdminContacts() {
       return { error: "Unauthorized", contacts: [] };
     }
 
+    // ── Postgres-Pfad (persistent) ──
+    if (isDbEnabled()) {
+      const posts = await listContactsPg();
+      if (posts) {
+        return { contacts: posts.map(transformContact) };
+      }
+      console.warn("⚠️ [ADMIN] Postgres-Lesefehler, nutze Datei-Fallback");
+    }
+
     console.log("✅ [ADMIN] Loading posts from:", STORAGE_PATH);
     const posts = await loadPosts();
     console.log(`✅ [ADMIN] Loaded ${posts.length} posts from file`);
@@ -240,6 +273,12 @@ export async function markContactAsRead(id: string) {
       return { error: "Unauthorized" };
     }
 
+    if (isDbEnabled()) {
+      const updated = await updateContactPg(id, { read: true, status: "read" });
+      if (updated) return { success: true, contact: updated };
+      console.warn("⚠️ [ADMIN] Postgres-Update fehlgeschlagen, nutze Datei-Fallback");
+    }
+
     const posts = await loadPosts();
     const index = posts.findIndex(p => p.id === id);
     if (index === -1) return { error: "Post not found" };
@@ -260,6 +299,12 @@ export async function archiveContact(id: string) {
       return { error: "Unauthorized" };
     }
 
+    if (isDbEnabled()) {
+      const updated = await updateContactPg(id, { archived: true, status: "archived" });
+      if (updated) return { success: true, contact: updated };
+      console.warn("⚠️ [ADMIN] Postgres-Archive fehlgeschlagen, nutze Datei-Fallback");
+    }
+
     const posts = await loadPosts();
     const index = posts.findIndex(p => p.id === id);
     if (index === -1) return { error: "Post not found" };
@@ -278,6 +323,12 @@ export async function deleteAdminContact(id: string) {
     const session = await verifySession();
     if (!session || session.role !== "admin") {
       return { error: "Unauthorized" };
+    }
+
+    if (isDbEnabled()) {
+      const ok = await deleteContactPg(id);
+      if (ok) return { success: true };
+      console.warn("⚠️ [ADMIN] Postgres-Delete fehlgeschlagen, nutze Datei-Fallback");
     }
 
     const posts = await loadPosts();

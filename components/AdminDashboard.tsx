@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import LogoManager from "@/components/admin/LogoManager";
 
 const IS_PRODUCTION = process.env.NEXT_PUBLIC_VERCEL === "1" || process.env.NODE_ENV === "production";
 
@@ -141,6 +142,7 @@ type TabId =
   | "demo"
   | "automationen"
   | "analytics"
+  | "logos"
   | "settings";
 
 type TimeRange = "24h" | "7d" | "30d";
@@ -222,6 +224,14 @@ function NavIcon({ name }: { name: TabId }) {
       return (
         <svg {...common}>
           <path d="M5 20V10M12 20V4M19 20v-6" />
+        </svg>
+      );
+    case "logos":
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <circle cx="8.5" cy="10" r="1.5" />
+          <path d="M21 16l-5-5L5 19" />
         </svg>
       );
     case "settings":
@@ -491,6 +501,7 @@ export default function AdminDashboard() {
     { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
     { id: "automationen", label: "Automationen" },
     { id: "analytics", label: "Analytics" },
+    { id: "logos", label: "Logos / Slider" },
     { id: "settings", label: "Einstellungen" },
   ];
 
@@ -503,6 +514,7 @@ export default function AdminDashboard() {
     demo: "Demo-Anfragen",
     automationen: "Automationen",
     analytics: "Analytics",
+    logos: "Logos / Slider",
     settings: "Einstellungen",
   };
 
@@ -1212,6 +1224,18 @@ export default function AdminDashboard() {
             title="Automationen"
             text="Workflows & Trigger werden hier verfügbar. Sobald Automationsregeln aktiv sind, erscheinen sie in diesem Bereich."
           />
+        )}
+
+        {/* ─── LOGOS / SLIDER ─────────────────────────────────────────── */}
+        {activeTab === "logos" && (
+          <GlassCard title="Kunden-Logos · Slider">
+            <p className="mb-5 text-xs leading-relaxed text-[#9CA3AF]">
+              Logos per Drag-and-Drop hochladen. Sie erscheinen sofort im
+              Slider auf der Startseite. Reihenfolge, Sichtbarkeit und Marke
+              lassen sich pro Logo steuern.
+            </p>
+            <LogoManager accent={sessionBrand.accent} />
+          </GlassCard>
         )}
 
         {/* ─── EINSTELLUNGEN ──────────────────────────────────────────── */}

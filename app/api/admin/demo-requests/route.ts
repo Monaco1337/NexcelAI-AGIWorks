@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/auth";
 import { getDemoRequests, updateDemoRequest, deleteDemoRequest } from "@/lib/database";
+import { isDbEnabled } from "@/lib/pg";
+import { listDemosPg, updateDemoPg, deleteDemoPg } from "@/lib/demos-store";
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +11,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const requests = getDemoRequests();
+    const requests = isDbEnabled()
+      ? (await listDemosPg()) ?? getDemoRequests()
+      : getDemoRequests();
     const { searchParams } = new URL(request.url);
     const archived = searchParams.get("archived") === "true";
     const unread = searchParams.get("unread") === "true";
@@ -55,7 +59,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const updated = updateDemoRequest(id, updates);
+    const updated = isDbEnabled()
+      ? (await updateDemoPg(id, updates)) ?? updateDemoRequest(id, updates)
+      : updateDemoRequest(id, updates);
     if (!updated) {
       return NextResponse.json({ error: "Demo request not found" }, { status: 404 });
     }
@@ -84,7 +90,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const deleted = deleteDemoRequest(id);
+    const deleted = isDbEnabled()
+      ? (await deleteDemoPg(id)) || deleteDemoRequest(id)
+      : deleteDemoRequest(id);
     if (!deleted) {
       return NextResponse.json({ error: "Demo request not found" }, { status: 404 });
     }

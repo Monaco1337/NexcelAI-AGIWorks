@@ -7,6 +7,8 @@
 
 import fs from "fs";
 import path from "path";
+import { isDbEnabled } from "@/lib/pg";
+import { createContactPg } from "@/lib/contacts-store";
 
 // IMMER lokale Datei verwenden - auch in Production!
 const STORAGE_PATH = path.join(process.cwd(), "data", "contact-posts.json");
@@ -197,7 +199,32 @@ export async function submitContactForm(formData: {
     const email = formData?.email ? String(formData.email).trim() : "unbekannt@example.com";
     const subject = formData?.subject ? String(formData.subject).trim() : "Kein Betreff";
     const message = formData?.message ? String(formData.message).trim() : "Keine Nachricht";
-    
+
+    // ── Persistente Speicherung über Postgres (wenn verbunden) ──
+    if (isDbEnabled()) {
+      const saved = await createContactPg({
+        vorname: firstName,
+        nachname: lastName,
+        email,
+        telefon: formData?.phone ? String(formData.phone).trim() : null,
+        unternehmen: formData?.company ? String(formData.company).trim() : null,
+        betreff: subject,
+        nachricht: message,
+        brand: formData?.brand ?? "nexcel",
+        sourceHost: formData?.sourceHost,
+      });
+      if (saved) {
+        console.log("✅ [CONTACT] Gespeichert in Postgres:", saved.id);
+        return {
+          success: true,
+          id: saved.id,
+          message:
+            "Ihre Anfrage wurde erfolgreich übermittelt. Wir werden uns schnellstmöglich bei Ihnen melden.",
+        };
+      }
+      console.warn("⚠️ [CONTACT] Postgres-Speicherung fehlgeschlagen, nutze Datei-Fallback");
+    }
+
     console.log("📝 [CONTACT] Loading posts...");
     let posts = await loadPosts();
     console.log(`📝 [CONTACT] Loaded ${posts.length} existing posts`);

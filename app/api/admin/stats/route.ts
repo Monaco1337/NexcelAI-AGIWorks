@@ -3,6 +3,9 @@ import { verifySession } from "@/lib/auth";
 import { getSnapshot, type AnalyticsBrand } from "@/lib/analytics-store";
 import { getAllPosts } from "@/lib/contact-store";
 import { getDemoRequests } from "@/lib/database";
+import { isDbEnabled } from "@/lib/pg";
+import { listContactsPg } from "@/lib/contacts-store";
+import { listDemosPg } from "@/lib/demos-store";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +27,17 @@ export async function GET(request: NextRequest) {
     const snapshot = await getSnapshot(brand);
 
     // Contact + demo aggregates so the existing dashboard KPIs stay populated.
-    const allContacts = getAllPosts();
+    // Postgres bevorzugt, sonst Datei-Fallback.
+    const allContacts = isDbEnabled()
+      ? (await listContactsPg()) ?? getAllPosts()
+      : getAllPosts();
     const contacts = (allContacts as any[]).filter((c) => {
       if (brand === "all") return true;
       return (c.brand ?? "nexcel") === brand;
     });
-    const demoRequests = getDemoRequests();
+    const demoRequests = isDbEnabled()
+      ? (await listDemosPg()) ?? getDemoRequests()
+      : getDemoRequests();
     const unreadContacts = contacts.filter((c: any) => !c.read && !c.archived).length;
     const unreadDemoRequests = demoRequests.filter((r) => !r.read && !r.archived).length;
     const pendingDemoRequests = demoRequests.filter(

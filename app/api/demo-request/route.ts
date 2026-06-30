@@ -147,14 +147,34 @@ export async function POST(req: NextRequest) {
 
     await sendDemoEmail(user.email, user.name, password, user.expiresAt, req.nextUrl.origin);
 
-    // Save demo request to database
-    const { saveDemoRequest } = await import("@/lib/database");
-    saveDemoRequest({
-      name: user.name,
-      email: user.email,
-      unternehmen: user.unternehmen,
-      expiresAt: user.expiresAt,
-    });
+    // Save demo request to database (Postgres bevorzugt, sonst Datei)
+    const { isDbEnabled } = await import("@/lib/pg");
+    if (isDbEnabled()) {
+      const { createDemoPg } = await import("@/lib/demos-store");
+      const saved = await createDemoPg({
+        name: user.name,
+        email: user.email,
+        unternehmen: user.unternehmen,
+        expiresAt: user.expiresAt,
+      });
+      if (!saved) {
+        const { saveDemoRequest } = await import("@/lib/database");
+        saveDemoRequest({
+          name: user.name,
+          email: user.email,
+          unternehmen: user.unternehmen,
+          expiresAt: user.expiresAt,
+        });
+      }
+    } else {
+      const { saveDemoRequest } = await import("@/lib/database");
+      saveDemoRequest({
+        name: user.name,
+        email: user.email,
+        unternehmen: user.unternehmen,
+        expiresAt: user.expiresAt,
+      });
+    }
 
     // Track analytics
     const { saveAnalyticsEvent } = await import("@/lib/database");

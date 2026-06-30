@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/auth";
 import { getAllPosts, updatePost, deletePost } from "@/lib/contact-store";
+import { isDbEnabled } from "@/lib/pg";
+import { listContactsPg, updateContactPg, deleteContactPg } from "@/lib/contacts-store";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,8 +15,10 @@ export async function GET(request: NextRequest) {
     const archived = searchParams.get("archived") === "true";
     const unread = searchParams.get("unread") === "true";
 
-    // Lade alle Posts aus Contact-Store
-    let contacts = getAllPosts();
+    // Lade alle Posts — Postgres bevorzugt, sonst Datei-Store
+    let contacts: any[] = isDbEnabled()
+      ? (await listContactsPg()) ?? getAllPosts()
+      : getAllPosts();
     
     // Filtere nach archived/unread
     if (archived) {
@@ -74,12 +78,23 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    // Update post in Contact-Store
-    const updated = updatePost(id, {
-      read: updates.read,
-      archived: updates.archived,
-      status: updates.status,
-    });
+    // Update post — Postgres bevorzugt, sonst Datei-Store
+    const updated = isDbEnabled()
+      ? (await updateContactPg(id, {
+          read: updates.read,
+          archived: updates.archived,
+          status: updates.status,
+        })) ??
+        updatePost(id, {
+          read: updates.read,
+          archived: updates.archived,
+          status: updates.status,
+        })
+      : updatePost(id, {
+          read: updates.read,
+          archived: updates.archived,
+          status: updates.status,
+        });
 
     if (!updated) {
       return NextResponse.json({ error: "Contact not found" }, { status: 404 });
@@ -122,8 +137,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    // Delete post from Contact-Store
-    const success = deletePost(id);
+    // Delete post — Postgres bevorzugt, sonst Datei-Store
+    const success = isDbEnabled()
+      ? (await deleteContactPg(id)) || deletePost(id)
+      : deletePost(id);
 
     if (!success) {
       return NextResponse.json({ error: "Contact not found" }, { status: 404 });

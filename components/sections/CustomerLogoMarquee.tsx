@@ -3,10 +3,16 @@
 /**
  * NEXCEL AI / AGI WORKS · CustomerLogoMarquee
  *
- * Originale Kundenlogos aus /public — volle Farben, Originalbranding.
- * Feinjustierung nur über max-h/max-w (className) und CSS filter (style).
- * Keine Umfärbung. Nur Helligkeit, Kontrast, Opacity nach Bedarf.
+ * Datengetrieben: Logos kommen primär aus der Datenbank (im Admin-Panel per
+ * Drag-and-Drop pflegbar). Solange keine DB-Logos existieren oder keine DB
+ * verbunden ist, werden die unten hinterlegten Standard-Logos angezeigt —
+ * die Sektion ist damit nie leer.
+ *
+ * Feinjustierung über max-h/max-w (className) und CSS filter (filterStyle).
  */
+
+import { useEffect, useState } from "react";
+import { DEFAULT_LOGOS } from "@/lib/default-logos";
 
 type CustomerLogo = {
   name: string;
@@ -17,84 +23,55 @@ type CustomerLogo = {
   style?: React.CSSProperties;
 };
 
-const customerLogos: CustomerLogo[] = [
-  {
-    // Transparenter BG, schwarzes Monogramm → invert = sauberes Weiß auf dark
-    name: "Lulu's Beauty",
-    src: "/lulus-beauty.png",
-    className: "max-h-[50px] max-w-[50px] sm:max-h-[60px] sm:max-w-[60px]",
-    style: { filter: "invert(1) brightness(0.90) opacity(0.78)" },
-  },
-  {
-    // Transparent, lila+gold Kreis — Originalfarben auf dunklem BG
-    name: "BeautyBar Akademie",
-    src: "/beautybar-akademie.png",
-    className: "max-h-[60px] max-w-[60px] sm:max-h-[70px] sm:max-w-[70px]",
-    style: { filter: "brightness(0.95) opacity(0.80)" },
-  },
-  {
-    // Schwarzer Text auf Transparent → invert(1) = weiße Schrift, Farben invertiert aber lesbar
-    name: "Impuls Ambulanter Pflegedienst",
-    src: "/impuls-pflegedienst.png",
-    className: "max-h-[36px] max-w-[180px] sm:max-h-[42px] sm:max-w-[206px]",
-    style: { filter: "invert(1) brightness(0.88) opacity(0.78)" },
-  },
-  {
-    // Weißer Hintergrund → brightness(0) invert(1) = sauberes weißes Monochrom, kein Kasten
-    name: "PflegeNest Bochum",
-    src: "/pflegenest-bochum.png",
-    className: "max-h-[64px] max-w-[64px] sm:max-h-[76px] sm:max-w-[76px]",
-    style: { filter: "brightness(0) invert(1) opacity(0.78)" },
-  },
-  {
-    // Dunkler Hintergrund — direkt nutzbar
-    name: "Borne-Run",
-    src: "/borne-run.png",
-    className: "max-h-[40px] max-w-[160px] sm:max-h-[46px] sm:max-w-[184px] rounded-lg",
-    style: { filter: "brightness(1.05) opacity(0.88)" },
-  },
-  {
-    // brightness(0) invert(1) → sauberes weißes Monochrom-Logo, maximal lesbar auf dark
-    name: "Immobilien Weissleder",
-    src: "/immobilien-weissleder.png",
-    className: "max-h-[38px] max-w-[200px] sm:max-h-[44px] sm:max-w-[228px]",
-    style: { filter: "brightness(0) invert(1) opacity(0.75)" },
-  },
-  {
-    // Dunkler Hintergrund — direkt nutzbar, dezent aufgehellt
-    name: "AGI Energy",
-    src: "/agi-energy.png",
-    className: "max-h-[36px] max-w-[168px] sm:max-h-[42px] sm:max-w-[192px] rounded-lg",
-    style: { filter: "brightness(1.08) opacity(0.90)" },
-  },
-  {
-    // Weißer Hintergrund → brightness(0) invert(1) = sauberes Weiß, kein Kasten
-    name: "Lokführerzentrum",
-    src: "/lokfuehrerzentrum.png",
-    className: "max-h-[40px] max-w-[200px] sm:max-h-[46px] sm:max-w-[228px] rounded-sm",
-    style: { filter: "brightness(0) invert(1) opacity(0.78)" },
-  },
-  {
-    // Freigestelltes Wappen, dunkles Grau → stark aufhellen für dunklen BG
-    name: "Cannabbros",
-    src: "/cannabbros.png",
-    className: "max-h-[64px] max-w-[64px] sm:max-h-[76px] sm:max-w-[76px]",
-    style: { filter: "brightness(2.2) contrast(0.80) opacity(0.80)" },
-  },
-  {
-    // Dunkler Hintergrund — direkt nutzbar, leicht aufgehellt für Premium-Wirkung
-    name: "Anatoly Mook",
-    src: "/anatoly-mook.png",
-    className: "max-h-[52px] max-w-[156px] sm:max-h-[62px] sm:max-w-[178px] rounded-lg",
-    style: {
-      filter: "brightness(1.10) opacity(0.88)",
-    },
-  },
-];
+const defaultLogos: CustomerLogo[] = DEFAULT_LOGOS.map((l) => ({
+  name: l.name,
+  src: l.src,
+  className: l.className,
+  style: { filter: l.filterStyle },
+}));
 
-const loop = [...customerLogos, ...customerLogos];
+type ApiLogo = {
+  id: string;
+  name: string;
+  src: string;
+  className?: string;
+  filterStyle?: string;
+};
 
 export default function CustomerLogoMarquee() {
+  const [logos, setLogos] = useState<CustomerLogo[]>(defaultLogos);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/logos", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const apiLogos: ApiLogo[] = Array.isArray(data?.logos) ? data.logos : [];
+        if (!cancelled && data?.dbConnected && apiLogos.length > 0) {
+          setLogos(
+            apiLogos.map((l) => ({
+              name: l.name,
+              src: l.src,
+              className:
+                l.className ||
+                "max-h-[48px] max-w-[160px] sm:max-h-[56px] sm:max-w-[184px]",
+              style: l.filterStyle ? { filter: l.filterStyle } : undefined,
+            })),
+          );
+        }
+      } catch {
+        /* Fallback bleibt: defaultLogos */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const loop = [...logos, ...logos];
+
   return (
     <section
       className="relative w-full pb-10 pt-6 sm:pb-14 sm:pt-8"
@@ -148,7 +125,7 @@ export default function CustomerLogoMarquee() {
                   title={logo.name}
                   loading="lazy"
                   draggable={false}
-                  aria-hidden={i >= customerLogos.length}
+                  aria-hidden={i >= logos.length}
                   className={`h-auto w-auto select-none object-contain transition duration-500 ease-out will-change-transform hover:translate-y-[-1px] hover:opacity-100 hover:brightness-110 ${logo.className}`}
                   style={logo.style}
                 />
