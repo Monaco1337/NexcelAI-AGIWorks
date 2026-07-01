@@ -124,20 +124,31 @@ function BrandBridge() {
       />
 
       <div className="px-5 py-5 sm:px-7 sm:py-6">
-        {/* ── Main row: NEXCEL AI left · ∞ · AGI Works right ── */}
+        {/* ── Main row: AGI Works left · ∞ · NEXCEL AI right ── */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-5">
 
-          {/* Left — NEXCEL AI */}
+          {/* Left — AGI Works */}
           <div className="flex min-w-0 flex-col gap-1.5">
-            <NexcelLogoMark width={118} />
+            <div className="flex items-center gap-1.5">
+              <AgiWorksLogoMark
+                size={22}
+                glow="drop-shadow(0 1px 4px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(91,184,255,0.5))"
+              />
+              <span
+                className="text-[13px] font-bold tracking-tight text-white/92 sm:text-[14px]"
+                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+              >
+                AGI Works
+              </span>
+            </div>
             <span
               className="text-[10px] font-medium uppercase tracking-[0.12em] sm:text-[10.5px]"
-              style={{ color: "#B78CFF" }}
+              style={{ color: "#5BB8FF" }}
             >
-              Systemarchitektur · Experience
+              Softwarearchitektur · Infrastruktur
             </span>
             <span className="hidden text-[11px] leading-snug text-white/42 sm:block">
-              Prozesse · Strategie · Automatisierung
+              Backend · Plattformen · Automatisierung
             </span>
           </div>
 
@@ -158,28 +169,19 @@ function BrandBridge() {
             </span>
           </div>
 
-          {/* Right — AGI Works */}
+          {/* Right — NEXCEL AI */}
           <div className="flex min-w-0 flex-col items-end gap-1.5 text-right">
-            <div className="flex items-center justify-end gap-1.5">
-              <AgiWorksLogoMark
-                size={22}
-                glow="drop-shadow(0 1px 4px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(91,184,255,0.5))"
-              />
-              <span
-                className="text-[13px] font-bold tracking-tight text-white/92 sm:text-[14px]"
-                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-              >
-                AGI Works
-              </span>
+            <div className="flex items-center justify-end">
+              <NexcelLogoMark width={118} />
             </div>
             <span
               className="text-[10px] font-medium uppercase tracking-[0.12em] sm:text-[10.5px]"
-              style={{ color: "#5BB8FF" }}
+              style={{ color: "#B78CFF" }}
             >
-              Softwarearchitektur · Infrastruktur
+              Systemarchitektur · Experience
             </span>
             <span className="hidden text-[11px] leading-snug text-white/42 sm:block">
-              Backend · Plattformen · Automatisierung
+              Prozesse · Strategie · Automatisierung
             </span>
           </div>
         </div>
