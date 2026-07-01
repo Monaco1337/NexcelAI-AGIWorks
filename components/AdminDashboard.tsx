@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import LogoManager from "@/components/admin/LogoManager";
+import ReferenceManager from "@/components/admin/ReferenceManager";
 
 const IS_PRODUCTION = process.env.NEXT_PUBLIC_VERCEL === "1" || process.env.NODE_ENV === "production";
 
@@ -143,6 +144,7 @@ type TabId =
   | "automationen"
   | "analytics"
   | "logos"
+  | "referenzen"
   | "settings";
 
 type TimeRange = "24h" | "7d" | "30d";
@@ -232,6 +234,15 @@ function NavIcon({ name }: { name: TabId }) {
           <rect x="3" y="5" width="18" height="14" rx="2" />
           <circle cx="8.5" cy="10" r="1.5" />
           <path d="M21 16l-5-5L5 19" />
+        </svg>
+      );
+    case "referenzen":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
         </svg>
       );
     case "settings":
@@ -502,6 +513,7 @@ export default function AdminDashboard() {
     { id: "automationen", label: "Automationen" },
     { id: "analytics", label: "Analytics" },
     { id: "logos", label: "Logos / Slider" },
+    { id: "referenzen", label: "Referenzen" },
     { id: "settings", label: "Einstellungen" },
   ];
 
@@ -515,6 +527,7 @@ export default function AdminDashboard() {
     automationen: "Automationen",
     analytics: "Analytics",
     logos: "Logos / Slider",
+    referenzen: "Referenzen",
     settings: "Einstellungen",
   };
 
@@ -1235,6 +1248,17 @@ export default function AdminDashboard() {
               lassen sich pro Logo steuern.
             </p>
             <LogoManager accent={sessionBrand.accent} />
+          </GlassCard>
+        )}
+
+        {/* ─── REFERENZEN ─────────────────────────────────────────────── */}
+        {activeTab === "referenzen" && (
+          <GlassCard title="Referenzen · Portfolio">
+            <p className="mb-5 text-xs leading-relaxed text-[#9CA3AF]">
+              Verwalte deine Case-Studies und Referenzprojekte. Reihenfolge per Drag &amp; Drop,
+              Bilder hochladen, Tags und Module vergeben. Projekte erscheinen sofort auf der Website.
+            </p>
+            <ReferenceManager accent={sessionBrand.accent} />
           </GlassCard>
         )}
 

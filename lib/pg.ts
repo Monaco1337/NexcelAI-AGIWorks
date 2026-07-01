@@ -138,6 +138,48 @@ export function ensureSchema(): Promise<boolean> {
         ON customer_logos (sort_order ASC, created_at ASC)
       `;
 
+      await client`
+        CREATE TABLE IF NOT EXISTS references_projects (
+          id               TEXT PRIMARY KEY,
+          title            TEXT NOT NULL DEFAULT '',
+          slug             TEXT NOT NULL DEFAULT '',
+          client_name      TEXT NOT NULL DEFAULT '',
+          short_description TEXT NOT NULL DEFAULT '',
+          full_description TEXT NOT NULL DEFAULT '',
+          type             TEXT NOT NULL DEFAULT '',
+          tags             TEXT[] NOT NULL DEFAULT '{}',
+          modules          TEXT[] NOT NULL DEFAULT '{}',
+          website_url      TEXT,
+          status           TEXT NOT NULL DEFAULT 'live',
+          cover_image      TEXT NOT NULL DEFAULT '',
+          cover_image_data BYTEA,
+          cover_content_type TEXT NOT NULL DEFAULT 'image/png',
+          sort_order       INTEGER NOT NULL DEFAULT 0,
+          is_published     BOOLEAN NOT NULL DEFAULT TRUE,
+          created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      await client`
+        CREATE INDEX IF NOT EXISTS idx_references_sort
+        ON references_projects (sort_order ASC, created_at ASC)
+      `;
+      await client`
+        CREATE TABLE IF NOT EXISTS reference_images (
+          id           TEXT PRIMARY KEY,
+          reference_id TEXT NOT NULL REFERENCES references_projects(id) ON DELETE CASCADE,
+          image_data   BYTEA NOT NULL,
+          content_type TEXT NOT NULL DEFAULT 'image/png',
+          alt          TEXT NOT NULL DEFAULT '',
+          sort_order   INTEGER NOT NULL DEFAULT 0,
+          created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      await client`
+        CREATE INDEX IF NOT EXISTS idx_reference_images_ref
+        ON reference_images (reference_id, sort_order ASC)
+      `;
+
       console.log("✅ [PG] Schema bereit");
       return true;
     } catch (error) {
