@@ -31,14 +31,24 @@ function Ico({ d, extra }: { d?: string; extra?: React.ReactNode }) {
   );
 }
 
-const FEATURES = [
-  { label: "Website",        icon: <Ico extra={<><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18"/></>} /> },
-  { label: "Buchungssystem", icon: <Ico extra={<><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></>} /> },
-  { label: "CRM",            icon: <Ico extra={<><circle cx="9" cy="8" r="3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M21 19c0-2.2-1.4-3.9-3.4-4.6"/></>} /> },
-  { label: "Adminpanel",     icon: <Ico extra={<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></>} /> },
-  { label: "Lead-Funnel",    icon: <Ico d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" /> },
-  { label: "Automatisierung",icon: <Ico d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" /> },
-  { label: "ERP",            icon: <Ico extra={<><path d="M12 3l8 4.5-8 4.5-8-4.5L12 3Z"/><path d="M4 12l8 4.5 8-4.5M4 16.5 12 21l8-4.5"/></>} /> },
+/**
+ * Leistungs-Chips im Hero — zeigen in 2–3 Sekunden das volle Spektrum:
+ * individuelle digitale Unternehmenssysteme, nicht nur Webseiten.
+ * Reihenfolge & Umfang bewusst kuratiert (max. 12 Chips).
+ */
+const CHIPS = [
+  { label: "Webseiten",        icon: <Ico extra={<><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18"/></>} /> },
+  { label: "Web-Apps",         icon: <Ico extra={<><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14l-2 2 2 2M13 14l2 2-2 2"/></>} /> },
+  { label: "Mobile Apps",      icon: <Ico extra={<><rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M11 18h2"/></>} /> },
+  { label: "SaaS",             icon: <Ico d="M7 18a4 4 0 0 1-.5-7.97 5.5 5.5 0 0 1 10.6-1.02A3.75 3.75 0 0 1 17.5 18H7Z" /> },
+  { label: "CRM",              icon: <Ico extra={<><circle cx="9" cy="8" r="3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M21 19c0-2.2-1.4-3.9-3.4-4.6"/></>} /> },
+  { label: "ERP",              icon: <Ico extra={<><rect x="4" y="3" width="16" height="18" rx="1.6"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6"/></>} /> },
+  { label: "Kundenportale",    icon: <Ico extra={<><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></>} /> },
+  { label: "Admin-Systeme",    icon: <Ico extra={<><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.1"/><circle cx="15" cy="16" r="2.1"/></>} /> },
+  { label: "KI-Agenten",       icon: <Ico extra={<><rect x="6" y="6" width="12" height="12" rx="2.2"/><path d="M10 10h4v4h-4zM9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2"/></>} /> },
+  { label: "Automatisierungen",icon: <Ico d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" /> },
+  { label: "Dashboards",       icon: <Ico extra={<><path d="M3 21h18"/><rect x="5" y="11" width="3" height="7" rx="0.6"/><rect x="10.5" y="6" width="3" height="12" rx="0.6"/><rect x="16" y="14" width="3" height="4" rx="0.6"/></>} /> },
+  { label: "APIs",             icon: <Ico d="M9 15l6-6M11 6.5 12.5 5a4 4 0 0 1 5.6 5.6L16.6 12M13 17.5 11.5 19a4 4 0 0 1-5.6-5.6L7.4 12" /> },
 ];
 
 /* ── Main component ─────────────────────────────────────────────────── */
@@ -300,31 +310,36 @@ export default function PremiumHero() {
           transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           className="mt-8 mb-4 sm:mb-6 lg:mb-8"
         >
-          {/* ── Feature-Glass-Leiste ─────────────────────────────── */}
+          {/* ── Leistungs-Chips ──────────────────────────────────────
+              Desktop: eine Zeile, Umbruch bei Bedarf.
+              Mobile: horizontal scrollbar mit Snap, Scrollbar ausgeblendet. */}
           <ul
-            className="flex flex-wrap items-center gap-y-0 rounded-[16px] px-2 py-2 backdrop-blur sm:flex-nowrap"
-            style={{
-              background: "linear-gradient(180deg,rgba(255,255,255,0.052) 0%,rgba(255,255,255,0.018) 100%)",
-              border: "1px solid rgba(255,255,255,0.09)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07), 0 8px 24px rgba(0,0,0,0.28)",
-              width: "fit-content",
-              maxWidth: "100%",
-            }}
+            className="
+              scrollbar-hide
+              flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1
+              lg:max-w-[700px] lg:flex-wrap lg:overflow-visible lg:pb-0
+            "
           >
-            {FEATURES.map((f, i) => (
-              <li key={f.label} className="flex items-center">
-                {i > 0 && (
-                  <span aria-hidden
-                    className="mx-0.5 hidden h-[13px] w-px sm:block"
-                    style={{ background: "rgba(255,255,255,0.12)" }}
-                  />
-                )}
+            {CHIPS.map((c) => (
+              <li key={c.label} className="shrink-0 snap-start lg:shrink">
                 <span
-                  className="flex items-center gap-[6px] rounded-xl px-2.5 py-[6px] text-[11.5px] font-medium text-white/56 transition-colors duration-300 hover:text-white/92 sm:px-3"
-                  style={{ cursor: "default" }}
+                  className="
+                    flex h-9 items-center gap-2 whitespace-nowrap rounded-full px-3.5
+                    text-[12.5px] font-medium text-white/70 backdrop-blur
+                    border border-white/[0.10]
+                    shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]
+                    transition-all duration-300
+                    hover:scale-[1.03] hover:border-white/20 hover:text-white
+                    hover:shadow-[0_0_22px_var(--brand-glow-mid),inset_0_1px_0_rgba(255,255,255,0.12)]
+                  "
+                  style={{
+                    background:
+                      "linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%)",
+                    cursor: "default",
+                  }}
                 >
-                  <span style={{ color: "var(--accent)" }}>{f.icon}</span>
-                  <span className="whitespace-nowrap">{f.label}</span>
+                  <span style={{ color: "var(--accent)" }}>{c.icon}</span>
+                  {c.label}
                 </span>
               </li>
             ))}
