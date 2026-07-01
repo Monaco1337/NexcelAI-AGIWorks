@@ -56,10 +56,41 @@ export interface LegalEntity {
   serviceProviderTerm: string;
   /** „vom Anbieter" | „von der Anbieterin" (Urheberrecht, fremde Inhalte) */
   creatorTerm: string;
+  /** Satzsubjekt „Die Anbieterin" | „Der Anbieter" (§ 36 VSBG). */
+  providerSubject: string;
   /** Markenspezifischer Leistungsbereich (erster Absatz) */
   serviceScope: string;
   /** Echte USt-IdNr. gemäß § 27a UStG — nur setzen, wenn tatsächlich vorhanden. */
   ustId?: string;
+}
+
+/* ── Pflichtfeld-Validierung ────────────────────────────────────────────────
+ * § 5 DDG verlangt Name, ladungsfähige Anschrift und schnelle Kontaktaufnahme.
+ * Fehlt ein Pflichtfeld, wird der Build/Render abgebrochen (kein Live-Platzhalter,
+ * keine unvollständige Anbieterkennzeichnung im Produktivsystem). */
+export function assertLegalEntityComplete(entity: LegalEntity): void {
+  const required: [keyof LegalEntity, string][] = [
+    ["brandName", "Geschäftsbezeichnung"],
+    ["ownerName", "Name der Anbieterin / des Anbieters"],
+    ["street", "Straße/Hausnummer"],
+    ["zipCity", "PLZ/Ort"],
+    ["country", "Land"],
+    ["primaryEmail", "E-Mail"],
+    ["website", "Website"],
+  ];
+  const missing = required
+    .filter(([key]) => {
+      const v = entity[key];
+      return typeof v !== "string" || v.trim() === "";
+    })
+    .map(([, label]) => label);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `[Impressum] Pflichtangaben gemäß § 5 DDG fehlen für "${entity.brandName || "(unbekannt)"}": ` +
+        `${missing.join(", ")}. Deployment blockiert, bis alle Pflichtdaten hinterlegt sind.`
+    );
+  }
 }
 
 /* ── Marken-Presets ─────────────────────────────────────────────────────── */
@@ -97,9 +128,10 @@ export const NEXCEL_ENTITY: LegalEntity = {
   responsibleSectionTitle: "Inhaltlich Verantwortliche gemäß § 18 Abs. 2 MStV",
   serviceProviderTerm: "Diensteanbieterin",
   creatorTerm: "von der Anbieterin",
+  providerSubject: "Die Anbieterin",
   serviceScope:
-    "NEXCEL AI stellt Informationen und Kontaktmöglichkeiten zu digitalen Markenauftritten, Webdesign, Webentwicklung, KI-gestützten Anwendungen, Automatisierung, CRM-/Lead-Systemen, digitalen Buchungs- und Verwaltungssystemen sowie verwandten digitalen Dienstleistungen bereit.",
-  // ustId: bewusst nicht gesetzt — keine echte USt-IdNr. hinterlegt.
+    "NEXCEL AI stellt Informationen und Kontaktmöglichkeiten zu digitalen Unternehmenssystemen, Systemarchitektur, Marken- und Experience-Architektur, Prozessdesign, Webplattformen, KI-gestützten Anwendungen, Automatisierung, CRM-/Lead-Systemen, Buchungs- und Verwaltungssystemen sowie verwandten digitalen Dienstleistungen bereit.",
+  ustId: "DE441463829",
 };
 
 export const AGI_ENTITY: LegalEntity = {
@@ -123,9 +155,10 @@ export const AGI_ENTITY: LegalEntity = {
   responsibleSectionTitle: "Inhaltlich Verantwortlicher gemäß § 18 Abs. 2 MStV",
   serviceProviderTerm: "Diensteanbieter",
   creatorTerm: "vom Anbieter",
+  providerSubject: "Der Anbieter",
   serviceScope:
-    "AGI Works stellt Informationen und Kontaktmöglichkeiten zu digitalen Systemen, Webentwicklung, Automatisierung, KI-gestützten Anwendungen, CRM-/Lead-Systemen, Softwareentwicklung, technischen Infrastrukturen und verwandten digitalen Dienstleistungen bereit.",
-  // ustId: bewusst nicht gesetzt — keine echte USt-IdNr. hinterlegt.
+    "AGI Works stellt Informationen und Kontaktmöglichkeiten zu Softwarearchitektur, Plattformentwicklung, Web- und Anwendungssystemen, Backend-Systemen, Infrastruktur, Systemintegration, KI-gestützten Anwendungen, Automatisierung, CRM-/Lead-Systemen, Buchungs- und Verwaltungssystemen sowie verwandten digitalen Dienstleistungen bereit.",
+  // ustId: bewusst nicht gesetzt — für AGI Works wurde keine USt-IdNr. erteilt.
 };
 
 /* ── Theme-Context ──────────────────────────────────────────────────────── */
