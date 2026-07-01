@@ -11,8 +11,8 @@ import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 const heroStats = [
   { icon: "users", label: "Zwei Gründer" },
-  { icon: "buildings", label: "Zwei Unternehmen" },
-  { icon: "link", label: "Ein gemeinsames Ziel" },
+  { icon: "buildings", label: "Zwei Architekturen" },
+  { icon: "link", label: "Ein gemeinsames System" },
   { icon: "rocket", label: "Ihr Wachstum" },
 ] as const;
 
@@ -124,31 +124,20 @@ function BrandBridge() {
       />
 
       <div className="px-5 py-5 sm:px-7 sm:py-6">
-        {/* ── Main row: 3-column grid matching homepage partner card ── */}
+        {/* ── Main row: NEXCEL AI left · ∞ · AGI Works right ── */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-5">
 
-          {/* Left — AGI Works (Kevin, baut das System) */}
+          {/* Left — NEXCEL AI */}
           <div className="flex min-w-0 flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <AgiWorksLogoMark
-                size={22}
-                glow="drop-shadow(0 1px 4px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(91,184,255,0.5))"
-              />
-              <span
-                className="text-[13px] font-bold tracking-tight text-white/92 sm:text-[14px]"
-                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-              >
-                AGI Works
-              </span>
-            </div>
+            <NexcelLogoMark width={96} />
             <span
-              className="text-[10.5px] font-medium uppercase tracking-[0.14em] sm:text-[11px]"
-              style={{ color: "#5BB8FF" }}
+              className="text-[10px] font-medium uppercase tracking-[0.12em] sm:text-[10.5px]"
+              style={{ color: "#B78CFF" }}
             >
-              Baut das System
+              Systemarchitektur · Experience
             </span>
-            <span className="hidden text-[11px] leading-snug text-white/45 sm:block">
-              Architektur · Plattformen · Infrastruktur
+            <span className="hidden text-[11px] leading-snug text-white/42 sm:block">
+              Prozesse · Strategie · Automatisierung
             </span>
           </div>
 
@@ -164,26 +153,33 @@ function BrandBridge() {
             >
               <InfinityIcon />
             </span>
-            <span
-              className="hidden text-[8px] font-medium uppercase tracking-[0.22em] text-white/30 sm:block"
-            >
-              Kooperation
+            <span className="hidden text-[8px] font-medium uppercase tracking-[0.2em] text-white/30 sm:block">
+              Gemeinsam
             </span>
           </div>
 
-          {/* Right — NEXCEL AI (Celina, gestaltet das System) */}
+          {/* Right — AGI Works */}
           <div className="flex min-w-0 flex-col items-end gap-1.5 text-right">
-            <div className="flex items-center gap-1.5">
-              <NexcelLogoMark width={96} />
+            <div className="flex items-center justify-end gap-1.5">
+              <AgiWorksLogoMark
+                size={22}
+                glow="drop-shadow(0 1px 4px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(91,184,255,0.5))"
+              />
+              <span
+                className="text-[13px] font-bold tracking-tight text-white/92 sm:text-[14px]"
+                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+              >
+                AGI Works
+              </span>
             </div>
             <span
-              className="text-[10.5px] font-medium uppercase tracking-[0.14em] sm:text-[11px]"
-              style={{ color: "#B78CFF" }}
+              className="text-[10px] font-medium uppercase tracking-[0.12em] sm:text-[10.5px]"
+              style={{ color: "#5BB8FF" }}
             >
-              Gestaltet das System
+              Softwarearchitektur · Infrastruktur
             </span>
-            <span className="hidden text-[11px] leading-snug text-white/45 sm:block">
-              Systemdesign · Prozesse · Branding
+            <span className="hidden text-[11px] leading-snug text-white/42 sm:block">
+              Backend · Plattformen · Automatisierung
             </span>
           </div>
         </div>
@@ -195,9 +191,10 @@ function BrandBridge() {
           style={{ background: "rgba(255,255,255,0.07)" }}
         />
 
-        {/* Subline */}
-        <p className="text-center text-[11.5px] font-medium uppercase tracking-[0.18em] text-white/35 sm:text-[12px]">
-          Zwei Partner.&ensp;·&ensp;Eine Umsetzung.
+        {/* Subline — equal partnership, no hierarchy */}
+        <p className="text-center text-[11px] leading-[1.6] text-white/38 sm:text-[11.5px]">
+          Zwei spezialisierte Unternehmen. Eine gemeinsame Verantwortung: digitale Systeme,
+          die nicht nur gut aussehen, sondern im Betrieb funktionieren.
         </p>
       </div>
     </motion.div>
@@ -261,7 +258,7 @@ function WhyHeading() {
         className="mt-5 text-[1.9rem] font-light leading-[1.12] tracking-[-0.03em] text-white sm:text-[2.3rem] lg:text-[2.6rem]"
         style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
       >
-        Zwei Spezialisierungen.
+        Tiefe Kompetenz.
         <br />
         <span
           style={{
@@ -272,7 +269,7 @@ function WhyHeading() {
             fontWeight: 400,
           }}
         >
-          Eine Lösung.
+          Eine Umsetzung.
         </span>
       </h2>
     </>
@@ -286,10 +283,11 @@ function WhyBody() {
         className="text-[15px] leading-[1.75] text-white/62 sm:text-[16px]"
         style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300 }}
       >
-        Viele Agenturen versuchen alles selbst zu machen. Wir nicht. NEXCEL AI
-        gestaltet das System — Unternehmensarchitektur, Prozessdesign, Branding
-        und Customer Experience. AGI Works baut das System —
-        Softwarearchitektur, Plattformen und Infrastruktur.
+        Viele Unternehmen trennen Strategie und Technik. Wir nicht. NEXCEL AI
+        entwickelt die systemische Logik — Unternehmensarchitektur,
+        Prozessdesign, Customer Experience und Automatisierung. AGI Works
+        entwickelt die technische Basis — Softwarearchitektur, Plattformen,
+        Infrastruktur und Integrationen.
       </p>
       <p
         className="text-[15px] leading-[1.75] sm:text-[16px]"
@@ -302,8 +300,8 @@ function WhyBody() {
           backgroundClip: "text",
         }}
       >
-        Gemeinsam entstehen Lösungen, die weder klassische Agenturen noch
-        Einzelpersonen in dieser Tiefe liefern können.
+        Gemeinsam entwickeln wir Systeme — keine Trennung von Strategie und
+        Technik, kein Design ohne Funktion, keine Technik ohne Konzept.
       </p>
     </div>
   );
@@ -314,35 +312,37 @@ const founders = [
   {
     brandId: "nexcel",
     name: "Celina Siebeneicher",
-    role: "Gründerin · Unternehmensarchitektin",
+    role: "Gründerin · System- & Experience-Architektin",
     company: "NEXCEL AI",
     image: "/images/team/celina.png",
     accent: "#B78CFF",
     accentRgb: "183, 140, 255",
+    bio: "Celina entwickelt die strategische Systemlogik hinter digitalen Plattformen: Unternehmensstruktur, Prozessführung, Customer Experience, Markenwirkung, Automatisierung und nutzerzentrierte Systemarchitektur.",
     responsibilities: [
-      "Unternehmenssysteme",
-      "Systemdesign",
+      "Systemarchitektur",
       "Prozessdesign",
-      "Branding",
       "Customer Experience",
+      "Markenstrategie",
       "Automatisierung",
+      "Unternehmenssysteme",
     ],
   },
   {
     brandId: "agiworks",
     name: "Kevin Blazevic",
-    role: "Gründer · Softwarearchitekt",
+    role: "Gründer · Software- & Plattformarchitekt",
     company: "AGI Works",
     image: "/images/team/kevin.png",
     accent: "#5BB8FF",
     accentRgb: "91, 184, 255",
+    bio: "Kevin entwickelt die technische Architektur hinter digitalen Systemen: Software, Infrastruktur, Backend-Strukturen, Integrationen, Automatisierung, Skalierbarkeit und stabile Plattformlogik.",
     responsibilities: [
       "Softwarearchitektur",
       "Plattformentwicklung",
-      "Enterprise-Systeme",
-      "Infrastruktur",
       "Backend-Systeme",
+      "Infrastruktur",
       "Systemintegration",
+      "Automatisierung",
     ],
   },
 ] as const;
@@ -424,6 +424,10 @@ function FounderColumn({
             {founder.company}
           </span>
         </p>
+        {/* Bio */}
+        <p className="mt-5 text-[14.5px] leading-[1.72] text-white/60">
+          {founder.bio}
+        </p>
       </div>
 
       {/* Verantwortungsbereiche — Premium Expand */}
@@ -503,10 +507,11 @@ function FounderColumn({
 }
 
 const sharedResponsibilities = [
-  "Analyse",
-  "Konzeption",
+  "Systemanalyse",
+  "Architekturkonzept",
   "Entwicklung",
   "Implementierung",
+  "Automatisierung",
   "Betreuung",
 ] as const;
 
@@ -551,7 +556,7 @@ function WhoDoesWhat() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            Zwei Unternehmen. Zwei Spezialisierungen. Eine gemeinsame Mission.
+            Zwei Gründer. Zwei Architekturen. Keine Hierarchie — nur Kompetenz.
           </motion.p>
 
           <motion.p
@@ -561,8 +566,9 @@ function WhoDoesWhat() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
           >
-            Wir entwickeln Unternehmenssysteme, die Prozesse, Menschen und
-            Technologie in einer funktionierenden Struktur zusammenführen.
+            NEXCEL AI und AGI Works entwickeln gemeinsam digitale
+            Betriebssysteme — von der Systemlogik bis zur technischen
+            Plattform, von der Experience bis zur Infrastruktur.
           </motion.p>
         </div>
 
@@ -614,7 +620,7 @@ function WhoDoesWhat() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            Dort, wo Strategie und technische Umsetzung zusammenkommen.
+            Kein Silo. Kein „einer macht Strategie, einer macht Technik". Beide entwickeln gemeinsam — mit klaren Rollen und tiefer gegenseitiger Integration.
           </motion.p>
 
           {/* Premium Typografie-Blöcke (keine Pills/Chips) */}
@@ -1223,9 +1229,9 @@ export default function AboutPageContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
             >
-              NEXCEL AI gestaltet das System — Prozesse, Strukturen und
-              Customer Experience. AGI Works baut es — Architektur,
-              Infrastruktur und Software.
+              NEXCEL AI und AGI Works entwickeln gemeinsam digitale Systeme,
+              die Strategie, Prozesse, Design, Software, Automatisierung und
+              Infrastruktur zu einem funktionierenden Betriebssystem verbinden.
             </motion.p>
 
             <HeroStats />
