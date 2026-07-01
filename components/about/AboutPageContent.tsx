@@ -6,6 +6,8 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
+import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 const heroStats = [
   { icon: "users", label: "Zwei Gründer" },
@@ -101,73 +103,103 @@ function HeroStats() {
 function BrandBridge() {
   return (
     <motion.div
-      className="relative mx-auto mt-16 w-full max-w-4xl overflow-hidden rounded-[28px] p-7 sm:p-9"
+      className="relative mx-auto mt-10 w-full max-w-[860px] overflow-hidden rounded-[22px] sm:rounded-[28px]"
       style={{
-        background:
-          "linear-gradient(180deg, rgba(10,10,18,0.72) 0%, rgba(6,6,12,0.82) 100%)",
-        border: "1px solid var(--brand-card-border)",
-        boxShadow:
-          "0 30px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 48px var(--brand-glow-soft)",
-        backdropFilter: "blur(28px) saturate(140%)",
-        WebkitBackdropFilter: "blur(28px) saturate(140%)",
+        background: "linear-gradient(160deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.025) 100%)",
+        border: "1px solid rgba(255,255,255,0.11)",
+        boxShadow: "0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 48px var(--brand-glow-soft)",
+        backdropFilter: "blur(32px) saturate(160%)",
+        WebkitBackdropFilter: "blur(32px) saturate(160%)",
       }}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="flex flex-col items-center gap-7 md:flex-row md:justify-between md:gap-5">
-        {/* NEXCEL AI */}
-        <div className="text-center md:text-left">
-          <div
-            className="text-[20px] font-semibold tracking-[-0.01em] sm:text-[22px]"
-            style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-          >
-            <span className="text-white">NEXCEL </span>
-            <span style={{ color: "#B78CFF" }}>AI</span>
+      {/* Top shimmer line */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-px left-1/2 h-px w-3/4 -translate-x-1/2"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent)" }}
+      />
+
+      <div className="px-5 py-5 sm:px-7 sm:py-6">
+        {/* ── Main row: 3-column grid matching homepage partner card ── */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-5">
+
+          {/* Left — AGI Works (Kevin, baut das System) */}
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <AgiWorksLogoMark
+                size={22}
+                glow="drop-shadow(0 1px 4px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(91,184,255,0.5))"
+              />
+              <span
+                className="text-[13px] font-bold tracking-tight text-white/92 sm:text-[14px]"
+                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+              >
+                AGI Works
+              </span>
+            </div>
+            <span
+              className="text-[10.5px] font-medium uppercase tracking-[0.14em] sm:text-[11px]"
+              style={{ color: "#5BB8FF" }}
+            >
+              Baut das System
+            </span>
+            <span className="hidden text-[11px] leading-snug text-white/45 sm:block">
+              Architektur · Plattformen · Infrastruktur
+            </span>
           </div>
-          <div className="mt-1.5 text-[12.5px] text-white/45">
-            Gestaltet das System
+
+          {/* Center — Infinity connector */}
+          <div className="flex flex-col items-center justify-center gap-2 px-2 sm:px-3">
+            <span
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12"
+              style={{
+                background: "radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 60%, transparent)",
+                border: "1px solid var(--brand-line-mid)",
+                boxShadow: "0 0 24px var(--brand-glow-mid), inset 0 1px 0 rgba(255,255,255,0.10)",
+              }}
+            >
+              <InfinityIcon />
+            </span>
+            <span
+              className="hidden text-[8px] font-medium uppercase tracking-[0.22em] text-white/30 sm:block"
+            >
+              Kooperation
+            </span>
+          </div>
+
+          {/* Right — NEXCEL AI (Celina, gestaltet das System) */}
+          <div className="flex min-w-0 flex-col items-end gap-1.5 text-right">
+            <div className="flex items-center gap-1.5">
+              <NexcelLogoMark width={92} height={17} />
+            </div>
+            <span
+              className="text-[10.5px] font-medium uppercase tracking-[0.14em] sm:text-[11px]"
+              style={{ color: "#B78CFF" }}
+            >
+              Gestaltet das System
+            </span>
+            <span className="hidden text-[11px] leading-snug text-white/45 sm:block">
+              Systemdesign · Prozesse · Branding
+            </span>
           </div>
         </div>
 
-        {/* Bridge connector */}
-        <div className="flex items-center gap-3">
-          <BridgeArrow direction="left" />
-          <span
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 60%, transparent 80%)",
-              border: "1px solid var(--brand-line-mid)",
-              boxShadow:
-                "0 0 28px var(--brand-glow-mid), inset 0 1px 0 rgba(255,255,255,0.10)",
-            }}
-          >
-            <InfinityIcon />
-          </span>
-          <BridgeArrow direction="right" />
-        </div>
+        {/* Divider */}
+        <div
+          aria-hidden
+          className="my-4 h-px w-full sm:my-5"
+          style={{ background: "rgba(255,255,255,0.07)" }}
+        />
 
-        {/* AGI Works */}
-        <div className="text-center md:text-right">
-          <div
-            className="text-[20px] font-semibold tracking-[-0.01em] sm:text-[22px]"
-            style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-          >
-            <span className="text-white">AGI </span>
-            <span style={{ color: "#5BB8FF" }}>Works</span>
-          </div>
-          <div className="mt-1.5 text-[12.5px] text-white/45">
-            Baut das System
-          </div>
-        </div>
+        {/* Subline */}
+        <p className="text-center text-[11.5px] font-medium uppercase tracking-[0.18em] text-white/35 sm:text-[12px]">
+          Zwei Partner.&ensp;·&ensp;Eine Umsetzung.
+        </p>
       </div>
-
-      <p className="mt-7 text-center text-[13px] leading-[1.65] text-white/50">
-        Zwei Spezialisierungen, eine Umsetzung — ein vollständiges
-        Betriebssystem für Ihr Unternehmen.
-      </p>
     </motion.div>
   );
 }
@@ -1063,71 +1095,72 @@ export default function AboutPageContent() {
       <Navigation />
 
       {/* Hero — Founders (Fullscreen-Background) */}
-      <section className="relative flex min-h-screen flex-col justify-center overflow-hidden px-6 pb-14 pt-28 sm:pt-32 md:pb-20">
-        {/* Gründerfoto — Fullscreen-Hintergrund über den gesamten Hero */}
+      <section className="relative flex min-h-screen flex-col justify-end overflow-hidden px-6 pb-12 pt-28 sm:min-h-[100svh] sm:pb-14 md:justify-center md:pb-20 md:pt-32">
+        {/* Gründerfoto — Fullscreen-Hintergrund */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <motion.div
             className="relative h-full w-full"
-            initial={{ opacity: 0, scale: 1.06 }}
+            initial={{ opacity: 0, scale: 1.04 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
           >
+            {/* The founders photo — centered to show both people equally */}
             <Image
               src="/images/team/founders.png"
               alt="Die Gründer von NEXCEL AI und AGI Works"
               fill
               priority
-              quality={100}
+              quality={95}
               sizes="100vw"
-              className="object-cover object-[64%_28%] sm:object-[58%_30%] md:object-[center_34%]"
-              style={{ transform: "scale(1.2)", transformOrigin: "center top" }}
+              className="object-cover object-[50%_16%] sm:object-[50%_18%] md:object-[50%_22%] lg:object-[50%_24%]"
             />
 
-            {/* 1 — Lesbarkeits-Verlauf links → rechts (Text-Seite abdunkeln) */}
+            {/* 1 — Vertical: nav area + bottom-card fade */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(90deg, var(--brand-bg-top) 0%, color-mix(in srgb, var(--brand-bg-top) 82%, transparent) 26%, color-mix(in srgb, var(--brand-bg-top) 40%, transparent) 52%, transparent 78%)",
+                  "linear-gradient(180deg, var(--brand-bg-top) 0%, color-mix(in srgb, var(--brand-bg-top) 30%, transparent) 15%, transparent 35%, transparent 52%, color-mix(in srgb, var(--brand-bg-top) 55%, transparent) 72%, var(--brand-bg-top) 100%)",
               }}
             />
-            {/* 2 — Vertikaler Verlauf: oben (Nav) + unten (Bridge) einbetten */}
+            {/* 2 — Left text-column scrim (lighter than before) */}
             <div
-              className="absolute inset-0"
+              className="absolute inset-0 hidden md:block"
               style={{
                 background:
-                  "linear-gradient(180deg, var(--brand-bg-top) 0%, transparent 20%, transparent 50%, color-mix(in srgb, var(--brand-bg-top) 88%, transparent) 84%, var(--brand-bg-top) 100%)",
+                  "linear-gradient(90deg, color-mix(in srgb, var(--brand-bg-top) 65%, transparent) 0%, color-mix(in srgb, var(--brand-bg-top) 28%, transparent) 36%, transparent 60%)",
               }}
             />
-            {/* 3 — Mobile-Scrim: zusätzliche Abdunklung für Textlesbarkeit */}
+            {/* 3 — Mobile bottom-up gradient: keeps card readable, preserves faces */}
             <div
               className="absolute inset-0 md:hidden"
               style={{
                 background:
-                  "linear-gradient(180deg, color-mix(in srgb, var(--brand-bg-top) 55%, transparent) 0%, color-mix(in srgb, var(--brand-bg-top) 78%, transparent) 100%)",
+                  "linear-gradient(180deg, color-mix(in srgb, var(--brand-bg-top) 40%, transparent) 0%, transparent 30%, transparent 48%, color-mix(in srgb, var(--brand-bg-top) 62%, transparent) 70%, var(--brand-bg-top) 100%)",
               }}
             />
-            {/* 4 — Brand-Tint (edle, markenfarbene Einbettung) */}
+            {/* 4 — Brand-tint glow */}
             <div
               className="absolute inset-0 mix-blend-soft-light"
               style={{
                 background:
-                  "radial-gradient(70% 60% at 72% 32%, var(--brand-glow-mid), transparent 70%)",
+                  "radial-gradient(65% 55% at 50% 28%, var(--brand-glow-mid), transparent 70%)",
               }}
             />
-            {/* 5 — Vignette */}
+            {/* 5 — Edge vignette */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(ellipse 100% 80% at 50% 45%, transparent 55%, rgba(0,0,0,0.45) 100%)",
+                  "radial-gradient(ellipse 110% 80% at 50% 40%, transparent 50%, rgba(0,0,0,0.38) 100%)",
               }}
             />
           </motion.div>
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl">
-          <div className="max-w-xl">
+          {/* Text content — on mobile sits above card at bottom; on md+ left-aligned */}
+          <div className="mb-8 max-w-[520px] md:mb-0 md:max-w-xl">
             <motion.span
               className="block text-[11px] font-medium uppercase tracking-[0.34em]"
               style={{ color: "var(--accent)" }}
@@ -1139,10 +1172,10 @@ export default function AboutPageContent() {
             </motion.span>
 
             <motion.h1
-              className="mt-6 text-[2.7rem] font-light leading-[1.02] tracking-[-0.035em] text-white sm:text-[3.3rem] md:text-[3.7rem] lg:text-[4rem]"
+              className="mt-5 text-[2.4rem] font-light leading-[1.04] tracking-[-0.035em] text-white sm:text-[3rem] md:text-[3.4rem] lg:text-[3.8rem]"
               style={{
                 fontFamily: "var(--font-headline), system-ui, sans-serif",
-                textShadow: "0 2px 40px rgba(0,0,0,0.5)",
+                textShadow: "0 2px 40px rgba(0,0,0,0.65)",
               }}
               initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -1166,8 +1199,8 @@ export default function AboutPageContent() {
             </motion.h1>
 
             <motion.p
-              className="mt-6 max-w-md text-[15.5px] leading-[1.7] text-white/72 sm:text-[16.5px]"
-              style={{ textShadow: "0 1px 24px rgba(0,0,0,0.55)" }}
+              className="mt-5 max-w-md text-[14.5px] leading-[1.72] text-white/68 sm:text-[15.5px]"
+              style={{ textShadow: "0 1px 28px rgba(0,0,0,0.7)" }}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
