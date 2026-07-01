@@ -265,10 +265,10 @@ export default function Footer() {
 
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-12 lg:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 sm:gap-6 md:gap-8 lg:gap-12 mb-8 sm:mb-10 md:mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-x-6 gap-y-8 sm:gap-6 md:gap-8 lg:gap-12 mb-8 sm:mb-10 md:mb-12">
           {/* Brand Column */}
           <motion.div
-            className="col-span-2 md:col-span-2"
+            className="col-span-2 md:col-span-2 pb-6 border-b border-white/[0.06] md:pb-0 md:border-0"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -467,7 +467,7 @@ export default function Footer() {
           <p className="text-[#9CA3AF] text-[10px] sm:text-xs font-light text-center md:text-left">
             {footer.copyright.replace(/©\s*\d{4}/, `© ${new Date().getFullYear()}`)}
           </p>
-          <div className="flex items-center gap-4 sm:gap-6 text-[10px] sm:text-xs text-[#9CA3AF]">
+          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-[#9CA3AF]">
             <span className="font-light">Made with</span>
             <motion.span
               className="text-[#A45CFF]"

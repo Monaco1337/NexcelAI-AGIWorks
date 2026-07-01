@@ -152,10 +152,12 @@ export default function FoundersCta() {
               {FOUNDERS.map((f) => (
                 <div
                   key={f.name}
-                  className="relative overflow-hidden rounded-3xl"
+                  className="relative flex flex-col overflow-hidden rounded-3xl"
                   style={{
                     border: "1px solid var(--brand-card-border)",
                     boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%)",
                   }}
                 >
                   <div className="relative aspect-[3/4] w-full">
@@ -165,23 +167,35 @@ export default function FoundersCta() {
                       className="absolute inset-0 h-full w-full select-none object-cover object-top"
                       draggable={false}
                     />
+                    {/* Dezente Tiefe auf Mobile (Text steht darunter) */}
                     <div
                       aria-hidden
-                      className="absolute inset-0"
+                      className="absolute inset-0 sm:hidden"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, rgba(5,4,16,0) 55%, rgba(5,4,16,0.55) 100%)",
+                      }}
+                    />
+                    {/* Kräftiger Verlauf für das Overlay ab sm */}
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 hidden sm:block"
                       style={{
                         background:
                           "linear-gradient(180deg, rgba(5,4,16,0.05) 30%, rgba(5,4,16,0.92) 100%)",
                       }}
                     />
                   </div>
-                  <div className="absolute inset-x-0 bottom-0 p-4">
+
+                  {/* Info: unter dem Bild auf Mobile, Overlay ab sm */}
+                  <div className="p-4 sm:absolute sm:inset-x-0 sm:bottom-0">
                     <div
-                      className="text-[14px] font-semibold text-white"
+                      className="text-[13px] sm:text-[14px] font-semibold text-white"
                       style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
                     >
                       {f.name}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1">
+                    <div className="mt-1 flex items-center gap-1">
                       {f.isNexcel && (
                         <NexcelLogoMark width={78} />
                       )}
