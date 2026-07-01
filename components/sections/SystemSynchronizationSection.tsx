@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useId } from "react";
+import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 
 /* ════════════════════════════════════════════════════════════════════
  *  System Synchronization — „Alles kommt zusammen"
@@ -684,17 +685,9 @@ function NexcelMark() {
 
 function AgiMark() {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src="/images/logos/agiworks-logo.png"
-      alt="AGI Works"
-      width={42}
-      height={42}
-      className="h-[42px] w-[42px] shrink-0 select-none object-contain"
-      style={{
-        filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.55)) drop-shadow(0 0 18px rgba(91,184,255,0.45))",
-      }}
-      draggable={false}
+    <AgiWorksLogoMark
+      size={42}
+      glow="drop-shadow(0 2px 8px rgba(0,0,0,0.55)) drop-shadow(0 0 18px rgba(91,184,255,0.45))"
     />
   );
 }

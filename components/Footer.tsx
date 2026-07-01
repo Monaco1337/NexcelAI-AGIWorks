@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
+import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 
 const linkedInIcon = (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -274,20 +275,12 @@ export default function Footer() {
               <div
                 className="flex items-center gap-2 sm:gap-2.5"
               >
-                {/* Logo mark — shown when brand has one (e.g. AGI Works transparent PNG) */}
-                {brand.navigation.logoMark && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={brand.navigation.logoMark.src}
-                    alt=""
-                    aria-hidden
-                    width={32}
-                    height={32}
-                    className="h-7 w-7 shrink-0 select-none object-contain sm:h-8 sm:w-8"
-                    style={{
-                      filter: "drop-shadow(0 1px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 12px var(--brand-glow-strong))",
-                    }}
-                    draggable={false}
+                {/* Logo mark — only for AGI Works (transparent PNG with bg-removal filter) */}
+                {brand.navigation.logoMark?.removeWhiteBg && (
+                  <AgiWorksLogoMark
+                    size={28}
+                    className="h-7 w-7 shrink-0 sm:h-8 sm:w-8"
+                    glow="drop-shadow(0 1px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 14px rgba(91,184,255,0.45))"
                   />
                 )}
                 <div

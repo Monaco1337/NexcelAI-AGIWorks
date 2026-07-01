@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
@@ -19,7 +20,7 @@ type SearchIndexItem = {
   category: string;
 };
 
-/** Renders a brand logo mark — with optional SVG filter to remove white PNG backgrounds. */
+/** Renders a brand logo mark — delegates to AgiWorksLogoMark when removeWhiteBg is set. */
 function LogoMarkImage({
   src,
   alt,
@@ -35,40 +36,15 @@ function LogoMarkImage({
   className?: string;
   style?: React.CSSProperties;
 }) {
-  const filterId = "aw-white-bg-remove";
   if (removeWhiteBg) {
+    // Extract drop-shadow from the passed style.filter for the glow prop
+    const glowFilter = (style?.filter as string | undefined) ?? null;
     return (
-      <svg
-        width={size ?? 36}
-        height={size ?? 36}
-        viewBox={`0 0 ${size ?? 36} ${size ?? 36}`}
+      <AgiWorksLogoMark
+        size={size ?? 36}
         className={className}
-        style={style}
-        role="img"
-        aria-label={alt}
-      >
-        <defs>
-          <filter id={filterId} x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
-            {/* Remove near-white pixels: alpha = -3R -3G -3B + 8 */}
-            <feColorMatrix
-              type="matrix"
-              values="1 0 0 0 0
-                      0 1 0 0 0
-                      0 0 1 0 0
-                      -3 -3 -3 8 -1"
-            />
-          </filter>
-        </defs>
-        <image
-          href={src}
-          x="0"
-          y="0"
-          width={size ?? 36}
-          height={size ?? 36}
-          filter={`url(#${filterId})`}
-          preserveAspectRatio="xMidYMid meet"
-        />
-      </svg>
+        glow={glowFilter}
+      />
     );
   }
   return (

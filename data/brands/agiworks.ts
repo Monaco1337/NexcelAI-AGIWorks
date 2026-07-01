@@ -24,6 +24,7 @@ export const agiworksBrand: BrandConfig = {
       src: "/images/logos/agiworks-logo.png",
       alt: "AGI Works Logo",
       size: 36,
+      removeWhiteBg: true,
     },
     partnerLabel: "in Kooperation mit",
     partnerName: "NEXCEL AI",

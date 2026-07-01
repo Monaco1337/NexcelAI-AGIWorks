@@ -12,20 +12,21 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
+import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 
 const FOUNDERS = [
   {
     name: "Celina Siebeneicher",
     role: "Systemdesign · Unternehmensarchitektur · Customer Experience",
     brand: "NEXCEL AI",
-    brandLogo: null as string | null,
+    isAgiWorks: false,
     image: "/images/team/celina.png",
   },
   {
     name: "Kevin Blazevic",
     role: "Softwarearchitektur · Plattformen · Infrastruktur",
     brand: "AGI Works",
-    brandLogo: "/images/logos/agiworks-logo.png",
+    isAgiWorks: true,
     image: "/images/team/kevin.png",
   },
 ];
@@ -181,17 +182,10 @@ export default function FoundersCta() {
                       className="mt-0.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.14em]"
                       style={{ color: "var(--accent)" }}
                     >
-                      {f.brandLogo && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={f.brandLogo}
-                          alt=""
-                          aria-hidden
-                          width={12}
-                          height={12}
-                          className="h-3 w-3 shrink-0 object-contain"
-                          style={{ filter: "drop-shadow(0 0 4px rgba(91,184,255,0.6))" }}
-                          draggable={false}
+                      {f.isAgiWorks && (
+                        <AgiWorksLogoMark
+                          size={12}
+                          glow="drop-shadow(0 0 4px rgba(91,184,255,0.65))"
                         />
                       )}
                       {f.brand}
