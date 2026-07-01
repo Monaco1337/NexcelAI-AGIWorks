@@ -5,7 +5,7 @@
  * Hochwertige Referenz-/Case-Study-Galerie mit Fullscreen-Modal.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeading } from "@/components/sections/SystemsGrid";
@@ -299,6 +299,191 @@ function ReferenceCard({
   );
 }
 
+// ─── Mobile / Tablet Swipe Slider ────────────────────────────────────────────
+function MobileReferenceSlider({
+  references,
+  onSelect,
+}: {
+  references: ReferenceEntry[];
+  onSelect: (p: ReferenceEntry) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const total = references.length;
+
+  const onScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const cardWidth = el.scrollWidth / total;
+    const idx = Math.round(el.scrollLeft / cardWidth);
+    setActiveIdx(Math.min(Math.max(idx, 0), total - 1));
+  }, [total]);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [onScroll]);
+
+  const scrollTo = (idx: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const cardWidth = el.scrollWidth / total;
+    el.scrollTo({ left: cardWidth * idx, behavior: "smooth" });
+  };
+
+  const prev = () => scrollTo(Math.max(activeIdx - 1, 0));
+  const next = () => scrollTo(Math.min(activeIdx + 1, total - 1));
+
+  return (
+    <div className="relative select-none">
+      {/* Scroll Track */}
+      <div
+        ref={trackRef}
+        className="flex snap-x snap-mandatory gap-4 overflow-x-scroll pb-1"
+        style={{
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"],
+          paddingLeft: "20px",
+          paddingRight: "20px",
+        }}
+      >
+        {references.map((project, i) => (
+          <motion.article
+            key={project.id}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-5%" }}
+            transition={{ duration: 0.45, delay: Math.min(i * 0.04, 0.2), ease: [0.22, 1, 0.36, 1] }}
+            /* 82vw on mobile → ~1 card + peek; 44vw on sm → ~2 cards */
+            className="group relative flex w-[82vw] flex-none cursor-pointer snap-start flex-col overflow-hidden rounded-[20px] sm:w-[44vw]"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: `1px solid ${i === activeIdx ? "rgba(var(--accent-rgb,168,85,247),0.32)" : "rgba(255,255,255,0.07)"}`,
+              boxShadow: i === activeIdx
+                ? "0 0 0 1px rgba(var(--accent-rgb,168,85,247),0.10)"
+                : "none",
+              transition: "border-color 0.3s, box-shadow 0.3s",
+            }}
+            onClick={() => onSelect(project)}
+          >
+            {/* Image */}
+            <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
+              <Image
+                src={project.coverImage}
+                alt={`${project.title} – ${project.shortDescription}`}
+                fill
+                className="object-cover transition-transform duration-500 group-active:scale-[1.02]"
+                quality={85}
+                sizes="82vw"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-70" />
+
+              {/* Tap hint */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-active:opacity-100">
+                <span className="rounded-full border border-white/30 bg-black/50 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm">
+                  Vollansicht öffnen
+                </span>
+              </div>
+
+              {/* Status badge */}
+              <div className="absolute right-3 top-3">
+                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm ${STATUS_COLOR[project.status] ?? "bg-white/10 text-white/60 border-white/20"}`}>
+                  {STATUS_LABEL[project.status] ?? project.status}
+                </span>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex flex-1 flex-col p-5">
+              <span className="mb-1 text-[11px] font-medium text-white/35">{project.type}</span>
+              <h3 className="mb-1.5 text-base font-semibold text-white">{project.title}</h3>
+              <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-white/55">{project.shortDescription}</p>
+              <div className="mt-auto flex flex-wrap gap-1.5">
+                {project.tags.slice(0, 3).map((tag) => (
+                  <span key={tag} className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-0.5 text-[10px] text-white/55">
+                    {tag}
+                  </span>
+                ))}
+                {project.tags.length > 3 && (
+                  <span className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-0.5 text-[10px] text-white/35">
+                    +{project.tags.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.article>
+        ))}
+      </div>
+
+      {/* Right fade mask */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-10"
+        style={{ background: "linear-gradient(to left, rgba(5,3,14,0.88) 0%, transparent 100%)" }}
+      />
+
+      {/* Controls: Counter + Dots + Arrows */}
+      <div className="mt-6 flex items-center justify-between px-5 sm:px-8">
+        {/* Counter */}
+        <span
+          className="text-[11px] font-medium tabular-nums tracking-[0.18em] text-white/35"
+          aria-live="polite"
+          aria-label={`Projekt ${activeIdx + 1} von ${total}`}
+        >
+          {String(activeIdx + 1).padStart(2, "0")}&nbsp;/&nbsp;{String(total).padStart(2, "0")}
+        </span>
+
+        {/* Dot Pagination */}
+        <div className="flex items-center gap-2" role="tablist" aria-label="Referenzen Navigation">
+          {references.map((_, i) => (
+            <button
+              key={i}
+              role="tab"
+              aria-selected={i === activeIdx}
+              aria-label={`Projekt ${i + 1}`}
+              onClick={() => scrollTo(i)}
+              className="relative h-1.5 overflow-hidden rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              style={{
+                width: i === activeIdx ? "22px" : "6px",
+                background: i === activeIdx ? "var(--accent)" : "rgba(255,255,255,0.22)",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Arrows */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prev}
+            disabled={activeIdx === 0}
+            aria-label="Vorheriges Projekt"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:opacity-30"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            onClick={next}
+            disabled={activeIdx === total - 1}
+            aria-label="Nächstes Projekt"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:opacity-30"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ProjectsShowcase() {
   const [references, setReferences] = useState<ReferenceEntry[]>(STATIC_REFERENCES.filter((r) => r.isPublished));
@@ -318,14 +503,22 @@ export default function ProjectsShowcase() {
   return (
     <>
       <section id="projekte" className="relative w-full scroll-mt-[108px] py-20 sm:py-28">
-        <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8">
-          <SectionHeading
-            eyebrow="Referenzen"
-            title="Reale Projekte. Reale Ergebnisse."
-            subtitle="Von der Idee bis zum fertigen System — maßgeschneiderte digitale Lösungen für Unternehmen aus verschiedenen Branchen."
-          />
+        <div className="mx-auto w-full max-w-[1280px]">
+          <div className="px-5 sm:px-8">
+            <SectionHeading
+              eyebrow="Referenzen"
+              title="Reale Projekte. Reale Ergebnisse."
+              subtitle="Von der Idee bis zum fertigen System — maßgeschneiderte digitale Lösungen für Unternehmen aus verschiedenen Branchen."
+            />
+          </div>
 
-          <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Mobile / Tablet: Swipe Slider (< lg) */}
+          <div className="mt-12 block lg:hidden">
+            <MobileReferenceSlider references={references} onSelect={setActiveRef} />
+          </div>
+
+          {/* Desktop: 3-Spalten-Grid (lg+) */}
+          <div className="mt-12 hidden px-5 sm:px-8 lg:grid lg:grid-cols-3 lg:gap-5">
             {references.map((project, i) => (
               <ReferenceCard
                 key={project.id}
@@ -342,7 +535,7 @@ export default function ProjectsShowcase() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-14 flex flex-col items-center gap-4 text-center"
+            className="mt-14 flex flex-col items-center gap-4 px-5 text-center sm:px-8"
           >
             <p className="text-sm text-white/45">Kein passendes Projekt dabei?</p>
             <a
