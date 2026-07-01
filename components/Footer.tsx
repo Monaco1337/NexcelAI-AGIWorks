@@ -42,7 +42,8 @@ export default function Footer() {
   const isImpressumPage = pathname === "/impressum";
   const isDemoPage = pathname?.startsWith("/demo") || pathname === "/login" || pathname === "/demo-anfordern";
   const isPreiskalkulatorPage =
-    pathname === "/preiskalkulator" || pathname === "/agiworks/preiskalkulator";
+    pathname === "/preiskalkulator" || pathname === "/agiworks/preiskalkulator" ||
+    pathname === "/preise" || pathname === "/agiworks/preise";
   const isSystemanalysePage =
     pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse");
 

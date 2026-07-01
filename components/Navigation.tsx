@@ -38,11 +38,19 @@ const BASE_SEARCH_INDEX: SearchIndexItem[] = [
     category: "page",
   },
   {
+    id: "preise",
+    title: "Preise",
+    href: "/preise",
+    description: "Preiskorridore – transparente Orientierung für Ihr digitales System",
+    keywords: ["preis", "preise", "kosten", "budget", "angebot", "orientierung"],
+    category: "page",
+  },
+  {
     id: "preiskalkulator",
     title: "Preiskalkulator",
     href: "/preiskalkulator",
     description: "Preiskalkulator - Transparente Kostenschätzung für Ihr System",
-    keywords: ["preis", "preise", "preiskalkulator", "kalkulator", "kosten", "budget", "schätzung", "angebot"],
+    keywords: ["preiskalkulator", "kalkulator", "schätzung", "berechnen"],
     category: "page",
   },
   {
@@ -126,7 +134,7 @@ export default function Navigation() {
       return [
         { label: "Start", href: r("/") },
         { label: "Projekte", href: r("/projekte") },
-        { label: "Preise", href: r("/preiskalkulator") },
+        { label: "Preise", href: r("/preise") },
         { label: "Über uns", href: r("/ueber-mich") },
         { label: "Kontakt", href: r("/kontakt") },
       ];
