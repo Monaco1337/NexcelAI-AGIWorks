@@ -322,11 +322,13 @@ const founders = [
     bio: "Celina entwickelt die strategische Systemlogik hinter digitalen Plattformen: Unternehmensstruktur, Prozessführung, Customer Experience, Markenwirkung, Automatisierung und nutzerzentrierte Systemarchitektur.",
     responsibilities: [
       "Systemarchitektur",
-      "Prozessdesign",
+      "Unternehmensarchitektur",
+      "Prozessarchitektur",
       "Customer Experience",
-      "Markenstrategie",
       "Automatisierung",
-      "Unternehmenssysteme",
+      "Marken- & Nutzerführung",
+      "Operations-Struktur",
+      "Strategische Systemlogik",
     ],
   },
   {
@@ -340,11 +342,13 @@ const founders = [
     bio: "Kevin entwickelt die technische Architektur hinter digitalen Systemen: Software, Infrastruktur, Backend-Strukturen, Integrationen, Automatisierung, Skalierbarkeit und stabile Plattformlogik.",
     responsibilities: [
       "Softwarearchitektur",
-      "Plattformentwicklung",
+      "Plattformarchitektur",
       "Backend-Systeme",
       "Infrastruktur",
-      "Systemintegration",
       "Automatisierung",
+      "Systemintegration",
+      "Skalierbarkeit",
+      "Technische Prozesslogik",
     ],
   },
 ] as const;
