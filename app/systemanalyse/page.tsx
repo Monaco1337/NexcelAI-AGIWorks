@@ -1,5 +1,5 @@
-import SystemanalyseWizard from "@/components/systemanalyse/SystemanalyseWizard";
+import SimpleSystemanalyse from "@/components/systemanalyse/SimpleSystemanalyse";
 
 export default function SystemanalysePage() {
-  return <SystemanalyseWizard />;
+  return <SimpleSystemanalyse />;
 }
