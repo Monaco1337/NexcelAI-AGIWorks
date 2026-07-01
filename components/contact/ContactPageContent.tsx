@@ -484,9 +484,9 @@ function ContactInfoTile({
   href?: string;
 }) {
   const inner = (
-    <div className="flex items-center gap-4">
+    <div className="flex w-full items-start gap-4">
       <span
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-300"
+        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-300"
         style={{
           background: "rgba(255,255,255,0.04)",
           border: "1px solid rgba(255,255,255,0.09)",
@@ -495,14 +495,14 @@ function ContactInfoTile({
       >
         {icon}
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p
           className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-white/40"
           style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
         >
           {label}
         </p>
-        <p className="mt-0.5 truncate text-[14px] font-light text-white/85">
+        <p className="mt-0.5 break-words text-[14px] font-light leading-snug text-white/85">
           {value}
         </p>
       </div>
@@ -520,7 +520,7 @@ function ContactInfoTile({
   );
 
   const tileClass =
-    "group/tile relative flex w-full items-center rounded-2xl px-4 py-3.5 transition-all duration-300 hover:bg-white/[0.04]";
+    "group/tile relative flex w-full items-start rounded-2xl px-4 py-3.5 transition-all duration-300 hover:bg-white/[0.04]";
   const tileStyle = {
     background: "rgba(255,255,255,0.025)",
     border: "1px solid rgba(255,255,255,0.07)",
