@@ -145,7 +145,7 @@ export const agiworksBrand: BrandConfig = {
       // Spalte „Systeme"
       products: [
         { label: "Systeme im Überblick", href: "/agiworks#systeme" },
-        { label: "Projekte", href: "/agiworks#projekte" },
+        { label: "Projekte", href: "/agiworks/projekte" },
         { label: "Preise", href: "/agiworks/preise" },
       ],
       // Spalte „Ressourcen"

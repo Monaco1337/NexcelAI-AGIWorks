@@ -134,7 +134,7 @@ export const nexcelBrand: BrandConfig = {
       // Spalte „Systeme"
       products: [
         { label: "Systeme im Überblick", href: "/#systeme" },
-        { label: "Projekte", href: "/#projekte" },
+        { label: "Projekte", href: "/projekte" },
         { label: "Preise", href: "/preise" },
       ],
       // Spalte „Ressourcen"
