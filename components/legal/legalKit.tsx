@@ -41,6 +41,25 @@ export interface LegalEntity {
   homeHref: string;
   impressumHref: string;
   datenschutzHref: string;
+
+  /* ── Rechtlich korrekte, geschlechtsspezifische Formulierungen ──────────
+   * Einzelunternehmen: der bürgerliche Name der/des Inhaber:in wird genannt.
+   * Diese Felder halten Impressum-Texte grammatikalisch sauber, ohne dass
+   * generische Platzhalter entstehen. */
+  /** Abschnittstitel „Anbieter dieses Internetangebots" / „Anbieterin …" */
+  providerSectionTitle: string;
+  /** Einleitung „Anbieter und Diensteanbieter dieses Internetangebots ist:" */
+  providerIntro: string;
+  /** Abschnittstitel „Inhaltlich Verantwortlicher/Verantwortliche gemäß § 18 Abs. 2 MStV" */
+  responsibleSectionTitle: string;
+  /** „Diensteanbieter" | „Diensteanbieterin" (Haftung für Inhalte) */
+  serviceProviderTerm: string;
+  /** „vom Anbieter" | „von der Anbieterin" (Urheberrecht, fremde Inhalte) */
+  creatorTerm: string;
+  /** Markenspezifischer Leistungsbereich (erster Absatz) */
+  serviceScope: string;
+  /** Echte USt-IdNr. gemäß § 27a UStG — nur setzen, wenn tatsächlich vorhanden. */
+  ustId?: string;
 }
 
 /* ── Marken-Presets ─────────────────────────────────────────────────────── */
@@ -73,6 +92,14 @@ export const NEXCEL_ENTITY: LegalEntity = {
   homeHref: "/",
   impressumHref: "/impressum",
   datenschutzHref: "/datenschutz",
+  providerSectionTitle: "Anbieterin dieses Internetangebots",
+  providerIntro: "Anbieterin und Diensteanbieterin dieses Internetangebots ist:",
+  responsibleSectionTitle: "Inhaltlich Verantwortliche gemäß § 18 Abs. 2 MStV",
+  serviceProviderTerm: "Diensteanbieterin",
+  creatorTerm: "von der Anbieterin",
+  serviceScope:
+    "NEXCEL AI stellt Informationen und Kontaktmöglichkeiten zu digitalen Markenauftritten, Webdesign, Webentwicklung, KI-gestützten Anwendungen, Automatisierung, CRM-/Lead-Systemen, digitalen Buchungs- und Verwaltungssystemen sowie verwandten digitalen Dienstleistungen bereit.",
+  // ustId: bewusst nicht gesetzt — keine echte USt-IdNr. hinterlegt.
 };
 
 export const AGI_ENTITY: LegalEntity = {
@@ -91,6 +118,14 @@ export const AGI_ENTITY: LegalEntity = {
   homeHref: "/agiworks",
   impressumHref: "/agiworks/impressum",
   datenschutzHref: "/agiworks/datenschutz",
+  providerSectionTitle: "Anbieter dieses Internetangebots",
+  providerIntro: "Anbieter und Diensteanbieter dieses Internetangebots ist:",
+  responsibleSectionTitle: "Inhaltlich Verantwortlicher gemäß § 18 Abs. 2 MStV",
+  serviceProviderTerm: "Diensteanbieter",
+  creatorTerm: "vom Anbieter",
+  serviceScope:
+    "AGI Works stellt Informationen und Kontaktmöglichkeiten zu digitalen Systemen, Webentwicklung, Automatisierung, KI-gestützten Anwendungen, CRM-/Lead-Systemen, Softwareentwicklung, technischen Infrastrukturen und verwandten digitalen Dienstleistungen bereit.",
+  // ustId: bewusst nicht gesetzt — keine echte USt-IdNr. hinterlegt.
 };
 
 /* ── Theme-Context ──────────────────────────────────────────────────────── */
@@ -193,12 +228,18 @@ export function LegalShell({
   dateLabel,
   sections,
   homeHref,
+  introLabel,
+  dateAtBottom = false,
 }: {
   theme: LegalTheme;
   title: string;
   dateLabel: string;
   sections: LegalSection[];
   homeHref: string;
+  /** Optionales Eyebrow-Label über der H1 (z. B. „Rechtliche Anbieterkennzeichnung"). */
+  introLabel?: string;
+  /** Wenn true: Datum klein am Seitenende statt dominant im Hero. */
+  dateAtBottom?: boolean;
 }) {
   return (
     <LegalThemeContext.Provider value={theme}>
@@ -222,12 +263,22 @@ export function LegalShell({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
+              {introLabel && (
+                <p
+                  className="mb-5 text-[11px] md:text-xs font-semibold uppercase tracking-[0.32em]"
+                  style={{ color: theme.accent }}
+                >
+                  {introLabel}
+                </p>
+              )}
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#FFFFFF] mb-6 tracking-tight">
                 <span style={{ color: theme.accent, textShadow: `0 0 40px rgba(${theme.accentRgb}, 0.6)` }}>
                   {title}
                 </span>
               </h1>
-              <p className="text-xl md:text-2xl text-[#E5E7EB] font-light">{dateLabel}</p>
+              {!dateAtBottom && (
+                <p className="text-xl md:text-2xl text-[#E5E7EB] font-light">{dateLabel}</p>
+              )}
             </motion.div>
 
             <div className="space-y-6">
@@ -298,6 +349,10 @@ export function LegalShell({
                 </motion.svg>
                 <span>Zurück zur Startseite</span>
               </Link>
+
+              {dateAtBottom && (
+                <p className="mt-6 text-xs text-[#9CA3AF]">{dateLabel}</p>
+              )}
             </motion.div>
           </div>
         </div>
