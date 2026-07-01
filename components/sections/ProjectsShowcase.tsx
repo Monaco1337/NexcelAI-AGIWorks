@@ -55,10 +55,10 @@ const IconRequest = () => (
 
 // ─── Fullscreen Detail Modal ──────────────────────────────────────────────────
 function ReferenceModal({
-  ref: project,
+  project,
   onClose,
 }: {
-  ref: ReferenceEntry;
+  project: ReferenceEntry;
   onClose: () => void;
 }) {
   // Lock body scroll
@@ -355,7 +355,7 @@ export default function ProjectsShowcase() {
 
       <AnimatePresence>
         {activeRef && (
-          <ReferenceModal ref={activeRef} onClose={() => setActiveRef(null)} />
+          <ReferenceModal project={activeRef} onClose={() => setActiveRef(null)} />
         )}
       </AnimatePresence>
     </>
