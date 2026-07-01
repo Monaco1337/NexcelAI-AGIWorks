@@ -175,12 +175,12 @@ function ImageUploadZone({
 
 // ─── Edit Drawer ──────────────────────────────────────────────────────────────
 function EditDrawer({
-  ref: item,
+  item,
   onSave,
   onClose,
   onCreate,
 }: {
-  ref: Partial<AdminRef> | null;
+  item: Partial<AdminRef> | null;
   onSave: (data: Partial<AdminRef>) => Promise<void>;
   onClose: () => void;
   onCreate?: boolean;
@@ -644,7 +644,7 @@ export default function ReferenceManager({ accent = "#A45CFF" }: { accent?: stri
       {/* Edit/Create Drawer */}
       {editItem && (
         <EditDrawer
-          ref={editItem}
+          item={editItem}
           onSave={handleSave}
           onClose={() => { setEditItem(null); setIsCreating(false); }}
           onCreate={isCreating}
