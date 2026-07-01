@@ -419,7 +419,18 @@ export default function PremiumHero() {
               <div className="flex min-w-0 flex-col items-end gap-1 text-right">
                 <span className="flex items-center gap-1.5 text-[12.5px] font-bold tracking-tight text-white/90">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/favicons/agiworks.svg" alt="" width={13} height={13} className="h-[13px] w-[13px] opacity-80" draggable={false} />
+                  <img
+                    src="/images/logos/agiworks-logo.png"
+                    alt=""
+                    aria-hidden
+                    width={18}
+                    height={18}
+                    className="h-[18px] w-[18px] shrink-0 select-none object-contain"
+                    style={{
+                      filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(91,184,255,0.5))",
+                    }}
+                    draggable={false}
+                  />
                   AGI Works
                 </span>
                 <span className="text-[10.5px] leading-snug text-white/48">

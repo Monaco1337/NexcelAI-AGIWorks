@@ -684,46 +684,18 @@ function NexcelMark() {
 
 function AgiMark() {
   return (
-    <span
-      className="relative flex h-[42px] w-[42px] items-center justify-center overflow-hidden rounded-[12px]"
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/images/logos/agiworks-logo.png"
+      alt="AGI Works"
+      width={42}
+      height={42}
+      className="h-[42px] w-[42px] shrink-0 select-none object-contain"
       style={{
-        background: "linear-gradient(155deg, #102444 0%, #0A1730 60%, #040A1A 100%)",
-        border: "1px solid rgba(91,184,255,0.4)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 8px 18px rgba(0,0,0,0.45), 0 0 22px rgba(31,122,224,0.4)",
+        filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.55)) drop-shadow(0 0 18px rgba(91,184,255,0.45))",
       }}
-    >
-      <span
-        aria-hidden
-        className="absolute inset-x-1 top-[1px] h-[42%]"
-        style={{ borderRadius: "10px 10px 18px 18px", background: "linear-gradient(180deg, rgba(255,255,255,0.18), transparent)" }}
-      />
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden className="relative">
-        <path
-          d="M6 19 L12 5 L18 19 M8.5 14 H15.5"
-          stroke="url(#ag-letter)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M4 13.5 C8 10.5, 16 10.5, 20 13.5"
-          stroke="url(#ag-swoosh)"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <defs>
-          <linearGradient id="ag-letter" x1="6" y1="5" x2="18" y2="19" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="100%" stopColor="#BFD9F2" />
-          </linearGradient>
-          <linearGradient id="ag-swoosh" x1="4" y1="11" x2="20" y2="14" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#9BD0FF" />
-            <stop offset="100%" stopColor="#1F7AE0" />
-          </linearGradient>
-        </defs>
-      </svg>
-    </span>
+      draggable={false}
+    />
   );
 }
 

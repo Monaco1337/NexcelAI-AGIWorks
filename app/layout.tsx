@@ -176,13 +176,11 @@ export default function RootLayout({
                       head.appendChild(m);
                     }
 
-                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "any");
-                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "16x16");
-                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "32x32");
-                    addLink("icon", "/favicons/agiworks.svg", "image/svg+xml", "96x96");
-                    addLink("shortcut icon", "/favicons/agiworks.svg", "image/svg+xml");
-                    addLink("apple-touch-icon", "/favicons/agiworks.svg", null, "180x180");
-                    addLink("mask-icon", "/favicons/agiworks.svg");
+                    addLink("icon", "/images/logos/agiworks-logo.png", "image/png", "512x512");
+                    addLink("icon", "/images/logos/agiworks-logo.png", "image/png", "32x32");
+                    addLink("icon", "/images/logos/agiworks-logo.png", "image/png", "16x16");
+                    addLink("shortcut icon", "/images/logos/agiworks-logo.png", "image/png");
+                    addLink("apple-touch-icon", "/images/logos/agiworks-logo.png", null, "180x180");
                     addMeta("theme-color", "#5BB8FF");
                     addMeta("msapplication-TileColor", "#1E5A99");
 

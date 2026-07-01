@@ -272,34 +272,54 @@ export default function Footer() {
           >
             <Link href={brand.navigation.baseHref} className="inline-block mb-3 sm:mb-4">
               <div
-                className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight"
-                style={{
-                  fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                  letterSpacing: "-0.02em",
-                }}
+                className="flex items-center gap-2 sm:gap-2.5"
               >
-                <span
-                  className="inline-block"
+                {/* Logo mark — shown when brand has one (e.g. AGI Works transparent PNG) */}
+                {brand.navigation.logoMark && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brand.navigation.logoMark.src}
+                    alt=""
+                    aria-hidden
+                    width={32}
+                    height={32}
+                    className="h-7 w-7 shrink-0 select-none object-contain sm:h-8 sm:w-8"
+                    style={{
+                      filter: "drop-shadow(0 1px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 12px var(--brand-glow-strong))",
+                    }}
+                    draggable={false}
+                  />
+                )}
+                <div
+                  className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight"
                   style={{
-                    background: brand.navigation.logoTextGradient,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
+                    fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                    letterSpacing: "-0.02em",
                   }}
                 >
-                  {brand.navigation.logoText}
-                </span>
-                <span
-                  className="inline-block ml-0.5 sm:ml-1"
-                  style={{
-                    background: brand.navigation.logoAccentGradient,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  {brand.navigation.logoTextAccent}
-                </span>
+                  <span
+                    className="inline-block"
+                    style={{
+                      background: brand.navigation.logoTextGradient,
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    {brand.navigation.logoText}
+                  </span>
+                  <span
+                    className="inline-block ml-0.5 sm:ml-1"
+                    style={{
+                      background: brand.navigation.logoAccentGradient,
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    {brand.navigation.logoTextAccent}
+                  </span>
+                </div>
               </div>
             </Link>
             <p className="text-[#9CA3AF] text-xs sm:text-sm font-light leading-relaxed mb-4 sm:mb-5 md:mb-6 max-w-xs">

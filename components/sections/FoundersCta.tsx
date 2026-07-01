@@ -18,12 +18,14 @@ const FOUNDERS = [
     name: "Celina Siebeneicher",
     role: "Systemdesign · Unternehmensarchitektur · Customer Experience",
     brand: "NEXCEL AI",
+    brandLogo: null as string | null,
     image: "/images/team/celina.png",
   },
   {
     name: "Kevin Blazevic",
     role: "Softwarearchitektur · Plattformen · Infrastruktur",
     brand: "AGI Works",
+    brandLogo: "/images/logos/agiworks-logo.png",
     image: "/images/team/kevin.png",
   },
 ];
@@ -176,9 +178,22 @@ export default function FoundersCta() {
                       {f.name}
                     </div>
                     <div
-                      className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em]"
+                      className="mt-0.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.14em]"
                       style={{ color: "var(--accent)" }}
                     >
+                      {f.brandLogo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={f.brandLogo}
+                          alt=""
+                          aria-hidden
+                          width={12}
+                          height={12}
+                          className="h-3 w-3 shrink-0 object-contain"
+                          style={{ filter: "drop-shadow(0 0 4px rgba(91,184,255,0.6))" }}
+                          draggable={false}
+                        />
+                      )}
                       {f.brand}
                     </div>
                     <div className="mt-1.5 text-[11px] leading-[1.45] text-white/60">
