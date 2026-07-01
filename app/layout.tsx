@@ -99,38 +99,13 @@ export default function RootLayout({
             Bandbreite/Parsing und wirkt wie „Seite lädt nicht“. Poster reicht für LCP. */}
         <link rel="preload" as="image" href="/images/hero/nexcel-system-architecture.png" />
 
-        {/* Standard Favicons - SVG wird bevorzugt, ICO als Fallback */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="alternate icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="icon" type="image/svg+xml" sizes="16x16" href="/favicon-16x16.svg" />
-        <link rel="icon" type="image/svg+xml" sizes="32x32" href="/favicon-32x32.svg" />
-        <link rel="icon" type="image/svg+xml" sizes="96x96" href="/favicon-96x96.svg" />
-        
-        {/* Apple Touch Icons - Alle Größen */}
-        <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.svg" />
-        <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.svg" />
-        <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.svg" />
-        <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.svg" />
-        <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.svg" />
-        <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.svg" />
-        <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.svg" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.svg" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
-        
-        {/* Android Chrome Icons */}
-        <link rel="icon" type="image/svg+xml" sizes="192x192" href="/android-chrome-192x192.svg" />
-        <link rel="icon" type="image/svg+xml" sizes="512x512" href="/android-chrome-512x512.svg" />
-        
-        {/* Safari */}
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#6B2DB8" />
-        
-        {/* Manifest */}
-        <link rel="manifest" href="/manifest.json" />
-        
+        {/* Favicons werden ausschließlich über Next.js Metadata API gesteuert.
+            Keine hardcodierten <link> Tags hier — damit AGI Works sein eigenes
+            Favicon via agiworks/layout.tsx metadata.icons überschreiben kann. */}
+
         {/* Theme Colors */}
         <meta name="theme-color" content="#6B2DB8" />
         <meta name="msapplication-TileColor" content="#6B2DB8" />
-        <meta name="msapplication-TileImage" content="/android-chrome-192x192.svg" />
         
         <script
           dangerouslySetInnerHTML={{
