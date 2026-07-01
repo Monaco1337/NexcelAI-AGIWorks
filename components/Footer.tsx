@@ -282,9 +282,8 @@ export default function Footer() {
                     glow="drop-shadow(0 1px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 14px rgba(91,184,255,0.45))"
                   />
                 )}
-                {/* NEXCEL AI: metallic wordmark image */}
                 {brand.navigation.wordmark ? (
-                  <NexcelLogoMark width={138} height={24} />
+                  <NexcelLogoMark width={138} />
                 ) : (
                   <div
                     className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight"

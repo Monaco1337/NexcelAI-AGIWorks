@@ -566,8 +566,8 @@ export default function Navigation() {
                         {/* Dual-Brand-Lockup (Mobile): Wortmarke + feine Partnerzeile */}
                         <span className="flex flex-col justify-center leading-none">
                           {brand.navigation.wordmark ? (
-                            /* Image-based wordmark (e.g. NEXCEL AI metallic PNG) */
-                            <NexcelLogoMark width={118} height={22} />
+                            /* SVG wordmark — NexcelLogoMark (no image, pure SVG) */
+                            <NexcelLogoMark width={118} />
                           ) : (
                             <span className="flex items-baseline">
                               <span
@@ -769,8 +769,8 @@ export default function Navigation() {
                     {/* Dual-Brand-Lockup: dominante Wortmarke + feine Partnerzeile */}
                     <span className="flex flex-col justify-center leading-none">
                       {brand.navigation.wordmark ? (
-                        /* Image-based wordmark (e.g. NEXCEL AI metallic PNG) */
-                        <NexcelLogoMark width={148} height={26} />
+                        /* SVG wordmark — NexcelLogoMark (no image, pure SVG) */
+                        <NexcelLogoMark width={148} />
                       ) : (
                         <span className="flex items-baseline">
                           <span

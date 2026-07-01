@@ -174,7 +174,7 @@ function BrandBridge() {
           {/* Right — NEXCEL AI (Celina, gestaltet das System) */}
           <div className="flex min-w-0 flex-col items-end gap-1.5 text-right">
             <div className="flex items-center gap-1.5">
-              <NexcelLogoMark width={92} height={17} />
+              <NexcelLogoMark width={96} />
             </div>
             <span
               className="text-[10.5px] font-medium uppercase tracking-[0.14em] sm:text-[11px]"

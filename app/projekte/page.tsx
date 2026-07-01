@@ -14,7 +14,7 @@ export default function ProjektePage() {
       <Navigation />
       <div className="pt-[76px] sm:pt-[88px]">
         <ProjectsShowcase />
-      </div>
+        </div>
       <Footer />
     </main>
   );

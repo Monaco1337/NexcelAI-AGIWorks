@@ -183,7 +183,7 @@ export default function FoundersCta() {
                     </div>
                     <div className="mt-0.5 flex items-center gap-1">
                       {f.isNexcel && (
-                        <NexcelLogoMark width={60} height={11} />
+                        <NexcelLogoMark width={64} />
                       )}
                       {f.isAgiWorks && (
                         <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--accent)" }}>
