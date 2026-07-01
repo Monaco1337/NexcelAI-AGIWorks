@@ -507,7 +507,7 @@ function Cooperation() {
         <BrandColumn
           mark={<NexcelMark />}
           name="NEXCEL AI"
-          nameComponent={<NexcelLogoMark width={172} />}
+          nameComponent={<NexcelLogoMark width={210} />}
           tagline="Gestaltet das System"
           nameGradient="linear-gradient(120deg, #FFFFFF 0%, #F5F3FF 45%, #C4B5FD 100%)"
           accent="#A78BFA"

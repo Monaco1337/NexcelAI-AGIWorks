@@ -129,7 +129,7 @@ function BrandBridge() {
 
           {/* Left — NEXCEL AI */}
           <div className="flex min-w-0 flex-col gap-1.5">
-            <NexcelLogoMark width={96} />
+            <NexcelLogoMark width={118} />
             <span
               className="text-[10px] font-medium uppercase tracking-[0.12em] sm:text-[10.5px]"
               style={{ color: "#B78CFF" }}

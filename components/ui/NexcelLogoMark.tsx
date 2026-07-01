@@ -54,12 +54,12 @@ export function NexcelLogoMark({
     y: ty,
     textAnchor: "middle" as const,
     fontFamily: "system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif",
-    fontWeight: "300",
-    fontSize: "21",
-    letterSpacing: "3.4",
-  };
+        fontWeight: "400",
+        fontSize: "21",
+        letterSpacing: "3.0",
+      };
 
-  return (
+      return (
     <svg
       width={width}
       height={h}

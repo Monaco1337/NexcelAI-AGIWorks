@@ -283,7 +283,7 @@ export default function Footer() {
                   />
                 )}
                 {brand.navigation.wordmark ? (
-                  <NexcelLogoMark width={138} />
+                  <NexcelLogoMark width={168} />
                 ) : (
                   <div
                     className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight"

@@ -567,7 +567,7 @@ export default function Navigation() {
                         <span className="flex flex-col justify-center leading-none">
                           {brand.navigation.wordmark ? (
                             /* SVG wordmark — NexcelLogoMark (no image, pure SVG) */
-                            <NexcelLogoMark width={118} />
+                            <NexcelLogoMark width={144} />
                           ) : (
                             <span className="flex items-baseline">
                               <span
@@ -770,7 +770,7 @@ export default function Navigation() {
                     <span className="flex flex-col justify-center leading-none">
                       {brand.navigation.wordmark ? (
                         /* SVG wordmark — NexcelLogoMark (no image, pure SVG) */
-                        <NexcelLogoMark width={148} />
+                        <NexcelLogoMark width={180} />
                       ) : (
                         <span className="flex items-baseline">
                           <span

@@ -422,7 +422,7 @@ export default function PremiumHero() {
 
               {/* NEXCEL AI — rechts (Celina steht rechts im Foto) */}
               <div className="flex min-w-0 flex-col items-end gap-1.5 text-right">
-                <NexcelLogoMark width={96} />
+                <NexcelLogoMark width={118} />
                 <span className="text-[11px] leading-snug text-white/52">
                   Strategie, Systeme & Wachstum
                 </span>
