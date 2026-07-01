@@ -110,6 +110,7 @@ export default function SimpleSystemanalyse() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
   const [consent, setConsent] = useState(false);
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -152,7 +153,7 @@ export default function SimpleSystemanalyse() {
     const [firstName, ...restName] = name.trim().split(" ");
     const lastName = restName.join(" ") || "—";
 
-    const summaryLines = [
+      const summaryLines = [
       "── Systemanalyse (Schnell-Check) ──",
       `Geschäft: ${answers.branche ?? "—"}`,
       `Ziel: ${answers.ziel ?? "—"}`,
@@ -160,6 +161,7 @@ export default function SimpleSystemanalyse() {
       "",
       `Empfehlung: ${recommendation.title}`,
       recommendation.text,
+      ...(message.trim() ? ["", "── Persönliche Nachricht ──", message.trim()] : []),
     ];
 
     try {
@@ -266,12 +268,14 @@ export default function SimpleSystemanalyse() {
                   name={name}
                   email={email}
                   phone={phone}
+                  message={message}
                   consent={consent}
                   sending={sending}
                   error={formError}
                   onName={setName}
                   onEmail={setEmail}
                   onPhone={setPhone}
+                  onMessage={setMessage}
                   onConsent={setConsent}
                   onBack={goBack}
                   onSubmit={submit}
@@ -404,12 +408,14 @@ function ContactView({
   name,
   email,
   phone,
+  message,
   consent,
   sending,
   error,
   onName,
   onEmail,
   onPhone,
+  onMessage,
   onConsent,
   onBack,
   onSubmit,
@@ -419,12 +425,14 @@ function ContactView({
   name: string;
   email: string;
   phone: string;
+  message: string;
   consent: boolean;
   sending: boolean;
   error: string | null;
   onName: (v: string) => void;
   onEmail: (v: string) => void;
   onPhone: (v: string) => void;
+  onMessage: (v: string) => void;
   onConsent: (v: boolean) => void;
   onBack: () => void;
   onSubmit: () => void;
@@ -459,6 +467,15 @@ function ContactView({
         <SimpleField label="Ihr Name" value={name} onChange={onName} placeholder="Vor- und Nachname" accentRgb={accentRgb} />
         <SimpleField label="E-Mail" value={email} onChange={onEmail} placeholder="name@beispiel.de" type="email" accentRgb={accentRgb} />
         <SimpleField label="Telefon (optional)" value={phone} onChange={onPhone} placeholder="Für einen kurzen Rückruf" type="tel" accentRgb={accentRgb} />
+
+        {/* Optionales Nachrichtenfeld */}
+        <SimpleTextarea
+          label="Ihre Nachricht (optional)"
+          value={message}
+          onChange={onMessage}
+          placeholder="Beschreiben Sie kurz Ihr Unternehmen oder was Sie sich vorstellen — damit wir uns optimal vorbereiten können."
+          accentRgb={accentRgb}
+        />
 
         <label className="mt-1 flex cursor-pointer items-start gap-3">
           <input
@@ -661,6 +678,45 @@ function SimpleField({
           boxShadow: focus ? `0 0 0 3px rgba(${accentRgb},0.15)` : "none",
         }}
       />
+    </div>
+  );
+}
+
+function SimpleTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  accentRgb,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  accentRgb: string;
+}) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <div>
+      <label className="mb-2 block text-[12px] font-medium text-white/55">
+        {label}
+      </label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        placeholder={placeholder}
+        rows={4}
+        className="w-full resize-none rounded-xl bg-white/[0.04] px-4 py-3.5 text-[15px] text-white placeholder-white/30 outline-none transition-all"
+        style={{
+          border: focus ? `1px solid rgb(${accentRgb})` : "1px solid rgba(255,255,255,0.10)",
+          boxShadow: focus ? `0 0 0 3px rgba(${accentRgb},0.15)` : "none",
+        }}
+      />
+      <p className="mt-1.5 text-right text-[11.5px] text-white/30">
+        {value.length > 0 ? `${value.length} Zeichen` : "Nicht verpflichtend"}
+      </p>
     </div>
   );
 }
