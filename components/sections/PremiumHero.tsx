@@ -243,14 +243,16 @@ export default function PremiumHero() {
             <span
               className="relative flex w-fit items-center gap-2.5 overflow-hidden rounded-2xl px-7 py-[16px] text-[14px] font-semibold text-white transition-transform duration-300 group-hover/cta:-translate-y-0.5"
               style={{
-                background: "var(--brand-gradient)",
+                background: "color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.03))",
+                border: "1px solid color-mix(in srgb, var(--accent) 50%, transparent)",
                 fontFamily: "var(--font-headline), system-ui, sans-serif",
-                boxShadow: "0 18px 44px var(--brand-glow-strong), inset 0 1px 0 rgba(255,255,255,0.28)",
+                backdropFilter: "blur(12px)",
+                boxShadow: "0 6px 28px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,0.13)",
               }}
             >
               <span aria-hidden
                 className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-out group-hover/cta:translate-x-full"
-                style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.26),transparent)" }}
+                style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.13),transparent)" }}
               />
               <span className="relative">Systemanalyse starten</span>
               <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden

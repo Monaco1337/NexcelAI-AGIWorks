@@ -71,7 +71,10 @@ export default function PricingSection() {
               {p.featured && (
                 <span
                   className="mb-3 w-fit rounded-full px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-[0.16em] text-white"
-                  style={{ background: "var(--brand-gradient)" }}
+                  style={{
+                    background: "color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.04))",
+                    border: "1px solid color-mix(in srgb, var(--accent) 45%, transparent)",
+                  }}
                 >
                   Häufig gewählt
                 </span>
@@ -156,7 +159,12 @@ export default function PricingSection() {
           <Link
             href={beratungHref}
             className="group relative inline-flex shrink-0 items-center gap-2.5 rounded-full px-7 py-3.5 text-[13px] font-semibold text-white transition-all hover:gap-3.5"
-            style={{ background: "var(--accent)", boxShadow: "0 10px 36px rgba(0,0,0,0.4)" }}
+            style={{
+              background: "color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.03))",
+              border: "1px solid color-mix(in srgb, var(--accent) 48%, transparent)",
+              backdropFilter: "blur(10px)",
+              boxShadow: "0 4px 20px color-mix(in srgb, var(--accent) 20%, transparent)",
+            }}
           >
             Kostenlos beraten lassen
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>

@@ -195,8 +195,13 @@ function ReferenceModal({
               </p>
               <a
                 href={contactHref}
-                className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: "var(--accent)" }}
+                className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-px"
+                style={{
+                  background: "color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.03))",
+                  border: "1px solid color-mix(in srgb, var(--accent) 48%, transparent)",
+                  backdropFilter: "blur(10px)",
+                  boxShadow: "0 4px 18px color-mix(in srgb, var(--accent) 20%, transparent)",
+                }}
               >
                 <IconRequest />
                 Projekt anfragen

@@ -888,11 +888,12 @@ export default function Navigation() {
                       whileHover={{ scale: 1.03, y: -1 }}
                       whileTap={{ scale: 0.97 }}
                       style={{
-                        background: "var(--brand-gradient)",
+                        background: "color-mix(in srgb, var(--accent) 14%, rgba(255,255,255,0.03))",
+                        border: "1px solid color-mix(in srgb, var(--accent) 48%, transparent)",
                         color: "#FFFFFF",
                         letterSpacing: "0.01em",
-                        boxShadow:
-                          "0 10px 28px var(--brand-glow-strong), inset 0 1px 0 rgba(255,255,255,0.25)",
+                        backdropFilter: "blur(12px)",
+                        boxShadow: "0 4px 22px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,0.12)",
                       }}
                     >
                       <span
@@ -900,7 +901,7 @@ export default function Navigation() {
                         className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-out group-hover/cta:translate-x-full"
                         style={{
                           background:
-                            "linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent)",
+                            "linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent)",
                         }}
                       />
                       <span className="relative">Systemanalyse starten</span>
@@ -1576,10 +1577,11 @@ export default function Navigation() {
                     whileTap={{ scale: 0.98 }}
                     className="relative flex items-center justify-center gap-2 overflow-hidden rounded-2xl px-5 py-4 text-sm font-semibold"
                     style={{
-                      background: "var(--brand-gradient)",
+                      background: "color-mix(in srgb, var(--accent) 14%, rgba(255,255,255,0.03))",
+                      border: "1px solid color-mix(in srgb, var(--accent) 48%, transparent)",
                       color: "#FFFFFF",
-                      boxShadow:
-                        "0 12px 30px var(--brand-glow-strong), inset 0 1px 0 rgba(255,255,255,0.25)",
+                      backdropFilter: "blur(12px)",
+                      boxShadow: "0 4px 22px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,0.12)",
                     }}
                   >
                     <span className="relative">Systemanalyse starten</span>

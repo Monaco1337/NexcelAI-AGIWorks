@@ -143,12 +143,12 @@ export default function Footer() {
                 prefetch={true}
                 className="group/cta-primary relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-full px-9 py-[15px] text-[12.5px] font-medium uppercase text-white transition-all duration-300 hover:-translate-y-0.5 sm:w-auto sm:text-[13px]"
                 style={{
-                  background: "var(--brand-gradient)",
+                  background: "color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.03))",
+                  border: "1px solid color-mix(in srgb, var(--accent) 48%, transparent)",
                   fontFamily: "var(--font-headline), system-ui, sans-serif",
                   letterSpacing: "0.16em",
-                  border: "1px solid color-mix(in srgb, #ffffff 16%, transparent)",
-                  boxShadow:
-                    "0 10px 30px var(--brand-glow-mid), inset 0 1px 0 rgba(255,255,255,0.18)",
+                  backdropFilter: "blur(12px)",
+                  boxShadow: "0 4px 24px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.10)",
                 }}
               >
                 {/* Feiner Top-Glanz statt grellem Sheen */}
