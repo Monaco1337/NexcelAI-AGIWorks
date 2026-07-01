@@ -472,78 +472,95 @@ function SuccessState({
   );
 }
 
-function DirectContactRow({
-  index,
+function ContactInfoTile({
+  icon,
   label,
   value,
   href,
-  isLast,
 }: {
-  index: string;
+  icon: React.ReactNode;
   label: string;
   value: string;
   href?: string;
-  isLast?: boolean;
 }) {
-  const content = href ? (
-    <a
-      href={href}
-      className="group/link inline-flex items-center gap-2 text-white/90 text-[15px] font-light transition-colors duration-300 hover:text-white"
-    >
-      <span>{value}</span>
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        aria-hidden
-        className="opacity-0 transition-all duration-300 group-hover/link:opacity-100 group-hover/link:translate-x-0.5"
-        style={{ color: "var(--brand-primary)" }}
+  const inner = (
+    <div className="flex items-center gap-4">
+      <span
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-300"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.09)",
+          color: "var(--brand-primary)",
+        }}
       >
-        <path
-          d="M5 12h14M13 6l6 6-6 6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </a>
-  ) : (
-    <p className="text-white/90 text-[15px] font-light">{value}</p>
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p
+          className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-white/40"
+          style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+        >
+          {label}
+        </p>
+        <p className="mt-0.5 truncate text-[14px] font-light text-white/85">
+          {value}
+        </p>
+      </div>
+      {href && (
+        <svg
+          width="13" height="13" viewBox="0 0 24 24"
+          fill="none" aria-hidden
+          className="ml-auto shrink-0 opacity-0 transition-all duration-300 group-hover/tile:translate-x-0.5 group-hover/tile:opacity-100"
+          style={{ color: "var(--brand-primary)" }}
+        >
+          <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </div>
   );
 
+  const tileClass =
+    "group/tile relative flex w-full items-center rounded-2xl px-4 py-3.5 transition-all duration-300 hover:bg-white/[0.04]";
+  const tileStyle = {
+    background: "rgba(255,255,255,0.025)",
+    border: "1px solid rgba(255,255,255,0.07)",
+  };
+
+  if (href) {
+    return (
+      <a href={href} className={tileClass} style={tileStyle}>
+        {inner}
+      </a>
+    );
+  }
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div className="py-6">
-        <div className="flex items-baseline gap-4 mb-2">
-          <span
-            className="text-[11px] tabular-nums tracking-[0.18em]"
-            style={{ color: "var(--brand-primary)", opacity: 0.7 }}
-          >
-            {index}
-          </span>
-          <span
-            className="text-[11px] uppercase tracking-[0.22em] text-white/40"
-            style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-          >
-            {label}
-          </span>
-        </div>
-        {content}
-      </div>
-      {!isLast && (
-        <div
-          className="h-px w-full"
-          style={{ background: "rgba(255,255,255,0.06)" }}
-        />
-      )}
-    </motion.div>
+    <div className={tileClass} style={tileStyle}>
+      {inner}
+    </div>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m4 7 8 6 8-6" />
+    </svg>
+  );
+}
+function PhoneIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 4h4l1.5 5-2.5 1.5a12 12 0 0 0 5.5 5.5L15 13.5l5 1.5v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" />
+    </svg>
+  );
+}
+function PinIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </svg>
   );
 }
 
@@ -716,7 +733,6 @@ export default function ContactPageContent() {
               className="text-4xl md:text-5xl lg:text-6xl font-light text-white tracking-tight mb-6"
               style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
             >
-              Kontakt{" "}
               <span
                 style={{
                   background: "var(--brand-headline-gradient)",
@@ -930,24 +946,23 @@ export default function ContactPageContent() {
                   {contactPage.directIntro}
                 </p>
 
-                <div className="mt-4">
-                  <DirectContactRow
-                    index="01"
+                <div className="mt-5 flex flex-col gap-3">
+                  <ContactInfoTile
+                    icon={<MailIcon />}
                     label="E-Mail"
                     value={contactPage.direct.email}
                     href={`mailto:${contactPage.direct.email}`}
                   />
-                  <DirectContactRow
-                    index="02"
+                  <ContactInfoTile
+                    icon={<PhoneIcon />}
                     label="Telefon"
                     value={contactPage.direct.phone}
                     href={contactPage.direct.phoneHref}
                   />
-                  <DirectContactRow
-                    index="03"
+                  <ContactInfoTile
+                    icon={<PinIcon />}
                     label="Standort"
                     value={contactPage.direct.location}
-                    isLast
                   />
                 </div>
 
