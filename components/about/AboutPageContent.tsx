@@ -1094,92 +1094,111 @@ export default function AboutPageContent() {
     <main className="relative min-h-screen overflow-x-clip">
       <Navigation />
 
-      {/* Hero — Founders (Fullscreen-Background) */}
-      <section className="relative flex min-h-screen flex-col justify-end overflow-hidden px-6 pb-12 pt-28 sm:min-h-[100svh] sm:pb-14 md:justify-center md:pb-20 md:pt-32">
-        {/* Gründerfoto — Fullscreen-Hintergrund */}
+      {/* ══════════════════════════════════════════════════════════════════
+          Hero — Split layout: text left, founders freigestellt right.
+          Mirrors the homepage PremiumHero structure exactly.
+      ══════════════════════════════════════════════════════════════════ */}
+      <section
+        className="relative w-full overflow-hidden"
+        style={{
+          minHeight: "min(100svh, 820px)",
+          background:
+            "radial-gradient(ellipse 80% 60% at 55% 8%, #0d0924 0%, #050412 55%, #020206 100%)",
+        }}
+      >
+        {/* ── Background ambient glow (no photo) ───────────────── */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <motion.div
-            className="relative h-full w-full"
-            initial={{ opacity: 0, scale: 1.04 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {/* The founders photo — centered to show both people equally */}
-            <Image
-              src="/images/team/founders.png"
-              alt="Die Gründer von NEXCEL AI und AGI Works"
-              fill
-              priority
-              quality={95}
-              sizes="100vw"
-              className="object-cover object-[50%_16%] sm:object-[50%_18%] md:object-[50%_22%] lg:object-[50%_24%]"
-            />
-
-            {/* 1 — Vertical: nav area + bottom-card fade */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(180deg, var(--brand-bg-top) 0%, color-mix(in srgb, var(--brand-bg-top) 30%, transparent) 15%, transparent 35%, transparent 52%, color-mix(in srgb, var(--brand-bg-top) 55%, transparent) 72%, var(--brand-bg-top) 100%)",
-              }}
-            />
-            {/* 2 — Left text-column scrim (lighter than before) */}
-            <div
-              className="absolute inset-0 hidden md:block"
-              style={{
-                background:
-                  "linear-gradient(90deg, color-mix(in srgb, var(--brand-bg-top) 65%, transparent) 0%, color-mix(in srgb, var(--brand-bg-top) 28%, transparent) 36%, transparent 60%)",
-              }}
-            />
-            {/* 3 — Mobile bottom-up gradient: keeps card readable, preserves faces */}
-            <div
-              className="absolute inset-0 md:hidden"
-              style={{
-                background:
-                  "linear-gradient(180deg, color-mix(in srgb, var(--brand-bg-top) 40%, transparent) 0%, transparent 30%, transparent 48%, color-mix(in srgb, var(--brand-bg-top) 62%, transparent) 70%, var(--brand-bg-top) 100%)",
-              }}
-            />
-            {/* 4 — Brand-tint glow */}
-            <div
-              className="absolute inset-0 mix-blend-soft-light"
-              style={{
-                background:
-                  "radial-gradient(65% 55% at 50% 28%, var(--brand-glow-mid), transparent 70%)",
-              }}
-            />
-            {/* 5 — Edge vignette */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(ellipse 110% 80% at 50% 40%, transparent 50%, rgba(0,0,0,0.38) 100%)",
-              }}
-            />
-          </motion.div>
+          <div
+            className="absolute"
+            style={{
+              top: "-10%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "90vw",
+              height: "65vh",
+              background:
+                "radial-gradient(ellipse at 50% 0%, var(--brand-glow-soft) 0%, transparent 68%)",
+              filter: "blur(44px)",
+            }}
+          />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl">
-          {/* Text content — on mobile sits above card at bottom; on md+ left-aligned */}
-          <div className="mb-8 max-w-[520px] md:mb-0 md:max-w-xl">
+        {/* ── Desktop: orbit glow ring (z-[5], behind founders) ─── */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-[5] hidden lg:block"
+          style={{
+            right: "calc(4vw - 110px)",
+            top: "10px",
+            width: "min(56vw, 920px)",
+            height: "min(56vw, 920px)",
+          }}
+        >
+          <div
+            className="absolute inset-[10%] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 48%, var(--brand-glow-mid) 0%, rgba(91,33,182,0.07) 52%, transparent 72%)",
+              filter: "blur(40px)",
+            }}
+          />
+          <div
+            className="absolute inset-[24%] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 46%, var(--brand-glow-strong) 0%, transparent 60%)",
+              filter: "blur(18px)",
+              opacity: 0.32,
+            }}
+          />
+        </div>
+
+        {/* ── Desktop: founders cut-out — absolute right, z-10 ──── */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <motion.img
+          src="/images/team/founders-cutout.png"
+          alt="Celina Siebeneicher und Kevin Blazevic — Gründer von NEXCEL AI und AGI Works"
+          draggable={false}
+          className="pointer-events-none absolute z-10 hidden select-none object-contain object-bottom lg:block"
+          style={{
+            right: "4vw",
+            top: "80px",
+            width: "min(52vw, 820px)",
+            minWidth: "560px",
+            height: "auto",
+            maxHeight: "calc(100% - 80px)",
+            filter:
+              "drop-shadow(0 28px 55px rgba(0,0,0,0.60)) drop-shadow(0 6px 18px rgba(0,0,0,0.44))",
+          }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1.0, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+        />
+
+        {/* ── Nav spacer (matches Navigation height) ─────────────── */}
+        <div aria-hidden style={{ height: "calc(env(safe-area-inset-top,0px) + 116px)" }} />
+
+        {/* ── Content — z-20, text column left ──────────────────── */}
+        <div className="relative z-20 mx-auto w-full max-w-[1300px] px-5 pb-12 sm:px-8 sm:pb-14 lg:pb-16">
+
+          {/* Text block */}
+          <div className="max-w-[520px] lg:max-w-xl">
             <motion.span
               className="block text-[11px] font-medium uppercase tracking-[0.34em]"
               style={{ color: "var(--accent)" }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             >
               Über uns
             </motion.span>
 
             <motion.h1
-              className="mt-5 text-[2.4rem] font-light leading-[1.04] tracking-[-0.035em] text-white sm:text-[3rem] md:text-[3.4rem] lg:text-[3.8rem]"
-              style={{
-                fontFamily: "var(--font-headline), system-ui, sans-serif",
-                textShadow: "0 2px 40px rgba(0,0,0,0.65)",
-              }}
-              initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+              className="mt-5 text-[2.55rem] font-light leading-[1.03] tracking-[-0.036em] text-white sm:text-[3.1rem] md:text-[3.5rem] lg:text-[3.85rem]"
+              style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+              initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.7, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
             >
               Hinter jedem System
               <br />
@@ -1191,7 +1210,7 @@ export default function AboutPageContent() {
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                   fontWeight: 400,
-                  filter: "drop-shadow(0 0 28px var(--brand-glow-strong))",
+                  filter: "drop-shadow(0 0 26px var(--brand-glow-strong))",
                 }}
               >
                 Menschen.
@@ -1199,11 +1218,10 @@ export default function AboutPageContent() {
             </motion.h1>
 
             <motion.p
-              className="mt-5 max-w-md text-[14.5px] leading-[1.72] text-white/68 sm:text-[15.5px]"
-              style={{ textShadow: "0 1px 28px rgba(0,0,0,0.7)" }}
-              initial={{ opacity: 0, y: 16 }}
+              className="mt-5 max-w-[440px] text-[15px] leading-[1.72] text-white/65 sm:text-[15.5px]"
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.65, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
             >
               NEXCEL AI gestaltet das System — Prozesse, Strukturen und
               Customer Experience. AGI Works baut es — Architektur,
@@ -1213,7 +1231,38 @@ export default function AboutPageContent() {
             <HeroStats />
           </div>
 
-          <BrandBridge />
+          {/* ── Mobile: founders in flow, after text ─────────────── */}
+          <div className="mt-8 flex justify-center lg:hidden">
+            <div className="relative w-full max-w-[420px]">
+              {/* mobile glow behind photo */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-[-14%] rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, var(--brand-glow-mid) 0%, transparent 68%)",
+                  filter: "blur(22px)",
+                  zIndex: 0,
+                }}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/team/founders-cutout.png"
+                alt="Celina Siebeneicher und Kevin Blazevic"
+                draggable={false}
+                className="relative z-10 block w-full select-none object-contain"
+                style={{
+                  filter:
+                    "drop-shadow(0 22px 44px rgba(0,0,0,0.55)) drop-shadow(0 4px 14px rgba(0,0,0,0.4))",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* ── BrandBridge ───────────────────────────────────────── */}
+          <div className="mt-8 lg:mt-10">
+            <BrandBridge />
+          </div>
         </div>
       </section>
 
