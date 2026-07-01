@@ -620,7 +620,7 @@ function WhoDoesWhat() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            Kein Silo. Kein „einer macht Strategie, einer macht Technik". Beide entwickeln gemeinsam — mit klaren Rollen und tiefer gegenseitiger Integration.
+            Kein Silo. Kein &ldquo;einer macht Strategie, einer macht Technik&rdquo;. Beide entwickeln gemeinsam — mit klaren Rollen und tiefer gegenseitiger Integration.
           </motion.p>
 
           {/* Premium Typografie-Blöcke (keine Pills/Chips) */}
