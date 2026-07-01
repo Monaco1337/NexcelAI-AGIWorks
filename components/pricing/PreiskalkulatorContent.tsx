@@ -6,7 +6,6 @@ import Link from "next/link";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useBrand } from "@/contexts/BrandContext";
-import PremiumProductsShowcase from "@/components/pricing/PremiumProductsShowcase";
 import { track } from "@/lib/track";
 import {
   type WizardState,
@@ -446,30 +445,13 @@ export default function PreiskalkulatorContent() {
     >
       <div className="mx-auto flex w-full max-w-7xl flex-col items-center">
 
-      {/* ═══════════════════════════════════════════════════════════════
-          PREMIUM PRODUCTS SHOWCASE — Festpreis-Katalog
-          (Hauptinhalt: 4 Tiers · 3 Support · Why · Benefits)
-          ═══════════════════════════════════════════════════════════ */}
-      <PremiumProductsShowcase />
-
-      {/* ─── Transition Divider: Showcase → Wizard ─────────────────── */}
-      <div className="mt-[clamp(56px,8vh,96px)] mb-[clamp(36px,5vh,56px)] flex w-full max-w-5xl flex-col items-center text-center">
-        <div className="flex items-center gap-3">
+      {/* ─── Kalkulator-Header ──────────────────────────────────────── */}
+      <div className="mb-[clamp(32px,5vh,52px)] flex w-full max-w-5xl flex-col items-center text-center">
+        <div className="flex items-center gap-3 mb-5">
           <span
             aria-hidden
             className="h-px w-[44px] sm:w-[64px]"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent 0%, var(--brand-line-mid) 100%)",
-            }}
-          />
-          <span
-            aria-hidden
-            className="inline-block h-[5px] w-[5px] rounded-full"
-            style={{
-              background: "var(--brand-line-bright)",
-              boxShadow: "0 0 8px var(--brand-glow-strong)",
-            }}
+            style={{ background: "linear-gradient(90deg, transparent 0%, var(--brand-line-mid) 100%)" }}
           />
           <span
             className="text-[10px] font-semibold uppercase tracking-[0.36em] sm:text-[10.5px]"
@@ -479,35 +461,24 @@ export default function PreiskalkulatorContent() {
               filter: "drop-shadow(0 0 6px var(--brand-glow-strong))",
             }}
           >
-            Individuell kalkulieren
+            Preiskalkulator
           </span>
           <span
             aria-hidden
-            className="inline-block h-[5px] w-[5px] rounded-full"
-            style={{
-              background: "var(--brand-line-bright)",
-              boxShadow: "0 0 8px var(--brand-glow-strong)",
-            }}
-          />
-          <span
-            aria-hidden
             className="h-px w-[44px] sm:w-[64px]"
-            style={{
-              background:
-                "linear-gradient(90deg, var(--brand-line-mid) 0%, transparent 100%)",
-            }}
+            style={{ background: "linear-gradient(90deg, var(--brand-line-mid) 0%, transparent 100%)" }}
           />
         </div>
 
-        <h2
-          className="mt-6 max-w-[640px] text-[1.6rem] leading-[1.1] text-white sm:text-[2rem] md:text-[2.3rem]"
+        <h1
+          className="max-w-[640px] text-[1.75rem] leading-[1.1] text-white sm:text-[2.2rem] md:text-[2.6rem]"
           style={{
             fontFamily: "var(--font-headline), system-ui, sans-serif",
             fontWeight: 300,
             letterSpacing: "-0.025em",
           }}
         >
-          Etwas{" "}
+          Dein Projektkorridor.{" "}
           <span
             style={{
               background: "var(--brand-headline-gradient)",
@@ -519,11 +490,10 @@ export default function PreiskalkulatorContent() {
               filter: "drop-shadow(0 0 18px var(--brand-glow-strong))",
             }}
           >
-            Eigenes
-          </span>{" "}
-          im Kopf?
-        </h2>
-        <p className="mt-3 max-w-[500px] text-[13px] leading-[1.6] text-white/55 sm:text-[14px]">
+            Individuell berechnet.
+          </span>
+        </h1>
+        <p className="mt-4 max-w-[500px] text-[13px] leading-[1.7] text-white/50 sm:text-[14px]">
           {pricingPage.subline}
         </p>
       </div>
