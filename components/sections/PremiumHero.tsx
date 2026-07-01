@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 /* ── Feature icons ─────────────────────────────────────────────────── */
 function Ico({ d, extra }: { d?: string; extra?: React.ReactNode }) {
@@ -383,9 +384,7 @@ export default function PremiumHero() {
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
               {/* NEXCEL AI */}
               <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-[12.5px] font-bold tracking-tight text-white/90">
-                  NEXCEL <span style={{ color: "#A78BFA" }}>AI</span>
-                </span>
+                <NexcelLogoMark width={88} height={16} />
                 <span className="text-[10.5px] leading-snug text-white/48">
                   Strategie, Systeme & Wachstum
                 </span>

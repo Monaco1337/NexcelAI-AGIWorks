@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 const FOUNDERS = [
   {
@@ -20,6 +21,7 @@ const FOUNDERS = [
     role: "Systemdesign · Unternehmensarchitektur · Customer Experience",
     brand: "NEXCEL AI",
     isAgiWorks: false,
+    isNexcel: true,
     image: "/images/team/celina.png",
   },
   {
@@ -27,6 +29,7 @@ const FOUNDERS = [
     role: "Softwarearchitektur · Plattformen · Infrastruktur",
     brand: "AGI Works",
     isAgiWorks: true,
+    isNexcel: false,
     image: "/images/team/kevin.png",
   },
 ];
@@ -178,17 +181,16 @@ export default function FoundersCta() {
                     >
                       {f.name}
                     </div>
-                    <div
-                      className="mt-0.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.14em]"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      {f.isAgiWorks && (
-                        <AgiWorksLogoMark
-                          size={12}
-                          glow="drop-shadow(0 0 4px rgba(91,184,255,0.65))"
-                        />
+                    <div className="mt-0.5 flex items-center gap-1">
+                      {f.isNexcel && (
+                        <NexcelLogoMark width={60} height={11} />
                       )}
-                      {f.brand}
+                      {f.isAgiWorks && (
+                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--accent)" }}>
+                          <AgiWorksLogoMark size={11} glow="drop-shadow(0 0 4px rgba(91,184,255,0.65))" />
+                          {f.brand}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-1.5 text-[11px] leading-[1.45] text-white/60">
                       {f.role}

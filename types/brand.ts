@@ -105,6 +105,17 @@ export interface BrandNavigation {
    */
   logoMark?: BrandLogoMark;
   /**
+   * Bildbasierter Wortmark (ersetzt logoText + logoTextAccent wenn vorhanden).
+   * NEXCEL AI: metallic wordmark PNG (black bg → screen blend mode).
+   */
+  wordmark?: {
+    src: string;
+    /** Anzeigebreite in px — Standard je nach Kontext */
+    width?: number;
+    /** Anzeigehöhe in px — Standard je nach Kontext */
+    height?: number;
+  };
+  /**
    * Partner-Lockup (Dual-Brand). Erscheint fein und untergeordnet unter dem
    * dominanten Wortmark — z. B. „in Kooperation mit AGI Works".
    * NEXCEL AI → partnerName: "AGI Works"; AGI Works → partnerName: "NEXCEL AI".

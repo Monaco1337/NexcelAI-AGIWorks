@@ -2,6 +2,7 @@
 
 import React from "react";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
@@ -564,36 +565,41 @@ export default function Navigation() {
                         )}
                         {/* Dual-Brand-Lockup (Mobile): Wortmarke + feine Partnerzeile */}
                         <span className="flex flex-col justify-center leading-none">
-                          <span className="flex items-baseline">
-                            <span
-                              className="text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-150"
-                              style={{
-                                fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                                letterSpacing: "-0.02em",
-                                background: brand.navigation.logoTextGradient,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text",
-                                color: theme === "dark" ? "#E5E7EB" : "#111827",
-                              }}
-                            >
-                              {brand.navigation.logoText}
+                          {brand.navigation.wordmark ? (
+                            /* Image-based wordmark (e.g. NEXCEL AI metallic PNG) */
+                            <NexcelLogoMark width={118} height={22} />
+                          ) : (
+                            <span className="flex items-baseline">
+                              <span
+                                className="text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-150"
+                                style={{
+                                  fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                                  letterSpacing: "-0.02em",
+                                  background: brand.navigation.logoTextGradient,
+                                  WebkitBackgroundClip: "text",
+                                  WebkitTextFillColor: "transparent",
+                                  backgroundClip: "text",
+                                  color: theme === "dark" ? "#E5E7EB" : "#111827",
+                                }}
+                              >
+                                {brand.navigation.logoText}
+                              </span>
+                              <span
+                                className="ml-0.5 sm:ml-1 text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-300"
+                                style={{
+                                  fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                                  letterSpacing: "-0.02em",
+                                  background: brand.navigation.logoAccentGradient,
+                                  WebkitBackgroundClip: "text",
+                                  WebkitTextFillColor: "transparent",
+                                  backgroundClip: "text",
+                                  color: "var(--accent)",
+                                }}
+                              >
+                                {brand.navigation.logoTextAccent}
+                              </span>
                             </span>
-                            <span
-                              className="ml-0.5 sm:ml-1 text-base sm:text-lg md:text-xl font-bold tracking-tight transition-all duration-300"
-                              style={{
-                                fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                                letterSpacing: "-0.02em",
-                                background: brand.navigation.logoAccentGradient,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text",
-                                color: "var(--accent)",
-                              }}
-                            >
-                              {brand.navigation.logoTextAccent}
-                            </span>
-                          </span>
+                          )}
                           {brand.navigation.partnerName && (
                             <span
                               className="mt-[2px] text-[8px] sm:text-[9px] font-medium uppercase tracking-[0.14em] whitespace-nowrap"
@@ -762,29 +768,34 @@ export default function Navigation() {
                     )}
                     {/* Dual-Brand-Lockup: dominante Wortmarke + feine Partnerzeile */}
                     <span className="flex flex-col justify-center leading-none">
-                      <span className="flex items-baseline">
-                        <span
-                          className="text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
-                          style={{
-                            fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                            letterSpacing: "-0.02em",
-                            color: "#E5E7EB",
-                          }}
-                        >
-                          {brand.navigation.logoText}
+                      {brand.navigation.wordmark ? (
+                        /* Image-based wordmark (e.g. NEXCEL AI metallic PNG) */
+                        <NexcelLogoMark width={148} height={26} />
+                      ) : (
+                        <span className="flex items-baseline">
+                          <span
+                            className="text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
+                            style={{
+                              fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                              letterSpacing: "-0.02em",
+                              color: "#E5E7EB",
+                            }}
+                          >
+                            {brand.navigation.logoText}
+                          </span>
+                          <span
+                            className="ml-0.5 lg:ml-1 text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
+                            style={{
+                              fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                              letterSpacing: "-0.02em",
+                              color: "var(--accent)",
+                              textShadow: "0 0 12px color-mix(in srgb, var(--accent) 40%, transparent)",
+                            }}
+                          >
+                            {brand.navigation.logoTextAccent}
+                          </span>
                         </span>
-                        <span
-                          className="ml-0.5 lg:ml-1 text-base lg:text-lg xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-300"
-                          style={{
-                            fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                            letterSpacing: "-0.02em",
-                            color: "var(--accent)",
-                            textShadow: "0 0 12px color-mix(in srgb, var(--accent) 40%, transparent)",
-                          }}
-                        >
-                          {brand.navigation.logoTextAccent}
-                        </span>
-                      </span>
+                      )}
                       {brand.navigation.partnerName && (
                         <span
                           className="mt-[3px] text-[9px] lg:text-[10px] font-medium uppercase tracking-[0.16em] whitespace-nowrap"

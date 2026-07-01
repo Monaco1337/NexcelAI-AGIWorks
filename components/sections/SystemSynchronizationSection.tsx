@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useId } from "react";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 /* ════════════════════════════════════════════════════════════════════
  *  System Synchronization — „Alles kommt zusammen"
@@ -506,6 +507,7 @@ function Cooperation() {
         <BrandColumn
           mark={<NexcelMark />}
           name="NEXCEL AI"
+          nameComponent={<NexcelLogoMark width={156} height={28} />}
           tagline="Gestaltet das System"
           nameGradient="linear-gradient(120deg, #FFFFFF 0%, #F5F3FF 45%, #C4B5FD 100%)"
           accent="#A78BFA"
@@ -588,6 +590,7 @@ function Cooperation() {
 function BrandColumn({
   mark,
   name,
+  nameComponent,
   tagline,
   nameGradient,
   accent,
@@ -596,6 +599,8 @@ function BrandColumn({
 }: {
   mark: React.ReactNode;
   name: string;
+  /** Optional component to replace the text name (e.g. NexcelLogoMark) */
+  nameComponent?: React.ReactNode;
   tagline: string;
   nameGradient: string;
   accent: string;
@@ -607,20 +612,22 @@ function BrandColumn({
     <div className={`flex flex-col items-center text-center ${desktopAlign}`}>
       <div className={`flex items-center gap-3.5 ${align === "end" ? "sm:flex-row-reverse" : ""}`}>
         {mark}
-        <span
-          className="text-[22px] font-medium leading-none sm:text-[27px]"
-          style={{
-            background: nameGradient,
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
-            WebkitTextFillColor: "transparent",
-            fontFamily: "var(--font-headline), system-ui, sans-serif",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {name}
-        </span>
+        {nameComponent ?? (
+          <span
+            className="text-[22px] font-medium leading-none sm:text-[27px]"
+            style={{
+              background: nameGradient,
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+              WebkitTextFillColor: "transparent",
+              fontFamily: "var(--font-headline), system-ui, sans-serif",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {name}
+          </span>
+        )}
       </div>
       <span
         className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.2em]"

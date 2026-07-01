@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 const linkedInIcon = (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -272,10 +273,8 @@ export default function Footer() {
             transition={{ duration: 0.6 }}
           >
             <Link href={brand.navigation.baseHref} className="inline-block mb-3 sm:mb-4">
-              <div
-                className="flex items-center gap-2 sm:gap-2.5"
-              >
-                {/* Logo mark — only for AGI Works (transparent PNG with bg-removal filter) */}
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {/* AGI Works: icon mark before text */}
                 {brand.navigation.logoMark?.removeWhiteBg && (
                   <AgiWorksLogoMark
                     size={28}
@@ -283,36 +282,41 @@ export default function Footer() {
                     glow="drop-shadow(0 1px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 14px rgba(91,184,255,0.45))"
                   />
                 )}
-                <div
-                  className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight"
-                  style={{
-                    fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  <span
-                    className="inline-block"
+                {/* NEXCEL AI: metallic wordmark image */}
+                {brand.navigation.wordmark ? (
+                  <NexcelLogoMark width={138} height={24} />
+                ) : (
+                  <div
+                    className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight"
                     style={{
-                      background: brand.navigation.logoTextGradient,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
+                      fontFamily: "var(--font-headline), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                      letterSpacing: "-0.02em",
                     }}
                   >
-                    {brand.navigation.logoText}
-                  </span>
-                  <span
-                    className="inline-block ml-0.5 sm:ml-1"
-                    style={{
-                      background: brand.navigation.logoAccentGradient,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    {brand.navigation.logoTextAccent}
-                  </span>
-                </div>
+                    <span
+                      className="inline-block"
+                      style={{
+                        background: brand.navigation.logoTextGradient,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {brand.navigation.logoText}
+                    </span>
+                    <span
+                      className="inline-block ml-0.5 sm:ml-1"
+                      style={{
+                        background: brand.navigation.logoAccentGradient,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {brand.navigation.logoTextAccent}
+                    </span>
+                  </div>
+                )}
               </div>
             </Link>
             <p className="text-[#9CA3AF] text-xs sm:text-sm font-light leading-relaxed mb-4 sm:mb-5 md:mb-6 max-w-xs">

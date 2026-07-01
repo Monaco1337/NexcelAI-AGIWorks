@@ -20,6 +20,9 @@ export const nexcelBrand: BrandConfig = {
     logoTextGradient: "linear-gradient(135deg, #F5F3FF 0%, #C4B5FD 100%)",
     logoAccentGradient: "linear-gradient(135deg, #C4B5FD 0%, #8B5CF6 100%)",
     baseHref: "/",
+    wordmark: {
+      src: "/images/logos/nexcel-logo.png",
+    },
     partnerLabel: "in Kooperation mit",
     partnerName: "AGI Works",
   },
