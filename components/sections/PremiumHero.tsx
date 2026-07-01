@@ -382,11 +382,17 @@ export default function PremiumHero() {
             />
 
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
-              {/* NEXCEL AI */}
-              <div className="flex min-w-0 flex-col gap-1">
-                <NexcelLogoMark width={88} height={16} />
-                <span className="text-[10.5px] leading-snug text-white/48">
-                  Strategie, Systeme & Wachstum
+              {/* AGI Works — links (Kevin steht links im Foto) */}
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <span className="flex items-center gap-1.5 text-[13px] font-bold tracking-tight text-white/92">
+                  <AgiWorksLogoMark
+                    size={20}
+                    glow="drop-shadow(0 1px 4px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(91,184,255,0.55))"
+                  />
+                  AGI Works
+                </span>
+                <span className="text-[11px] leading-snug text-white/52">
+                  Architektur, Systeme & Skalierung
                 </span>
               </div>
 
@@ -397,7 +403,6 @@ export default function PremiumHero() {
                   aria-hidden className="shrink-0"
                   style={{ filter: "drop-shadow(0 0 8px var(--brand-glow-strong))" }}
                 >
-                  {/* stroke version — clean, premium */}
                   <path
                     d="M14 11c0 0-2-6-7-6a6 6 0 0 0 0 12c5 0 6.5-3.5 10-6
                        c3.5-2.5 5-6 10-6a6 6 0 0 1 0 12c-5 0-7-6-7-6"
@@ -415,17 +420,11 @@ export default function PremiumHero() {
                 </svg>
               </div>
 
-              {/* AGI Works */}
-              <div className="flex min-w-0 flex-col items-end gap-1 text-right">
-                <span className="flex items-center gap-1.5 text-[12.5px] font-bold tracking-tight text-white/90">
-                  <AgiWorksLogoMark
-                    size={18}
-                    glow="drop-shadow(0 1px 4px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(91,184,255,0.55))"
-                  />
-                  AGI Works
-                </span>
-                <span className="text-[10.5px] leading-snug text-white/48">
-                  Architektur, Systeme & Skalierung
+              {/* NEXCEL AI — rechts (Celina steht rechts im Foto) */}
+              <div className="flex min-w-0 flex-col items-end gap-1.5 text-right">
+                <NexcelLogoMark width={96} height={18} />
+                <span className="text-[11px] leading-snug text-white/52">
+                  Strategie, Systeme & Wachstum
                 </span>
               </div>
             </div>
