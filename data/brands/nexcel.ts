@@ -115,8 +115,8 @@ export const nexcelBrand: BrandConfig = {
     directIntro: "Direkt erreichbar:",
     direct: {
       email: "info@nexcelai.de",
-      phone: "+49 151 00000000",
-      phoneHref: "tel:+4915100000000",
+      phone: "+49 163 9166073",
+      phoneHref: "tel:+491639166073",
       location: "Ziegelstraße 9, 59423 Unna, Deutschland",
     },
   },
@@ -154,6 +154,7 @@ export const nexcelBrand: BrandConfig = {
       legal: [
         { label: "Impressum", href: "/impressum" },
         { label: "Datenschutz", href: "/datenschutz" },
+        { label: "Cookie-Richtlinie", href: "/cookie-richtlinie" },
         { label: "AGB", href: "/agb" },
         { label: "Vertragsverarbeitung", href: "/vertragsverarbeitung" },
       ],

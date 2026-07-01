@@ -1241,7 +1241,7 @@ export default function Navigation() {
         {mobileMenuOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-40 nav-mobile:block lg:hidden"
+              className="fixed inset-0 z-[110] nav-mobile:block lg:hidden"
               style={{
                 background: theme === "dark"
                   ? "rgba(0, 0, 0, 0.9)"
@@ -1265,7 +1265,7 @@ export default function Navigation() {
             />
 
             <motion.div
-              className="fixed top-0 right-0 h-full w-80 max-w-[85vw] z-50 nav-mobile:block lg:hidden"
+              className="fixed top-0 right-0 h-full w-80 max-w-[85vw] z-[120] nav-mobile:block lg:hidden"
               style={{
                 background: theme === "dark"
                   ? "linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.12) 30%, rgba(255, 255, 255, 0.08) 60%, rgba(255, 255, 255, 0.04) 100%)"
@@ -1294,40 +1294,43 @@ export default function Navigation() {
             >
               <div className="flex flex-col h-full p-6">
                 {/* Logo + X-Button oben */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center">
+                <div className="flex items-center justify-between gap-3 mb-6">
+                  <div className="flex min-w-0 flex-1 items-center">
                     {brand.navigation.logoMark && (
-                      <img
+                      <LogoMarkImage
                         src={brand.navigation.logoMark.src}
                         alt={brand.navigation.logoMark.alt}
-                        width={brand.navigation.logoMark.size ?? 28}
-                        height={brand.navigation.logoMark.size ?? 28}
-                        className="mr-2 inline-block h-7 w-7 select-none"
+                        size={brand.navigation.logoMark.size ?? 28}
+                        removeWhiteBg={brand.navigation.logoMark.removeWhiteBg}
+                        className="mr-2 inline-block h-8 w-8 flex-shrink-0 select-none"
                         style={{
                           filter:
                             "drop-shadow(0 2px 6px rgba(0,0,0,0.45)) drop-shadow(0 0 12px var(--brand-glow-strong))",
                         }}
-                        draggable={false}
                       />
                     )}
-                    <span className="flex flex-col justify-center leading-none">
-                      <span className="flex items-baseline text-xl font-bold tracking-tight">
-                        <span style={{
-                          background: brand.navigation.logoTextGradient,
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
-                        }}>{brand.navigation.logoText}</span>
-                        <span className="ml-1" style={{
-                          background: brand.navigation.logoAccentGradient,
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
-                        }}>{brand.navigation.logoTextAccent}</span>
-                      </span>
+                    <span className="flex min-w-0 flex-col justify-center leading-none">
+                      {brand.navigation.wordmark ? (
+                        <NexcelLogoMark width={132} />
+                      ) : (
+                        <span className="flex items-baseline text-xl font-bold tracking-tight">
+                          <span style={{
+                            background: brand.navigation.logoTextGradient,
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}>{brand.navigation.logoText}</span>
+                          <span className="ml-1" style={{
+                            background: brand.navigation.logoAccentGradient,
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}>{brand.navigation.logoTextAccent}</span>
+                        </span>
+                      )}
                       {brand.navigation.partnerName && (
                         <span
-                          className="mt-[3px] text-[9px] font-medium uppercase tracking-[0.14em] whitespace-nowrap"
+                          className="mt-[3px] truncate text-[9px] font-medium uppercase tracking-[0.14em]"
                           style={{ color: "rgba(255,255,255,0.4)" }}
                         >
                           {brand.navigation.partnerLabel}{" "}
@@ -1339,7 +1342,7 @@ export default function Navigation() {
                     </span>
                   </div>
                   <motion.button
-                    className="w-10 h-10 flex items-center justify-center rounded-lg"
+                    className="w-10 h-10 flex flex-shrink-0 items-center justify-center rounded-lg"
                     style={{
                       background: theme === "dark"
                         ? "rgba(255, 255, 255, 0.12)"

@@ -41,6 +41,7 @@ export interface LegalEntity {
   homeHref: string;
   impressumHref: string;
   datenschutzHref: string;
+  cookieRichtlinieHref: string;
 
   /* ── Rechtlich korrekte, geschlechtsspezifische Formulierungen ──────────
    * Einzelunternehmen: der bürgerliche Name der/des Inhaber:in wird genannt.
@@ -123,6 +124,7 @@ export const NEXCEL_ENTITY: LegalEntity = {
   homeHref: "/",
   impressumHref: "/impressum",
   datenschutzHref: "/datenschutz",
+  cookieRichtlinieHref: "/cookie-richtlinie",
   providerSectionTitle: "Anbieterin dieses Internetangebots",
   providerIntro: "Anbieterin und Diensteanbieterin dieses Internetangebots ist:",
   responsibleSectionTitle: "Inhaltlich Verantwortliche gemäß § 18 Abs. 2 MStV",
@@ -150,6 +152,7 @@ export const AGI_ENTITY: LegalEntity = {
   homeHref: "/agiworks",
   impressumHref: "/agiworks/impressum",
   datenschutzHref: "/agiworks/datenschutz",
+  cookieRichtlinieHref: "/agiworks/cookie-richtlinie",
   providerSectionTitle: "Anbieter dieses Internetangebots",
   providerIntro: "Anbieter und Diensteanbieter dieses Internetangebots ist:",
   responsibleSectionTitle: "Inhaltlich Verantwortlicher gemäß § 18 Abs. 2 MStV",

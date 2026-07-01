@@ -42,6 +42,8 @@ export default function Footer() {
   const isContactPage = pathname === "/kontakt" || pathname === "/agiworks/kontakt";
   const isProjektePage = pathname === "/projekte";
   const isImpressumPage = pathname === "/impressum";
+  const isCookieRichtliniePage =
+    pathname === "/cookie-richtlinie" || pathname === "/agiworks/cookie-richtlinie";
   const isDemoPage = pathname?.startsWith("/demo") || pathname === "/login" || pathname === "/demo-anfordern";
   const isPreiskalkulatorPage =
     pathname === "/preiskalkulator" || pathname === "/agiworks/preiskalkulator" ||
@@ -52,7 +54,7 @@ export default function Footer() {
   return (
     <footer className="relative border-t border-[#A45CFF]/10 bg-gradient-to-b from-transparent to-[#0C0F1A]">
       {/* CTA Section */}
-      {!isContactPage && !isProjektePage && !isImpressumPage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
+      {!isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
         <motion.section
           aria-labelledby="footer-cta-title"
           className="relative overflow-hidden px-5 py-[clamp(6rem,13vw,9.5rem)] sm:px-8"

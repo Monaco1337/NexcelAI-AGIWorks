@@ -163,6 +163,7 @@ export const agiworksBrand: BrandConfig = {
       legal: [
         { label: "Impressum", href: "/agiworks/impressum" },
         { label: "Datenschutz", href: "/agiworks/datenschutz" },
+        { label: "Cookie-Richtlinie", href: "/agiworks/cookie-richtlinie" },
         { label: "AGB", href: "/agiworks/agb" },
         { label: "Vertragsverarbeitung", href: "/agiworks/vertragsverarbeitung" },
       ],

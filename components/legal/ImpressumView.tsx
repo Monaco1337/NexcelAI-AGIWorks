@@ -260,6 +260,10 @@ export default function ImpressumView({ theme, entity }: { theme: LegalTheme; en
             <Link href={entity.datenschutzHref} className="underline font-semibold" style={{ color: theme.accent }}>
               Datenschutzerklärung
             </Link>
+            . Ergänzende Informationen zu Cookies und vergleichbaren Technologien finden Sie in der{" "}
+            <Link href={entity.cookieRichtlinieHref} className="underline font-semibold" style={{ color: theme.accent }}>
+              Cookie-Richtlinie
+            </Link>
             .
           </Para>
         </Card>
