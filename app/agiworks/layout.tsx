@@ -25,15 +25,14 @@ export const metadata: Metadata = {
     title: agiworksBrand.seo.ogTitle,
     description: agiworksBrand.seo.ogDescription,
   },
-  // Eigenes AGI-WORKS-Favicon (silberner Ring, blaues Swoosh-A).
-  // SVG skaliert sauber in allen Browser-Tab-Größen; PNG-Fallback für Safari/iOS.
+  // Eigenes AGI-WORKS-Favicon — echtes Markenlogo (blau/silber A-Ring).
   icons: {
     icon: [
-      { url: "/favicons/agiworks.svg", type: "image/svg+xml" },
-      { url: "/favicons/agiworks.svg", sizes: "any" },
+      { url: "/images/logos/agiworks-logo.png", type: "image/png", sizes: "512x512" },
+      { url: "/images/logos/agiworks-logo.png", sizes: "any" },
     ],
-    apple: { url: "/favicons/agiworks.svg", sizes: "180x180" },
-    shortcut: "/favicons/agiworks.svg",
+    apple: { url: "/images/logos/agiworks-logo.png", sizes: "180x180" },
+    shortcut: "/images/logos/agiworks-logo.png",
   },
 };
 

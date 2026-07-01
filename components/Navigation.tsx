@@ -19,6 +19,71 @@ type SearchIndexItem = {
   category: string;
 };
 
+/** Renders a brand logo mark — with optional SVG filter to remove white PNG backgrounds. */
+function LogoMarkImage({
+  src,
+  alt,
+  size,
+  removeWhiteBg,
+  className,
+  style,
+}: {
+  src: string;
+  alt: string;
+  size?: number;
+  removeWhiteBg?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const filterId = "aw-white-bg-remove";
+  if (removeWhiteBg) {
+    return (
+      <svg
+        width={size ?? 36}
+        height={size ?? 36}
+        viewBox={`0 0 ${size ?? 36} ${size ?? 36}`}
+        className={className}
+        style={style}
+        role="img"
+        aria-label={alt}
+      >
+        <defs>
+          <filter id={filterId} x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
+            {/* Remove near-white pixels: alpha = -3R -3G -3B + 8 */}
+            <feColorMatrix
+              type="matrix"
+              values="1 0 0 0 0
+                      0 1 0 0 0
+                      0 0 1 0 0
+                      -3 -3 -3 8 -1"
+            />
+          </filter>
+        </defs>
+        <image
+          href={src}
+          x="0"
+          y="0"
+          width={size ?? 36}
+          height={size ?? 36}
+          filter={`url(#${filterId})`}
+          preserveAspectRatio="xMidYMid meet"
+        />
+      </svg>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={size ?? 32}
+      height={size ?? 32}
+      className={className}
+      style={style}
+      draggable={false}
+    />
+  );
+}
+
 // Search Index - All Pages & Content (hrefs resolved per brand at runtime)
 const BASE_SEARCH_INDEX: SearchIndexItem[] = [
   {
@@ -509,17 +574,16 @@ export default function Navigation() {
                           }}
                         />
                         {brand.navigation.logoMark && (
-                          <img
+                          <LogoMarkImage
                             src={brand.navigation.logoMark.src}
                             alt={brand.navigation.logoMark.alt}
-                            width={brand.navigation.logoMark.size ?? 28}
-                            height={brand.navigation.logoMark.size ?? 28}
-                            className="mr-2 inline-block h-7 w-7 select-none sm:h-8 sm:w-8"
+                            size={brand.navigation.logoMark.size ?? 28}
+                            removeWhiteBg={brand.navigation.logoMark.removeWhiteBg}
+                            className="mr-2 inline-block h-8 w-8 select-none sm:h-9 sm:w-9"
                             style={{
                               filter:
                                 "drop-shadow(0 2px 6px rgba(0,0,0,0.45)) drop-shadow(0 0 14px var(--brand-glow-strong))",
                             }}
-                            draggable={false}
                           />
                         )}
                         {/* Dual-Brand-Lockup (Mobile): Wortmarke + feine Partnerzeile */}
@@ -708,17 +772,16 @@ export default function Navigation() {
                       }}
                     />
                     {brand.navigation.logoMark && (
-                      <img
+                      <LogoMarkImage
                         src={brand.navigation.logoMark.src}
                         alt={brand.navigation.logoMark.alt}
-                        width={brand.navigation.logoMark.size ?? 32}
-                        height={brand.navigation.logoMark.size ?? 32}
-                        className="mr-2.5 inline-block h-8 w-8 select-none lg:mr-3 lg:h-9 lg:w-9"
+                        size={brand.navigation.logoMark.size ?? 32}
+                        removeWhiteBg={brand.navigation.logoMark.removeWhiteBg}
+                        className="mr-2.5 inline-block h-9 w-9 select-none lg:mr-3 lg:h-10 lg:w-10"
                         style={{
                           filter:
                             "drop-shadow(0 2px 8px rgba(0,0,0,0.5)) drop-shadow(0 0 18px var(--brand-glow-strong))",
                         }}
-                        draggable={false}
                       />
                     )}
                     {/* Dual-Brand-Lockup: dominante Wortmarke + feine Partnerzeile */}

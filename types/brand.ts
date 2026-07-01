@@ -86,6 +86,10 @@ export interface BrandLogoMark {
   alt: string;
   /** Anzeigegröße (px) im Standard-Header */
   size?: number;
+  /** CSS mix-blend-mode — z.B. "screen" um weißen Hintergrund auf dunklen Flächen zu entfernen */
+  blendMode?: string;
+  /** SVG-feColorMatrix-Filter, um weißen PNG-Hintergrund zu entfernen */
+  removeWhiteBg?: boolean;
 }
 
 export interface BrandNavigation {

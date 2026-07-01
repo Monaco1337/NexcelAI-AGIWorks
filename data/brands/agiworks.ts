@@ -21,9 +21,10 @@ export const agiworksBrand: BrandConfig = {
     logoAccentGradient: "linear-gradient(135deg, #B5D8FF 0%, #3A8EE6 100%)",
     baseHref: "/agiworks",
     logoMark: {
-      src: "/favicons/agiworks.svg",
+      src: "/images/logos/agiworks-logo.png",
       alt: "AGI Works Logo",
-      size: 28,
+      size: 36,
+      removeWhiteBg: true,
     },
     partnerLabel: "in Kooperation mit",
     partnerName: "NEXCEL AI",
