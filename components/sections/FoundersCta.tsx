@@ -210,7 +210,10 @@ export default function FoundersCta() {
                         <AgiWorksLogo width={78} className="-ml-0.5" />
                       )}
                     </div>
-                    <div className="mt-1.5 text-[11px] leading-[1.45] text-white/60">
+                    <div
+                      lang="de"
+                      className="mt-1.5 text-[11px] leading-[1.5] text-white/60 [hyphens:auto] [overflow-wrap:break-word]"
+                    >
                       {f.role}
                     </div>
                   </div>
