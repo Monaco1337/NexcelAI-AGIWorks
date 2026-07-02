@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
+import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 
 const FOUNDERS = [
   {
@@ -200,12 +201,7 @@ export default function FoundersCta() {
                         <NexcelLogoMark width={78} className="-ml-0.5" />
                       )}
                       {f.isAgiWorks && (
-                        <span
-                          className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                          style={{ color: "#5BB8FF" }}
-                        >
-                          AGI WORKS
-                        </span>
+                        <AgiWorksLogo width={78} className="-ml-0.5" />
                       )}
                     </div>
                     <div className="mt-1.5 text-[11px] leading-[1.45] text-white/60">

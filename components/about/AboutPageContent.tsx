@@ -5,7 +5,7 @@ import Image from "next/image";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
-import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 const heroStats = [
@@ -128,17 +128,8 @@ function BrandBridge() {
 
           {/* Left — AGI Works */}
           <div className="flex min-w-0 flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <AgiWorksLogoMark
-                size={22}
-                glow="drop-shadow(0 1px 4px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(91,184,255,0.5))"
-              />
-              <span
-                className="text-[13px] font-bold tracking-tight text-white/92 sm:text-[14px]"
-                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-              >
-                AGI Works
-              </span>
+            <div className="flex items-center">
+              <AgiWorksLogo width={118} />
             </div>
             <span
               className="text-[10px] font-medium uppercase tracking-[0.12em] sm:text-[10.5px]"

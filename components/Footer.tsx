@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useBrand } from "@/contexts/BrandContext";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 const linkedInIcon = (
@@ -284,7 +285,11 @@ export default function Footer() {
                   />
                 )}
                 {brand.navigation.wordmark ? (
-                  <NexcelLogoMark width={168} />
+                  brand.id === "agiworks" ? (
+                    <AgiWorksLogo width={176} />
+                  ) : (
+                    <NexcelLogoMark width={168} />
+                  )
                 ) : (
                   <div
                     className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight"

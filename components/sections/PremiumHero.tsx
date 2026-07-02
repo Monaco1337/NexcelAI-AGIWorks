@@ -18,7 +18,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
-import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 /* ── Feature icons ─────────────────────────────────────────────────── */
@@ -384,13 +384,7 @@ export default function PremiumHero() {
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
               {/* AGI Works — links (Kevin steht links im Foto) */}
               <div className="flex min-w-0 flex-col gap-1.5">
-                <span className="flex items-center gap-1.5 text-[13px] font-bold tracking-tight text-white/92">
-                  <AgiWorksLogoMark
-                    size={20}
-                    glow="drop-shadow(0 1px 4px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(91,184,255,0.55))"
-                  />
-                  AGI Works
-                </span>
+                <AgiWorksLogo width={118} />
                 <span className="text-[11px] leading-snug text-white/52">
                   Architektur, Systeme & Skalierung
                 </span>

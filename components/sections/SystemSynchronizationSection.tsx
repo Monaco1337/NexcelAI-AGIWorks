@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useId } from "react";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 /* ════════════════════════════════════════════════════════════════════
@@ -535,6 +536,7 @@ function Cooperation() {
         <BrandColumn
           mark={<AgiMark />}
           name="AGI Works"
+          nameComponent={<AgiWorksLogo width={210} />}
           tagline="Baut das System"
           nameGradient="linear-gradient(120deg, #FFFFFF 0%, #DBEAFE 45%, #60A5FA 100%)"
           accent="#5BB8FF"

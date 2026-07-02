@@ -20,11 +20,10 @@ export const agiworksBrand: BrandConfig = {
     logoTextGradient: "linear-gradient(135deg, #F0F7FF 0%, #B5D8FF 100%)",
     logoAccentGradient: "linear-gradient(135deg, #B5D8FF 0%, #3A8EE6 100%)",
     baseHref: "/",
-    logoMark: {
-      src: "/images/logos/agiworks-logo.png",
-      alt: "AGI Works Logo",
-      size: 36,
-      removeWhiteBg: true,
+    // Full brand lockup (ring/arrow symbol + "AGI WORKS" wordmark) as a
+    // transparent PNG — replaces the previous square logoMark + text combo.
+    wordmark: {
+      src: "/images/logos/agiworks-logo-full.png",
     },
     partnerLabel: "in Kooperation mit",
     partnerName: "NEXCEL AI",

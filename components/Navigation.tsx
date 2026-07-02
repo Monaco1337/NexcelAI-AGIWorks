@@ -2,6 +2,7 @@
 
 import React from "react";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
+import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
@@ -566,8 +567,12 @@ export default function Navigation() {
                         {/* Dual-Brand-Lockup (Mobile): Wortmarke + feine Partnerzeile */}
                         <span className="flex flex-col justify-center leading-none">
                           {brand.navigation.wordmark ? (
-                            /* SVG wordmark — NexcelLogoMark (no image, pure SVG) */
-                            <NexcelLogoMark width={144} />
+                            /* Full brand lockup image (symbol + wordmark) */
+                            brand.id === "agiworks" ? (
+                              <AgiWorksLogo width={144} />
+                            ) : (
+                              <NexcelLogoMark width={144} />
+                            )
                           ) : (
                             <span className="flex items-baseline">
                               <span
@@ -769,8 +774,12 @@ export default function Navigation() {
                     {/* Dual-Brand-Lockup: dominante Wortmarke + feine Partnerzeile */}
                     <span className="flex flex-col justify-center leading-none">
                       {brand.navigation.wordmark ? (
-                        /* SVG wordmark — NexcelLogoMark (no image, pure SVG) */
-                        <NexcelLogoMark width={180} />
+                        /* Full brand lockup image (symbol + wordmark) */
+                        brand.id === "agiworks" ? (
+                          <AgiWorksLogo width={180} />
+                        ) : (
+                          <NexcelLogoMark width={180} />
+                        )
                       ) : (
                         <span className="flex items-baseline">
                           <span
@@ -1287,7 +1296,11 @@ export default function Navigation() {
                     )}
                     <span className="flex min-w-0 flex-col justify-center leading-none">
                       {brand.navigation.wordmark ? (
-                        <NexcelLogoMark width={132} />
+                        brand.id === "agiworks" ? (
+                          <AgiWorksLogo width={132} />
+                        ) : (
+                          <NexcelLogoMark width={132} />
+                        )
                       ) : (
                         <span className="flex items-baseline text-xl font-bold tracking-tight">
                           <span style={{
