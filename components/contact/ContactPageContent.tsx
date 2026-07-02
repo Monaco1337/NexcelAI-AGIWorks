@@ -1,6 +1,5 @@
 "use client";
 
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, FormEvent } from "react";
@@ -712,7 +711,6 @@ export default function ContactPageContent() {
 
   return (
     <main className="relative overflow-hidden min-h-screen">
-      <Navigation />
 
       <section className="relative pt-[120px] md:pt-[150px] pb-24 md:pb-32 px-6">
         <div className="relative z-10 max-w-7xl mx-auto">

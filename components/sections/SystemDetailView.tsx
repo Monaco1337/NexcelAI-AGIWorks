@@ -8,7 +8,6 @@
  * Kontaktformular führt (/kontakt?system=<slug>).
  */
 
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,7 +25,6 @@ export default function SystemDetailView({ slug }: { slug: string }) {
   if (!system) {
     return (
       <main className="relative min-h-screen overflow-hidden">
-        <Navigation />
         <section className="relative flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
           <h1 className="text-2xl font-light text-white">System nicht gefunden</h1>
           <Link
@@ -47,8 +45,6 @@ export default function SystemDetailView({ slug }: { slug: string }) {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <Navigation />
-
       <section className="relative px-5 pt-[110px] sm:px-8 md:pt-[140px]">
         <div className="mx-auto w-full max-w-[1240px]">
           {/* Breadcrumb / Zurück */}

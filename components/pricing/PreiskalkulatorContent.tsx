@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useBrand } from "@/contexts/BrandContext";
 import { track } from "@/lib/track";
@@ -434,7 +433,6 @@ export default function PreiskalkulatorContent() {
 
   return (
     <>
-    <Navigation />
     <main
       id="preiskalkulator"
       className="ds-app min-h-screen px-4 text-white sm:px-6 scroll-mt-[120px]"

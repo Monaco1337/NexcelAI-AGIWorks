@@ -1,4 +1,3 @@
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { verifySession } from "@/lib/auth";
 import { findUserById } from "@/lib/demo-users";
@@ -29,7 +28,6 @@ export default async function DemoPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <Navigation />
       <DemoDashboard user={user} />
       <Footer />
     </main>

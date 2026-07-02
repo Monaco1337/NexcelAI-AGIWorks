@@ -1,4 +1,3 @@
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ProjectsShowcase from "@/components/sections/ProjectsShowcase";
 
@@ -11,7 +10,6 @@ export const metadata = {
 export default function ProjektePage() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
-      <Navigation />
       <div className="pt-[76px] sm:pt-[88px]">
         <ProjectsShowcase />
         </div>

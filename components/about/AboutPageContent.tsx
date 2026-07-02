@@ -2,7 +2,6 @@
 
 import { Fragment, useState } from "react";
 import Image from "next/image";
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
@@ -1104,7 +1103,6 @@ function WhyClients() {
 export default function AboutPageContent() {
   return (
     <main className="relative min-h-screen overflow-x-clip">
-      <Navigation />
 
       {/* ══════════════════════════════════════════════════════════════════
           Hero — Split layout: text left, founders freigestellt right.

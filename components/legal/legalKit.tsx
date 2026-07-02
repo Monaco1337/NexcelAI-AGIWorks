@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext } from "react";
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -280,7 +279,6 @@ export function LegalShell({
   return (
     <LegalThemeContext.Provider value={theme}>
       <main className="relative min-h-screen overflow-hidden">
-        <Navigation />
         <div className="relative min-h-screen py-20 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden">
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div

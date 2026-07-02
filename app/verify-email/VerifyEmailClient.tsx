@@ -3,7 +3,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
 export default function VerifyEmailClient() {
@@ -40,7 +39,6 @@ export default function VerifyEmailClient() {
 
   return (
     <main className="relative overflow-hidden min-h-screen">
-      <Navigation />
       
       <section className="relative py-24 md:py-32 px-6 overflow-hidden min-h-[80vh] flex items-center">
         {/* Background */}

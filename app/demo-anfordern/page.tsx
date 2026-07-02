@@ -1,6 +1,5 @@
 "use client";
 
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { useState, FormEvent } from "react";
@@ -85,7 +84,6 @@ export default function DemoAnfordernPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <Navigation />
       <section className="relative py-24 md:py-32 px-6 overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none">
           <div
