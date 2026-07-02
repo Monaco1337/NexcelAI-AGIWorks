@@ -29,6 +29,11 @@ import { validateSchemas } from "@/lib/seo/schemaValidator";
 import { checkLeadMap } from "@/lib/seo/leadMap";
 import { validateTemplates } from "@/lib/seo/templatesGuard";
 import { checkCaseStudies } from "@/lib/seo/caseStudyGuard";
+import { checkMoneyPages } from "@/lib/seo/moneyPageGuard";
+import { checkLocationPages, locationBodies } from "@/lib/seo/locationPageGuard";
+import { checkKnowledgePages } from "@/lib/seo/knowledgePageGuard";
+import { checkScaling } from "@/lib/seo/scalingGuard";
+import { auditReadiness } from "@/lib/seo/auditReport";
 import {
   BAD_CROSS_DOMAIN_PAGES,
   BAD_DUPLICATE_PAGES,
@@ -124,9 +129,22 @@ const quality: Check = {
   name: "quality",
   run: () => {
     const findings: Finding[] = [];
-    for (const p of PAGE_REGISTRY) {
+    // Only pages we intend to index are gated: for them, quality blockers must
+    // fail the build. Candidate/draft pages (not approved / not manually cleared)
+    // are intentionally noindex — their deny-by-default state is not an error.
+    const intended = PAGE_REGISTRY.filter((p) => p.approved && p.manualIndexApproval);
+    for (const p of intended) {
       const res = getIndexabilityStatus(p, { cities: brandCities(p.brand) });
       findings.push(...res.findings);
+    }
+    const candidates = PAGE_REGISTRY.length - intended.length;
+    if (candidates > 0) {
+      findings.push(
+        info(
+          "QUALITY_CANDIDATES_DEFERRED",
+          `${candidates} candidate/draft pages are noindex by design and not index-gated yet`
+        )
+      );
     }
     return { name: "quality", findings };
   },
@@ -139,7 +157,8 @@ const brand: Check = {
 
 const location: Check = {
   name: "location",
-  run: () => ({ name: "location", findings: checkRegistryLocations() }),
+  // Feed rendered location-page bodies for full DOM coverage of fake-signal scan.
+  run: () => ({ name: "location", findings: checkRegistryLocations(locationBodies()) }),
 };
 
 const schema: Check = {
@@ -201,6 +220,31 @@ const caseStudies: Check = {
   run: () => ({ name: "case-studies", findings: checkCaseStudies() }),
 };
 
+const moneyPages: Check = {
+  name: "money-pages",
+  run: () => ({ name: "money-pages", findings: checkMoneyPages() }),
+};
+
+const locationPages: Check = {
+  name: "location-pages",
+  run: () => ({ name: "location-pages", findings: checkLocationPages() }),
+};
+
+const knowledgePages: Check = {
+  name: "knowledge-pages",
+  run: () => ({ name: "knowledge-pages", findings: checkKnowledgePages() }),
+};
+
+const scaling: Check = {
+  name: "scaling",
+  run: () => ({ name: "scaling", findings: checkScaling() }),
+};
+
+const readiness: Check = {
+  name: "readiness",
+  run: () => ({ name: "readiness", findings: auditReadiness() }),
+};
+
 export const CHECKS: Check[] = [
   routes,
   crossdomain,
@@ -215,6 +259,11 @@ export const CHECKS: Check[] = [
   leadMap,
   templates,
   caseStudies,
+  moneyPages,
+  locationPages,
+  knowledgePages,
+  scaling,
+  readiness,
 ];
 
 export const CHECK_BY_NAME: Record<string, Check> = Object.fromEntries(

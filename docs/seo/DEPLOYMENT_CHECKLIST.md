@@ -5,14 +5,20 @@ Run before every deploy. All must pass.
 ## 1. Gates (must be green)
 
 ```bash
-npm run seo:all      # 0 blockers required
+npm run seo:all      # 18 checks, 0 blockers, ends with GO-LIVE VERDICT: GO
 npx tsc --noEmit     # no type errors
 npm run build        # Next production build succeeds
 ```
 
-`seo:all` must report **0 blockers**. Warnings are acceptable but should be
-reviewed. The self-tests (`GUARD_SELFTEST_OK`) must be present — their absence
-means a guard was silently disabled.
+`seo:all` must report **0 blockers** and print `GO-LIVE VERDICT: GO`. Warnings are
+acceptable but should be reviewed. The self-tests (`GUARD_SELFTEST_OK`) must be
+present — their absence means a guard was silently disabled.
+
+The final audit (`seo:readiness`, included in `seo:all`) asserts every indexable
+page passes the live quality gate, has a correct canonical host and that each
+brand's sitemap is non-empty; `seo:scaling` enforces the national-scaling policy
+(city allowlist, candidate caps, cross-type doorway scan). See
+[`PRODUCTION_AUDIT.md`](./PRODUCTION_AUDIT.md).
 
 ## 2. Cross-domain ownership (critical)
 

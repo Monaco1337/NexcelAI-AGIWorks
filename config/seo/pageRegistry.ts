@@ -17,10 +17,15 @@
 
 import { cleanAgiPath, type BrandKey } from "./brands";
 import { AGI_INTERNAL_PREFIX } from "./domains";
+import { MONEY_PAGES } from "@/data/moneyPages";
+import { LOCATION_PAGES } from "@/data/locationPages";
+import { KNOWLEDGE_PAGES } from "@/data/knowledgePages";
 
 export type SeoPageType =
   | "home"
   | "money"
+  | "location"
+  | "knowledge"
   | "tool"
   | "content"
   | "legal";
@@ -219,6 +224,72 @@ function buildRegistry(): SeoPage[] {
       });
     });
   });
+
+  // Money pages (Phase 6) — commercial /leistungen (AGI) & /loesungen (NEXCEL)
+  // routes. These ship as CANDIDATE: not approved, not manually cleared and
+  // quality.index=false → deny-by-default noindex,follow. They are served by a
+  // catch-all route + MoneyPageTemplate, not a static folder per slug.
+  MONEY_PAGES.forEach((mp) => {
+    pages.push({
+      id: mp.id,
+      brand: mp.brand,
+      path: mp.path,
+      internalPath: internalPathFor(mp.brand, mp.path),
+      type: "money",
+      title: mp.title,
+      description: mp.description,
+      breadcrumbLabel: mp.serviceName,
+      approved: mp.approved,
+      manualIndexApproval: mp.manualIndexApproval,
+      quality: { index: false },
+      changefreq: "monthly",
+      priority: 0.6,
+    });
+  });
+
+  // Location pages (Phase 7) — NRW city pages under /standorte/*, served by a
+  // catch-all route + LocationPageTemplate. CANDIDATE by default (noindex,follow)
+  // until they pass content/duplicate/location guards + manual approval.
+  LOCATION_PAGES.forEach((lp) => {
+    pages.push({
+      id: lp.id,
+      brand: lp.brand,
+      path: lp.path,
+      internalPath: internalPathFor(lp.brand, lp.path),
+      type: "location",
+      title: lp.title,
+      description: lp.description,
+      breadcrumbLabel: lp.city,
+      approved: lp.approved,
+      manualIndexApproval: lp.manualIndexApproval,
+      quality: { index: false },
+      changefreq: "monthly",
+      priority: 0.5,
+    });
+  });
+
+  // Knowledge pages (Phase 8) — AEO/GEO editorial content under /wissen/*, served
+  // by a catch-all route + KnowledgePageTemplate. CANDIDATE by default
+  // (noindex,follow) until they pass content/duplicate/knowledge guards + manual
+  // approval.
+  KNOWLEDGE_PAGES.forEach((kp) => {
+    pages.push({
+      id: kp.id,
+      brand: kp.brand,
+      path: kp.path,
+      internalPath: internalPathFor(kp.brand, kp.path),
+      type: "knowledge",
+      title: kp.title,
+      description: kp.description,
+      breadcrumbLabel: kp.topic,
+      approved: kp.approved,
+      manualIndexApproval: kp.manualIndexApproval,
+      quality: { index: false },
+      changefreq: "monthly",
+      priority: 0.5,
+    });
+  });
+
   return pages;
 }
 

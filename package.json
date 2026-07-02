@@ -28,6 +28,11 @@
     "seo:lead-map": "tsx scripts/seo/run.ts lead-map",
     "seo:templates": "tsx scripts/seo/run.ts templates",
     "seo:case-studies": "tsx scripts/seo/run.ts case-studies",
+    "seo:money-pages": "tsx scripts/seo/run.ts money-pages",
+    "seo:location-pages": "tsx scripts/seo/run.ts location-pages",
+    "seo:knowledge-pages": "tsx scripts/seo/run.ts knowledge-pages",
+    "seo:scaling": "tsx scripts/seo/run.ts scaling",
+    "seo:readiness": "tsx scripts/seo/run.ts readiness",
     "seo:audit": "tsx scripts/seo/run.ts audit",
     "seo:all": "tsx scripts/seo/run.ts all"
   },

@@ -57,13 +57,29 @@ function expectedFileForPage(page: SeoPage): string {
   return path.join(APP_DIR, internal.replace(/^\//, ""), "page.tsx");
 }
 
+/**
+ * Some registry pages are served by a catch-all dynamic route (e.g. money pages
+ * under app/loesungen/[slug]/page.tsx) instead of a static folder per slug.
+ * Treat a page as present when its parent directory contains a `[param]/page.tsx`.
+ */
+function hasDynamicBacking(page: SeoPage): boolean {
+  const internal = page.internalPath;
+  if (internal === "/") return false;
+  const parent = internal.replace(/\/[^/]+$/, "");
+  const parentDir = path.join(APP_DIR, parent.replace(/^\//, ""));
+  if (!existsSync(parentDir)) return false;
+  const matches = fg.sync("*/page.tsx", { cwd: parentDir, dot: false });
+  return matches.some((f) => /^\[[^\]]+\]\/page\.tsx$/.test(f));
+}
+
 export async function validateRoutes(pages: SeoPage[] = PAGE_REGISTRY): Promise<Finding[]> {
   const findings: Finding[] = [];
 
-  // 1. Every registry page must have a physical route file.
+  // 1. Every registry page must have a physical route file (static folder or a
+  //    catch-all dynamic route in its parent directory).
   for (const p of pages) {
     const file = expectedFileForPage(p);
-    if (!existsSync(file)) {
+    if (!existsSync(file) && !hasDynamicBacking(p)) {
       findings.push(
         blocker("REGISTRY_ROUTE_MISSING", `No page.tsx for registry page ${p.id}`, {
           brand: p.brand,

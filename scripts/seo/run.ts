@@ -80,9 +80,11 @@ async function main(): Promise<void> {
 
   if (hasBlockers(all)) {
     console.error(`\nFAILED: ${totals.blocker} blocker(s) must be fixed before deploy.`);
+    if (runAll) console.error(`GO-LIVE VERDICT: NO-GO`);
     process.exit(1);
   }
   console.log(`\nPASSED: no blockers.`);
+  if (runAll) console.log(`GO-LIVE VERDICT: GO (pending manual deploy checklist).`);
   process.exit(0);
 }
 

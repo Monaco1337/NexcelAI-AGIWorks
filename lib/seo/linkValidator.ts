@@ -21,6 +21,10 @@ const APP_DIR = path.join(ROOT, "app");
 /** Dynamic / utility route prefixes that accept arbitrary sub-paths. */
 const ALLOWED_PREFIXES = [
   "/systeme/",
+  "/leistungen/",
+  "/loesungen/",
+  "/standorte/",
+  "/wissen/",
   "/diagnose/",
   "/systemanalyse",
   "/admin",

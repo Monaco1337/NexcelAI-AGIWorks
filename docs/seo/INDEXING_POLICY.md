@@ -23,13 +23,15 @@
 
 Per-type minimum score (`qualityGate.ts → TYPE_THRESHOLDS`):
 
-| type    | min score |
-| ------- | :-------: |
-| home    | 80 |
-| money   | 80 |
-| tool    | 70 |
-| content | 70 |
-| legal   | 50 |
+| type      | min score |
+| --------- | :-------: |
+| home      | 80 |
+| money     | 80 |
+| location  | 90 |
+| knowledge | 80 |
+| tool      | 70 |
+| content   | 70 |
+| legal     | 50 |
 
 Scoring starts at 100; each warning −8, each blocker −40 (and any blocker forces
 `canIndex = false`).

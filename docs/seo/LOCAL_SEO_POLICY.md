@@ -34,8 +34,24 @@ optional rendered body text. Full page-body coverage requires feeding rendered
 HTML into `checkRegistryLocations(bodyByPageId)`; DOM coverage is therefore
 **partial** until Phase 4 renders and pipes page bodies into the guard.
 
-## Local scaling (later phases)
+## Local scaling (Phase 7 — implemented)
 
-NRW location pages (Phase 7) must ship as `candidate` (noindex) with **real local
-differentiation** — never a generic templated city page. They are indexed only
-after passing content, duplicate and location guards plus manual approval.
+NRW location pages ship as `candidate` (noindex) with **real local
+differentiation** — never a generic templated city page. Data lives in
+`data/locationPages.ts` (5 cities × 2 brands), rendered by
+`components/templates/LocationPageTemplate.tsx` under `/standorte/<city>` via
+catch-all routes. See [`LOCATION_PAGES.md`](./LOCATION_PAGES.md).
+
+The dedicated guard `lib/seo/locationPageGuard.ts` (`npm run seo:location-pages`):
+
+- reuses `checkLocation` on the **full page body** (not just title/description) —
+  the `location` check now feeds rendered location bodies via `locationBodies()`,
+  closing the earlier partial-DOM gap for these pages;
+- blocks generic same-brand city templates (`LP_GENERIC_CITY_TEMPLATE`, body
+  similarity ≥ 0.70) and cross-domain duplicates (≥ 0.60);
+- requires city-specific `localContext`, min structure and resolving nearby-city
+  and related links.
+
+Pages are indexed only after passing content, duplicate and location guards, the
+quality gate (threshold 90) **and** manual approval (`approved` +
+`manualIndexApproval`).

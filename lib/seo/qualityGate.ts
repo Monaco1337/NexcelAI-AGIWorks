@@ -36,6 +36,11 @@ export interface QualityResult {
 const TYPE_THRESHOLDS: Record<SeoPageType, number> = {
   home: 80,
   money: 80,
+  // Location pages must clear a high bar before indexing (real local
+  // differentiation, no generic city template).
+  location: 90,
+  // Knowledge/editorial pages carry E-E-A-T weight; hold a high bar too.
+  knowledge: 80,
   tool: 70,
   content: 70,
   legal: 50,
