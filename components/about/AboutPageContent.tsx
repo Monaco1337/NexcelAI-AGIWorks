@@ -384,7 +384,7 @@ function FounderColumn({
           fill
           quality={100}
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover object-[center_22%] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
+          className="object-cover object-[center_12%] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
         />
         {/* Boden-Verlauf für Tiefe */}
         <div
