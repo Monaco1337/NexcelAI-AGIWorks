@@ -95,6 +95,91 @@ export function webPageSchema(page: SeoPage): JsonLdObject {
   };
 }
 
+/**
+ * Service schema — a factual offering. No price, no rating, no fake availability.
+ * `provider` links to the brand Organization.
+ */
+export function serviceSchema(input: {
+  brand: BrandKey;
+  name: string;
+  description: string;
+  url: string;
+  serviceType?: string;
+  areaServed?: string[];
+}): JsonLdObject {
+  const cfg = getBrandConfig(input.brand);
+  const origin = getCanonicalDomain(input.brand);
+  const schema: JsonLdObject = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: input.name,
+    description: input.description,
+    url: input.url,
+    provider: { "@id": `${origin}/#organization` },
+    areaServed: input.areaServed ?? cfg.areaServed,
+    inLanguage: cfg.locale.replace("_", "-"),
+  };
+  if (input.serviceType) schema.serviceType = input.serviceType;
+  return schema;
+}
+
+/**
+ * Article schema — for knowledge / editorial pages. Author must be a real
+ * person (E-E-A-T). Dates are optional; when omitted no fake date is emitted.
+ */
+export function articleSchema(input: {
+  brand: BrandKey;
+  headline: string;
+  description: string;
+  url: string;
+  authorName?: string;
+  datePublished?: string;
+  dateModified?: string;
+}): JsonLdObject {
+  const cfg = getBrandConfig(input.brand);
+  const origin = getCanonicalDomain(input.brand);
+  const schema: JsonLdObject = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.headline,
+    description: input.description,
+    url: input.url,
+    inLanguage: cfg.locale.replace("_", "-"),
+    author: {
+      "@type": "Person",
+      name: input.authorName ?? cfg.primaryOwner,
+    },
+    publisher: { "@id": `${origin}/#organization` },
+    mainEntityOfPage: input.url,
+  };
+  if (input.datePublished) schema.datePublished = input.datePublished;
+  if (input.dateModified) schema.dateModified = input.dateModified;
+  return schema;
+}
+
+/**
+ * WebPage schema for a page identified by an absolute URL (used by Phase 4
+ * templates / candidate pages that are not in the registry yet).
+ */
+export function webPageForUrl(input: {
+  brand: BrandKey;
+  url: string;
+  name: string;
+  description: string;
+}): JsonLdObject {
+  const origin = getCanonicalDomain(input.brand);
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${input.url}#webpage`,
+    url: input.url,
+    name: input.name,
+    description: input.description,
+    inLanguage: "de-DE",
+    isPartOf: { "@id": `${origin}/#website` },
+  };
+}
+
 export interface BreadcrumbItem {
   name: string;
   url: string;

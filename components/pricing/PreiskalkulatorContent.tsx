@@ -7,6 +7,11 @@ import Footer from "@/components/Footer";
 import { useBrand } from "@/contexts/BrandContext";
 import { track } from "@/lib/track";
 import {
+  captureFirstTouch,
+  getAttributionPayload,
+  honeypotFieldNames,
+} from "@/lib/leadAttributionClient";
+import {
   type WizardState,
   type ProjectType,
   type Scope,
@@ -261,6 +266,13 @@ export default function PreiskalkulatorContent() {
   }, [step, scrollToWizardTop]);
 
   // Fire one pricing_start when the user first interacts with the wizard
+  // Capture first-touch attribution once (non-PII, first-party) for lead submits.
+  const formRenderedAtRef = useRef<number>(Date.now());
+  useEffect(() => {
+    captureFirstTouch();
+    formRenderedAtRef.current = Date.now();
+  }, []);
+
   // (i.e. reaches step 1 or later), and a pricing_step event on every move.
   const hasStartedRef = useRef(false);
   useEffect(() => {
@@ -396,6 +408,9 @@ export default function PreiskalkulatorContent() {
           quote: quote
             ? { min: quote.min, max: quote.max, weeksMin: quote.weeksMin, weeksMax: quote.weeksMax, scopeSummary: quote.scopeSummary }
             : null,
+          attribution: getAttributionPayload(),
+          [honeypotFieldNames.value]: (formData.get(honeypotFieldNames.value) as string) || "",
+          [honeypotFieldNames.time]: formRenderedAtRef.current,
         }),
       });
       const data = await res.json();
@@ -861,6 +876,23 @@ export default function PreiskalkulatorContent() {
                         background: "rgba(255,255,255,0.03)",
                       }}
                     >
+                      {/* Honeypot: hidden from humans, only bots fill it. */}
+                      <input
+                        type="text"
+                        name={honeypotFieldNames.value}
+                        tabIndex={-1}
+                        autoComplete="off"
+                        aria-hidden="true"
+                        defaultValue=""
+                        style={{
+                          position: "absolute",
+                          left: "-9999px",
+                          width: 1,
+                          height: 1,
+                          opacity: 0,
+                          pointerEvents: "none",
+                        }}
+                      />
                       <h3
                         className="font-light text-white/95 text-lg"
                         style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}

@@ -14,7 +14,22 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "seo:routes": "tsx scripts/seo/run.ts routes",
+    "seo:crossdomain": "tsx scripts/seo/run.ts crossdomain",
+    "seo:duplicates": "tsx scripts/seo/run.ts duplicates",
+    "seo:content": "tsx scripts/seo/run.ts content",
+    "seo:quality": "tsx scripts/seo/run.ts quality",
+    "seo:brand": "tsx scripts/seo/run.ts brand",
+    "seo:location": "tsx scripts/seo/run.ts location",
+    "seo:schema": "tsx scripts/seo/run.ts schema",
+    "seo:links": "tsx scripts/seo/run.ts links",
+    "seo:sitemap": "tsx scripts/seo/run.ts sitemap",
+    "seo:lead-map": "tsx scripts/seo/run.ts lead-map",
+    "seo:templates": "tsx scripts/seo/run.ts templates",
+    "seo:case-studies": "tsx scripts/seo/run.ts case-studies",
+    "seo:audit": "tsx scripts/seo/run.ts audit",
+    "seo:all": "tsx scripts/seo/run.ts all"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
@@ -44,11 +59,14 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
+    "cheerio": "^1.2.0",
     "dotenv": "^17.2.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.5",
+    "fast-glob": "^3.3.3",
     "postcss": "^8.4.40",
     "tailwindcss": "^3.4.7",
+    "tsx": "^4.22.4",
     "typescript": "^5.5.4"
   }
 }

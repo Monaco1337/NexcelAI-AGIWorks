@@ -7,9 +7,12 @@
  */
 
 import type { ReactNode } from "react";
+import { SYSTEM_SLUGS, type SystemSlug } from "./systems-slugs";
+
+export { SYSTEM_SLUGS, type SystemSlug };
 
 export type SystemEntry = {
-  slug: string;
+  slug: SystemSlug;
   title: string;
   tagline: string;
   /** Kurzbeschreibung (2–3 Zeilen) für die Übersichtskarte. */
@@ -240,7 +243,6 @@ export function getSystemBySlug(slug: string): SystemEntry | undefined {
   return SYSTEMS.find((s) => s.slug === slug);
 }
 
-export const SYSTEM_SLUGS = SYSTEMS.map((s) => s.slug);
 
 /* ── Icons ── */
 export function GlobeIcon() {
