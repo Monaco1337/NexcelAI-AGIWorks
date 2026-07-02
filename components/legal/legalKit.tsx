@@ -202,7 +202,7 @@ export function Card({ children, className = "", strong = false }: { children: R
   const t = useLegalTheme();
   return (
     <div
-      className={`p-6 rounded-xl ${className}`}
+      className={`p-4 sm:p-6 rounded-xl ${className}`}
       style={{
         background: `rgba(${t.accentRgb}, ${strong ? 0.08 : 0.05})`,
         border: `1px solid rgba(${t.accentRgb}, 0.15)`,
@@ -281,10 +281,10 @@ export function LegalShell({
     <LegalThemeContext.Provider value={theme}>
       <main className="relative min-h-screen overflow-hidden">
         <Navigation />
-        <div className="relative min-h-screen py-24 md:py-32 px-6 overflow-hidden">
+        <div className="relative min-h-screen py-20 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden">
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-20"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] opacity-20"
               style={{
                 background: `radial-gradient(circle, rgba(${theme.accentRgb}, 0.3) 0%, transparent 70%)`,
                 filter: "blur(80px)",
@@ -294,30 +294,30 @@ export function LegalShell({
 
           <div className="relative z-10 max-w-5xl mx-auto">
             <motion.div
-              className="text-center mb-16"
+              className="text-center mb-10 md:mb-16"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
               {introLabel && (
                 <p
-                  className="mb-5 text-[11px] md:text-xs font-semibold uppercase tracking-[0.32em]"
+                  className="mb-4 text-[10px] sm:text-[11px] md:text-xs font-semibold uppercase tracking-[0.28em] sm:tracking-[0.32em]"
                   style={{ color: theme.accent }}
                 >
                   {introLabel}
                 </p>
               )}
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#FFFFFF] mb-6 tracking-tight">
+              <h1 className="text-[2rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#FFFFFF] mb-4 md:mb-6 tracking-tight break-words hyphens-auto">
                 <span style={{ color: theme.accent, textShadow: `0 0 40px rgba(${theme.accentRgb}, 0.6)` }}>
                   {title}
                 </span>
               </h1>
               {!dateAtBottom && (
-                <p className="text-xl md:text-2xl text-[#E5E7EB] font-light">{dateLabel}</p>
+                <p className="text-base sm:text-lg md:text-xl text-[#E5E7EB] font-light">{dateLabel}</p>
               )}
             </motion.div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {sections.map((section, index) => (
                 <motion.div
                   key={index}
@@ -328,7 +328,7 @@ export function LegalShell({
                   className="group"
                 >
                   <div
-                    className="rounded-2xl p-6 md:p-8 transition-all duration-500"
+                    className="rounded-2xl p-4 sm:p-6 md:p-8 transition-all duration-500"
                     style={{
                       background: "rgba(255, 255, 255, 0.03)",
                       backdropFilter: "blur(30px)",
@@ -345,11 +345,15 @@ export function LegalShell({
                       e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)";
                     }}
                   >
-                    <div className="flex items-start gap-4 mb-6">
-                      <motion.div whileHover={{ scale: 1.1, rotate: 5 }} transition={{ duration: 0.3 }}>
+                    <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+                      <motion.div
+                        className="flex-shrink-0"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ duration: 0.3 }}
+                      >
                         <IconBadge>{section.icon}</IconBadge>
                       </motion.div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-[#FFFFFF] tracking-tight flex-1 pt-1">
+                      <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold text-[#FFFFFF] tracking-tight flex-1 pt-2 sm:pt-1 leading-snug break-words min-w-0">
                         {section.title}
                       </h2>
                     </div>
@@ -360,7 +364,7 @@ export function LegalShell({
             </div>
 
             <motion.div
-              className="mt-16 pt-8 text-center"
+              className="mt-10 sm:mt-16 pt-6 sm:pt-8 text-center"
               style={{ borderTop: `1px solid rgba(${theme.accentRgb}, 0.2)` }}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
@@ -369,11 +373,11 @@ export function LegalShell({
             >
               <Link
                 href={homeHref}
-                className="inline-flex items-center gap-2 transition-all duration-300 font-medium group"
+                className="inline-flex items-center gap-2 transition-all duration-300 font-medium group text-sm sm:text-base"
                 style={{ color: theme.accent }}
               >
                 <motion.svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
