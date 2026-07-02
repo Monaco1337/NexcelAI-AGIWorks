@@ -105,8 +105,8 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/softwareentwicklung", "/systemanalyse", "/kontakt"],
     tags: ["Web-App", "Grundlagen", "Softwareentwicklung"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "agiworks:/wissen/individualsoftware-vs-standardsoftware",
@@ -156,8 +156,8 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/leistungen/softwareentwicklung", "/leistungen/saas-entwicklung", "/systemanalyse", "/kontakt"],
     tags: ["Individualsoftware", "Standardsoftware", "Entscheidung"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "agiworks:/wissen/was-kostet-softwareentwicklung",
@@ -207,8 +207,8 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/leistungen/softwareentwicklung", "/preiskalkulator", "/systemanalyse", "/kontakt"],
     tags: ["Kosten", "Projektkorridor", "Softwareentwicklung"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "agiworks:/wissen/erp-system-einfuehren",
@@ -258,8 +258,8 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/leistungen/erp-system-entwicklung", "/leistungen/crm-system-entwicklung", "/systemanalyse", "/kontakt"],
     tags: ["ERP", "Einführung", "Leitfaden"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
 ];
 
@@ -314,8 +314,8 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/loesungen/automatisierung", "/loesungen/ki-systeme", "/systemanalyse", "/kontakt"],
     tags: ["KI", "Automatisierung", "Grundlagen"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "nexcel:/wissen/was-ist-ein-ki-agent",
@@ -365,8 +365,8 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/loesungen/ki-agenten", "/loesungen/automatisierung", "/systemanalyse", "/kontakt"],
     tags: ["KI-Agent", "Grundlagen", "Automatisierung"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "nexcel:/wissen/prozesse-automatisieren-im-mittelstand",
@@ -416,8 +416,8 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/loesungen/automatisierung", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/kontakt"],
     tags: ["Automatisierung", "Mittelstand", "Prozesse"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "nexcel:/wissen/customer-experience-mit-ki-verbessern",
@@ -467,8 +467,8 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     dateModified: PUBLISHED,
     relatedPaths: ["/loesungen/customer-experience-systeme", "/loesungen/crm-automation", "/systemanalyse", "/kontakt"],
     tags: ["Customer Experience", "KI", "Service"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
 ];
 

@@ -141,31 +141,37 @@ export const agiworksBrand: BrandConfig = {
     ctaTitle: "Ihr nächstes System beginnt hier.",
     ctaSubline: "Von der Analyse bis zum produktiven Betrieb — ein Team, eine Architektur.",
     ctaButtonText: "Projekt besprechen",
-    ctaButtonHref: "/agiworks/kontakt",
+    // Public hrefs on agiworks.de are CLEAN. The middleware rewrites clean paths
+    // to the internal /agiworks/* app subtree — no /agiworks prefix is ever
+    // rendered in a public anchor, sitemap URL or canonical.
+    ctaButtonHref: "/kontakt",
     links: {
       // Spalte „Systeme"
       products: [
-        { label: "Systeme im Überblick", href: "/agiworks#systeme" },
-        { label: "Projekte", href: "/agiworks/projekte" },
-        { label: "Preise", href: "/agiworks/preise" },
+        { label: "Systeme im Überblick", href: "/#systeme" },
+        { label: "Leistungen", href: "/leistungen" },
+        { label: "Standorte", href: "/standorte" },
+        { label: "Projekte", href: "/projekte" },
+        { label: "Preise", href: "/preise" },
       ],
       // Spalte „Ressourcen"
       solutions: [
-        { label: "Systemanalyse", href: "/agiworks/systemanalyse" },
-        { label: "Preiskalkulator", href: "/agiworks/preiskalkulator" },
+        { label: "Systemanalyse", href: "/systemanalyse" },
+        { label: "Wissen", href: "/wissen" },
+        { label: "Preiskalkulator", href: "/preiskalkulator" },
       ],
       // Spalte „Unternehmen"
       company: [
-        { label: "Über uns", href: "/agiworks/ueber-mich" },
-        { label: "Kontakt", href: "/agiworks/kontakt" },
+        { label: "Über uns", href: "/ueber-mich" },
+        { label: "Kontakt", href: "/kontakt" },
       ],
       // Spalte „Rechtliches"
       legal: [
-        { label: "Impressum", href: "/agiworks/impressum" },
-        { label: "Datenschutz", href: "/agiworks/datenschutz" },
-        { label: "Cookie-Richtlinie", href: "/agiworks/cookie-richtlinie" },
-        { label: "AGB", href: "/agiworks/agb" },
-        { label: "Vertragsverarbeitung", href: "/agiworks/vertragsverarbeitung" },
+        { label: "Impressum", href: "/impressum" },
+        { label: "Datenschutz", href: "/datenschutz" },
+        { label: "Cookie-Richtlinie", href: "/cookie-richtlinie" },
+        { label: "AGB", href: "/agb" },
+        { label: "Vertragsverarbeitung", href: "/vertragsverarbeitung" },
       ],
     },
     contact: {

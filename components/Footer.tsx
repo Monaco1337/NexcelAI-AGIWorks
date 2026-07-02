@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useBrand } from "@/contexts/BrandContext";
-import { resolveBrandNavHref } from "@/lib/brandNav";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
@@ -185,7 +184,7 @@ export default function Footer() {
 
               {(brand.id === "nexcel" || brand.id === "agiworks") && (
                 <Link
-                  href={resolveBrandNavHref("/preiskalkulator", brand.id)}
+                  href="/preiskalkulator"
                   prefetch={true}
                   className="group/secondary relative inline-flex w-full items-center justify-center gap-2.5 rounded-full px-8 py-4 text-[12.5px] uppercase transition-all duration-500 hover:gap-3.5 sm:w-auto sm:text-[13px]"
                   style={{

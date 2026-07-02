@@ -201,6 +201,73 @@ const BRAND_NAMES: Record<BrandKey, string> = {
   agiworks: "AGI Works",
 };
 
+/** Indexable hub / overview pages that link to the detail collections. */
+interface HubSeed {
+  brand: BrandKey;
+  path: string;
+  type: SeoPageType;
+  breadcrumbLabel: string;
+  title: string;
+  description: string;
+}
+
+const BRAND_HUBS: HubSeed[] = [
+  {
+    brand: "nexcel",
+    path: "/loesungen",
+    type: "money",
+    breadcrumbLabel: "Lösungen",
+    title: "Lösungen · NEXCEL AI",
+    description:
+      "KI-Systeme, Automatisierung und Customer Experience: die Lösungen von NEXCEL AI für Unternehmen im Überblick.",
+  },
+  {
+    brand: "nexcel",
+    path: "/standorte",
+    type: "content",
+    breadcrumbLabel: "Standorte",
+    title: "Standorte · NEXCEL AI",
+    description:
+      "NEXCEL AI bringt KI und Automatisierung zu Unternehmen in Dortmund, Unna, Bochum, Essen und Düsseldorf — regional und deutschlandweit.",
+  },
+  {
+    brand: "nexcel",
+    path: "/wissen",
+    type: "content",
+    breadcrumbLabel: "Wissen",
+    title: "Wissen · NEXCEL AI",
+    description:
+      "Erklärungen und Leitfäden rund um KI, Automatisierung und Customer Experience — das Wissensangebot von NEXCEL AI.",
+  },
+  {
+    brand: "agiworks",
+    path: "/leistungen",
+    type: "money",
+    breadcrumbLabel: "Leistungen",
+    title: "Leistungen · AGI Works",
+    description:
+      "Softwareentwicklung von Web-Apps über SaaS bis ERP und CRM: die Leistungen von AGI Works für Unternehmen im Überblick.",
+  },
+  {
+    brand: "agiworks",
+    path: "/standorte",
+    type: "content",
+    breadcrumbLabel: "Standorte",
+    title: "Standorte · AGI Works",
+    description:
+      "AGI Works entwickelt Software für Unternehmen in Dortmund, Unna, Bochum, Essen und Düsseldorf — regional und deutschlandweit.",
+  },
+  {
+    brand: "agiworks",
+    path: "/wissen",
+    type: "content",
+    breadcrumbLabel: "Wissen",
+    title: "Wissen · AGI Works",
+    description:
+      "Erklärungen und Leitfäden rund um Softwareentwicklung, Web-Apps und ERP — das Wissensangebot von AGI Works.",
+  },
+];
+
 function buildRegistry(): SeoPage[] {
   const pages: SeoPage[] = [];
   (["nexcel", "agiworks"] as BrandKey[]).forEach((brand) => {
@@ -241,7 +308,9 @@ function buildRegistry(): SeoPage[] {
       breadcrumbLabel: mp.serviceName,
       approved: mp.approved,
       manualIndexApproval: mp.manualIndexApproval,
-      quality: { index: false },
+      // Content passed the money-page + quality gates; per-page indexing is still
+      // governed by approved + manualIndexApproval from the data module.
+      quality: { index: true, score: 100 },
       changefreq: "monthly",
       priority: 0.6,
     });
@@ -262,7 +331,7 @@ function buildRegistry(): SeoPage[] {
       breadcrumbLabel: lp.city,
       approved: lp.approved,
       manualIndexApproval: lp.manualIndexApproval,
-      quality: { index: false },
+      quality: { index: true, score: 100 },
       changefreq: "monthly",
       priority: 0.5,
     });
@@ -284,9 +353,31 @@ function buildRegistry(): SeoPage[] {
       breadcrumbLabel: kp.topic,
       approved: kp.approved,
       manualIndexApproval: kp.manualIndexApproval,
-      quality: { index: false },
+      quality: { index: true, score: 100 },
       changefreq: "monthly",
       priority: 0.5,
+    });
+  });
+
+  // Hub / overview pages (Phase: go-live) — indexable entry points that link to
+  // the money / location / knowledge detail pages (no orphan pages). AGI money
+  // lives at /leistungen, NEXCEL at /loesungen; /standorte and /wissen exist per
+  // brand on their own domain.
+  BRAND_HUBS.forEach((hub) => {
+    pages.push({
+      id: `${hub.brand}:${hub.path}`,
+      brand: hub.brand,
+      path: hub.path,
+      internalPath: internalPathFor(hub.brand, hub.path),
+      type: hub.type,
+      title: hub.title,
+      description: hub.description,
+      breadcrumbLabel: hub.breadcrumbLabel,
+      approved: true,
+      manualIndexApproval: true,
+      quality: { index: true, score: 100 },
+      changefreq: "weekly",
+      priority: 0.7,
     });
   });
 

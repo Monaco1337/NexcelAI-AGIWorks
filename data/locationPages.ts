@@ -113,8 +113,8 @@ const AGI_LOCATIONS: LocationPage[] = [
     nearbyCities: ["unna", "bochum", "essen"],
     relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/erp-system-entwicklung", "/systemanalyse", "/kontakt"],
     areaServed: ["Dortmund", "Ruhrgebiet", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "agiworks:/standorte/unna",
@@ -148,8 +148,8 @@ const AGI_LOCATIONS: LocationPage[] = [
     nearbyCities: ["dortmund", "bochum"],
     relatedPaths: ["/leistungen/erp-system-entwicklung", "/leistungen/softwareentwicklung", "/systemanalyse", "/kontakt"],
     areaServed: ["Unna", "Kreis Unna", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "agiworks:/standorte/bochum",
@@ -183,8 +183,8 @@ const AGI_LOCATIONS: LocationPage[] = [
     nearbyCities: ["dortmund", "essen", "unna"],
     relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/kundenportal-entwicklung", "/systemanalyse", "/kontakt"],
     areaServed: ["Bochum", "Ruhrgebiet", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "agiworks:/standorte/essen",
@@ -218,8 +218,8 @@ const AGI_LOCATIONS: LocationPage[] = [
     nearbyCities: ["bochum", "dortmund", "duesseldorf"],
     relatedPaths: ["/leistungen/erp-system-entwicklung", "/leistungen/api-entwicklung", "/systemanalyse", "/kontakt"],
     areaServed: ["Essen", "Ruhrgebiet", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "agiworks:/standorte/duesseldorf",
@@ -253,8 +253,8 @@ const AGI_LOCATIONS: LocationPage[] = [
     nearbyCities: ["essen", "bochum"],
     relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/systemanalyse", "/kontakt"],
     areaServed: ["Düsseldorf", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
 ];
 
@@ -293,8 +293,8 @@ const NEXCEL_LOCATIONS: LocationPage[] = [
     nearbyCities: ["unna", "bochum", "essen"],
     relatedPaths: ["/loesungen/automatisierung", "/loesungen/lead-automation", "/systemanalyse", "/kontakt"],
     areaServed: ["Dortmund", "Ruhrgebiet", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "nexcel:/standorte/unna",
@@ -328,8 +328,8 @@ const NEXCEL_LOCATIONS: LocationPage[] = [
     nearbyCities: ["dortmund", "bochum"],
     relatedPaths: ["/loesungen/automatisierung", "/loesungen/customer-experience-systeme", "/systemanalyse", "/kontakt"],
     areaServed: ["Unna", "Kreis Unna", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "nexcel:/standorte/bochum",
@@ -363,8 +363,8 @@ const NEXCEL_LOCATIONS: LocationPage[] = [
     nearbyCities: ["dortmund", "essen", "unna"],
     relatedPaths: ["/loesungen/customer-experience-systeme", "/loesungen/automatisierung", "/systemanalyse", "/kontakt"],
     areaServed: ["Bochum", "Ruhrgebiet", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "nexcel:/standorte/essen",
@@ -398,8 +398,8 @@ const NEXCEL_LOCATIONS: LocationPage[] = [
     nearbyCities: ["bochum", "dortmund", "duesseldorf"],
     relatedPaths: ["/loesungen/lead-automation", "/loesungen/ki-fuer-vertrieb", "/systemanalyse", "/kontakt"],
     areaServed: ["Essen", "Ruhrgebiet", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
   {
     id: "nexcel:/standorte/duesseldorf",
@@ -433,8 +433,8 @@ const NEXCEL_LOCATIONS: LocationPage[] = [
     nearbyCities: ["essen", "bochum"],
     relatedPaths: ["/loesungen/customer-experience-systeme", "/loesungen/ki-systeme", "/systemanalyse", "/kontakt"],
     areaServed: ["Düsseldorf", "Nordrhein-Westfalen", "Deutschland"],
-    approved: false,
-    manualIndexApproval: false,
+    approved: true,
+    manualIndexApproval: true,
   },
 ];
 
