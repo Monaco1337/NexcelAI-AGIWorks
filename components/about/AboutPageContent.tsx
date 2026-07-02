@@ -306,7 +306,7 @@ const founders = [
     name: "Celina Siebeneicher",
     role: "Gründerin · System- & Experience-Architektin",
     company: "NEXCEL AI",
-    image: "/images/team/celina.png",
+    image: "/images/team/celina-v2.jpg",
     accent: "#B78CFF",
     accentRgb: "183, 140, 255",
     bio: "Celina entwickelt die strategische Systemlogik hinter digitalen Plattformen: Unternehmensstruktur, Prozessführung, Customer Experience, Markenwirkung, Automatisierung und nutzerzentrierte Systemarchitektur.",

@@ -24,7 +24,7 @@ const FOUNDERS = [
     brand: "NEXCEL AI",
     isAgiWorks: false,
     isNexcel: true,
-    image: "/images/team/celina.png",
+    image: "/images/team/celina-v2.jpg",
   },
   {
     name: "Kevin Blazevic",
