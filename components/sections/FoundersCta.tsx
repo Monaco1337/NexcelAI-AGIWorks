@@ -18,6 +18,8 @@ import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 const FOUNDERS = [
   {
     name: "Celina Siebeneicher",
+    firstName: "Celina",
+    lastName: "Siebeneicher",
     role: "Systemdesign · Unternehmensarchitektur · Customer Experience",
     brand: "NEXCEL AI",
     isAgiWorks: false,
@@ -26,6 +28,8 @@ const FOUNDERS = [
   },
   {
     name: "Kevin Blazevic",
+    firstName: "Kevin",
+    lastName: "Blazevic",
     role: "Softwarearchitektur · Plattformen · Infrastruktur",
     brand: "AGI Works",
     isAgiWorks: true,
@@ -189,11 +193,13 @@ export default function FoundersCta() {
 
                   {/* Info: unter dem Bild auf Mobile, Overlay ab sm */}
                   <div className="p-4 sm:absolute sm:inset-x-0 sm:bottom-0">
+                    {/* Vor-/Nachname stets zweizeilig — einheitliche Kartenhöhe für beide Gründer */}
                     <div
-                      className="text-[13px] sm:text-[14px] font-semibold text-white"
+                      className="text-[13px] leading-[1.25] sm:text-[14px] font-semibold text-white"
                       style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
                     >
-                      {f.name}
+                      <span className="block">{f.firstName}</span>
+                      <span className="block">{f.lastName}</span>
                     </div>
                     {/* Brand-Zeile: feste Höhe damit beide Namen auf gleicher Höhe landen */}
                     <div className="mt-1 flex min-h-[18px] items-center">
