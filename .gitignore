@@ -43,6 +43,8 @@ next-env.d.ts
 # Brand-Konfiguration ist Quellcode (kein Runtime-Data) und muss deployt werden
 !/data/brands
 !/data/brands/**
+# SEO-Content-Datenmodule sind Quellcode (kein Runtime-Data) und müssen deployt werden
+!/data/*.ts
 
 # large zip files
 *.zip
