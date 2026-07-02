@@ -1,11 +1,8 @@
 import Footer from "@/components/Footer";
 import PricingSection from "@/components/sections/PricingSection";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata = {
-  title: "Preise – AGI Works",
-  description:
-    "Transparente Preiskorridore für individuelle digitale Systeme. Websysteme, Buchungssysteme, CRM, ERP und KI-Automatisierungen.",
-};
+export const metadata = generateSeoMetadata({ brand: "agiworks", path: "/preise" });
 
 export default function AgiWorksPreisePage() {
   return (

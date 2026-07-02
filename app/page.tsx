@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import PremiumHero from "@/components/sections/PremiumHero";
 import ReferenceBar from "@/components/sections/ReferenceBar";
 import { SectionErrorBoundary } from "@/components/ErrorBoundaries";
+import SeoJsonLd from "@/components/seo/SeoJsonLd";
+import { organizationSchema, webSiteSchema } from "@/lib/seo/jsonld";
 
 // Premium-Enterprise-Startseite — Reihenfolge:
 //   PremiumHero            (Hero — Gründerbild + Dual-Brand-Card)
@@ -61,6 +63,7 @@ export default function Home() {
         minHeight: "100vh",
       }}
     >
+      <SeoJsonLd schema={[organizationSchema("nexcel"), webSiteSchema("nexcel")]} />
       <SectionErrorBoundary sectionName="Premium Hero">
         <PremiumHero />
       </SectionErrorBoundary>

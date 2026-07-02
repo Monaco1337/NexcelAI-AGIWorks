@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://www.nexcelai.de"),
-  title: "Impressum | NEXCEL AI",
-  description:
-    "Impressum von NEXCEL AI – Anbieterkennzeichnung, Kontakt, Verantwortlichkeit und rechtliche Hinweise gemäß § 5 DDG.",
-  alternates: { canonical: "/impressum" },
-  robots: { index: true, follow: true },
-};
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/impressum" });
 
 export default function ImpressumLayout({
   children,

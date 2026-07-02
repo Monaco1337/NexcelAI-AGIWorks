@@ -1,16 +1,6 @@
-import type { Metadata } from "next";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Systemanalyse · Strategischer Intake",
-  description:
-    "Geführte Architektur-Diagnose für Prozesse, Systeme, Daten und Automatisierung — strukturierter Premium-Intake für Unternehmen.",
-  openGraph: {
-    title: "Systemanalyse · Strategischer Intake",
-    description:
-      "Strukturierte Erfassung von Ausgangslage, Schmerzpunkten und Zielen — Basis für Architektur und Umsetzung.",
-    type: "website",
-  },
-};
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/systemanalyse" });
 
 export default function SystemanalyseLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

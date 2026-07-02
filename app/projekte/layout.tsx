@@ -1,15 +1,8 @@
-import type { Metadata } from "next";
 import NeuralAIBackground from "@/components/NeuralAIBackground";
 import NeuralCursor from "@/components/NeuralCursor";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "NEXCEL AI – Projekte",
-  description: "Systeme, die Zukunft bauen. NEXCEL OS, AI-Automation Engine, CRM-System, Projektmanagement, Speditionssystem und Website-Development.",
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/projekte" });
 
 export default function ProjekteLayout({
   children,

@@ -1,11 +1,8 @@
 import Footer from "@/components/Footer";
 import PricingSection from "@/components/sections/PricingSection";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata = {
-  title: "Preise – NEXCEL AI",
-  description:
-    "Transparente Preiskorridore für individuelle digitale Systeme. Websysteme, Buchungssysteme, CRM, ERP und KI-Automatisierungen.",
-};
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/preise" });
 
 export default function PreisePage() {
   return (

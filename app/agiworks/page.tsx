@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import PremiumHero from "@/components/sections/PremiumHero";
 import ReferenceBar from "@/components/sections/ReferenceBar";
 import { SectionErrorBoundary } from "@/components/ErrorBoundaries";
+import SeoJsonLd from "@/components/seo/SeoJsonLd";
+import { organizationSchema, webSiteSchema } from "@/lib/seo/jsonld";
 
 /**
  * AGI WORKS — identische Premium-Enterprise-Architektur wie die NEXCEL-Startseite,
@@ -57,6 +59,7 @@ export default function AgiWorksPage() {
         minHeight: "100vh",
       }}
     >
+      <SeoJsonLd schema={[organizationSchema("agiworks"), webSiteSchema("agiworks")]} />
       <SectionErrorBoundary sectionName="Premium Hero">
         <PremiumHero />
       </SectionErrorBoundary>

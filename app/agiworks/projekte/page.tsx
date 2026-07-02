@@ -1,11 +1,8 @@
 import Footer from "@/components/Footer";
 import ProjectsShowcase from "@/components/sections/ProjectsShowcase";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata = {
-  title: "Referenzen – AGI Works",
-  description:
-    "Reale Projekte, reale Ergebnisse. Entdecke unsere Case Studies: Buchungssysteme, CRM, Lead-Funnels, SaaS-Plattformen und mehr.",
-};
+export const metadata = generateSeoMetadata({ brand: "agiworks", path: "/projekte" });
 
 export default function AgiWorksProjektePage() {
   return (

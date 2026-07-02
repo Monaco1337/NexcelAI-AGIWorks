@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifySession } from "./lib/auth";
-
-const AGIWORKS_HOSTS = new Set([
-  "agiworks.de",
-  "www.agiworks.de",
-]);
+import {
+  AGIWORKS_HOSTS,
+  CANONICAL_DOMAIN,
+  cleanAgiPath,
+  isAgiInternalPath,
+  isLocalOrPreviewHost,
+  normalizeHost,
+} from "./config/seo/domains";
 
 const SHARED_TOP_LEVEL = [
   "/admin",
@@ -24,7 +27,20 @@ function isSharedPath(path: string): boolean {
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const path = url.pathname;
-  const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
+  const host = normalizeHost(request.headers.get("host"));
+  const isDevHost = isLocalOrPreviewHost(host);
+
+  // ── Cross-domain URL ownership (hard 301) ────────────────────────────────
+  // Canonical tags alone do NOT protect against cross-domain duplicates. The
+  // internal /agiworks/* subtree must never be publicly reachable: it belongs
+  // to agiworks.de as clean paths. Enforce with permanent redirects.
+  // Skipped on localhost / preview so development keeps working.
+  if (!isDevHost && isAgiInternalPath(path)) {
+    const target = `${CANONICAL_DOMAIN.agiworks}${cleanAgiPath(path)}`;
+    const dest = new URL(target);
+    dest.search = url.search;
+    return NextResponse.redirect(dest, 301);
+  }
 
   // Host-based brand rewrite: agiworks.de/* serves /agiworks/* internally,
   // while the user-facing URL stays untouched (rewrite, not redirect).

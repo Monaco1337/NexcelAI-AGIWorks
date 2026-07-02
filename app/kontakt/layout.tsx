@@ -1,15 +1,8 @@
-import { Metadata } from "next";
 import NeuralAIBackground from "@/components/NeuralAIBackground";
 import NeuralCursor from "@/components/NeuralCursor";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Kontakt • NEXCEL AI",
-  description: "Kontaktieren Sie NEXCEL AI für maßgeschneiderte KI-Systeme und Softwarelösungen. Beschreiben Sie Ihr Projekt – wir melden uns persönlich zurück.",
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/kontakt" });
 
 export default function KontaktLayout({
   children,

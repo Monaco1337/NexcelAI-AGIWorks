@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { agiworksBrand } from "@/data/brands/agiworks";
 import { BrandProvider } from "@/contexts/BrandContext";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
 /**
  * AGI WORKS — eigene Metadata, OG-Tags, Theme-Color, Favicon-Set.
@@ -11,20 +12,15 @@ import { BrandProvider } from "@/contexts/BrandContext";
  * `usePathname()` aktiviert.
  */
 
+// SEO metadata (title, description, canonical, robots, OG/Twitter) comes from
+// the registry-driven engine for the AGI Works home ("/"). This layout wraps
+// every /agiworks/* route, so it also provides the default canonical/robots;
+// child route layouts override title/description/canonical per page. The AGI
+// Works favicon set is preserved here and inherited by all child routes.
+const agiHomeSeo = generateSeoMetadata({ brand: "agiworks", path: "/" });
+
 export const metadata: Metadata = {
-  title: agiworksBrand.seo.title,
-  description: agiworksBrand.seo.description,
-  openGraph: {
-    title: agiworksBrand.seo.ogTitle,
-    description: agiworksBrand.seo.ogDescription,
-    type: "website",
-    siteName: "AGI Works",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: agiworksBrand.seo.ogTitle,
-    description: agiworksBrand.seo.ogDescription,
-  },
+  ...agiHomeSeo,
   // Eigenes AGI-WORKS-Favicon — echtes Markenlogo (blau/silber A-Ring).
   icons: {
     icon: [

@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://www.nexcelai.de"),
-  title: "Cookie-Richtlinie | NEXCEL AI",
-  description:
-    "Cookie-Richtlinie von NEXCEL AI – Informationen zu Cookies, lokalen Speichertechnologien, Einwilligung und Widerruf gemäß § 25 TDDDG und DSGVO.",
-  alternates: { canonical: "/cookie-richtlinie" },
-  robots: { index: true, follow: true },
-};
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/cookie-richtlinie" });
 
 export default function CookieRichtlinieLayout({
   children,

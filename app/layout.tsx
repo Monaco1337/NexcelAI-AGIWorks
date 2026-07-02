@@ -59,6 +59,7 @@ const PerformanceAuditor = dynamic(() => import("@/components/PerformanceAuditor
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.nexcelai.de"),
   title: "NEXCEL AI • Individuelle KI-Systeme & Softwarelösungen",
   description: "Intelligente Software. Maßgeschneiderte KI. Zukunft, die funktioniert. Individuelle KI-Systeme, Automationen und digitale Produkte für Unternehmen.",
   icons: {

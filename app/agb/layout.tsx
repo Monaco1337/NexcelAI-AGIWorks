@@ -1,12 +1,11 @@
 import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/ueber-mich" });
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/agb" });
 
-export default function UeberMichLayout({
+export default function AgbLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return children;
 }
-

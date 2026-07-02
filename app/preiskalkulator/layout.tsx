@@ -1,14 +1,6 @@
-import type { Metadata } from "next";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Preiskalkulator • NEXCEL AI",
-  description:
-    "In wenigen Schritten zu Ihrer groben Kosteneinschätzung: Projektart, Umfang, Features, Zeitrahmen und Qualität. Unverbindliches Angebot anfordern.",
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/preiskalkulator" });
 
 export default function PreiskalkulatorLayout({
   children,
