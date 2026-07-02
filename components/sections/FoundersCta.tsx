@@ -12,7 +12,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
-import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 const FOUNDERS = [
@@ -195,14 +194,17 @@ export default function FoundersCta() {
                     >
                       {f.name}
                     </div>
-                    <div className="mt-1 flex items-center gap-1">
+                    {/* Brand-Zeile: feste Höhe damit beide Namen auf gleicher Höhe landen */}
+                    <div className="mt-1 flex min-h-[18px] items-center">
                       {f.isNexcel && (
-                        <NexcelLogoMark width={78} />
+                        <NexcelLogoMark width={78} className="-ml-0.5" />
                       )}
                       {f.isAgiWorks && (
-                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--accent)" }}>
-                          <AgiWorksLogoMark size={11} glow="drop-shadow(0 0 4px rgba(91,184,255,0.65))" />
-                          {f.brand}
+                        <span
+                          className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                          style={{ color: "#5BB8FF" }}
+                        >
+                          AGI WORKS
                         </span>
                       )}
                     </div>
