@@ -17,6 +17,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import { submitContactForm } from "@/app/actions/contact";
+import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
+import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 
 type Option = { id: string; label: string; hint?: string; icon: React.ReactNode };
 type Question = { key: string; title: string; subtitle: string; options: Option[] };
@@ -198,9 +200,13 @@ export default function SimpleSystemanalyse() {
     <div className="flex min-h-screen flex-col" style={bgStyle}>
       {/* Top-Bar */}
       <header className="flex items-center justify-between px-5 py-5 sm:px-8">
-        <span className="text-[13px] font-semibold tracking-tight text-white/80">
-          {brand.name}
-        </span>
+        <Link href={homeHref} aria-label={brand.name} className="flex items-center">
+          {brand.id === "agiworks" ? (
+            <AgiWorksLogo width={116} />
+          ) : (
+            <NexcelLogoMark width={112} />
+          )}
+        </Link>
         <Link
           href={homeHref}
           className="flex h-9 w-9 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white"
