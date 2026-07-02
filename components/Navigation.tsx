@@ -1236,65 +1236,41 @@ export default function Navigation() {
         document.body
       )}
 
-      {/* Mobile Menu Overlay - Sichtbar bei <= 980px */}
+      {/* Mobile Menu — Vollbild-Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-[110] nav-mobile:block lg:hidden"
+              className="fixed inset-0 z-[120] lg:hidden overflow-y-auto"
               style={{
                 background: theme === "dark"
-                  ? "rgba(0, 0, 0, 0.9)"
-                  : "rgba(0, 0, 0, 0.7)",
-                backdropFilter: "blur(30px) saturate(200%)",
-                WebkitBackdropFilter: "blur(30px) saturate(200%)",
+                  ? "linear-gradient(160deg, rgba(12,10,28,0.97) 0%, rgba(18,14,40,0.98) 40%, rgba(8,6,20,0.99) 100%)"
+                  : "linear-gradient(160deg, rgba(255,255,255,0.99) 0%, rgba(248,246,255,0.99) 100%)",
+                backdropFilter: "blur(60px) saturate(200%)",
+                WebkitBackdropFilter: "blur(60px) saturate(200%)",
               }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => setMobileMenuOpen(false)}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === "Escape") {
-                  setMobileMenuOpen(false);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label="Close menu"
-            />
-
-            <motion.div
-              className="fixed top-0 right-0 h-full w-80 max-w-[85vw] z-[120] nav-mobile:block lg:hidden"
-              style={{
-                background: theme === "dark"
-                  ? "linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.12) 30%, rgba(255, 255, 255, 0.08) 60%, rgba(255, 255, 255, 0.04) 100%)"
-                  : "linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)",
-                backdropFilter: "blur(50px) saturate(220%)",
-                WebkitBackdropFilter: "blur(50px) saturate(220%)",
-                borderLeft: theme === "dark"
-                  ? "1px solid rgba(255, 255, 255, 0.3)"
-                  : "1px solid rgba(0, 0, 0, 0.15)",
-                boxShadow: theme === "dark"
-                  ? "-20px 0 60px rgba(0, 0, 0, 0.7), 0 0 0 0.5px rgba(255, 255, 255, 0.2) inset"
-                  : "-20px 0 60px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(0, 0, 0, 0.1) inset",
-              }}
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{
-                type: "spring",
-                damping: 30,
-                stiffness: 300,
-              }}
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               role="dialog"
               aria-modal="true"
               aria-label="Navigation menu"
               aria-expanded={mobileMenuOpen}
             >
-              <div className="flex flex-col h-full p-6">
+              {/* Brand ambient glow */}
+              <div
+                aria-hidden
+                className="pointer-events-none fixed inset-x-0 top-0 h-[55%]"
+                style={{
+                  background:
+                    "radial-gradient(ellipse 80% 60% at 50% -10%, var(--brand-glow-mid) 0%, transparent 70%)",
+                  opacity: 0.45,
+                }}
+              />
+              <div className="relative flex flex-col min-h-full px-5 pt-5 pb-8 max-w-lg mx-auto">
                 {/* Logo + X-Button oben */}
-                <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center justify-between gap-3 mb-6 pb-5 border-b border-white/[0.07]">
                   <div className="flex min-w-0 flex-1 items-center">
                     {brand.navigation.logoMark && (
                       <LogoMarkImage
@@ -1575,12 +1551,12 @@ export default function Navigation() {
 
                 {/* Navigation Links */}
                 <nav className="flex-1 space-y-2 mb-4">
-                  {mainNavItems.map((item) => (
+                  {mainNavItems.map((item, idx) => (
                     <motion.div
                       key={item.label}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: 0.05 + idx * 0.04, ease: "easeOut" }}
                     >
                       <Link
                         href={item.href}
@@ -1650,7 +1626,7 @@ export default function Navigation() {
                     </svg>
                   </motion.div>
                 </Link>
-              </div>
+              </div>{/* end max-w-lg inner */}
             </motion.div>
           </>
         )}
