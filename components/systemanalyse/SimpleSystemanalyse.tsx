@@ -279,7 +279,7 @@ export default function SimpleSystemanalyse() {
                   onConsent={setConsent}
                   onBack={goBack}
                   onSubmit={submit}
-                  privacyHref={brand.id === "agiworks" ? "/agiworks/datenschutz" : "/datenschutz"}
+                  privacyHref="/datenschutz"
                 />
               </Fade>
             )}

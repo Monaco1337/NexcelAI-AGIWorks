@@ -3,49 +3,35 @@ import type { BrandId } from "@/types/brand";
 const AGIWORKS_PREFIX = "/agiworks";
 
 /**
- * Path segments that exist under the AGI Works site tree (mirror of main IA where needed).
- * Routes not listed here stay on the global app (e.g. /impressum, /datenschutz).
+ * Normalizes an internal href to its CLEAN public form.
+ *
+ * Public URLs are always clean (no `/agiworks` prefix). On agiworks.de the
+ * middleware rewrites clean paths onto the internal `/agiworks/*` app subtree,
+ * so a `/agiworks` prefix must never appear in a rendered anchor. This helper
+ * therefore strips the internal prefix defensively and NEVER adds it — both
+ * brands render clean public hrefs. The `brandId` argument is kept for a stable
+ * call-site API but no longer changes the output.
  */
-const AGIWORKS_OWNED_FIRST_SEGMENTS = new Set([
-  "systeme",
-  "kontakt",
-  "arbeitsweise",
-  "systemanalyse",
-  "ueber-mich",
-  "preiskalkulator",
-]);
-
-/**
- * Rewrites internal hrefs when the active brand is AGI Works so navbar and search stay in /agiworks.
- */
-export function resolveBrandNavHref(href: string, brandId: BrandId): string {
-  if (brandId !== "agiworks") return href;
+export function resolveBrandNavHref(href: string, _brandId: BrandId): string {
   if (!href || href === "#") return href;
-  if (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:")) {
+  if (
+    href.startsWith("http://") ||
+    href.startsWith("https://") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("tel:")
+  ) {
     return href;
   }
-  if (href.startsWith(AGIWORKS_PREFIX)) return href;
-
-  // /#anchor → /agiworks#anchor
-  if (href.startsWith("/#")) {
-    return `${AGIWORKS_PREFIX}${href.slice(1)}`;
+  // "/agiworks" → "/"
+  if (href === AGIWORKS_PREFIX) return "/";
+  // "/agiworks/preise" → "/preise"
+  if (href.startsWith(`${AGIWORKS_PREFIX}/`)) {
+    return href.slice(AGIWORKS_PREFIX.length) || "/";
   }
-
-  const hashIndex = href.indexOf("#");
-  const pathPart = hashIndex >= 0 ? href.slice(0, hashIndex) : href;
-  const hash = hashIndex >= 0 ? href.slice(hashIndex) : "";
-
-  const cleanPath = pathPart || "/";
-  if (cleanPath === "/") {
-    return `${AGIWORKS_PREFIX}${hash}`;
+  // "/agiworks#systeme" → "/#systeme"
+  if (href.startsWith(`${AGIWORKS_PREFIX}#`)) {
+    return `/${href.slice(AGIWORKS_PREFIX.length)}`;
   }
-
-  const segments = cleanPath.replace(/^\//, "").split("/").filter(Boolean);
-  const first = segments[0];
-  if (first && AGIWORKS_OWNED_FIRST_SEGMENTS.has(first)) {
-    return `${AGIWORKS_PREFIX}/${segments.join("/")}${hash}`;
-  }
-
   return href;
 }
 

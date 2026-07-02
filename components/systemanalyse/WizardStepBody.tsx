@@ -307,13 +307,12 @@ export function WizardStepBody({
   dispatch,
   accentRgb,
   brandName,
-  brandId,
   signatureProduct,
   onStartIntro,
   analysisSummary,
   analysisSummaryLoading,
 }: Props) {
-  const privacyHref = brandId === "agiworks" ? "/agiworks/datenschutz" : "/datenschutz";
+  const privacyHref = "/datenschutz";
   const profileStage1Ready =
     state.companyName.trim().length > 1 &&
     state.contactName.trim().length > 1 &&

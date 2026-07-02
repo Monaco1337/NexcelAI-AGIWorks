@@ -21,7 +21,7 @@ import { useBrand } from "@/contexts/BrandContext";
  */
 export default function CookieBanner() {
   const brand = useBrand();
-  const privacyHref = brand.id === "agiworks" ? "/agiworks/datenschutz" : "/datenschutz";
+  const privacyHref = "/datenschutz";
   const [showModal, setShowModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isAdminPage, setIsAdminPage] = useState(false);

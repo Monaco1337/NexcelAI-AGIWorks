@@ -567,7 +567,7 @@ export default function ContactPageContent() {
   const brand = useBrand();
   const { contactPage } = brand;
   const homeHref = brand.navigation.baseHref || "/";
-  const privacyHref = brand.id === "agiworks" ? "/agiworks/datenschutz" : "/datenschutz";
+  const privacyHref = "/datenschutz";
 
   const [formData, setFormData] = useState({
     vorname: "",

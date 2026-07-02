@@ -19,7 +19,7 @@ export const agiworksBrand: BrandConfig = {
     logoTextAccent: "WORKS",
     logoTextGradient: "linear-gradient(135deg, #F0F7FF 0%, #B5D8FF 100%)",
     logoAccentGradient: "linear-gradient(135deg, #B5D8FF 0%, #3A8EE6 100%)",
-    baseHref: "/agiworks",
+    baseHref: "/",
     logoMark: {
       src: "/images/logos/agiworks-logo.png",
       alt: "AGI Works Logo",
@@ -42,8 +42,8 @@ export const agiworksBrand: BrandConfig = {
     headline2: "Betriebssysteme.",
     subline:
       "Software und KI-Infrastruktur, die Ihre Abläufe strukturieren, automatisieren und messbar beschleunigen.",
-    ctaPrimary: { text: "Projekt besprechen", href: "/agiworks/kontakt" },
-    ctaSecondary: { text: "Systemanalyse", href: "/agiworks/systemanalyse" },
+    ctaPrimary: { text: "Projekt besprechen", href: "/kontakt" },
+    ctaSecondary: { text: "Systemanalyse", href: "/systemanalyse" },
   },
   capabilities: {
     headline: "Was AGI Works liefert",
