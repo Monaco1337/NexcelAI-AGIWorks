@@ -66,7 +66,7 @@ export default function FoundersCta() {
             }}
           />
 
-          <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+          <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
             {/* Text + CTAs */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -99,10 +99,8 @@ export default function FoundersCta() {
                 </span>
               </h2>
               <p className="mt-5 max-w-[520px] text-[15px] leading-[1.65] text-white/65">
-                Gemeinsam entwickeln Celina Siebeneicher und Kevin Blazevic Ihr
-                digitales Betriebssystem — passgenau, sicher und zukunftsfähig.
-                Von der ersten Struktur bis zur produktiven Umsetzung begleiten
-                wir Sie persönlich.
+                Sie sprechen direkt mit uns — persönlich, passgenau, von der
+                ersten Idee bis zur produktiven Umsetzung.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -164,7 +162,7 @@ export default function FoundersCta() {
                       "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%)",
                   }}
                 >
-                  <div className="relative aspect-[3/4] w-full">
+                  <div className="relative aspect-[3/4] w-full sm:aspect-[4/5]">
                     <img
                       src={f.image}
                       alt={`${f.name} — ${f.brand}`}

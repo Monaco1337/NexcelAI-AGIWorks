@@ -13,7 +13,17 @@ import { organizationSchema, webSiteSchema } from "@/lib/seo/jsonld";
  * AGI WORKS — identische Premium-Enterprise-Architektur wie die NEXCEL-Startseite,
  * unter dem Pfad /agiworks. Differenzierung ausschließlich über Brand-Tokens
  * (BrandProvider). KEINE duplizierten Komponenten.
+ *
+ * Neue Informationsarchitektur (identisch zu NEXCEL AI):
+ *   PremiumHero → ReferenceBar → HowItWorksSection → ProblemSolution
+ *   → SystemsGrid → ProjectsShowcase → WhyUsSection → PricingSection
+ *   → FoundersCta → Footer
  */
+
+const HowItWorksSection = dynamic(
+  () => import("@/components/sections/HowItWorksSection"),
+  { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
+);
 
 const ProblemSolutionSection = dynamic(
   () => import("@/components/sections/ProblemSolutionSection"),
@@ -30,9 +40,9 @@ const ProjectsShowcase = dynamic(
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
 
-const TrustKpis = dynamic(() => import("@/components/sections/TrustKpis"), {
+const WhyUsSection = dynamic(() => import("@/components/sections/WhyUsSection"), {
   ssr: true,
-  loading: () => <div className="h-40 bg-transparent" />,
+  loading: () => <div className="h-64 bg-transparent" />,
 });
 
 const PricingSection = dynamic(
@@ -66,6 +76,9 @@ export default function AgiWorksPage() {
       <SectionErrorBoundary sectionName="Referenzleiste">
         <ReferenceBar />
       </SectionErrorBoundary>
+      <SectionErrorBoundary sectionName="Wie funktioniert das">
+        <HowItWorksSection />
+      </SectionErrorBoundary>
       <SectionErrorBoundary sectionName="Problem / Lösung">
         <ProblemSolutionSection />
       </SectionErrorBoundary>
@@ -75,8 +88,8 @@ export default function AgiWorksPage() {
       <SectionErrorBoundary sectionName="Projekte">
         <ProjectsShowcase />
       </SectionErrorBoundary>
-      <SectionErrorBoundary sectionName="Trust KPIs">
-        <TrustKpis />
+      <SectionErrorBoundary sectionName="Warum wir">
+        <WhyUsSection />
       </SectionErrorBoundary>
       <SectionErrorBoundary sectionName="Preise">
         <PricingSection />

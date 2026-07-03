@@ -11,17 +11,20 @@
 import { motion } from "framer-motion";
 
 const PROBLEM_BULLETS = [
-  "Informationen sind verstreut",
-  "Prozesse nicht verbunden",
-  "Keine echten Echtzeitdaten",
-  "Wachstum wird blockiert",
+  "Excel",
+  "WhatsApp",
+  "Kalender",
+  "Papier",
+  "E-Mail",
+  "Doppelte Arbeit",
 ];
 
 const SOLUTION_BULLETS = [
-  "Eine zentrale Datenbasis",
-  "Automatisierte Workflows",
-  "Echtzeit-Transparenz",
-  "Kontrolle & nachhaltiges Wachstum",
+  "Ein Login",
+  "Alle Daten",
+  "Automatische Abläufe",
+  "Echtzeit",
+  "Volle Kontrolle",
 ];
 
 export default function ProblemSolutionSection() {
@@ -53,23 +56,24 @@ export default function ProblemSolutionSection() {
           {/* ── Problem ── */}
           <Column
             tone="problem"
-            eyebrow="Das Problem"
+            eyebrow="Heute"
             title={["Zu viele Tools.", "Zu wenig Überblick."]}
-            text="Zersplitterte Anwendungen, doppelte Daten, manuelle Arbeit und Medienbrüche bremsen Ihr Unternehmen aus."
             bullets={PROBLEM_BULLETS}
           />
 
           {/* ── Flow-Diagram ── */}
-          <div className="order-first flex justify-center lg:order-none">
+          <div className="order-first flex flex-col items-center gap-3 lg:order-none">
             <CoreVisual />
+            <p className="hidden text-center text-[11px] font-medium uppercase tracking-[0.2em] text-white/30 lg:block">
+              Viele Tools → Ein Betriebssystem
+            </p>
           </div>
 
           {/* ── Lösung ── */}
           <Column
             tone="solution"
-            eyebrow="Die Lösung"
+            eyebrow="Morgen"
             title={["Ein System.", "Alle Prozesse."]}
-            text="Ein maßgeschneidertes digitales Betriebssystem, das Ihre Abläufe verbindet, automatisiert und skalierbar macht."
             bullets={SOLUTION_BULLETS}
           />
 
@@ -83,12 +87,11 @@ export default function ProblemSolutionSection() {
    TEXT COLUMN
 ────────────────────────────────────────────────────────────────────── */
 function Column({
-  tone, eyebrow, title, text, bullets,
+  tone, eyebrow, title, bullets,
 }: {
   tone: "problem" | "solution";
   eyebrow: string;
   title: [string, string];
-  text: string;
   bullets: string[];
 }) {
   const isSolution = tone === "solution";
@@ -125,12 +128,16 @@ function Column({
           <span className="text-white/55" style={{ fontWeight: 400 }}>{title[1]}</span>
         )}
       </h3>
-      <p className={`mt-4 max-w-[400px] text-[14px] leading-[1.65] text-white/58 ${isSolution ? "lg:ml-auto" : ""}`}>
-        {text}
-      </p>
-      <ul className={`mt-6 flex flex-col gap-2.5 ${isSolution ? "lg:items-end" : ""}`}>
+      <ul className={`mt-6 flex flex-wrap gap-2 ${isSolution ? "lg:justify-end" : ""}`}>
         {bullets.map((b) => (
-          <li key={b} className={`flex items-center gap-2.5 text-[13px] text-white/72 ${isSolution ? "lg:flex-row-reverse lg:text-right" : ""}`}>
+          <li
+            key={b}
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-medium text-white/78"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: `1px solid ${isSolution ? "rgba(196,181,253,0.22)" : "rgba(255,255,255,0.10)"}`,
+            }}
+          >
             {isSolution ? <CheckIcon /> : <DotIcon />}
             <span>{b}</span>
           </li>

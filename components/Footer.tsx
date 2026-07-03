@@ -185,7 +185,7 @@ export default function Footer() {
 
               {(brand.id === "nexcel" || brand.id === "agiworks") && (
                 <Link
-                  href="/preiskalkulator"
+                  href="/kontakt"
                   prefetch={true}
                   className="group/secondary relative inline-flex w-full items-center justify-center gap-2.5 rounded-full px-8 py-4 text-[12.5px] uppercase transition-all duration-500 hover:gap-3.5 sm:w-auto sm:text-[13px]"
                   style={{
@@ -205,7 +205,7 @@ export default function Footer() {
                       boxShadow: "0 0 28px var(--brand-glow-mid)",
                     }}
                   />
-                  <span className="relative">Preis berechnen</span>
+                  <span className="relative">Projekt besprechen</span>
                   <svg
                     className="relative h-3 w-3 shrink-0 transition-transform duration-500 group-hover/secondary:translate-x-0.5"
                     fill="none"

@@ -34,23 +34,15 @@ function Ico({ d, extra }: { d?: string; extra?: React.ReactNode }) {
 }
 
 /**
- * Leistungs-Chips im Hero — zeigen in 2–3 Sekunden das volle Spektrum:
- * individuelle digitale Unternehmenssysteme, nicht nur Webseiten.
- * Reihenfolge & Umfang bewusst kuratiert (max. 12 Chips).
+ * Nutzen-Chips im Hero — die Seite muss in 5 Sekunden verständlich sein.
+ * Statt technischer Begriffe (CRM, ERP, API, SaaS …) zeigen wir den
+ * geschäftlichen Nutzen: maximal 4 Chips, sofort verständlich.
  */
 const CHIPS = [
-  { label: "Webseiten",        icon: <Ico extra={<><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18"/></>} /> },
-  { label: "Web-Apps",         icon: <Ico extra={<><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14l-2 2 2 2M13 14l2 2-2 2"/></>} /> },
-  { label: "Mobile Apps",      icon: <Ico extra={<><rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M11 18h2"/></>} /> },
-  { label: "SaaS",             icon: <Ico d="M7 18a4 4 0 0 1-.5-7.97 5.5 5.5 0 0 1 10.6-1.02A3.75 3.75 0 0 1 17.5 18H7Z" /> },
-  { label: "CRM",              icon: <Ico extra={<><circle cx="9" cy="8" r="3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M21 19c0-2.2-1.4-3.9-3.4-4.6"/></>} /> },
-  { label: "ERP",              icon: <Ico extra={<><rect x="4" y="3" width="16" height="18" rx="1.6"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6"/></>} /> },
-  { label: "Kundenportale",    icon: <Ico extra={<><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></>} /> },
-  { label: "Admin-Systeme",    icon: <Ico extra={<><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.1"/><circle cx="15" cy="16" r="2.1"/></>} /> },
-  { label: "KI-Agenten",       icon: <Ico extra={<><rect x="6" y="6" width="12" height="12" rx="2.2"/><path d="M10 10h4v4h-4zM9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2"/></>} /> },
-  { label: "Automatisierungen",icon: <Ico d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" /> },
-  { label: "Dashboards",       icon: <Ico extra={<><path d="M3 21h18"/><rect x="5" y="11" width="3" height="7" rx="0.6"/><rect x="10.5" y="6" width="3" height="12" rx="0.6"/><rect x="16" y="14" width="3" height="4" rx="0.6"/></>} /> },
-  { label: "APIs",             icon: <Ico d="M9 15l6-6M11 6.5 12.5 5a4 4 0 0 1 5.6 5.6L16.6 12M13 17.5 11.5 19a4 4 0 0 1-5.6-5.6L7.4 12" /> },
+  { label: "Mehr Kunden", icon: <Ico d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /> },
+  { label: "Weniger Aufwand", icon: <Ico d="M12 8v4l3 3M12 21a9 9 0 100-18 9 9 0 000 18z" /> },
+  { label: "Automatisierte Prozesse", icon: <Ico d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" /> },
+  { label: "Ein System statt zehn Tools", icon: <Ico extra={<><rect x="4" y="3" width="16" height="18" rx="1.6"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6"/></>} /> },
 ];
 
 /* ── Main component ─────────────────────────────────────────────────── */

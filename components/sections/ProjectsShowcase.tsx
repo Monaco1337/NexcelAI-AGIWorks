@@ -53,6 +53,56 @@ const IconRequest = () => (
   </svg>
 );
 
+/**
+ * Vorher → Nachher → Ergebnis — keine reine Galerie. Fällt auf generische,
+ * aber ehrliche Werte zurück, falls eine Referenz (z. B. aus der DB) diese
+ * Felder noch nicht gepflegt hat.
+ */
+function BeforeAfterResult({ project, compact }: { project: ReferenceEntry; compact?: boolean }) {
+  const before = project.before ?? "Manuelle, unverbundene Abläufe.";
+  const after = project.after && project.after.length > 0 ? project.after : project.modules.slice(0, 3);
+  const result = project.result && project.result.length > 0 ? project.result : ["Mehr Struktur", "Weniger Aufwand"];
+
+  return (
+    <div className={`flex flex-col ${compact ? "gap-2" : "gap-2.5"}`}>
+      <Row label="Vorher" tone="before" text={before} compact={compact} />
+      <Row label="Nachher" tone="after" text={after.join(" · ")} compact={compact} />
+      <Row label="Ergebnis" tone="result" text={result.join(" · ")} compact={compact} />
+    </div>
+  );
+}
+
+function Row({
+  label,
+  tone,
+  text,
+  compact,
+}: {
+  label: string;
+  tone: "before" | "after" | "result";
+  text: string;
+  compact?: boolean;
+}) {
+  const color = tone === "result" ? "var(--accent)" : tone === "after" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.42)";
+  return (
+    <div className="flex items-start gap-2">
+      <span
+        className={`mt-[3px] shrink-0 rounded-full ${compact ? "px-1.5 py-[1px] text-[8.5px]" : "px-2 py-[2px] text-[9.5px]"} font-semibold uppercase tracking-[0.08em]`}
+        style={{
+          color,
+          border: `1px solid ${tone === "result" ? "color-mix(in srgb, var(--accent) 45%, transparent)" : "rgba(255,255,255,0.14)"}`,
+          background: tone === "result" ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "rgba(255,255,255,0.03)",
+        }}
+      >
+        {label}
+      </span>
+      <span className={`${compact ? "text-[11.5px]" : "text-[12.5px]"} leading-[1.5]`} style={{ color: tone === "before" ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.82)" }}>
+        {text}
+      </span>
+    </div>
+  );
+}
+
 // ─── Fullscreen Detail Modal ──────────────────────────────────────────────────
 function ReferenceModal({
   project,
@@ -150,9 +200,14 @@ function ReferenceModal({
             <p className="mb-1 text-sm font-medium text-white/40">{project.clientName}</p>
 
             {/* Description */}
-            <p className="mb-8 mt-4 text-base leading-relaxed text-white/65">
+            <p className="mb-6 mt-4 text-base leading-relaxed text-white/65">
               {project.fullDescription}
             </p>
+
+            {/* Vorher → Nachher → Ergebnis */}
+            <div className="mb-8 rounded-2xl border border-white/8 p-5" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <BeforeAfterResult project={project} />
+            </div>
 
             {/* Tags */}
             {project.tags.length > 0 && (
@@ -273,27 +328,13 @@ function ReferenceCard({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content — Vorher → Nachher → Ergebnis statt reiner Galerie */}
       <div className="flex flex-1 flex-col p-5">
         <div className="mb-1.5 flex items-center gap-2">
           <span className="text-[11px] font-medium text-white/35">{project.type}</span>
         </div>
-        <h3 className="mb-1.5 text-base font-semibold text-white">{project.title}</h3>
-        <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-white/55">{project.shortDescription}</p>
-
-        {/* Tags */}
-        <div className="mt-auto flex flex-wrap gap-1.5">
-          {project.tags.slice(0, 4).map((tag) => (
-            <span key={tag} className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-0.5 text-[10px] text-white/55">
-              {tag}
-            </span>
-          ))}
-          {project.tags.length > 4 && (
-            <span className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-0.5 text-[10px] text-white/35">
-              +{project.tags.length - 4}
-            </span>
-          )}
-        </div>
+        <h3 className="mb-3 text-base font-semibold text-white">{project.title}</h3>
+        <BeforeAfterResult project={project} />
       </div>
     </motion.article>
   );
@@ -396,23 +437,11 @@ function MobileReferenceSlider({
               </div>
             </div>
 
-            {/* Content */}
+            {/* Content — Vorher → Nachher → Ergebnis */}
             <div className="flex flex-1 flex-col p-5">
               <span className="mb-1 text-[11px] font-medium text-white/35">{project.type}</span>
-              <h3 className="mb-1.5 text-base font-semibold text-white">{project.title}</h3>
-              <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-white/55">{project.shortDescription}</p>
-              <div className="mt-auto flex flex-wrap gap-1.5">
-                {project.tags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-0.5 text-[10px] text-white/55">
-                    {tag}
-                  </span>
-                ))}
-                {project.tags.length > 3 && (
-                  <span className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-0.5 text-[10px] text-white/35">
-                    +{project.tags.length - 3}
-                  </span>
-                )}
-              </div>
+              <h3 className="mb-2.5 text-base font-semibold text-white">{project.title}</h3>
+              <BeforeAfterResult project={project} compact />
             </div>
           </motion.article>
         ))}

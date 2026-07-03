@@ -44,10 +44,10 @@ export default function PricingSection() {
         <SectionHeading
           eyebrow="Preise"
           title="Transparente Orientierung. Keine Baukästen."
-          subtitle="Alle Preise verstehen sich als Projektkorridore. Jedes System wird individuell kalkuliert."
+          subtitle="Jedes System wird individuell geplant. Die Preise dienen ausschließlich zur Orientierung."
         />
 
-        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {PRICES.map((p, i) => (
             <motion.div
               key={p.title}
@@ -55,7 +55,7 @@ export default function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-8%" }}
               transition={{ duration: 0.5, delay: (i % 3) * 0.07, ease: [0.22, 1, 0.36, 1] }}
-              className="group relative flex flex-col overflow-hidden rounded-2xl p-6"
+              className="group relative flex flex-col overflow-hidden rounded-2xl p-5"
               style={{
                 background: p.featured
                   ? "linear-gradient(180deg, var(--brand-glow-mid) 0%, rgba(255,255,255,0.02) 100%)"
@@ -80,16 +80,16 @@ export default function PricingSection() {
                 </span>
               )}
               <h3
-                className="text-[16px] font-medium text-white"
+                className="text-[15px] font-medium text-white"
                 style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
               >
                 {p.title}
               </h3>
-              <p className="mt-1.5 text-[13px] leading-[1.55] text-white/50">{p.note}</p>
+              <p className="mt-1 text-[12.5px] leading-[1.5] text-white/50">{p.note}</p>
 
-              <div className="mt-5 flex items-baseline gap-2">
+              <div className="mt-4 flex items-baseline gap-2">
                 <span
-                  className="text-[1.7rem] font-semibold"
+                  className="text-[1.5rem] font-semibold"
                   style={{
                     fontFamily: "var(--font-headline), system-ui, sans-serif",
                     background: "var(--brand-headline-gradient)",
@@ -109,7 +109,7 @@ export default function PricingSection() {
               <Link
                 href={preiskalkulatorHref}
                 prefetch
-                className="group/pl mt-6 inline-flex items-center gap-1.5 text-[12.5px] font-medium transition-colors"
+                className="group/pl mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium transition-colors"
                 style={{ color: "var(--accent)" }}
               >
                 Projektkorridor berechnen

@@ -137,13 +137,13 @@ export const agiworksBrand: BrandConfig = {
   },
   footer: {
     tagline: "Digitale Betriebssysteme und KI-Infrastruktur für Unternehmen.",
-    ctaTitle: "Ihr nächstes System beginnt hier.",
-    ctaSubline: "Von der Analyse bis zum produktiven Betrieb — ein Team, eine Architektur.",
-    ctaButtonText: "Projekt besprechen",
+    ctaTitle: "Finden Sie heraus, welches digitale System Ihrem Unternehmen aktuell den größten Hebel bringt.",
+    ctaSubline: "Kostenlos, unverbindlich und in wenigen Minuten.",
+    ctaButtonText: "Kostenlose Systemanalyse starten",
     // Public hrefs on agiworks.de are CLEAN. The middleware rewrites clean paths
     // to the internal /agiworks/* app subtree — no /agiworks prefix is ever
     // rendered in a public anchor, sitemap URL or canonical.
-    ctaButtonHref: "/kontakt",
+    ctaButtonHref: "/systemanalyse",
     links: {
       // Spalte „Systeme"
       products: [

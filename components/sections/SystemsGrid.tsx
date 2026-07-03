@@ -11,17 +11,77 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { SYSTEMS } from "@/lib/systems-data";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { SYSTEMS, type SystemSlug } from "@/lib/systems-data";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 
+type CategoryId = "vertrieb" | "kunden" | "unternehmen" | "ki";
+
+/**
+ * "Nach Ziel" — vier Kategorien, bevor die konkreten Systeme erscheinen.
+ * Ein Geschäftsführer wählt zuerst ein Ziel, dann sieht er die passenden Systeme.
+ */
+const CATEGORIES: { id: CategoryId; label: string; bullets: string[]; icon: React.ReactNode; slugs: SystemSlug[] }[] = [
+  {
+    id: "vertrieb",
+    label: "Vertrieb",
+    bullets: ["Lead Funnel", "CRM", "Automatisierung"],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" />
+      </svg>
+    ),
+    slugs: ["lead-funnels-crm", "premium-websysteme"],
+  },
+  {
+    id: "kunden",
+    label: "Kunden",
+    bullets: ["Portale", "Terminbuchung", "Mitglieder"],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <circle cx="12" cy="8" r="3.2" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+      </svg>
+    ),
+    slugs: ["buchungs-beauty-systeme", "mitglieder-clubverwaltung"],
+  },
+  {
+    id: "unternehmen",
+    label: "Unternehmen",
+    bullets: ["ERP", "Dokumente", "Personal", "Projekte"],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="4" y="3" width="16" height="18" rx="1.6" /><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6" />
+      </svg>
+    ),
+    slugs: ["erp-systeme", "branchen-plattformen", "schnittstellen-integrationen"],
+  },
+  {
+    id: "ki",
+    label: "KI",
+    bullets: ["Agenten", "Telefon", "Workflows", "Assistenz"],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" />
+      </svg>
+    ),
+    slugs: ["ki-automatisierung", "schnittstellen-integrationen"],
+  },
+];
+
 export default function SystemsGrid() {
   const brand = useBrand();
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null);
 
   const detailHref = (slug: string) =>
     resolveBrandNavHref(`/systeme/${slug}`, brand.id);
+
+  const visibleSystems = useMemo(() => {
+    if (!activeCategory) return SYSTEMS;
+    const cat = CATEGORIES.find((c) => c.id === activeCategory);
+    if (!cat) return SYSTEMS;
+    return SYSTEMS.filter((s) => cat.slugs.includes(s.slug));
+  }, [activeCategory]);
 
   return (
     <section
@@ -35,32 +95,76 @@ export default function SystemsGrid() {
       <div className="mx-auto w-full max-w-[1280px]">
         <div className="px-5 sm:px-8">
           <SectionHeading
-            eyebrow="Systeme"
-            title="Systeme, die zu Ihrem Unternehmen passen."
+            eyebrow="Unsere Lösungen"
+            title="Wählen Sie Ihr Ziel."
+            subtitle="Jedes Ziel führt zu den passenden Systemen — konkret, nicht generisch."
           />
         </div>
 
+        {/* ── Nach Ziel: 4 Kategorien ── */}
+        <div className="mt-10 grid grid-cols-2 gap-3 px-5 sm:px-8 lg:grid-cols-4 lg:gap-4">
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategory((p) => (p === cat.id ? null : cat.id))}
+                aria-pressed={isActive}
+                className="group relative flex flex-col items-start gap-2.5 rounded-2xl p-4 text-left transition-all duration-300 sm:p-5"
+                style={{
+                  background: isActive
+                    ? "color-mix(in srgb, var(--accent) 12%, rgba(255,255,255,0.03))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.015) 100%)",
+                  border: `1px solid ${isActive ? "color-mix(in srgb, var(--accent) 45%, transparent)" : "var(--brand-card-border)"}`,
+                  boxShadow: isActive ? "0 8px 24px color-mix(in srgb, var(--accent) 16%, transparent)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
+                }}
+              >
+                <span
+                  className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-300"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    color: isActive ? "var(--accent)" : "rgba(255,255,255,0.6)",
+                  }}
+                >
+                  {cat.icon}
+                </span>
+                <span className="text-[14.5px] font-medium text-white" style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}>
+                  {cat.label}
+                </span>
+                <span className="text-[11.5px] leading-snug text-white/45">
+                  {cat.bullets.join(" · ")}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* ── Mobile / Tablet: Swipe Slider (< lg) ── */}
-        <div className="mt-12 block lg:hidden">
-          <MobileSlider detailHref={detailHref} />
+        <div className="mt-10 block lg:hidden">
+          <MobileSlider systems={visibleSystems} detailHref={detailHref} />
         </div>
 
         {/* ── Desktop: 4-Spalten-Grid (lg+) ── */}
-        <div className="mt-12 hidden px-5 sm:px-8 lg:grid lg:grid-cols-4 lg:gap-5">
-          {SYSTEMS.map((card, i) => {
-            const isOpen = expanded === card.slug;
-            return (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory ?? "alle"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="mt-10 hidden px-5 sm:px-8 lg:grid lg:grid-cols-4 lg:gap-5"
+          >
+            {visibleSystems.map((card, i) => (
               <DesktopCard
                 key={card.slug}
                 card={card}
                 index={i}
-                isOpen={isOpen}
-                onToggle={() => setExpanded((p) => (p === card.slug ? null : card.slug))}
                 detailHref={detailHref(card.slug)}
               />
-            );
-          })}
-        </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );
@@ -69,10 +173,21 @@ export default function SystemsGrid() {
 /* ─────────────────────────────────────────────────────────
    Mobile Swipe Slider
 ───────────────────────────────────────────────────────── */
-function MobileSlider({ detailHref }: { detailHref: (slug: string) => string }) {
+function MobileSlider({
+  systems,
+  detailHref,
+}: {
+  systems: typeof SYSTEMS;
+  detailHref: (slug: string) => string;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
-  const total = SYSTEMS.length;
+  const total = systems.length;
+
+  useEffect(() => {
+    setActiveIdx(0);
+    trackRef.current?.scrollTo({ left: 0 });
+  }, [systems]);
 
   /* Track which card is most centered as user scrolls */
   const onScroll = useCallback(() => {
@@ -114,7 +229,7 @@ function MobileSlider({ detailHref }: { detailHref: (slug: string) => string }) 
           paddingRight: "20px",
         }}
       >
-        {SYSTEMS.map((card, i) => (
+        {systems.map((card, i) => (
           <SliderCard
             key={card.slug}
             card={card}
@@ -148,7 +263,7 @@ function MobileSlider({ detailHref }: { detailHref: (slug: string) => string }) 
 
         {/* Dot Pagination */}
         <div className="flex items-center gap-2" role="tablist" aria-label="Systeme Navigation">
-          {SYSTEMS.map((_, i) => (
+          {systems.map((_, i) => (
             <button
               key={i}
               role="tab"
@@ -237,13 +352,13 @@ function SliderCard({
         transition: "border-color 0.3s, box-shadow 0.3s",
       }}
     >
-      {/* Image */}
+      {/* Image — größer, dominant */}
       <Link
         href={detailHref}
         aria-label={`${card.title} — Details ansehen`}
         className="group/img relative block w-full overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/25"
       >
-        <div className="relative aspect-[16/10] w-full">
+        <div className="relative aspect-[4/3] w-full">
           <Image
             src={card.image}
             alt={card.alt}
@@ -258,16 +373,10 @@ function SliderCard({
               background: "linear-gradient(to top, rgba(3,2,10,0.55) 0%, transparent 55%)",
             }}
           />
-          <span className="pointer-events-none absolute bottom-3 left-3 flex translate-y-1 items-center gap-1.5 text-[11px] font-medium text-white opacity-0 transition-all duration-300 group-hover/img:translate-y-0 group-hover/img:opacity-100">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M15 3h6v6M10 14L21 3M9 3H3v18h18v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Vollansicht öffnen
-          </span>
         </div>
       </Link>
 
-      {/* Text */}
+      {/* Text — reduziert auf das Wesentliche */}
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center gap-2.5">
           <span
@@ -287,16 +396,20 @@ function SliderCard({
             {card.title}
           </h3>
         </div>
-        <p className="mt-2.5 line-clamp-3 text-[12.5px] leading-[1.6] text-white/55">
+        <p className="mt-2.5 line-clamp-2 text-[12.5px] leading-[1.6] text-white/55">
           {card.desc}
         </p>
         <Link
           href={detailHref}
-          className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[11.5px] font-medium transition-opacity hover:opacity-80"
-          style={{ color: "var(--accent)" }}
+          className="group/cta mt-4 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[12.5px] font-semibold transition-all duration-300"
+          style={{
+            background: "color-mix(in srgb, var(--accent) 14%, rgba(255,255,255,0.03))",
+            border: "1px solid color-mix(in srgb, var(--accent) 45%, transparent)",
+            color: "#fff",
+          }}
         >
-          Details ansehen
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+          System ansehen
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden className="transition-transform duration-300 group-hover/cta:translate-x-0.5">
             <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </Link>
@@ -311,14 +424,10 @@ function SliderCard({
 function DesktopCard({
   card,
   index,
-  isOpen,
-  onToggle,
   detailHref,
 }: {
   card: CardData;
   index: number;
-  isOpen: boolean;
-  onToggle: () => void;
   detailHref: string;
 }) {
   return (
@@ -327,8 +436,9 @@ function DesktopCard({
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-8%" }}
+      whileHover={{ y: -4 }}
       transition={{ duration: 0.5, delay: (index % 4) * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl"
+      className="group relative flex flex-col overflow-hidden rounded-2xl transition-shadow duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.35)]"
       style={{
         background:
           "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%)",
@@ -336,19 +446,19 @@ function DesktopCard({
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
       }}
     >
-      {/* Bild · immer sichtbar · Klick → Detailseite */}
+      {/* Bild · größer, dominant · Klick → Detailseite */}
       <Link
         href={detailHref}
         aria-label={`${card.title} — Details ansehen`}
         className="group/img relative block w-full overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/25"
       >
-        <div className="relative aspect-[16/10] w-full">
+        <div className="relative aspect-[4/3] w-full">
           <Image
             src={card.image}
             alt={card.alt}
             fill
             sizes="(min-width: 1024px) 300px, 45vw"
-            className="object-cover object-top transition-transform duration-[600ms] ease-out group-hover/img:scale-[1.04]"
+            className="object-cover object-top transition-transform duration-[600ms] ease-out group-hover/img:scale-[1.06]"
           />
           <span
             aria-hidden
@@ -357,16 +467,10 @@ function DesktopCard({
               background: "linear-gradient(to top, rgba(3,2,10,0.55) 0%, transparent 55%)",
             }}
           />
-          <span className="pointer-events-none absolute bottom-3 left-3 flex translate-y-1 items-center gap-1.5 text-[11px] font-medium text-white opacity-0 transition-all duration-300 group-hover/img:translate-y-0 group-hover/img:opacity-100">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M15 3h6v6M10 14L21 3M9 3H3v18h18v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Vollansicht öffnen
-          </span>
         </div>
       </Link>
 
-      {/* Textbereich */}
+      {/* Textbereich — reduziert auf das Wesentliche */}
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center gap-2.5">
           <span
@@ -387,79 +491,24 @@ function DesktopCard({
           </h3>
         </div>
 
-        <p className="mt-2.5 line-clamp-3 text-[12.5px] leading-[1.6] text-white/55">
+        <p className="mt-2.5 line-clamp-2 text-[12.5px] leading-[1.6] text-white/55">
           {card.desc}
         </p>
 
-        <AnimatePresence initial={false}>
-          {isOpen && (
-            <motion.ul
-              key="bullets"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="mt-3 space-y-2 border-t border-white/[0.06] pt-3">
-                {card.bullets.map((b) => (
-                  <li
-                    key={b}
-                    className="flex items-start gap-2 text-[12px] leading-[1.5] text-white/70"
-                  >
-                    <span
-                      className="mt-[6px] h-1 w-1 shrink-0 rounded-full"
-                      style={{ background: "var(--accent)" }}
-                      aria-hidden
-                    />
-                    {b}
-                  </li>
-                ))}
-                <li className="pt-1">
-                  <Link
-                    href={detailHref}
-                    className="inline-flex items-center gap-1.5 text-[11.5px] font-medium transition-opacity hover:opacity-80"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    Mehr erfahren
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
-                </li>
-              </div>
-            </motion.ul>
-          )}
-        </AnimatePresence>
-
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? "Weniger anzeigen" : "Mehr Infos anzeigen"}
-          className="group/btn mt-auto flex items-center gap-1.5 pt-4 text-[11px] font-medium uppercase tracking-[0.14em] text-white/40 outline-none transition-colors hover:text-white/75 focus-visible:text-white/75"
+        <Link
+          href={detailHref}
+          className="group/cta mt-auto flex items-center justify-center gap-1.5 rounded-xl py-2.5 mt-4 text-[12.5px] font-semibold transition-all duration-300"
+          style={{
+            background: "color-mix(in srgb, var(--accent) 14%, rgba(255,255,255,0.03))",
+            border: "1px solid color-mix(in srgb, var(--accent) 45%, transparent)",
+            color: "#fff",
+          }}
         >
-          {isOpen ? "Weniger" : "Mehr Infos"}
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden
-            style={{
-              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1)",
-            }}
-          >
-            <path
-              d="M6 9l6 6 6-6"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          System ansehen
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden className="transition-transform duration-300 group-hover/cta:translate-x-0.5">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
+        </Link>
       </div>
     </motion.article>
   );

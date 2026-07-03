@@ -12,6 +12,16 @@ import { useBrand } from "@/contexts/BrandContext";
 import { useRouter, usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { isBrandNavItemActive, resolveBrandNavHref } from "@/lib/brandNav";
+import { SYSTEMS } from "@/lib/systems-data";
+
+/**
+ * Suche ist architektonisch vorbereitet (Index, Modal, Drawer-Variante),
+ * aber standardmäßig deaktiviert — die Seite hat zu wenige Unterseiten,
+ * um eine Suche zu rechtfertigen; sie konkurriert nur mit dem CTA.
+ * Sobald ein Wissensbereich/Blog/Academy mit vielen Unterseiten entsteht,
+ * kann sie hier wieder aktiviert werden.
+ */
+const SEARCH_ENABLED = false;
 
 type SearchIndexItem = {
   id: string;
@@ -138,6 +148,61 @@ const BASE_SEARCH_INDEX: SearchIndexItem[] = [
   },
 ];
 
+type MegaMenuEntry = {
+  id: string;
+  label: string;
+  description: string;
+  href: string;
+  icon: React.ReactNode;
+};
+
+function GoalIcon({ d }: { d: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d={d} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** "Nach Ziel" — geschäftlicher Nutzen zuerst, verlinkt auf das System, das dieses Ziel am direktesten bedient. */
+const GOAL_MENU: (Omit<MegaMenuEntry, "href"> & { systemSlug: string })[] = [
+  {
+    id: "mehr-kunden",
+    label: "Mehr Kunden gewinnen",
+    description: "Leads erfassen, qualifizieren, nachfassen",
+    icon: <GoalIcon d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
+    systemSlug: "lead-funnels-crm",
+  },
+  {
+    id: "prozesse-automatisieren",
+    label: "Prozesse automatisieren",
+    description: "Wiederkehrende Aufgaben laufen von selbst",
+    icon: <GoalIcon d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />,
+    systemSlug: "ki-automatisierung",
+  },
+  {
+    id: "verwaltung-digitalisieren",
+    label: "Verwaltung digitalisieren",
+    description: "Kunden, Finanzen, Ressourcen — ein System",
+    icon: <GoalIcon d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z" />,
+    systemSlug: "erp-systeme",
+  },
+  {
+    id: "mitarbeiter-organisieren",
+    label: "Mitarbeiter organisieren",
+    description: "Rollen, Zugriffe und Abläufe im Griff",
+    icon: <GoalIcon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
+    systemSlug: "mitglieder-clubverwaltung",
+  },
+  {
+    id: "ki-integrieren",
+    label: "KI integrieren",
+    description: "Dokumente lesen, priorisieren, beantworten",
+    icon: <GoalIcon d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />,
+    systemSlug: "ki-automatisierung",
+  },
+];
+
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
@@ -157,6 +222,12 @@ export default function Navigation() {
   const [mounted, setMounted] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [mobileSolutionsOpen, setMobileSolutionsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const megaMenuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const solutionsTriggerRef = useRef<HTMLDivElement>(null);
+  const [megaMenuPosition, setMegaMenuPosition] = useState({ top: 0, left: 0 });
   const router = useRouter();
   const pathname = usePathname();
   const navRef = useRef<HTMLDivElement>(null);
@@ -171,15 +242,41 @@ export default function Navigation() {
     [brand.id]
   );
 
+  /** "Lösungen" führt je Marke auf die passende Hub-Seite (NEXCEL: /loesungen, AGI: /leistungen). */
+  const solutionsHref = useMemo(
+    () => resolveBrandNavHref(brand.id === "agiworks" ? "/leistungen" : "/loesungen", brand.id),
+    [brand.id]
+  );
+
+  const solutionsGoalItems: MegaMenuEntry[] = useMemo(
+    () =>
+      GOAL_MENU.map(({ systemSlug, ...item }) => ({
+        ...item,
+        href: resolveBrandNavHref(`/systeme/${systemSlug}`, brand.id),
+      })),
+    [brand.id]
+  );
+
+  const solutionsSystemItems: MegaMenuEntry[] = useMemo(
+    () =>
+      SYSTEMS.map((s) => ({
+        id: s.slug,
+        label: s.title,
+        description: s.tagline,
+        icon: s.icon,
+        href: resolveBrandNavHref(`/systeme/${s.slug}`, brand.id),
+      })),
+    [brand.id]
+  );
+
   const mainNavItems = useMemo(
     () => {
       const r = (h: string) => resolveBrandNavHref(h, brand.id);
       return [
-        { label: "Start", href: r("/") },
-        { label: "Projekte", href: r("/projekte") },
-        { label: "Preise", href: r("/preise") },
-        { label: "Über uns", href: r("/ueber-mich") },
-        { label: "Kontakt", href: r("/kontakt") },
+        { id: "referenzen", label: "Referenzen", href: r("/projekte") },
+        { id: "preise", label: "Preise", href: r("/preise") },
+        { id: "ueber-uns", label: "Über uns", href: r("/ueber-mich") },
+        { id: "kontakt", label: "Kontakt", href: r("/kontakt") },
       ];
     },
     [brand.id]
@@ -247,6 +344,77 @@ export default function Navigation() {
     }
   }, [mobileMenuOpen, searchModalOpen]);
 
+  /**
+   * Scroll-Spy: Auf der Startseite wird der Menüpunkt hervorgehoben,
+   * dessen Section gerade im Viewport ist (Lösungen → #loesungen,
+   * Referenzen → #projekte, Preise → #preise). Auf allen anderen Seiten
+   * greift ausschließlich die Pfad-basierte Aktiv-Erkennung.
+   */
+  useEffect(() => {
+    const isHome = pathname === "/";
+    if (!isHome) {
+      setActiveSection(null);
+      return;
+    }
+    const ids = ["hero", "systeme", "projekte", "preise"];
+    const elements = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [pathname]);
+
+  const updateMegaMenuPosition = useCallback(() => {
+    if (solutionsTriggerRef.current) {
+      const rect = solutionsTriggerRef.current.getBoundingClientRect();
+      setMegaMenuPosition({ top: rect.bottom + 12, left: rect.left });
+    }
+  }, []);
+
+  const openMegaMenu = useCallback(() => {
+    if (megaMenuCloseTimer.current) clearTimeout(megaMenuCloseTimer.current);
+    updateMegaMenuPosition();
+    setMegaMenuOpen(true);
+  }, [updateMegaMenuPosition]);
+
+  const scheduleMegaMenuClose = useCallback(() => {
+    if (megaMenuCloseTimer.current) clearTimeout(megaMenuCloseTimer.current);
+    megaMenuCloseTimer.current = setTimeout(() => setMegaMenuOpen(false), 140);
+  }, []);
+
+  useEffect(() => {
+    if (!megaMenuOpen) return;
+    updateMegaMenuPosition();
+    window.addEventListener("scroll", updateMegaMenuPosition, true);
+    window.addEventListener("resize", updateMegaMenuPosition);
+    return () => {
+      window.removeEventListener("scroll", updateMegaMenuPosition, true);
+      window.removeEventListener("resize", updateMegaMenuPosition);
+    };
+  }, [megaMenuOpen, updateMegaMenuPosition]);
+
+  /** Logo-Klick: auf der Startseite weich nach oben scrollen statt hart zu navigieren. */
+  const handleLogoClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (pathname === "/") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    [pathname]
+  );
+
   useEffect(() => {
     if (mobileMenuOpen || searchModalOpen) {
       document.body.style.overflow = "hidden";
@@ -311,15 +479,16 @@ export default function Navigation() {
   // Handle search keyboard shortcut (Cmd/Ctrl + K) and ESC for mobile menu
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K to open search modal
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      // Cmd/Ctrl + K to open search modal (nur wenn Suche aktiviert ist)
+      if (SEARCH_ENABLED && (e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearchModalOpen(true);
         setSearchFocused(true);
       }
 
-      // Escape to close search modal or mobile menu
+      // Escape to close search modal, mega menu or mobile menu
       if (e.key === "Escape") {
+        if (megaMenuOpen) setMegaMenuOpen(false);
         if (searchModalOpen || searchFocused) {
           setSearchModalOpen(false);
           setSearchQuery("");
@@ -334,7 +503,7 @@ export default function Navigation() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [searchModalOpen, searchFocused, mobileMenuOpen]);
+  }, [searchModalOpen, searchFocused, mobileMenuOpen, megaMenuOpen]);
 
   // Keyboard Navigation in Results
   const handleKeyDown = useCallback(
@@ -530,7 +699,7 @@ export default function Navigation() {
                 <div className="flex items-center justify-between lg:hidden gap-3 sm:gap-4 w-full min-h-[52px] sm:min-h-[56px]">
                   {/* Mobile: Logo - Premium */}
                   <div className="flex items-center flex-shrink-0">
-                    <Link href={brand.navigation.baseHref} prefetch={true} className="block">
+                    <Link href={brand.navigation.baseHref} prefetch={true} className="block" onClick={handleLogoClick}>
                       <motion.div
                         className="relative flex items-center cursor-pointer group/logo"
                         initial={{ opacity: 0, x: -20 }}
@@ -737,7 +906,7 @@ export default function Navigation() {
                 <div className="hidden lg:flex items-center gap-2 lg:gap-3 xl:gap-4 2xl:gap-5 justify-start">
                   {/* Logo */}
                   <div className="flex-shrink-0">
-                  <Link href={brand.navigation.baseHref} className="block">
+                  <Link href={brand.navigation.baseHref} className="block" onClick={handleLogoClick}>
                   <motion.div
                     className="relative flex items-center cursor-pointer group/logo"
                     initial={{ opacity: 0, x: -20 }}
@@ -849,12 +1018,65 @@ export default function Navigation() {
                       minWidth: 0,
                     }}
                   >
+                    {/* Lösungen — Mega-Menu-Trigger (Hover auf Desktop) */}
+                    <div
+                      ref={solutionsTriggerRef}
+                      className="relative"
+                      onMouseEnter={openMegaMenu}
+                      onMouseLeave={scheduleMegaMenuClose}
+                    >
+                      <Link
+                        href={solutionsHref}
+                        prefetch={true}
+                        className={`pill-nav-link group/navlink ${
+                          megaMenuOpen || activeSection === "systeme" || pathname.includes("/loesungen") || pathname.includes("/leistungen") || pathname.startsWith("/systeme")
+                            ? "active"
+                            : ""
+                        }`}
+                        aria-haspopup="true"
+                        aria-expanded={megaMenuOpen}
+                      >
+                        <motion.span
+                          className="relative flex items-center gap-1 px-3 lg:px-4 xl:px-5 py-2 text-[11px] lg:text-xs xl:text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0"
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          style={{
+                            color:
+                              megaMenuOpen || activeSection === "systeme" || pathname.includes("/loesungen") || pathname.includes("/leistungen") || pathname.startsWith("/systeme")
+                                ? "var(--accent)"
+                                : "rgba(255, 255, 255, 0.95)",
+                          }}
+                        >
+                          Lösungen
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden
+                            className="transition-transform duration-200"
+                            style={{ transform: megaMenuOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                          >
+                            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span
+                            className="absolute inset-0 rounded-lg opacity-0 group-hover/navlink:opacity-100 transition-opacity duration-300 -z-10 pointer-events-none"
+                            style={{
+                              background: theme === "dark"
+                                ? "radial-gradient(circle, rgba(183, 140, 255, 0.15), transparent 70%)"
+                                : "radial-gradient(circle, rgba(124, 58, 237, 0.1), transparent 70%)",
+                              filter: "blur(8px)",
+                            }}
+                          />
+                        </motion.span>
+                      </Link>
+                    </div>
+
                     {mainNavItems.map((item) => {
-                      const isActive = isBrandNavItemActive(
-                        pathname,
-                        item.href,
-                        brand.navigation.baseHref
-                      );
+                      const isActive =
+                        isBrandNavItemActive(pathname, item.href, brand.navigation.baseHref) ||
+                        activeSection === item.id;
 
                       return (
                         <Link
@@ -889,48 +1111,6 @@ export default function Navigation() {
                         </Link>
                       );
                     })}
-                    
-                    {/* Search Button - innerhalb der Pill-Navigation */}
-                    <motion.button
-                      onClick={() => setSearchModalOpen(true)}
-                      aria-label="Suche öffnen"
-                      className="pill-nav-link group/navlink ml-1"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                    >
-                      <span 
-                        className="relative flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 rounded-lg transition-all duration-300"
-                        style={{
-                          background: "rgba(255, 255, 255, 0.06)",
-                        }}
-                      >
-                        <svg
-                          className="w-4 h-4 lg:w-[18px] lg:h-[18px]"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                          style={{
-                          color: "rgba(255, 255, 255, 0.92)",
-                          }}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        {/* Hover Glow */}
-                        <span
-                          className="absolute inset-0 rounded-lg opacity-0 group-hover/navlink:opacity-100 transition-opacity duration-300 -z-10 pointer-events-none"
-                          style={{
-                            background: theme === "dark"
-                              ? "radial-gradient(circle, rgba(183, 140, 255, 0.2), transparent 70%)"
-                              : "radial-gradient(circle, rgba(124, 58, 237, 0.15), transparent 70%)",
-                            filter: "blur(8px)",
-                          }}
-                        />
-                      </span>
-                    </motion.button>
                   </motion.nav>
 
                   {/* Primärer CTA: Systemanalyse starten */}
@@ -991,8 +1171,117 @@ export default function Navigation() {
         </div>
       </motion.nav>
 
-      {/* Search Dropdown - High-End Design unter der Navbar */}
+      {/* Lösungen — Mega-Menu (Desktop, Hover-Panel) */}
       {mounted && createPortal(
+        <AnimatePresence>
+          {megaMenuOpen && (
+            <motion.div
+              className="fixed z-[9999] hidden lg:block"
+              style={{ top: megaMenuPosition.top, left: megaMenuPosition.left }}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+              onMouseEnter={openMegaMenu}
+              onMouseLeave={scheduleMegaMenuClose}
+            >
+              <div
+                className="relative w-[640px] overflow-hidden rounded-[24px] p-2"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(18,18,28,0.98) 0%, rgba(12,12,20,0.99) 100%)",
+                  backdropFilter: "blur(40px) saturate(200%)",
+                  WebkitBackdropFilter: "blur(40px) saturate(200%)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  boxShadow: "0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
+                }}
+              >
+                <div className="grid grid-cols-2 gap-1">
+                  {/* Spalte 1 — Nach Ziel */}
+                  <div className="p-3">
+                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                      Nach Ziel
+                    </p>
+                    {solutionsGoalItems.map((entry) => (
+                      <Link
+                        key={entry.id}
+                        href={entry.href}
+                        onClick={() => setMegaMenuOpen(false)}
+                        className="group/mega flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors duration-150 hover:bg-white/[0.06]"
+                      >
+                        <span
+                          className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-150"
+                          style={{ background: "rgba(255,255,255,0.06)", color: "var(--accent)" }}
+                        >
+                          {entry.icon}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-[13px] font-medium text-white/92 group-hover/mega:text-white">
+                            {entry.label}
+                          </span>
+                          <span className="block text-[11.5px] leading-snug text-white/45">
+                            {entry.description}
+                          </span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Spalte 2 — Nach System */}
+                  <div
+                    className="p-3"
+                    style={{ borderLeft: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                      Nach System
+                    </p>
+                    {solutionsSystemItems.map((entry) => (
+                      <Link
+                        key={entry.id}
+                        href={entry.href}
+                        onClick={() => setMegaMenuOpen(false)}
+                        className="group/mega flex items-start gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.06]"
+                      >
+                        <span
+                          className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-150"
+                          style={{ background: "rgba(255,255,255,0.06)", color: "var(--accent)" }}
+                        >
+                          {entry.icon}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-[12.5px] font-medium text-white/92 group-hover/mega:text-white">
+                            {entry.label}
+                          </span>
+                          <span className="block truncate text-[11px] leading-snug text-white/45">
+                            {entry.description}
+                          </span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Footer-Zeile: alle Lösungen im Überblick */}
+                <Link
+                  href={solutionsHref}
+                  onClick={() => setMegaMenuOpen(false)}
+                  className="group/megaall mt-1 flex items-center justify-between rounded-xl px-4 py-3 transition-colors duration-150 hover:bg-white/[0.06]"
+                  style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <span className="text-[12.5px] font-medium text-white/85">Alle Lösungen im Überblick</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="transition-transform duration-200 group-hover/megaall:translate-x-0.5">
+                    <path d="M5 12h14M13 6l6 6-6 6" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Search Dropdown - High-End Design unter der Navbar (vorbereitet, standardmäßig deaktiviert) */}
+      {SEARCH_ENABLED && mounted && createPortal(
         <AnimatePresence>
           {searchModalOpen && (
             <>
@@ -1362,214 +1651,107 @@ export default function Navigation() {
                   </motion.button>
                 </div>
 
-                {/* Suchleiste darunter - Funktional im Drawer */}
-                <motion.div
-                  className="mb-6 relative"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                >
-                  <div className="relative w-full">
-                    <div
-                      className="relative w-full px-4 py-3 rounded-xl flex items-center gap-3 group/search-drawer"
-                      style={{
-                        background: theme === "dark"
-                          ? "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%)"
-                          : "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.90) 100%)",
-                        backdropFilter: "blur(20px) saturate(180%)",
-                        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-                        border: theme === "dark"
-                          ? "1px solid rgba(255, 255, 255, 0.2)"
-                          : "1px solid rgba(0, 0, 0, 0.12)",
-                        boxShadow: theme === "dark"
-                          ? "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset"
-                          : "0 4px 12px rgba(0, 0, 0, 0.1), 0 0 0 0.5px rgba(0, 0, 0, 0.05) inset",
-                      }}
-                    >
-                      <motion.svg
-                        className="w-5 h-5 flex-shrink-0"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                        style={{
-                          color: searchFocused || searchQuery
-                            ? theme === "dark" ? "rgba(168, 85, 247, 1)" : "rgba(124, 58, 237, 1)"
-                            : theme === "dark" ? "rgba(255, 255, 255, 0.6)" : "rgba(0, 0, 0, 0.5)",
-                        }}
-                        animate={{
-                          scale: searchFocused || searchQuery ? 1.1 : 1,
-                          rotate: searchFocused || searchQuery ? [0, -10, 10, 0] : 0,
-                        }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </motion.svg>
-                      <input
-                        type="text"
-                        placeholder="Suche. Entscheiden. Autopilot."
-                        value={searchQuery}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                        onFocus={() => setSearchFocused(true)}
-                        onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                          if (e.key === "Enter" && searchResults.length > 0 && searchResults[selectedIndex]) {
-                            router.push(searchResults[selectedIndex].href);
-                            setSearchQuery("");
-                            setShowResults(false);
-                            setMobileMenuOpen(false);
-                          }
-                          if (e.key === "ArrowDown" && searchResults.length > 0) {
-                            e.preventDefault();
-                            setSelectedIndex((prev: number) => (prev + 1) % searchResults.length);
-                          }
-                          if (e.key === "ArrowUp" && searchResults.length > 0) {
-                            e.preventDefault();
-                            setSelectedIndex((prev: number) => (prev - 1 + searchResults.length) % searchResults.length);
-                          }
-                          if (e.key === "Escape") {
-                            setSearchQuery("");
-                            setShowResults(false);
-                          }
-                        }}
-                        className="flex-1 bg-transparent border-none outline-none text-sm font-medium placeholder:opacity-60"
-                        style={{
-                          color: theme === "dark" ? "#FFFFFF" : "#0C0F1A",
-                          fontFamily: "var(--font-body), -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif",
-                        }}
-                      />
-                      {searchQuery && (
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          onClick={() => {
-                            setSearchQuery("");
-                            setShowResults(false);
-                          }}
-                          className="w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200"
-                          style={{
-                            background: theme === "dark"
-                              ? "rgba(255, 255, 255, 0.1)"
-                              : "rgba(0, 0, 0, 0.08)",
-                            color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.6)",
-                          }}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </motion.button>
-                      )}
-                    </div>
-
-                    {/* Suchergebnisse direkt im Drawer unter der Suchleiste */}
-                    {showResults && searchResults.length > 0 && (
-                      <motion.div
-                        className="mt-2 max-h-[300px] overflow-y-auto rounded-xl"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        style={{
-                          background: theme === "dark"
-                            ? "linear-gradient(180deg, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.96) 100%)"
-                            : "linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(255, 255, 255, 0.98) 100%)",
-                          backdropFilter: "blur(120px) saturate(250%)",
-                          WebkitBackdropFilter: "blur(120px) saturate(250%)",
-                          border: theme === "dark"
-                            ? "1.5px solid rgba(255, 255, 255, 0.4)"
-                            : "1.5px solid rgba(0, 0, 0, 0.2)",
-                          boxShadow: theme === "dark"
-                            ? "0 8px 32px rgba(0, 0, 0, 0.9), 0 0 0 0.5px rgba(255, 255, 255, 0.25) inset"
-                            : "0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(0, 0, 0, 0.15) inset",
-                        }}
-                      >
-                        <div className="p-2">
-                          {searchResults.map((result: SearchIndexItem, index: number) => (
-                            <Link
-                              key={result.id}
-                              href={result.href}
-                              onClick={() => {
-                                setSearchQuery("");
-                                setShowResults(false);
-                                setMobileMenuOpen(false);
-                              }}
-                            >
-                              <motion.div
-                                className={`px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                                  index === selectedIndex ? "bg-opacity-100" : ""
-                                }`}
-                                whileHover={{ scale: 1.01, x: 2 }}
-                                whileTap={{ scale: 0.99 }}
-                                style={{
-                                  background:
-                                    index === selectedIndex
-                                      ? theme === "dark"
-                                        ? "rgba(168, 85, 247, 0.2)"
-                                        : "rgba(124, 58, 237, 0.15)"
-                                      : "transparent",
-                                }}
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                                    style={{
-                                      background:
-                                        result.category === "action"
-                                          ? theme === "dark"
-                                            ? "rgba(168, 85, 247, 0.3)"
-                                            : "rgba(124, 58, 237, 0.2)"
-                                          : theme === "dark"
-                                          ? "rgba(255, 255, 255, 0.15)"
-                                          : "rgba(0, 0, 0, 0.08)",
-                                    }}
-                                  >
-                                    {result.category === "action" ? (
-                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: theme === "dark" ? "#A45CFF" : "#7C3AED" }}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                      </svg>
-                                    ) : (
-                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.8)" }}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                      </svg>
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div
-                                      className="font-bold text-sm mb-1 truncate"
-                                      style={{
-                                        color: theme === "dark" ? "#FFFFFF" : "#0C0F1A",
-                                      }}
-                                    >
-                                      {result.title}
-                                    </div>
-                                    <div
-                                      className="text-xs line-clamp-1 font-medium"
-                                      style={{
-                                        color: theme === "dark" ? "rgba(255, 255, 255, 0.85)" : "rgba(0, 0, 0, 0.7)",
-                                      }}
-                                    >
-                                      {result.description}
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            </Link>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-                </motion.div>
-
                 {/* Navigation Links */}
                 <nav className="flex-1 space-y-2 mb-4">
+                  {/* Lösungen — aufklappbares Akkordeon (Ziel + System) */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: 0.05, ease: "easeOut" }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setMobileSolutionsOpen((v) => !v)}
+                      className="flex w-full items-center justify-between px-4 py-3 rounded-xl font-medium text-base relative"
+                      style={{
+                        color: theme === "dark" ? "rgba(229, 231, 235, 1)" : "rgba(0, 0, 0, 0.8)",
+                        background: theme === "dark"
+                          ? "linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)"
+                          : "linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.02) 100%)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        border: theme === "dark"
+                          ? "1px solid rgba(255, 255, 255, 0.18)"
+                          : "1px solid rgba(0, 0, 0, 0.12)",
+                      }}
+                      aria-expanded={mobileSolutionsOpen}
+                    >
+                      Lösungen
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden
+                        className="transition-transform duration-200"
+                        style={{ transform: mobileSolutionsOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                      >
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+
+                    <AnimatePresence>
+                      {mobileSolutionsOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-2 mb-1 space-y-3 rounded-xl px-3 py-3" style={{ background: "rgba(255,255,255,0.03)" }}>
+                            <div>
+                              <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">Nach Ziel</p>
+                              {solutionsGoalItems.map((entry) => (
+                                <Link
+                                  key={entry.id}
+                                  href={entry.href}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="flex items-center gap-3 rounded-lg px-2 py-2 text-[13.5px] font-medium text-white/85 active:bg-white/[0.06]"
+                                >
+                                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center" style={{ color: "var(--accent)" }}>
+                                    {entry.icon}
+                                  </span>
+                                  {entry.label}
+                                </Link>
+                              ))}
+                            </div>
+                            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} className="pt-3">
+                              <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">Nach System</p>
+                              {solutionsSystemItems.map((entry) => (
+                                <Link
+                                  key={entry.id}
+                                  href={entry.href}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="flex items-center gap-3 rounded-lg px-2 py-2 text-[13.5px] font-medium text-white/85 active:bg-white/[0.06]"
+                                >
+                                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center" style={{ color: "var(--accent)" }}>
+                                    {entry.icon}
+                                  </span>
+                                  {entry.label}
+                                </Link>
+                              ))}
+                            </div>
+                            <Link
+                              href={solutionsHref}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block px-2 pt-1 text-[13px] font-medium"
+                              style={{ color: "var(--accent)" }}
+                            >
+                              Alle Lösungen im Überblick →
+                            </Link>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
                   {mainNavItems.map((item, idx) => (
                     <motion.div
                       key={item.label}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, delay: 0.05 + idx * 0.04, ease: "easeOut" }}
+                      transition={{ duration: 0.2, delay: 0.09 + idx * 0.04, ease: "easeOut" }}
                     >
                       <Link
                         href={item.href}

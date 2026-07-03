@@ -19,6 +19,10 @@ export type ReferenceEntry = {
   sortOrder: number;
   isPublished: boolean;
   createdAt: string;
+  /** Vorher → Nachher → Ergebnis — jede Referenz zeigt den Wandel, keine reine Galerie. */
+  before?: string;
+  after?: string[];
+  result?: string[];
 };
 
 export const STATIC_REFERENCES: ReferenceEntry[] = [
@@ -32,6 +36,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     type: "Mitglieder-Plattform",
     tags: ["SaaS", "Mitglieder", "Admin Panel", "Buchungssystem", "E-Commerce"],
     modules: ["Mitgliederverwaltung", "Token-Shop", "Bestellverwaltung", "Abholbuchung", "Compliance & Sicherheit", "Produkt-CMS", "Admin-Dashboard"],
+    before: "Verwaltung per Excel-Listen und Papier, keine digitale Mitgliederkontrolle.",
+    after: ["Digitale Mitgliederverwaltung", "Token-Shop", "Compliance-System"],
+    result: ["100 % KCanG-konform", "Volle Kontrolle über Bestände & Limits"],
     status: "live",
     coverImage: "/images/references/cannabbros.png",
     sortOrder: 1,
@@ -48,6 +55,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     type: "Buchungssystem",
     tags: ["Buchungssystem", "Admin Panel", "Website", "Kundenportal"],
     modules: ["Online-Buchung", "Terminkalender", "Leistungsverwaltung", "Admin-Dashboard", "Galerie-CMS", "Kundenverwaltung"],
+    before: "Telefonische Terminvergabe.",
+    after: ["Buchungssystem", "Admin-Dashboard", "Automatisierung"],
+    result: ["Mehr Übersicht", "Weniger Verwaltungsaufwand"],
     status: "live",
     coverImage: "/images/references/beautybar.png",
     sortOrder: 2,
@@ -65,6 +75,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     tags: ["Lead Funnel", "CRM", "Admin Panel", "SaaS", "Automatisierung"],
     modules: ["Lead-Funnel", "Partner-Dashboard", "Admin-Cockpit", "Lead-Verteilung", "Rollen & Rechte", "Reporting", "Automatisierungen"],
     websiteUrl: undefined,
+    before: "Anonyme Tarifportale, Leads gehen ohne Struktur an Partner verloren.",
+    after: ["Lead-Funnel", "Partner-Dashboard", "Automatisches Routing"],
+    result: ["Planbarer Vertrieb", "Echtzeit-Reporting über Leads & Provisionen"],
     status: "live",
     coverImage: "/images/references/agi-energy.png",
     sortOrder: 3,
@@ -82,6 +95,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     tags: ["Website", "CRM", "Admin Panel", "ERP"],
     modules: ["Premium-Webseite", "Immobilienverwaltung", "CRM", "Hausverwaltung", "Handwerker-Verwaltung", "Mängelmeldungen", "Admin-Dashboard"],
     websiteUrl: "https://immobilien-weissleder.de",
+    before: "Vermarktung, Verwaltung und Kommunikation liefen getrennt und manuell.",
+    after: ["Premium-Webseite", "CRM", "Hausverwaltung"],
+    result: ["Eine zentrale Plattform", "Schnellere Reaktion auf Anfragen & Mängel"],
     status: "live",
     coverImage: "/images/references/immobilien-weissleder.png",
     sortOrder: 4,
@@ -98,6 +114,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     type: "Buchungssystem",
     tags: ["Buchungssystem", "Website", "Admin Panel", "Kundenportal"],
     modules: ["Online-Buchung", "Service-Auswahl", "Terminkalender", "Admin-Dashboard", "Leistungsverwaltung", "Galerie"],
+    before: "Terminvergabe per Anruf, keine Übersicht über Auslastung.",
+    after: ["Online-Buchung", "Team-Kalender", "Admin-Panel"],
+    result: ["Premium-Buchungsstrecke", "Volle Kalender ohne Telefon-Pingpong"],
     status: "live",
     coverImage: "/images/references/lulus-beauty.png",
     sortOrder: 5,
@@ -114,6 +133,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     type: "Branchen-Plattform",
     tags: ["SaaS", "CRM", "Admin Panel", "ERP", "Automatisierung"],
     modules: ["Patientenaufnahme", "Anamnese", "Pflegegrad-Check", "Einsatzplanung", "Schichtplanung", "CRM", "Recruiting", "Operations-Wall"],
+    before: "Patientenaufnahme und Einsatzplanung auf Papier, verstreute Informationen.",
+    after: ["Digitale Aufnahme", "Einsatz- & Schichtplanung", "CRM & Operations-Wall"],
+    result: ["Ein zentrales System", "Weniger Verwaltungsaufwand im Tagesbetrieb"],
     status: "live",
     coverImage: "/images/references/pflegenest.png",
     sortOrder: 6,
@@ -130,6 +152,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     type: "Branchen-Plattform",
     tags: ["Website", "SaaS", "Admin Panel", "Automatisierung"],
     modules: ["Website", "Karriere & Bewerbungen", "Digitale Anamnese", "Stellenverwaltung", "Dokumentenverwaltung", "Inhaltsverwaltung", "Admin-System"],
+    before: "Bewerbungen und Anamnese liefen per E-Mail und Papierformular.",
+    after: ["Premium-Website", "Karriere-Modul", "Digitale Anamnese"],
+    result: ["Alles in einer Plattform", "DSGVO-konform & sicher"],
     status: "live",
     coverImage: "/images/references/impuls-pflege.png",
     sortOrder: 7,
@@ -147,6 +172,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     tags: ["Lead Funnel", "CRM", "Admin Panel", "Automatisierung"],
     modules: ["Lead-Funnel & Eignungscheck", "CRM & Pipeline", "Kanban-Board", "Rollen & Rechte", "Reporting", "Automationen & Vorlagen", "Bewerbermanagement"],
     websiteUrl: "https://lokfuehrerzentrum.de",
+    before: "Bewerber-Interesse ohne Qualifizierung, manuelle Nachverfolgung.",
+    after: ["Lead-Funnel mit Eignungscheck", "CRM & Pipeline", "Automationen"],
+    result: ["Messbare Conversion", "Planbares Bewerberaufkommen"],
     status: "live",
     coverImage: "/images/references/lokfuehrerzentrum.png",
     sortOrder: 8,
@@ -163,6 +191,9 @@ export const STATIC_REFERENCES: ReferenceEntry[] = [
     type: "Branchen-Plattform",
     tags: ["SaaS", "KI-System", "Admin Panel", "App", "Automatisierung"],
     modules: ["Event-Website & Anmeldung", "Live-Tracking & Leaderboard", "KI-Performance-Analyse", "Operations Center", "Ticket-System", "Schichtplanung", "Helfer-App", "Inventar & Material"],
+    before: "Papierlisten für Anmeldung, Zeitmessung und Helfer-Einsatz beim Event.",
+    after: ["Event-Website", "Live-Tracking", "Operations Center"],
+    result: ["Alles in Echtzeit steuerbar", "Weniger operative Fehler am Eventtag"],
     status: "live",
     coverImage: "/images/references/born-to-run.png",
     sortOrder: 9,
