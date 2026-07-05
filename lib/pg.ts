@@ -180,6 +180,36 @@ export function ensureSchema(): Promise<boolean> {
         ON reference_images (reference_id, sort_order ASC)
       `;
 
+      await client`
+        CREATE TABLE IF NOT EXISTS systems_cards (
+          id                  TEXT PRIMARY KEY,
+          slug                TEXT UNIQUE NOT NULL,
+          category            TEXT NOT NULL DEFAULT 'unternehmen',
+          title               TEXT NOT NULL DEFAULT '',
+          tagline             TEXT NOT NULL DEFAULT '',
+          desc                TEXT NOT NULL DEFAULT '',
+          long_desc           TEXT NOT NULL DEFAULT '',
+          bullets             JSONB NOT NULL DEFAULT '[]',
+          details             JSONB NOT NULL DEFAULT '[]',
+          image               TEXT NOT NULL DEFAULT '',
+          cover_image_data    BYTEA,
+          cover_content_type  TEXT NOT NULL DEFAULT 'image/png',
+          alt                 TEXT NOT NULL DEFAULT '',
+          sort_order          INTEGER NOT NULL DEFAULT 0,
+          is_published        BOOLEAN NOT NULL DEFAULT TRUE,
+          created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      await client`
+        CREATE INDEX IF NOT EXISTS idx_systems_cards_sort
+        ON systems_cards (sort_order ASC, created_at ASC)
+      `;
+      await client`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_systems_cards_slug
+        ON systems_cards (slug)
+      `;
+
       console.log("✅ [PG] Schema bereit");
       return true;
     } catch (error) {

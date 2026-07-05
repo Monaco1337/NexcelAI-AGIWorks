@@ -399,32 +399,6 @@ export const SYSTEMS: SystemEntry[] = [
     alt: "Warenwirtschaft & Lagerverwaltung — Produktbestand, Bestellungen und Lieferanten",
   },
   {
-    slug: "termin-schichtplanung",
-    title: "Termin- & Schichtplanung",
-    tagline: "Planung ohne Chaos. Immer besetzt.",
-    desc: "Mitarbeiterschichten, Ressourcen und Termine intelligent planen und automatisch verwalten.",
-    longDesc:
-      "Ob Schichtbetrieb oder Terminverwaltung: Das System plant Mitarbeitereinsätze, verwaltet Ressourcen und koordiniert Termine automatisch. Mit Echtzeit-Übersicht, automatischen Erinnerungen und einfachem Tausch-Workflow für Ihr Team.",
-    bullets: [
-      "Schicht- & Mitarbeiterplanung",
-      "Ressourcen- & Raumverwaltung",
-      "Erinnerungen & automatische Koordination",
-    ],
-    details: [
-      "Schichtplanung & Mitarbeitereinsatz",
-      "Ressourcen- & Raumverwaltung",
-      "Automatische Erinnerungen & Bestätigungen",
-      "Tausch-Workflow & Vertretungsplanung",
-      "Kalenderansicht (Tag / Woche / Monat)",
-      "Abwesenheits- & Urlaubsintegration",
-      "Team-Benachrichtigungen bei Änderungen",
-      "Export & Druckansicht",
-    ],
-    icon: <ClockIcon />,
-    image: "/images/system-visuals/termin-schichtplanung.png",
-    alt: "Termin- & Schichtplanung — Mitarbeiterplanung, Ressourcen und Kalender",
-  },
-  {
     slug: "dashboard-reporting",
     title: "Dashboard & Reporting",
     tagline: "Zahlen, die entscheiden.",

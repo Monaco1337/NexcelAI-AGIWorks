@@ -27,7 +27,6 @@ export const SYSTEM_SLUGS = [
   "projekt-aufgabenmanagement",
   "mitarbeiter-hr-system",
   "warenwirtschaft-lagerverwaltung",
-  "termin-schichtplanung",
   "dashboard-reporting",
   "recruiting-bewerberplattform",
   // KI

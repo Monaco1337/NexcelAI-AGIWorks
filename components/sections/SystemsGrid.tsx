@@ -6,6 +6,7 @@
  * – Desktop (lg+)  : 4-Spalten-Grid, unverändert
  * – Mobile/Tablet  : Premium Swipe-Slider (CSS scroll-snap + Touch)
  *                    mit Dot-Pagination, Card-Counter & Peek-Effekt
+ * – Daten          : API /api/systems (DB) mit statischem Fallback
  */
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { SYSTEMS, type SystemSlug } from "@/lib/systems-data";
+import type { SystemCardEntry } from "@/lib/systems-store";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 
@@ -55,7 +57,7 @@ const CATEGORIES: { id: CategoryId; label: string; bullets: string[]; icon: Reac
         <rect x="4" y="3" width="16" height="18" rx="1.6" /><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6" />
       </svg>
     ),
-    slugs: ["erp-systeme", "admin-operations-system", "dokumentenmanagement-freigaben", "projekt-aufgabenmanagement", "mitarbeiter-hr-system", "warenwirtschaft-lagerverwaltung", "termin-schichtplanung", "dashboard-reporting", "recruiting-bewerberplattform"],
+    slugs: ["erp-systeme", "admin-operations-system", "dokumentenmanagement-freigaben", "projekt-aufgabenmanagement", "mitarbeiter-hr-system", "warenwirtschaft-lagerverwaltung", "dashboard-reporting", "recruiting-bewerberplattform"],
   },
   {
     id: "ki",
@@ -81,19 +83,73 @@ const CATEGORIES: { id: CategoryId; label: string; bullets: string[]; icon: Reac
   },
 ];
 
+// Unified card type merging static SystemEntry and DB SystemCardEntry
+type UnifiedCard = {
+  slug: string;
+  title: string;
+  desc: string;
+  image: string;
+  alt: string;
+  icon: React.ReactNode;
+  category: string;
+  isPublished: boolean;
+};
+
+function categoryIcon(category: string): React.ReactNode {
+  const cls = { width: 18, height: 18, fill: "none", "aria-hidden": true as const };
+  switch (category) {
+    case "vertrieb":
+      return <svg {...cls} viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>;
+    case "kunden":
+      return <svg {...cls} viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.5" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
+    case "ki":
+      return <svg {...cls} viewBox="0 0 24 24"><path d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>;
+    case "plattformen":
+      return <svg {...cls} viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><rect x="13" y="4" width="8" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><rect x="13" y="11" width="8" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><rect x="3" y="14" width="8" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" /></svg>;
+    default: // unternehmen
+      return <svg {...cls} viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.6" stroke="currentColor" strokeWidth="1.5" /><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
+  }
+}
+
+function toUnified(s: (typeof SYSTEMS)[number]): UnifiedCard {
+  let category = "unternehmen";
+  if (["lead-funnels-crm", "vertriebsplattform-partnerportal", "angebots-beratungssystem"].includes(s.slug)) category = "vertrieb";
+  else if (["kundenportal-self-service", "buchungs-beauty-systeme", "mitglieder-clubverwaltung", "service-supportportal", "omnichannel-kommunikation"].includes(s.slug)) category = "kunden";
+  else if (["ki-automatisierung", "ki-telefonagent-voice"].includes(s.slug)) category = "ki";
+  else if (["premium-websysteme", "branchen-plattformen", "saas-plattform-multi-tenant", "akademie-lernplattform", "schnittstellen-integrationen"].includes(s.slug)) category = "plattformen";
+  return { slug: s.slug, title: s.title, desc: s.desc, image: s.image, alt: s.alt, icon: s.icon, category, isPublished: true };
+}
+
+function dbToUnified(s: SystemCardEntry): UnifiedCard {
+  return { slug: s.slug, title: s.title, desc: s.desc, image: s.image, alt: s.alt, icon: categoryIcon(s.category), category: s.category, isPublished: s.isPublished };
+}
+
 export default function SystemsGrid() {
   const brand = useBrand();
   const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null);
+  const [allCards, setAllCards] = useState<UnifiedCard[]>(SYSTEMS.map(toUnified));
+
+  useEffect(() => {
+    fetch("/api/systems")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.systems) && data.systems.length > 0) {
+          setAllCards(data.systems.map(dbToUnified));
+        }
+      })
+      .catch(() => { /* statischer Fallback bleibt */ });
+  }, []);
 
   const detailHref = (slug: string) =>
     resolveBrandNavHref(`/systeme/${slug}`, brand.id);
 
   const visibleSystems = useMemo(() => {
-    if (!activeCategory) return SYSTEMS;
+    const published = allCards.filter((c) => c.isPublished);
+    if (!activeCategory) return published;
     const cat = CATEGORIES.find((c) => c.id === activeCategory);
-    if (!cat) return SYSTEMS;
-    return SYSTEMS.filter((s) => cat.slugs.includes(s.slug));
-  }, [activeCategory]);
+    if (!cat) return published;
+    return published.filter((c) => c.category === activeCategory);
+  }, [activeCategory, allCards]);
 
   return (
     <section
@@ -189,7 +245,7 @@ function MobileSlider({
   systems,
   detailHref,
 }: {
-  systems: typeof SYSTEMS;
+  systems: UnifiedCard[];
   detailHref: (slug: string) => string;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -333,7 +389,7 @@ function MobileSlider({
 /* ─────────────────────────────────────────────────────────
    Einzelne Slider-Karte (Mobile)
 ───────────────────────────────────────────────────────── */
-type CardData = (typeof SYSTEMS)[number];
+type CardData = UnifiedCard;
 
 function SliderCard({
   card,

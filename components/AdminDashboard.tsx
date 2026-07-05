@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import LogoManager from "@/components/admin/LogoManager";
 import ReferenceManager from "@/components/admin/ReferenceManager";
+import SystemsManager from "@/components/admin/SystemsManager";
 
 const IS_PRODUCTION = process.env.NEXT_PUBLIC_VERCEL === "1" || process.env.NODE_ENV === "production";
 
@@ -145,6 +146,7 @@ type TabId =
   | "analytics"
   | "logos"
   | "referenzen"
+  | "systeme"
   | "settings";
 
 type TimeRange = "24h" | "7d" | "30d";
@@ -243,6 +245,15 @@ function NavIcon({ name }: { name: TabId }) {
           <rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="3" y="14" width="7" height="7" rx="1.5" />
           <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+      );
+    case "systeme":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="5" rx="1.5" />
+          <rect x="14" y="10" width="7" height="9" rx="1.5" />
+          <rect x="3" y="12" width="7" height="7" rx="1.5" />
         </svg>
       );
     case "settings":
@@ -514,6 +525,7 @@ export default function AdminDashboard() {
     { id: "analytics", label: "Analytics" },
     { id: "logos", label: "Logos / Slider" },
     { id: "referenzen", label: "Referenzen" },
+    { id: "systeme", label: "Systeme" },
     { id: "settings", label: "Einstellungen" },
   ];
 
@@ -528,6 +540,7 @@ export default function AdminDashboard() {
     analytics: "Analytics",
     logos: "Logos / Slider",
     referenzen: "Referenzen",
+    systeme: "Systeme",
     settings: "Einstellungen",
   };
 
@@ -1259,6 +1272,18 @@ export default function AdminDashboard() {
               Bilder hochladen, Tags und Module vergeben. Projekte erscheinen sofort auf der Website.
             </p>
             <ReferenceManager accent={sessionBrand.accent} />
+          </GlassCard>
+        )}
+
+        {/* ─── SYSTEME ────────────────────────────────────────────────── */}
+        {activeTab === "systeme" && (
+          <GlassCard title="Systemkarten · Lösungssektion">
+            <p className="mb-5 text-xs leading-relaxed text-[#9CA3AF]">
+              Verwalte alle Systemkarten der Lösungssektion. Reihenfolge per Drag &amp; Drop,
+              Bilder hochladen, Kategorie, Beschreibung und Sichtbarkeit steuern.
+              Neue Systeme erscheinen sofort auf der Website.
+            </p>
+            <SystemsManager />
           </GlassCard>
         )}
 
