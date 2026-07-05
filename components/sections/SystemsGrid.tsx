@@ -16,17 +16,18 @@ import { SYSTEMS, type SystemSlug } from "@/lib/systems-data";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 
-type CategoryId = "vertrieb" | "kunden" | "unternehmen" | "ki";
+type CategoryId = "vertrieb" | "kunden" | "unternehmen" | "ki" | "plattformen";
 
 /**
- * "Nach Ziel" — vier Kategorien, bevor die konkreten Systeme erscheinen.
+ * "Nach Ziel" — fünf Kategorien, bevor die konkreten Systeme erscheinen.
  * Ein Geschäftsführer wählt zuerst ein Ziel, dann sieht er die passenden Systeme.
+ * Jedes der 8 Systeme ist genau einer Kategorie zugeordnet (keine Überschneidung).
  */
 const CATEGORIES: { id: CategoryId; label: string; bullets: string[]; icon: React.ReactNode; slugs: SystemSlug[] }[] = [
   {
     id: "vertrieb",
     label: "Vertrieb",
-    bullets: ["Lead Funnel", "CRM", "Automatisierung"],
+    bullets: ["Lead Funnel", "CRM", "Websysteme"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" />
@@ -37,35 +38,46 @@ const CATEGORIES: { id: CategoryId; label: string; bullets: string[]; icon: Reac
   {
     id: "kunden",
     label: "Kunden",
-    bullets: ["Portale", "Terminbuchung", "Mitglieder"],
+    bullets: ["Terminbuchung", "Kundenportale"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <circle cx="12" cy="8" r="3.2" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
       </svg>
     ),
-    slugs: ["buchungs-beauty-systeme", "mitglieder-clubverwaltung"],
+    slugs: ["buchungs-beauty-systeme"],
   },
   {
     id: "unternehmen",
     label: "Unternehmen",
-    bullets: ["ERP", "Dokumente", "Personal", "Projekte"],
+    bullets: ["ERP", "Finanzen", "Schnittstellen"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <rect x="4" y="3" width="16" height="18" rx="1.6" /><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6" />
       </svg>
     ),
-    slugs: ["erp-systeme", "branchen-plattformen", "schnittstellen-integrationen"],
+    slugs: ["erp-systeme", "schnittstellen-integrationen"],
   },
   {
     id: "ki",
     label: "KI",
-    bullets: ["Agenten", "Telefon", "Workflows", "Assistenz"],
+    bullets: ["Agenten", "Workflows", "Automatisierung"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" />
       </svg>
     ),
-    slugs: ["ki-automatisierung", "schnittstellen-integrationen"],
+    slugs: ["ki-automatisierung"],
+  },
+  {
+    id: "plattformen",
+    label: "Plattformen",
+    bullets: ["Marktplätze", "Mitgliederbereiche"],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="3" y="4" width="8" height="8" rx="1.4" /><rect x="13" y="4" width="8" height="5" rx="1.4" /><rect x="13" y="11" width="8" height="9" rx="1.4" /><rect x="3" y="14" width="8" height="6" rx="1.4" />
+      </svg>
+    ),
+    slugs: ["branchen-plattformen", "mitglieder-clubverwaltung"],
   },
 ];
 
@@ -86,7 +98,7 @@ export default function SystemsGrid() {
   return (
     <section
       id="systeme"
-      className="relative w-full overflow-hidden scroll-mt-[108px] py-20 sm:py-28"
+      className="relative w-full overflow-hidden scroll-mt-[108px] py-20 sm:py-28 lg:py-36"
       style={{
         background:
           "linear-gradient(to bottom, rgba(5,3,14,0.92) 0%, transparent 15%, transparent 85%, rgba(5,3,14,0.92) 100%)",
@@ -101,8 +113,8 @@ export default function SystemsGrid() {
           />
         </div>
 
-        {/* ── Nach Ziel: 4 Kategorien ── */}
-        <div className="mt-10 grid grid-cols-2 gap-3 px-5 sm:px-8 lg:grid-cols-4 lg:gap-4">
+        {/* ── Nach Ziel: 5 Kategorien ── */}
+        <div className="mt-10 grid grid-cols-2 gap-3 px-5 sm:grid-cols-3 sm:px-8 lg:grid-cols-5 lg:gap-4">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
             return (
@@ -436,9 +448,14 @@ function DesktopCard({
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-8%" }}
-      whileHover={{ y: -4 }}
+      whileHover={{
+        y: -6,
+        boxShadow:
+          "0 20px 48px rgba(0,0,0,0.4), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 36px color-mix(in srgb, var(--accent) 18%, transparent)",
+        transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+      }}
       transition={{ duration: 0.5, delay: (index % 4) * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl transition-shadow duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.35)]"
+      className="group relative flex flex-col overflow-hidden rounded-2xl"
       style={{
         background:
           "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%)",

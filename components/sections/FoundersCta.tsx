@@ -44,7 +44,7 @@ export default function FoundersCta() {
   const kontaktHref = resolveBrandNavHref("/kontakt", brand.id);
 
   return (
-    <section className="relative w-full py-20 sm:py-28">
+    <section className="relative w-full py-20 sm:py-28 lg:py-36">
       <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8">
         <div
           className="relative overflow-hidden rounded-[32px] p-7 sm:p-10 lg:p-14"
@@ -84,7 +84,7 @@ export default function FoundersCta() {
                 className="mt-3 text-[2rem] leading-[1.1] tracking-[-0.02em] text-white sm:text-[2.6rem]"
                 style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300 }}
               >
-                Lassen Sie uns Ihr{" "}
+                Direkt mit den Gründern.{" "}
                 <span
                   style={{
                     background: "var(--brand-headline-gradient)",
@@ -95,12 +95,11 @@ export default function FoundersCta() {
                     fontWeight: 400,
                   }}
                 >
-                  System planen.
+                  Keine Agentur-Schleife.
                 </span>
               </h2>
               <p className="mt-5 max-w-[520px] text-[15px] leading-[1.65] text-white/65">
-                Sie sprechen direkt mit uns — persönlich, passgenau, von der
-                ersten Idee bis zur produktiven Umsetzung.
+                Wir begleiten Ihr System persönlich – von der Analyse bis zum Livebetrieb.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -7,7 +7,8 @@
  * Vier große Vertrauens-Karten statt vieler Zahlen — daneben drei Kern-Stats.
  */
 
-import { motion } from "framer-motion";
+import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
+import { useEffect, useRef } from "react";
 import { SectionHeading } from "./SystemsGrid";
 
 type Card = {
@@ -47,15 +48,45 @@ const CARDS: Card[] = [
   },
 ];
 
-const STATS = [
-  { value: "25+", label: "Systeme" },
-  { value: "100%", label: "Individuell" },
-  { value: "3–12", label: "Wochen" },
+type Stat = { number?: number; prefix?: string; suffix?: string; display?: string; label: string };
+
+const STATS: Stat[] = [
+  { number: 25, suffix: "+", label: "Systeme entwickelt" },
+  { number: 100, suffix: "%", label: "Individuell · kein Baukasten" },
+  { number: 2, label: "Gründer · direkter Kontakt" },
+  { display: "3–12", label: "Wochen Projektlaufzeit" },
+  { display: "∞", label: "Langfristige Betreuung" },
 ];
+
+/** Zählt beim ersten Sichtbarwerden von 0 auf den Zielwert hoch — dezent, performant (nur eine MotionValue). */
+function CountUpStat({ stat }: { stat: Stat }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-10%" });
+  const motionValue = useMotionValue(0);
+  const rounded = useTransform(motionValue, (v) => Math.round(v));
+
+  useEffect(() => {
+    if (!inView || stat.number === undefined) return;
+    const controls = animate(motionValue, stat.number, { duration: 1.4, ease: [0.22, 1, 0.36, 1] });
+    return () => controls.stop();
+  }, [inView, stat.number, motionValue]);
+
+  if (stat.number === undefined) {
+    return <span ref={ref}>{stat.display}</span>;
+  }
+
+  return (
+    <span ref={ref}>
+      {stat.prefix}
+      <motion.span>{rounded}</motion.span>
+      {stat.suffix}
+    </span>
+  );
+}
 
 export default function WhyUsSection() {
   return (
-    <section className="relative w-full overflow-hidden py-20 sm:py-28" style={{ background: "#08060f" }}>
+    <section className="relative w-full overflow-hidden py-20 sm:py-28 lg:py-32" style={{ background: "#08060f" }}>
       <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8">
         <SectionHeading eyebrow="Warum wir?" title="Kein Anbieter. Ein Partner." />
 
@@ -94,22 +125,31 @@ export default function WhyUsSection() {
           ))}
         </div>
 
-        {/* Kern-Stats */}
+        {/* Kern-Stats — hoher Kontrast, Count-Up, hochwertiger Glow-Border */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.25 }}
-          className="mx-auto mt-14 grid max-w-[640px] grid-cols-3 gap-4 rounded-2xl p-6 sm:p-8"
+          className="relative mx-auto mt-14 grid max-w-[880px] grid-cols-2 gap-x-4 gap-y-8 overflow-hidden rounded-[26px] p-7 sm:grid-cols-5 sm:gap-4 sm:p-9"
           style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
-            border: "1px solid var(--brand-card-border)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.015) 100%)",
+            border: "1px solid color-mix(in srgb, var(--accent) 22%, var(--brand-card-border))",
+            boxShadow: "0 30px 70px rgba(0,0,0,0.4), 0 0 60px color-mix(in srgb, var(--accent) 10%, transparent), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
-          {STATS.map((s) => (
-            <div key={s.label} className="text-center">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            style={{ background: "linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 55%, transparent), transparent)" }}
+          />
+          {STATS.map((s, i) => (
+            <div
+              key={s.label}
+              className={`relative text-center ${i < STATS.length - 1 ? "sm:after:absolute sm:after:right-[-8px] sm:after:top-1/2 sm:after:h-10 sm:after:w-px sm:after:-translate-y-1/2 sm:after:bg-white/[0.08] sm:after:content-['']" : ""}`}
+            >
               <div
-                className="text-[2rem] font-light leading-none sm:text-[2.4rem]"
+                className="text-[2.1rem] font-light leading-none sm:text-[2.5rem]"
                 style={{
                   background: "var(--brand-headline-gradient)",
                   WebkitBackgroundClip: "text",
@@ -117,11 +157,12 @@ export default function WhyUsSection() {
                   color: "transparent",
                   WebkitTextFillColor: "transparent",
                   fontFamily: "var(--font-headline), system-ui, sans-serif",
+                  filter: "drop-shadow(0 0 18px var(--brand-glow-strong))",
                 }}
               >
-                {s.value}
+                <CountUpStat stat={s} />
               </div>
-              <div className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/45">
+              <div className="mt-2 text-[10.5px] font-medium uppercase leading-snug tracking-[0.10em] text-white/50">
                 {s.label}
               </div>
             </div>

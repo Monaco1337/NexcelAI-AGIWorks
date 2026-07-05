@@ -631,7 +631,14 @@ export default function Navigation() {
         style={{ pointerEvents: navVisible ? "auto" : "none" }}
       >
         {/* Ultra High-End Navigation Container */}
-        <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-9 xl:px-10 pt-4 sm:pt-5 md:pt-6" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}>
+        <div
+          className="relative w-full px-4 sm:px-6 md:px-8 lg:px-9 xl:px-10 transition-[padding] duration-300 ease-out"
+          style={{
+            paddingTop: scrolled
+              ? "max(0.7rem, env(safe-area-inset-top, 0.7rem))"
+              : "max(1rem, env(safe-area-inset-top, 1rem))",
+          }}
+        >
           {/* Main Navigation Bar - Apple Intelligence Style */}
           <motion.div
             className="relative mx-auto max-w-[1320px]"
@@ -639,9 +646,15 @@ export default function Navigation() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            {/* Ultra Glassmorphic Container - Highest Level */}
+            {/* Ultra Glassmorphic Container - Highest Level
+                Kompaktiert beim Scrollen um ~12% Höhe (Padding), damit mehr
+                Platz für Content bleibt, ohne je Inhalte zu verdecken. */}
             <div
-              className="relative rounded-[32px] md:rounded-[36px] lg:rounded-[40px] px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-2.5 sm:py-3 md:py-4 lg:py-5 transition-all duration-300 ease-out overflow-hidden"
+              className={`relative rounded-[32px] md:rounded-[36px] lg:rounded-[40px] px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 transition-all duration-300 ease-out overflow-hidden ${
+                scrolled
+                  ? "py-2 sm:py-2.5 md:py-3 lg:py-3.5"
+                  : "py-2.5 sm:py-3 md:py-4 lg:py-5"
+              }`}
               style={navGlassBaseStyle}
             >
               {/* Top Highlight - Ultra Refined (hidden in heroMode) */}
@@ -1113,34 +1126,46 @@ export default function Navigation() {
                     })}
                   </motion.nav>
 
-                  {/* Primärer CTA: Systemanalyse starten */}
+                  {/* Primärer CTA: Systemanalyse starten — stärkster Fokuspunkt der Navigation */}
                   <Link
                     href={resolveBrandNavHref("/systemanalyse", brand.id)}
                     prefetch={true}
-                    className="group/cta ml-2.5 xl:ml-3 flex-shrink-0"
+                    className="group/cta relative ml-3 xl:ml-4 flex-shrink-0"
                   >
+                    {/* Ambient glow hinter dem CTA — macht ihn optisch dominant */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 -z-10 rounded-full opacity-70 blur-xl transition-opacity duration-300 group-hover/cta:opacity-100"
+                      style={{ background: "color-mix(in srgb, var(--accent) 42%, transparent)" }}
+                    />
                     <motion.span
-                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full px-4 lg:px-5 xl:px-6 py-2.5 lg:py-3 text-[11px] lg:text-xs xl:text-sm font-semibold whitespace-nowrap"
+                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full px-5 lg:px-6 xl:px-7 py-3 lg:py-3.5 text-[11.5px] lg:text-xs xl:text-sm font-semibold whitespace-nowrap"
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
-                      whileHover={{ scale: 1.03, y: -1 }}
+                      whileHover={{ scale: 1.045, y: -1.5 }}
                       whileTap={{ scale: 0.97 }}
                       style={{
-                        background: "color-mix(in srgb, var(--accent) 14%, rgba(255,255,255,0.03))",
-                        border: "1px solid color-mix(in srgb, var(--accent) 48%, transparent)",
+                        background: "color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.04))",
+                        border: "1px solid color-mix(in srgb, var(--accent) 62%, transparent)",
                         color: "#FFFFFF",
                         letterSpacing: "0.01em",
                         backdropFilter: "blur(12px)",
-                        boxShadow: "0 4px 22px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,0.12)",
+                        boxShadow: "0 6px 30px color-mix(in srgb, var(--accent) 34%, transparent), inset 0 1px 0 rgba(255,255,255,0.16)",
                       }}
                     >
+                      {/* Top-Glanz — hebt den CTA von den übrigen Pill-Links ab */}
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full"
+                        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%)" }}
+                      />
                       <span
                         aria-hidden
                         className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-out group-hover/cta:translate-x-full"
                         style={{
                           background:
-                            "linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent)",
+                            "linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)",
                         }}
                       />
                       <span className="relative">Systemanalyse starten</span>
@@ -1149,7 +1174,7 @@ export default function Navigation() {
                         height="14"
                         viewBox="0 0 24 24"
                         aria-hidden
-                        className="relative transition-transform duration-300 group-hover/cta:translate-x-0.5"
+                        className="relative transition-transform duration-300 group-hover/cta:translate-x-1"
                       >
                         <path
                           d="M5 12h14M13 6l6 6-6 6"

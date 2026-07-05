@@ -54,20 +54,26 @@ const IconRequest = () => (
 );
 
 /**
- * Vorher → Nachher → Ergebnis — keine reine Galerie. Fällt auf generische,
- * aber ehrliche Werte zurück, falls eine Referenz (z. B. aus der DB) diese
- * Felder noch nicht gepflegt hat.
+ * 1 Satz Ergebnis/Nutzen — schneller verstehbar als eine ganze Beschreibung.
  */
-function BeforeAfterResult({ project, compact }: { project: ReferenceEntry; compact?: boolean }) {
-  const before = project.before ?? "Manuelle, unverbundene Abläufe.";
-  const after = project.after && project.after.length > 0 ? project.after : project.modules.slice(0, 3);
-  const result = project.result && project.result.length > 0 ? project.result : ["Mehr Struktur", "Weniger Aufwand"];
+function benefitSentence(project: ReferenceEntry): string {
+  if (project.result && project.result.length > 0) return project.result.join(" · ");
+  return project.shortDescription;
+}
+
+/**
+ * Kompakte Vorher → Nachher-Struktur (2 Zeilen statt 3) — keine reine Galerie,
+ * aber auch kein Fließtext. Fällt auf ehrliche Standardwerte zurück, falls
+ * eine Referenz (z. B. aus der DB) diese Felder noch nicht gepflegt hat.
+ */
+function MiniTransition({ project, compact }: { project: ReferenceEntry; compact?: boolean }) {
+  const before = project.before ?? "Manuell · verstreut · unübersichtlich";
+  const after = project.after && project.after.length > 0 ? project.after.join(" · ") : "System · Automatisierung · Übersicht";
 
   return (
-    <div className={`flex flex-col ${compact ? "gap-2" : "gap-2.5"}`}>
+    <div className={`flex flex-col ${compact ? "gap-1.5" : "gap-2"}`}>
       <Row label="Vorher" tone="before" text={before} compact={compact} />
-      <Row label="Nachher" tone="after" text={after.join(" · ")} compact={compact} />
-      <Row label="Ergebnis" tone="result" text={result.join(" · ")} compact={compact} />
+      <Row label="Nachher" tone="after" text={after} compact={compact} />
     </div>
   );
 }
@@ -79,24 +85,24 @@ function Row({
   compact,
 }: {
   label: string;
-  tone: "before" | "after" | "result";
+  tone: "before" | "after";
   text: string;
   compact?: boolean;
 }) {
-  const color = tone === "result" ? "var(--accent)" : tone === "after" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.42)";
+  const color = tone === "after" ? "var(--accent)" : "rgba(255,255,255,0.4)";
   return (
     <div className="flex items-start gap-2">
       <span
-        className={`mt-[3px] shrink-0 rounded-full ${compact ? "px-1.5 py-[1px] text-[8.5px]" : "px-2 py-[2px] text-[9.5px]"} font-semibold uppercase tracking-[0.08em]`}
+        className={`mt-[2px] shrink-0 rounded-full ${compact ? "px-1.5 py-[1px] text-[8px]" : "px-2 py-[2px] text-[9px]"} font-semibold uppercase tracking-[0.08em]`}
         style={{
           color,
-          border: `1px solid ${tone === "result" ? "color-mix(in srgb, var(--accent) 45%, transparent)" : "rgba(255,255,255,0.14)"}`,
-          background: tone === "result" ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "rgba(255,255,255,0.03)",
+          border: `1px solid ${tone === "after" ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "rgba(255,255,255,0.13)"}`,
+          background: tone === "after" ? "color-mix(in srgb, var(--accent) 8%, transparent)" : "transparent",
         }}
       >
         {label}
       </span>
-      <span className={`${compact ? "text-[11.5px]" : "text-[12.5px]"} leading-[1.5]`} style={{ color: tone === "before" ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.82)" }}>
+      <span className={`${compact ? "text-[11px]" : "text-[12px]"} leading-[1.45]`} style={{ color: tone === "before" ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.78)" }}>
         {text}
       </span>
     </div>
@@ -204,9 +210,10 @@ function ReferenceModal({
               {project.fullDescription}
             </p>
 
-            {/* Vorher → Nachher → Ergebnis */}
+            {/* Vorher → Nachher + Ergebnis */}
             <div className="mb-8 rounded-2xl border border-white/8 p-5" style={{ background: "rgba(255,255,255,0.03)" }}>
-              <BeforeAfterResult project={project} />
+              <p className="mb-4 text-[13.5px] font-medium leading-snug text-white/85">{benefitSentence(project)}</p>
+              <MiniTransition project={project} />
             </div>
 
             {/* Tags */}
@@ -285,32 +292,45 @@ function ReferenceCard({
   project,
   index,
   onClick,
+  featured,
 }: {
   project: ReferenceEntry;
   index: number;
   onClick: () => void;
+  featured?: boolean;
 }) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-5%" }}
+      whileHover={{
+        y: -5,
+        boxShadow:
+          "0 12px 56px rgba(0,0,0,0.5), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent)",
+        transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+      }}
       transition={{ duration: 0.55, delay: (index % 3) * 0.07, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/[0.07] transition-all duration-300 hover:border-white/15 hover:shadow-[0_8px_48px_rgba(0,0,0,0.5)]"
+      className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/[0.07] ${featured ? "lg:flex-row" : ""}`}
       style={{ background: "rgba(255,255,255,0.03)" }}
       onClick={onClick}
     >
       {/* Image */}
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
-        <Image
-          src={project.coverImage}
-          alt={`${project.title} – ${project.shortDescription}`}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          quality={85}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          loading="lazy"
-        />
+      <div
+        className={`relative w-full shrink-0 overflow-hidden ${featured ? "lg:w-[54%]" : ""}`}
+        style={{ aspectRatio: featured ? undefined : "16/9" }}
+      >
+        <div className={featured ? "relative h-full min-h-[240px] w-full lg:min-h-full" : "relative h-full w-full"}>
+          <Image
+            src={project.coverImage}
+            alt={`${project.title} – ${project.shortDescription}`}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            quality={85}
+            sizes={featured ? "(max-width: 1024px) 100vw, 54vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+            loading="lazy"
+          />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-70 transition-opacity group-hover:opacity-50" />
 
         {/* Hover overlay */}
@@ -321,20 +341,34 @@ function ReferenceCard({
         </div>
 
         {/* Status badge */}
-        <div className="absolute right-3 top-3">
+        <div className="absolute right-3 top-3 flex items-center gap-2">
+          {featured && (
+            <span className="inline-flex items-center rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/85 backdrop-blur-sm">
+              Featured
+            </span>
+          )}
           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm ${STATUS_COLOR[project.status] ?? "bg-white/10 text-white/60 border-white/20"}`}>
             {STATUS_LABEL[project.status] ?? project.status}
           </span>
         </div>
       </div>
 
-      {/* Content — Vorher → Nachher → Ergebnis statt reiner Galerie */}
-      <div className="flex flex-1 flex-col p-5">
-        <div className="mb-1.5 flex items-center gap-2">
-          <span className="text-[11px] font-medium text-white/35">{project.type}</span>
+      {/* Content — Kategorie, Titel, 1-Satz-Nutzen, kompakte Vorher/Nachher, CTA */}
+      <div className={`flex flex-1 flex-col p-5 ${featured ? "lg:justify-center lg:p-7" : ""}`}>
+        <span className="mb-1.5 text-[11px] font-medium text-white/35">{project.type}</span>
+        <h3 className={`font-semibold text-white ${featured ? "text-xl" : "text-base"}`}>{project.title}</h3>
+        <p className={`mt-2 leading-[1.5] text-white/70 ${featured ? "text-[14px]" : "text-[12.5px]"}`}>
+          {benefitSentence(project)}
+        </p>
+        <div className="mt-3.5">
+          <MiniTransition project={project} />
         </div>
-        <h3 className="mb-3 text-base font-semibold text-white">{project.title}</h3>
-        <BeforeAfterResult project={project} />
+        <span className="mt-4 inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold transition-transform duration-300 group-hover:translate-x-0.5" style={{ color: "var(--accent)" }}>
+          Details ansehen
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </div>
     </motion.article>
   );
@@ -437,11 +471,28 @@ function MobileReferenceSlider({
               </div>
             </div>
 
-            {/* Content — Vorher → Nachher → Ergebnis */}
-            <div className="flex flex-1 flex-col p-5">
-              <span className="mb-1 text-[11px] font-medium text-white/35">{project.type}</span>
-              <h3 className="mb-2.5 text-base font-semibold text-white">{project.title}</h3>
-              <BeforeAfterResult project={project} compact />
+            {/* Content — nur das Nötigste: Name, 1 Nutzen-Satz, Tags, CTA */}
+            <div className="flex flex-1 flex-col p-4">
+              <span className="mb-1 text-[10.5px] font-medium text-white/35">{project.type}</span>
+              <h3 className="text-[15px] font-semibold text-white">{project.title}</h3>
+              <p className="mt-1.5 line-clamp-2 text-[12px] leading-[1.5] text-white/62">
+                {benefitSentence(project)}
+              </p>
+              {project.tags.length > 0 && (
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {project.tags.slice(0, 2).map((tag) => (
+                    <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9.5px] font-medium text-white/55">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <span className="mt-3 inline-flex w-fit items-center gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--accent)" }}>
+                Details ansehen
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
             </div>
           </motion.article>
         ))}
@@ -531,7 +582,7 @@ export default function ProjectsShowcase() {
 
   return (
     <>
-      <section id="projekte" className="relative w-full scroll-mt-[108px] py-20 sm:py-28">
+      <section id="projekte" className="relative w-full scroll-mt-[108px] py-20 sm:py-28 lg:py-36">
         <div className="mx-auto w-full max-w-[1280px]">
           <div className="px-5 sm:px-8">
             <SectionHeading
@@ -546,16 +597,49 @@ export default function ProjectsShowcase() {
             <MobileReferenceSlider references={references} onSelect={setActiveRef} />
           </div>
 
-          {/* Desktop: 3-Spalten-Grid (lg+) */}
-          <div className="mt-12 hidden px-5 sm:px-8 lg:grid lg:grid-cols-3 lg:gap-5">
-            {references.map((project, i) => (
-              <ReferenceCard
-                key={project.id}
-                project={project}
-                index={i}
-                onClick={() => setActiveRef(project)}
-              />
-            ))}
+          {/* Desktop: Featured-Layout — 1 große Referenz, 2 kleinere daneben, danach Grid */}
+          <div className="mt-12 hidden px-5 sm:px-8 lg:block">
+            {references.length > 0 && (
+              <div
+                className="grid gap-5"
+                style={{
+                  gridTemplateColumns: "2fr 1fr",
+                  gridTemplateRows: "1fr 1fr",
+                  gridTemplateAreas: '"featured small1" "featured small2"',
+                }}
+              >
+                <div style={{ gridArea: "featured" }}>
+                  <ReferenceCard
+                    project={references[0]}
+                    index={0}
+                    featured
+                    onClick={() => setActiveRef(references[0])}
+                  />
+                </div>
+                {references.slice(1, 3).map((project, i) => (
+                  <div key={project.id} style={{ gridArea: i === 0 ? "small1" : "small2" }}>
+                    <ReferenceCard
+                      project={project}
+                      index={i + 1}
+                      onClick={() => setActiveRef(project)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {references.length > 3 && (
+              <div className="mt-5 grid grid-cols-3 gap-5">
+                {references.slice(3).map((project, i) => (
+                  <ReferenceCard
+                    key={project.id}
+                    project={project}
+                    index={i + 3}
+                    onClick={() => setActiveRef(project)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Bottom CTA */}

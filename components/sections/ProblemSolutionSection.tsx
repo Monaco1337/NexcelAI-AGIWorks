@@ -30,7 +30,7 @@ const SOLUTION_BULLETS = [
 export default function ProblemSolutionSection() {
   return (
     <section
-      className="relative w-full overflow-hidden pt-10 pb-20 sm:pt-12 sm:pb-28"
+      className="relative w-full overflow-hidden pt-14 pb-24 sm:pt-16 sm:pb-32 lg:pt-20 lg:pb-40"
       style={{
         background:
           "radial-gradient(ellipse 90% 60% at 50% 50%, rgba(109,40,217,0.07) 0%, transparent 70%)," +
@@ -128,14 +128,16 @@ function Column({
           <span className="text-white/55" style={{ fontWeight: 400 }}>{title[1]}</span>
         )}
       </h3>
-      <ul className={`mt-6 flex flex-wrap gap-2 ${isSolution ? "lg:justify-end" : ""}`}>
+      <ul className={`mt-7 flex flex-wrap gap-2.5 ${isSolution ? "lg:justify-end" : ""}`}>
         {bullets.map((b) => (
           <li
             key={b}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-medium text-white/78"
+            className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-medium text-white/82 transition-all duration-300 hover:scale-[1.03]"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${isSolution ? "rgba(196,181,253,0.22)" : "rgba(255,255,255,0.10)"}`,
+              background: isSolution
+                ? "linear-gradient(180deg, rgba(196,181,253,0.10) 0%, rgba(196,181,253,0.03) 100%)"
+                : "rgba(255,255,255,0.04)",
+              border: `1px solid ${isSolution ? "rgba(196,181,253,0.28)" : "rgba(255,255,255,0.11)"}`,
             }}
           >
             {isSolution ? <CheckIcon /> : <DotIcon />}

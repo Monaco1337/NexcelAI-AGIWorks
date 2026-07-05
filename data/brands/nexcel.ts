@@ -130,7 +130,7 @@ export const nexcelBrand: BrandConfig = {
   footer: {
     tagline: "Unternehmenssysteme: Systemdesign, Prozesse, Branding und Automatisierung.",
     ctaTitle: "Finden Sie heraus, welches digitale System Ihrem Unternehmen aktuell den größten Hebel bringt.",
-    ctaSubline: "Kostenlos, unverbindlich und in wenigen Minuten.",
+    ctaSubline: "Kostenlos, unverbindlich und direkt mit den Gründern.",
     ctaButtonText: "Kostenlose Systemanalyse starten",
     ctaButtonHref: "/systemanalyse",
     links: {

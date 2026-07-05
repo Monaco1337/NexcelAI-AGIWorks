@@ -62,6 +62,9 @@ export default function PremiumHero() {
       {/* ── z-0  Background grid + animated glow ─────────────────── */}
       <HeroBg />
 
+      {/* ── z-[6]  Schwebende UI-Fragmente — dezente Systemanmutung ── */}
+      <FloatingFragments />
+
       {/* ── Nav spacer ───────────────────────────────────────────── */}
       <div aria-hidden style={{ height: "calc(env(safe-area-inset-top,0px) + 116px)" }} />
 
@@ -149,6 +152,15 @@ export default function PremiumHero() {
             stroke="#C4B5FD" strokeWidth="0.6" opacity="0.22"
             strokeDasharray="6 10"
           />
+
+          {/* dezente Connection-Lines zwischen den Node-Dots — "alles verbunden" */}
+          <motion.path
+            d="M 250 15 L 484 250 L 250 485 L 16 250 Z"
+            stroke="url(#phOrb2)" strokeWidth="0.5" opacity="0.16"
+            strokeDasharray="2 8" fill="none"
+            animate={{ strokeDashoffset: [0, -40] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+          />
         </svg>
       </div>
 
@@ -233,15 +245,20 @@ export default function PremiumHero() {
           transition={{ duration: 0.6, delay: 0.19, ease: [0.22, 1, 0.36, 1] }}
           className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
         >
-          <Link href={analyseHref} prefetch className="group/cta">
+          <Link href={analyseHref} prefetch className="group/cta relative">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -z-10 rounded-2xl opacity-70 blur-2xl transition-opacity duration-300 group-hover/cta:opacity-100"
+              style={{ background: "color-mix(in srgb, var(--accent) 40%, transparent)" }}
+            />
             <span
               className="relative flex w-fit items-center gap-2.5 overflow-hidden rounded-2xl px-7 py-[16px] text-[14px] font-semibold text-white transition-transform duration-300 group-hover/cta:-translate-y-0.5"
               style={{
-                background: "color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.03))",
-                border: "1px solid color-mix(in srgb, var(--accent) 50%, transparent)",
+                background: "color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,0.03))",
+                border: "1px solid color-mix(in srgb, var(--accent) 58%, transparent)",
                 fontFamily: "var(--font-headline), system-ui, sans-serif",
                 backdropFilter: "blur(12px)",
-                boxShadow: "0 6px 28px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,0.13)",
+                boxShadow: "0 8px 34px color-mix(in srgb, var(--accent) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)",
               }}
             >
               <span aria-hidden
@@ -428,6 +445,41 @@ export default function PremiumHero() {
         {/* /feature+card group */}
       </div>
     </section>
+  );
+}
+
+/**
+ * Leicht schwebende UI-Fragmente im Hintergrund — dezente Glas-Kacheln,
+ * die die "System statt Einzelteile"-Erzählung unterstützen, ohne
+ * abzulenken. Rein dekorativ, keine Interaktion, performant (nur
+ * transform/opacity, kein Repaint-schwerer Content).
+ */
+function FloatingFragments() {
+  const fragments = [
+    { top: "14%", left: "6%", size: 46, delay: 0, duration: 9 },
+    { top: "62%", left: "10.5%", size: 34, delay: 1.4, duration: 11 },
+    { top: "40%", left: "3%", size: 26, delay: 2.6, duration: 8 },
+  ];
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[6] hidden overflow-hidden lg:block">
+      {fragments.map((f, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-xl"
+          style={{
+            top: f.top,
+            left: f.left,
+            width: f.size,
+            height: f.size,
+            background: "linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.015) 100%)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
+          animate={{ y: [0, -14, 0], opacity: [0.55, 0.85, 0.55] }}
+          transition={{ duration: f.duration, delay: f.delay, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
   );
 }
 

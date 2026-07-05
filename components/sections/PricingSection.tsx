@@ -22,12 +22,13 @@ type Price = {
   featured?: boolean;
 };
 
+/** Projektkorridore statt einzelner "ab"-Preise — realistischer Rahmen statt Einstiegspreis-Illusion. */
 const PRICES: Price[] = [
-  { title: "Premium-Websystem", price: "ab 3.900 €", note: "Performance, Design und Conversion." },
-  { title: "Buchungssystem", price: "ab 7.500 €", note: "Termine, Kunden und Abläufe digital." },
-  { title: "Lead-Funnel & CRM", price: "ab 9.500 €", note: "Leads gewinnen und steuern." },
-  { title: "Unternehmenssystem", price: "ab 15.000 €", note: "Prozesse zentral verbinden.", featured: true },
-  { title: "Individuelles ERP-System", price: "ab 25.000 €", note: "Warenwirtschaft, Finanzen, Ressourcen." },
+  { title: "Premium-Websystem", price: "3.900–8.000 €", note: "Performance, Design und Conversion." },
+  { title: "Buchungssystem", price: "7.500–15.000 €", note: "Termine, Kunden und Abläufe digital." },
+  { title: "Lead-Funnel & CRM", price: "9.500–20.000 €", note: "Leads gewinnen und steuern." },
+  { title: "Unternehmenssystem", price: "15.000–35.000 €", note: "Prozesse zentral verbinden.", featured: true },
+  { title: "Individuelles ERP-System", price: "25.000–60.000 €", note: "Warenwirtschaft, Finanzen, Ressourcen." },
   { title: "KI & Automatisierung", price: "ab 7.500 €", suffix: "zusätzlich", note: "Ergänzt jedes System." },
 ];
 
@@ -39,12 +40,12 @@ export default function PricingSection() {
   )}`;
 
   return (
-    <section id="preise" className="relative w-full scroll-mt-[108px] py-20 sm:py-28">
+    <section id="preise" className="relative w-full scroll-mt-[108px] py-20 sm:py-28 lg:py-36">
       <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8">
         <SectionHeading
           eyebrow="Preise"
           title="Transparente Orientierung. Keine Baukästen."
-          subtitle="Jedes System wird individuell geplant. Die Preise dienen ausschließlich zur Orientierung."
+          subtitle="Jedes System wird individuell geplant. Die Preise dienen als realistische Orientierung."
         />
 
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -87,9 +88,9 @@ export default function PricingSection() {
               </h3>
               <p className="mt-1 text-[12.5px] leading-[1.5] text-white/50">{p.note}</p>
 
-              <div className="mt-4 flex items-baseline gap-2">
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span
-                  className="text-[1.5rem] font-semibold"
+                  className="text-[1.2rem] font-semibold sm:text-[1.32rem]"
                   style={{
                     fontFamily: "var(--font-headline), system-ui, sans-serif",
                     background: "var(--brand-headline-gradient)",
