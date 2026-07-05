@@ -75,7 +75,24 @@ export function ensureSchema(): Promise<boolean> {
     const client = getSql();
     if (!client) return false;
 
-    try {
+    /**
+     * Jede Tabelle wird ISOLIERT angelegt. Schlägt ein DDL fehl (z. B. wegen
+     * eines reservierten Spaltennamens oder eines Migrations-Konflikts), darf
+     * das NIEMALS den Zugriff auf alle anderen Tabellen blockieren.
+     * `db()` bleibt damit für bereits existierende Tabellen (Kontakte,
+     * Referenzen, Logos …) voll funktionsfähig.
+     */
+    let hadError = false;
+    const run = async (label: string, fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+      } catch (error) {
+        hadError = true;
+        console.error(`❌ [PG] Migration "${label}" fehlgeschlagen:`, error);
+      }
+    };
+
+    await run("contact_posts", async () => {
       await client`
         CREATE TABLE IF NOT EXISTS contact_posts (
           id           TEXT PRIMARY KEY,
@@ -98,7 +115,9 @@ export function ensureSchema(): Promise<boolean> {
         CREATE INDEX IF NOT EXISTS idx_contact_posts_created_at
         ON contact_posts (created_at DESC)
       `;
+    });
 
+    await run("demo_requests", async () => {
       await client`
         CREATE TABLE IF NOT EXISTS demo_requests (
           id           TEXT PRIMARY KEY,
@@ -117,7 +136,9 @@ export function ensureSchema(): Promise<boolean> {
         CREATE INDEX IF NOT EXISTS idx_demo_requests_created_at
         ON demo_requests (created_at DESC)
       `;
+    });
 
+    await run("customer_logos", async () => {
       await client`
         CREATE TABLE IF NOT EXISTS customer_logos (
           id            TEXT PRIMARY KEY,
@@ -137,7 +158,9 @@ export function ensureSchema(): Promise<boolean> {
         CREATE INDEX IF NOT EXISTS idx_customer_logos_sort
         ON customer_logos (sort_order ASC, created_at ASC)
       `;
+    });
 
+    await run("references_projects", async () => {
       await client`
         CREATE TABLE IF NOT EXISTS references_projects (
           id               TEXT PRIMARY KEY,
@@ -164,6 +187,9 @@ export function ensureSchema(): Promise<boolean> {
         CREATE INDEX IF NOT EXISTS idx_references_sort
         ON references_projects (sort_order ASC, created_at ASC)
       `;
+    });
+
+    await run("reference_images", async () => {
       await client`
         CREATE TABLE IF NOT EXISTS reference_images (
           id           TEXT PRIMARY KEY,
@@ -179,7 +205,9 @@ export function ensureSchema(): Promise<boolean> {
         CREATE INDEX IF NOT EXISTS idx_reference_images_ref
         ON reference_images (reference_id, sort_order ASC)
       `;
+    });
 
+    await run("systems_cards", async () => {
       await client`
         CREATE TABLE IF NOT EXISTS systems_cards (
           id                  TEXT PRIMARY KEY,
@@ -187,7 +215,7 @@ export function ensureSchema(): Promise<boolean> {
           category            TEXT NOT NULL DEFAULT 'unternehmen',
           title               TEXT NOT NULL DEFAULT '',
           tagline             TEXT NOT NULL DEFAULT '',
-          desc                TEXT NOT NULL DEFAULT '',
+          card_desc           TEXT NOT NULL DEFAULT '',
           long_desc           TEXT NOT NULL DEFAULT '',
           bullets             JSONB NOT NULL DEFAULT '[]',
           details             JSONB NOT NULL DEFAULT '[]',
@@ -201,6 +229,11 @@ export function ensureSchema(): Promise<boolean> {
           updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `;
+      // Falls eine frühere (kaputte) Version die Spalte "desc" hatte:
+      // sauber auf "card_desc" migrieren, ohne Daten zu verlieren.
+      await client`
+        ALTER TABLE systems_cards RENAME COLUMN "desc" TO card_desc
+      `.catch(() => {/* Spalte existiert nicht — ok */});
       await client`
         CREATE INDEX IF NOT EXISTS idx_systems_cards_sort
         ON systems_cards (sort_order ASC, created_at ASC)
@@ -209,15 +242,15 @@ export function ensureSchema(): Promise<boolean> {
         CREATE UNIQUE INDEX IF NOT EXISTS idx_systems_cards_slug
         ON systems_cards (slug)
       `;
+    });
 
+    if (hadError) {
+      console.warn("⚠️ [PG] Schema teilweise mit Fehlern initialisiert — funktionsfähige Tabellen bleiben nutzbar.");
+    } else {
       console.log("✅ [PG] Schema bereit");
-      return true;
-    } catch (error) {
-      console.error("❌ [PG] Schema-Bootstrap fehlgeschlagen:", error);
-      // Reset, damit ein späterer Versuch erneut booten kann.
-      schemaPromise = null;
-      return false;
     }
+    // Verbindung steht → Client zurückgeben, auch bei einzelnen DDL-Fehlern.
+    return true;
   })();
 
   return schemaPromise;

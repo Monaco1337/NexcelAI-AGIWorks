@@ -33,7 +33,7 @@ type DbSystem = {
   category: string;
   title: string;
   tagline: string;
-  desc: string;
+  card_desc: string;
   long_desc: string;
   bullets: string[];
   details: string[];
@@ -51,7 +51,7 @@ function rowToEntry(r: DbSystem): SystemCardEntry {
     category: r.category,
     title: r.title,
     tagline: r.tagline,
-    desc: r.desc,
+    desc: r.card_desc,
     longDesc: r.long_desc,
     bullets: r.bullets ?? [],
     details: r.details ?? [],
@@ -108,7 +108,7 @@ async function seedIfEmpty(client: Awaited<ReturnType<typeof db>>) {
     const entry = staticToEntry(s, i);
     await client`
       INSERT INTO systems_cards
-        (id, slug, category, title, tagline, desc, long_desc,
+        (id, slug, category, title, tagline, card_desc, long_desc,
          bullets, details, image, alt, sort_order, is_published, created_at, updated_at)
       VALUES (
         ${entry.id}, ${entry.slug}, ${entry.category}, ${entry.title}, ${entry.tagline},
@@ -172,7 +172,7 @@ export async function createSystem(id: string, input: CreateSystemInput): Promis
   if (!client) return false;
   await client`
     INSERT INTO systems_cards
-      (id, slug, category, title, tagline, desc, long_desc,
+      (id, slug, category, title, tagline, card_desc, long_desc,
        bullets, details, image, alt, sort_order, is_published, created_at, updated_at)
     VALUES (
       ${id}, ${input.slug}, ${input.category}, ${input.title}, ${input.tagline},
@@ -196,7 +196,7 @@ export async function updateSystem(id: string, input: UpdateSystemInput): Promis
       category    = COALESCE(${input.category ?? null}, category),
       title       = COALESCE(${input.title ?? null}, title),
       tagline     = COALESCE(${input.tagline ?? null}, tagline),
-      desc        = COALESCE(${input.desc ?? null}, desc),
+      card_desc   = COALESCE(${input.desc ?? null}, card_desc),
       long_desc   = COALESCE(${input.longDesc ?? null}, long_desc),
       bullets     = COALESCE(${input.bullets ? JSON.stringify(input.bullets) : null}::jsonb, bullets),
       details     = COALESCE(${input.details ? JSON.stringify(input.details) : null}::jsonb, details),
