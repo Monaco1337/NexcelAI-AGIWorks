@@ -554,15 +554,6 @@ function PhoneIcon() {
     </svg>
   );
 }
-function PinIcon() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11Z" />
-      <circle cx="12" cy="10" r="2.5" />
-    </svg>
-  );
-}
-
 export default function ContactPageContent() {
   const brand = useBrand();
   const { contactPage } = brand;
@@ -956,11 +947,6 @@ export default function ContactPageContent() {
                     label="Telefon"
                     value={contactPage.direct.phone}
                     href={contactPage.direct.phoneHref}
-                  />
-                  <ContactInfoTile
-                    icon={<PinIcon />}
-                    label="Standort"
-                    value={contactPage.direct.location}
                   />
                 </div>
 
