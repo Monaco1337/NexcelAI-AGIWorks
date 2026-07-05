@@ -292,12 +292,10 @@ function ReferenceCard({
   project,
   index,
   onClick,
-  featured,
 }: {
   project: ReferenceEntry;
   index: number;
   onClick: () => void;
-  featured?: boolean;
 }) {
   return (
     <motion.article
@@ -311,26 +309,21 @@ function ReferenceCard({
         transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
       }}
       transition={{ duration: 0.55, delay: (index % 3) * 0.07, ease: [0.22, 1, 0.36, 1] }}
-      className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/[0.07] ${featured ? "lg:flex-row" : ""}`}
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/[0.07]"
       style={{ background: "rgba(255,255,255,0.03)" }}
       onClick={onClick}
     >
       {/* Image */}
-      <div
-        className={`relative w-full shrink-0 overflow-hidden ${featured ? "lg:w-[54%]" : ""}`}
-        style={{ aspectRatio: featured ? undefined : "16/9" }}
-      >
-        <div className={featured ? "relative h-full min-h-[240px] w-full lg:min-h-full" : "relative h-full w-full"}>
-          <Image
-            src={project.coverImage}
-            alt={`${project.title} – ${project.shortDescription}`}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-            quality={85}
-            sizes={featured ? "(max-width: 1024px) 100vw, 54vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
-            loading="lazy"
-          />
-        </div>
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
+        <Image
+          src={project.coverImage}
+          alt={`${project.title} – ${project.shortDescription}`}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          quality={85}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          loading="lazy"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-70 transition-opacity group-hover:opacity-50" />
 
         {/* Hover overlay */}
@@ -341,12 +334,7 @@ function ReferenceCard({
         </div>
 
         {/* Status badge */}
-        <div className="absolute right-3 top-3 flex items-center gap-2">
-          {featured && (
-            <span className="inline-flex items-center rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/85 backdrop-blur-sm">
-              Featured
-            </span>
-          )}
+        <div className="absolute right-3 top-3">
           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm ${STATUS_COLOR[project.status] ?? "bg-white/10 text-white/60 border-white/20"}`}>
             {STATUS_LABEL[project.status] ?? project.status}
           </span>
@@ -354,10 +342,10 @@ function ReferenceCard({
       </div>
 
       {/* Content — Kategorie, Titel, 1-Satz-Nutzen, kompakte Vorher/Nachher, CTA */}
-      <div className={`flex flex-1 flex-col p-5 ${featured ? "lg:justify-center lg:p-7" : ""}`}>
+      <div className="flex flex-1 flex-col p-5">
         <span className="mb-1.5 text-[11px] font-medium text-white/35">{project.type}</span>
-        <h3 className={`font-semibold text-white ${featured ? "text-xl" : "text-base"}`}>{project.title}</h3>
-        <p className={`mt-2 leading-[1.5] text-white/70 ${featured ? "text-[14px]" : "text-[12.5px]"}`}>
+        <h3 className="text-base font-semibold text-white">{project.title}</h3>
+        <p className="mt-2 text-[12.5px] leading-[1.5] text-white/70">
           {benefitSentence(project)}
         </p>
         <div className="mt-3.5">
@@ -597,49 +585,16 @@ export default function ProjectsShowcase() {
             <MobileReferenceSlider references={references} onSelect={setActiveRef} />
           </div>
 
-          {/* Desktop: Featured-Layout — 1 große Referenz, 2 kleinere daneben, danach Grid */}
-          <div className="mt-12 hidden px-5 sm:px-8 lg:block">
-            {references.length > 0 && (
-              <div
-                className="grid gap-5"
-                style={{
-                  gridTemplateColumns: "2fr 1fr",
-                  gridTemplateRows: "1fr 1fr",
-                  gridTemplateAreas: '"featured small1" "featured small2"',
-                }}
-              >
-                <div style={{ gridArea: "featured" }}>
-                  <ReferenceCard
-                    project={references[0]}
-                    index={0}
-                    featured
-                    onClick={() => setActiveRef(references[0])}
-                  />
-                </div>
-                {references.slice(1, 3).map((project, i) => (
-                  <div key={project.id} style={{ gridArea: i === 0 ? "small1" : "small2" }}>
-                    <ReferenceCard
-                      project={project}
-                      index={i + 1}
-                      onClick={() => setActiveRef(project)}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {references.length > 3 && (
-              <div className="mt-5 grid grid-cols-3 gap-5">
-                {references.slice(3).map((project, i) => (
-                  <ReferenceCard
-                    key={project.id}
-                    project={project}
-                    index={i + 3}
-                    onClick={() => setActiveRef(project)}
-                  />
-                ))}
-              </div>
-            )}
+          {/* Desktop: einheitliches 3-Spalten-Grid — alle Karten gleich groß */}
+          <div className="mt-12 hidden px-5 sm:px-8 lg:grid lg:grid-cols-3 lg:gap-5">
+            {references.map((project, i) => (
+              <ReferenceCard
+                key={project.id}
+                project={project}
+                index={i}
+                onClick={() => setActiveRef(project)}
+              />
+            ))}
           </div>
 
           {/* Bottom CTA */}
