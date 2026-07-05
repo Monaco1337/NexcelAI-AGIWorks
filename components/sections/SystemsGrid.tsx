@@ -27,57 +27,57 @@ const CATEGORIES: { id: CategoryId; label: string; bullets: string[]; icon: Reac
   {
     id: "vertrieb",
     label: "Vertrieb",
-    bullets: ["Lead Funnel", "CRM", "Websysteme"],
+    bullets: ["Lead & CRM", "Partner", "Angebote"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" />
       </svg>
     ),
-    slugs: ["lead-funnels-crm", "premium-websysteme"],
+    slugs: ["lead-funnels-crm", "vertriebsplattform-partnerportal", "angebots-beratungssystem"],
   },
   {
     id: "kunden",
     label: "Kunden",
-    bullets: ["Terminbuchung", "Kundenportale"],
+    bullets: ["Portale", "Buchung", "Support"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <circle cx="12" cy="8" r="3.2" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
       </svg>
     ),
-    slugs: ["buchungs-beauty-systeme"],
+    slugs: ["kundenportal-self-service", "buchungs-beauty-systeme", "mitglieder-clubverwaltung", "service-supportportal", "omnichannel-kommunikation"],
   },
   {
     id: "unternehmen",
     label: "Unternehmen",
-    bullets: ["ERP", "Finanzen", "Schnittstellen"],
+    bullets: ["ERP", "HR", "Operations"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <rect x="4" y="3" width="16" height="18" rx="1.6" /><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6" />
       </svg>
     ),
-    slugs: ["erp-systeme", "schnittstellen-integrationen"],
+    slugs: ["erp-systeme", "admin-operations-system", "dokumentenmanagement-freigaben", "projekt-aufgabenmanagement", "mitarbeiter-hr-system", "warenwirtschaft-lagerverwaltung", "termin-schichtplanung", "dashboard-reporting", "recruiting-bewerberplattform"],
   },
   {
     id: "ki",
     label: "KI",
-    bullets: ["Agenten", "Workflows", "Automatisierung"],
+    bullets: ["Agenten", "Voice", "Automatisierung"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" />
       </svg>
     ),
-    slugs: ["ki-automatisierung"],
+    slugs: ["ki-automatisierung", "ki-telefonagent-voice"],
   },
   {
     id: "plattformen",
     label: "Plattformen",
-    bullets: ["Marktplätze", "Mitgliederbereiche"],
+    bullets: ["SaaS", "Akademie", "Branchen"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <rect x="3" y="4" width="8" height="8" rx="1.4" /><rect x="13" y="4" width="8" height="5" rx="1.4" /><rect x="13" y="11" width="8" height="9" rx="1.4" /><rect x="3" y="14" width="8" height="6" rx="1.4" />
       </svg>
     ),
-    slugs: ["branchen-plattformen", "mitglieder-clubverwaltung"],
+    slugs: ["premium-websysteme", "branchen-plattformen", "saas-plattform-multi-tenant", "akademie-lernplattform", "schnittstellen-integrationen"],
   },
 ];
 

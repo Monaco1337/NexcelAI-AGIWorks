@@ -10,13 +10,34 @@
  */
 
 export const SYSTEM_SLUGS = [
-  "premium-websysteme",
-  "buchungs-beauty-systeme",
+  // Vertrieb
   "lead-funnels-crm",
+  "vertriebsplattform-partnerportal",
+  "angebots-beratungssystem",
+  // Kunden
+  "kundenportal-self-service",
+  "buchungs-beauty-systeme",
   "mitglieder-clubverwaltung",
-  "branchen-plattformen",
+  "service-supportportal",
+  "omnichannel-kommunikation",
+  // Unternehmen
   "erp-systeme",
+  "admin-operations-system",
+  "dokumentenmanagement-freigaben",
+  "projekt-aufgabenmanagement",
+  "mitarbeiter-hr-system",
+  "warenwirtschaft-lagerverwaltung",
+  "termin-schichtplanung",
+  "dashboard-reporting",
+  "recruiting-bewerberplattform",
+  // KI
   "ki-automatisierung",
+  "ki-telefonagent-voice",
+  // Plattformen
+  "premium-websysteme",
+  "branchen-plattformen",
+  "saas-plattform-multi-tenant",
+  "akademie-lernplattform",
   "schnittstellen-integrationen",
 ] as const;
 
