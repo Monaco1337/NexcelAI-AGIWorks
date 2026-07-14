@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import LogoManager from "@/components/admin/LogoManager";
@@ -330,92 +330,116 @@ export default function AdminDashboard() {
     user?.brand === "agiworks" ? "agiworks" : "nexcel";
   const sessionBrand = BRAND_META[sessionBrandKey];
 
-  useEffect(() => {
-    loadData(true);
-    // Refresh every 2 seconds — analytics data is quite chatty, keeps server cool.
-    const interval = setInterval(() => loadData(false), 2000);
-    return () => clearInterval(interval);
-  }, [brandFilter]);
+  // Signatur der zuletzt geladenen Daten. Damit wird das gesamte Dashboard
+  // NUR neu gerendert, wenn sich wirklich etwas geändert hat — sonst blockiert
+  // das Hintergrund-Polling jede Interaktion (Tab-Wechsel dauerte ~5 s).
+  const lastPayloadRef = useRef<string>("");
 
-  const loadData = async (isInitial = false) => {
+  const loadData = useCallback(async (isInitial = false) => {
     try {
       if (isInitial) {
         setLoading(true);
         setError(null);
         setErrorDetails(null);
       }
-      
-      // DIREKT ÜBER SERVER ACTIONS - KEINE API-CALLS!
+
+      // Daten direkt über Server Action + APIs laden.
       const { getAdminContacts } = await import("@/app/actions/admin");
       const brandQuery = brandFilter === "all" ? "" : `?brand=${brandFilter}`;
-      
+
       const [contactsData, statsRes, demoRes, userRes] = await Promise.all([
-        getAdminContacts(), // Server Action für Posts
-        fetch(`/api/admin/stats${brandQuery}`), // Stats inkl. Analytics
-        fetch("/api/admin/demo-requests?archived=false"), // Demo bleibt API
-        fetch("/api/admin/me"), // Auth bleibt API
+        getAdminContacts(),
+        fetch(`/api/admin/stats${brandQuery}`),
+        fetch("/api/admin/demo-requests?archived=false"),
+        fetch("/api/admin/me"),
       ]);
-      
-      console.log("🔵 [ADMIN DASHBOARD] Contacts data:", contactsData);
-      console.log("🔵 [ADMIN DASHBOARD] Contacts count:", contactsData.contacts?.length || 0);
-      
-      if (statsRes.ok) setStats(await statsRes.json());
-      
-      // Kontakte aus Server Action - MIT DETAILLIERTER FEHLERANZEIGE!
-      if (contactsData && contactsData.contacts && Array.isArray(contactsData.contacts)) {
-        console.log("✅ [ADMIN DASHBOARD] Setting contacts:", contactsData.contacts.length);
-        if (contactsData.contacts.length > 0) {
-          console.log("✅ [ADMIN DASHBOARD] First contact:", {
-            id: contactsData.contacts[0].id,
-            name: contactsData.contacts[0].name,
-            email: contactsData.contacts[0].email,
-            betreff: contactsData.contacts[0].betreff,
-          });
-        }
-        setContacts(contactsData.contacts);
-        setError(null);
-        setErrorDetails(null);
-      } else if (contactsData && contactsData.error) {
-        // FEHLER ANZEIGEN - DETAILLIERT!
-        const errorDetailsObj = {
+
+      // Fehlerpfad für Kontakte zuerst behandeln.
+      if (contactsData && contactsData.error) {
+        setError(`Fehler beim Laden der Posts: ${contactsData.error}`);
+        setErrorDetails({
           type: "contacts_load_error",
           message: contactsData.error,
           data: contactsData,
           timestamp: new Date().toISOString(),
           storagePath: IS_PRODUCTION ? "/tmp/contact-posts.json" : "data/contact-posts.json",
           environment: IS_PRODUCTION ? "production" : "development",
-        };
-        setError(`Fehler beim Laden der Posts: ${contactsData.error}`);
-        setErrorDetails(errorDetailsObj);
-        setContacts([]);
-      } else {
-        // Keine Daten oder unerwartetes Format - aber kein Fehler setzen, nur leeres Array
-        console.warn("⚠️ [ADMIN DASHBOARD] Unexpected data format:", contactsData);
-        setContacts([]);
+        });
+      }
+
+      const nextStats = statsRes.ok ? await statsRes.json() : null;
+      const nextContacts =
+        contactsData && Array.isArray(contactsData.contacts) ? contactsData.contacts : [];
+      const nextDemos = demoRes.ok ? (await demoRes.json()).requests ?? [] : [];
+      const nextUser = userRes.ok ? await userRes.json() : null;
+
+      // Change-Detection: nur State setzen (= Re-Render auslösen), wenn sich
+      // die Nutzdaten tatsächlich geändert haben. Das hält den Main-Thread frei
+      // und macht Tab-Wechsel/Klicks sofort responsiv.
+      const signature = JSON.stringify([nextStats, nextContacts, nextDemos, nextUser]);
+      if (signature !== lastPayloadRef.current) {
+        lastPayloadRef.current = signature;
+        if (nextStats) setStats(nextStats);
+        setContacts(nextContacts);
+        setDemoRequests(nextDemos);
+        if (nextUser) setUser(nextUser);
+      }
+
+      if (!contactsData?.error) {
         setError(null);
         setErrorDetails(null);
       }
-      
-      if (demoRes.ok) setDemoRequests((await demoRes.json()).requests);
-      if (userRes.ok) setUser(await userRes.json());
     } catch (error: any) {
-      // DETAILLIERTE FEHLERANZEIGE!
       const errorMessage = error?.message || String(error) || "Unbekannter Fehler";
       setError(`Fehler beim Laden der Daten: ${errorMessage}`);
       setErrorDetails({
         type: "load_error",
         message: errorMessage,
         stack: error?.stack,
-        error: error,
         timestamp: new Date().toISOString(),
       });
-      console.error("❌ [ADMIN DASHBOARD] Error loading data:", error);
     } finally {
       if (isInitial) {
         setLoading(false);
       }
     }
-  };
+  }, [brandFilter]);
+
+  useEffect(() => {
+    loadData(true);
+
+    // Polling: deutlich seltener (10 s statt 2 s) und pausiert automatisch,
+    // wenn der Browser-Tab nicht sichtbar ist. Kombiniert mit der
+    // Change-Detection oben entstehen im Leerlauf keine Re-Renders mehr.
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (interval) return;
+      interval = setInterval(() => {
+        if (!document.hidden) loadData(false);
+      }, 10000);
+    };
+    const stop = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+    const onVisibility = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        loadData(false);
+        start();
+      }
+    };
+
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [loadData]);
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST" });
