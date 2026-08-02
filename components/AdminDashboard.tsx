@@ -11,18 +11,22 @@ import SystemsManager from "@/components/admin/SystemsManager";
 // Das Ticket Control Center wird erst beim Öffnen des Reiters geladen. Fest
 // eingebunden würde es den Start des gesamten Dashboards verlangsamen, obwohl
 // die meisten Sitzungen im Command Center beginnen.
+const listSkeleton = () => (
+  <div className="space-y-2">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className="h-14 animate-pulse rounded-xl bg-white/[0.02]" />
+    ))}
+  </div>
+);
+
 const TicketControlCenter = dynamicImport(
   () => import("@/components/admin/tickets/TicketControlCenter"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-14 animate-pulse rounded-xl bg-white/[0.02]" />
-        ))}
-      </div>
-    ),
-  }
+  { ssr: false, loading: listSkeleton }
+);
+
+const ProjectsManager = dynamicImport(
+  () => import("@/components/admin/projects/ProjectsManager"),
+  { ssr: false, loading: listSkeleton }
 );
 
 const IS_PRODUCTION = process.env.NEXT_PUBLIC_VERCEL === "1" || process.env.NODE_ENV === "production";
@@ -160,6 +164,7 @@ type TabId =
   | "pipeline"
   | "unternehmen"
   | "demo"
+  | "projekte"
   | "tickets"
   | "automationen"
   | "analytics"
@@ -275,6 +280,14 @@ function NavIcon({ name }: { name: TabId }) {
           <rect x="3" y="12" width="7" height="7" rx="1.5" />
         </svg>
       );
+    case "projekte":
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M3 9h18" />
+          <path d="M7 6.5h.01M10 6.5h.01" />
+        </svg>
+      );
     case "tickets":
       return (
         <svg {...common}>
@@ -340,6 +353,8 @@ export default function AdminDashboard() {
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [openTickets, setOpenTickets] = useState(0);
+  // Vorauswahl beim Sprung aus der Projektübersicht ins Ticketsystem.
+  const [ticketProjectFilter, setTicketProjectFilter] = useState<string | null>(null);
 
   // Filtered views derived from brandFilter. Legacy entries without a
   // brand tag default to "nexcel" so they remain visible under the
@@ -572,6 +587,14 @@ export default function AdminDashboard() {
   const unreadContacts = filteredContacts.filter((c) => !c.read).length;
   const unreadDemos = filteredDemoRequests.filter((r) => !r.read).length;
 
+  // Wechsel über die Navigation. Der Ticketbereich verliert dabei eine zuvor
+  // aus der Projektübersicht gesetzte Eingrenzung — wer links auf "Tickets"
+  // klickt, erwartet alle Tickets, nicht die des zuletzt geöffneten Projekts.
+  const openTab = (id: TabId) => {
+    if (id === "tickets") setTicketProjectFilter(null);
+    setActiveTab(id);
+  };
+
   const navItems: { id: TabId; label: string; badge?: number }[] = [
     { id: "overview", label: "Command Center" },
     { id: "analysen", label: "Analysen" },
@@ -579,6 +602,7 @@ export default function AdminDashboard() {
     { id: "pipeline", label: "Pipeline" },
     { id: "unternehmen", label: "Unternehmen" },
     { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
+    { id: "projekte", label: "Projekte" },
     { id: "tickets", label: "Tickets", badge: openTickets },
     { id: "automationen", label: "Automationen" },
     { id: "analytics", label: "Analytics" },
@@ -595,6 +619,7 @@ export default function AdminDashboard() {
     pipeline: "Pipeline",
     unternehmen: "Unternehmen",
     demo: "Demo-Anfragen",
+    projekte: "Projekte",
     tickets: "Ticket Control Center",
     automationen: "Automationen",
     analytics: "Analytics",
@@ -784,7 +809,7 @@ export default function AdminDashboard() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => openTab(item.id)}
                   className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                   style={{
                     background: active ? `${sessionBrand.accent}1A` : "transparent",
@@ -879,7 +904,7 @@ export default function AdminDashboard() {
                     <button
                       key={item.id}
                       onClick={() => {
-                        setActiveTab(item.id);
+                        openTab(item.id);
                         setMobileNavOpen(false);
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium"
@@ -1324,9 +1349,33 @@ export default function AdminDashboard() {
           </GlassCard>
         )}
 
+        {/* ─── PROJEKTE ───────────────────────────────────────────────── */}
+        {activeTab === "projekte" && (
+          <GlassCard title="Projekte · Betreute Systeme">
+            <p className="mb-5 text-xs leading-relaxed text-[#9CA3AF]">
+              Alle betreuten Projekte mit ihrer Produktions-URL und der zuletzt bewegten
+              Meldung. Ein Klick auf ein Projekt öffnet dessen Tickets.
+            </p>
+            <ProjectsManager
+              accent={sessionBrand.accent}
+              onOpenTickets={(projectId) => {
+                setTicketProjectFilter(projectId);
+                setActiveTab("tickets");
+              }}
+            />
+          </GlassCard>
+        )}
+
         {/* ─── TICKET CONTROL CENTER ──────────────────────────────────── */}
         {activeTab === "tickets" && (
-          <TicketControlCenter accent={sessionBrand.accent} />
+          <TicketControlCenter
+            // Der Schlüssel erzwingt einen Neuaufbau, wenn aus der
+            // Projektübersicht ein anderes Projekt gewählt wird — sonst
+            // behielte die Komponente ihren alten Filterzustand.
+            key={ticketProjectFilter ?? "all"}
+            accent={sessionBrand.accent}
+            initialProjectId={ticketProjectFilter}
+          />
         )}
 
         {/* ─── REFERENZEN ─────────────────────────────────────────────── */}

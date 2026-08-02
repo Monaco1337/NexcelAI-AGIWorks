@@ -70,6 +70,17 @@ export async function POST(request: NextRequest) {
       operation = { kind: "priority", priority: body.priority };
       break;
 
+    case "project":
+      if (!gate.auth.can("ticket.update")) {
+        return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      }
+      operation = {
+        kind: "project",
+        projectId:
+          typeof body.projectId === "string" && body.projectId ? body.projectId : null,
+      };
+      break;
+
     case "archive":
       if (!gate.auth.can("ticket.archive")) {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });

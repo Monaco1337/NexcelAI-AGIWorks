@@ -50,6 +50,9 @@ export interface Ticket {
   brand: string;
   orgId: string | null;
   orgName: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  projectColor: string | null;
   requester: TicketPerson | null;
   assignee: TicketPerson | null;
   source: TicketSource;
@@ -115,6 +118,9 @@ interface TicketRow {
   brand: string;
   org_id: string | null;
   org_name: string | null;
+  project_id: string | null;
+  project_name: string | null;
+  project_color: string | null;
   requester_id: string | null;
   requester_name: string | null;
   requester_email: string | null;
@@ -163,6 +169,9 @@ function rowToTicket(r: TicketRow): Ticket {
     brand: r.brand,
     orgId: r.org_id,
     orgName: r.org_name,
+    projectId: r.project_id,
+    projectName: r.project_name,
+    projectColor: r.project_color,
     requester: person(r.requester_id, r.requester_name, r.requester_email),
     assignee: person(r.assignee_id, r.assignee_name, r.assignee_email),
     source: r.source as TicketSource,
@@ -193,6 +202,7 @@ function rowToTicket(r: TicketRow): Ticket {
 const TICKET_SELECT = `
   t.id, t.key, t.type, t.status, t.priority, t.severity, t.title, t.description,
   t.brand, t.org_id, o.name AS org_name,
+  t.project_id, pr.name AS project_name, pr.color AS project_color,
   t.requester_id, ru.name AS requester_name, ru.email AS requester_email,
   t.assignee_id, au.name AS assignee_name, au.email AS assignee_email,
   t.source, t.labels, t.visibility,
@@ -209,6 +219,7 @@ const TICKET_JOINS = `
   LEFT JOIN crm_users ru ON ru.id = t.requester_id
   LEFT JOIN crm_users au ON au.id = t.assignee_id
   LEFT JOIN crm_organizations o ON o.id = t.org_id
+  LEFT JOIN crm_projects pr ON pr.id = t.project_id
 `;
 
 /* ── Lesen ──────────────────────────────────────────────────────────── */
@@ -220,6 +231,8 @@ export interface TicketFilter {
   assigneeId?: string | null;
   requesterId?: string;
   orgId?: string;
+  /** `null` filtert gezielt auf Tickets ohne Projektbezug. */
+  projectId?: string | null;
   brand?: string;
   labels?: string[];
   /** Volltextsuche über Titel, Beschreibung und Ticketnummer. */
@@ -291,6 +304,9 @@ export async function listTickets(
              OR t.assignee_id = ${filter.assigneeId ?? null})
         AND (${filter.requesterId ?? null}::text IS NULL OR t.requester_id = ${filter.requesterId ?? null})
         AND (${filter.orgId ?? null}::text IS NULL OR t.org_id = ${filter.orgId ?? null})
+        AND (${filter.projectId === undefined}
+             OR (${filter.projectId === null} AND t.project_id IS NULL)
+             OR t.project_id = ${filter.projectId ?? null})
         AND (${filter.brand ?? null}::text IS NULL OR t.brand = ${filter.brand ?? null})
         AND (${filter.labels == null} OR t.labels && ${filter.labels ?? []}::text[])
         AND (${filter.openOnly !== true} OR t.status NOT IN ('resolved','closed','cancelled'))
@@ -446,6 +462,7 @@ export interface CreateTicketInput {
   severity?: TicketSeverity | null;
   brand?: string;
   orgId?: string | null;
+  projectId?: string | null;
   requesterId?: string | null;
   assigneeId?: string | null;
   labels?: string[];
@@ -487,12 +504,12 @@ export async function createTicket(
     await tx`
       INSERT INTO tickets (
         id, key, type, status, priority, severity, title, description,
-        brand, org_id, requester_id, assignee_id, source, labels, visibility,
-        due_at, created_by, updated_by
+        brand, org_id, project_id, requester_id, assignee_id, source, labels,
+        visibility, due_at, created_by, updated_by
       ) VALUES (
         ${id}, ${key}, ${input.type}, 'new', ${input.priority ?? "normal"},
         ${input.severity ?? null}, ${title}, ${input.description ?? ""},
-        ${input.brand ?? "nexcel"}, ${input.orgId ?? null},
+        ${input.brand ?? "nexcel"}, ${input.orgId ?? null}, ${input.projectId ?? null},
         ${requesterId}, ${assigneeId},
         ${input.source ?? "manual"}, ${input.labels ?? []},
         ${input.visibility ?? "internal"}, ${input.dueAt ?? null},
@@ -511,6 +528,7 @@ export async function createTicket(
         title,
         priority: input.priority ?? "normal",
         assigneeId,
+        projectId: input.projectId ?? null,
       },
       ...meta,
     });
@@ -527,6 +545,7 @@ export interface UpdateTicketInput {
   severity?: TicketSeverity | null;
   assigneeId?: string | null;
   orgId?: string | null;
+  projectId?: string | null;
   labels?: string[];
   visibility?: TicketVisibility;
   dueAt?: string | null;
@@ -548,11 +567,12 @@ export async function updateTicket(
       {
         version: number; title: string; description: string; type: string;
         priority: string; severity: string | null; assignee_id: string | null;
-        org_id: string | null; labels: string[]; visibility: string; due_at: Date | null;
+        org_id: string | null; project_id: string | null; labels: string[];
+        visibility: string; due_at: Date | null;
       }[]
     >`
       SELECT version, title, description, type, priority, severity,
-             assignee_id, org_id, labels, visibility, due_at
+             assignee_id, org_id, project_id, labels, visibility, due_at
       FROM tickets WHERE id = ${id} AND deleted_at IS NULL
       FOR UPDATE
     `;
@@ -589,6 +609,7 @@ export async function updateTicket(
         severity    = ${input.severity === undefined ? sql`severity` : input.severity},
         assignee_id = ${input.assigneeId === undefined ? sql`assignee_id` : input.assigneeId},
         org_id      = ${input.orgId === undefined ? sql`org_id` : input.orgId},
+        project_id  = ${input.projectId === undefined ? sql`project_id` : input.projectId},
         labels      = COALESCE(${input.labels ?? null}::text[], labels),
         visibility  = COALESCE(${input.visibility ?? null}, visibility),
         due_at      = ${input.dueAt === undefined ? sql`due_at` : input.dueAt},
@@ -602,11 +623,11 @@ export async function updateTicket(
       {
         title: string; description: string; type: string; priority: string;
         severity: string | null; assignee_id: string | null; org_id: string | null;
-        labels: string[]; visibility: string; due_at: Date | null;
+        project_id: string | null; labels: string[]; visibility: string; due_at: Date | null;
       }[]
     >`
       SELECT title, description, type, priority, severity, assignee_id,
-             org_id, labels, visibility, due_at
+             org_id, project_id, labels, visibility, due_at
       FROM tickets WHERE id = ${id}
     `;
 
@@ -622,6 +643,7 @@ export async function updateTicket(
       ["severity", current.severity, next.severity],
       ["assigneeId", current.assignee_id, next.assignee_id],
       ["orgId", current.org_id, next.org_id],
+      ["projectId", current.project_id, next.project_id],
       ["labels", current.labels, next.labels],
       ["visibility", current.visibility, next.visibility],
       ["dueAt", iso(current.due_at), iso(next.due_at)],
@@ -801,6 +823,7 @@ export async function bulkUpdate(
     | { kind: "status"; status: TicketStatus }
     | { kind: "assign"; assigneeId: string | null }
     | { kind: "priority"; priority: TicketPriority }
+    | { kind: "project"; projectId: string | null }
     | { kind: "archive" }
     | { kind: "delete" },
   actor: AuditActor,
@@ -820,6 +843,9 @@ export async function bulkUpdate(
           break;
         case "priority":
           await updateTicket(id, { priority: operation.priority }, actor, meta);
+          break;
+        case "project":
+          await updateTicket(id, { projectId: operation.projectId }, actor, meta);
           break;
         case "archive":
           await archiveTicket(id, actor, meta);

@@ -61,6 +61,10 @@ export async function GET(request: NextRequest) {
   else if (assignee === "me") filter.assigneeId = gate.auth.userId;
   else if (assignee) filter.assigneeId = assignee;
 
+  const project = params.get("project");
+  if (project === "none") filter.projectId = null;
+  else if (project) filter.projectId = project;
+
   const limit = Number.parseInt(params.get("limit") ?? "50", 10);
 
   try {
@@ -116,6 +120,7 @@ export async function POST(request: NextRequest) {
         severity,
         brand: typeof body.brand === "string" ? body.brand : gate.auth.brand ?? "nexcel",
         orgId: typeof body.orgId === "string" && body.orgId ? body.orgId : null,
+        projectId: typeof body.projectId === "string" && body.projectId ? body.projectId : null,
         requesterId:
           typeof body.requesterId === "string" && body.requesterId
             ? body.requesterId

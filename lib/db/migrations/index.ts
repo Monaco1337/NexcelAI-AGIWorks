@@ -17,10 +17,12 @@ import { migration0001 } from "./0001_baseline";
 import { migration0002 } from "./0002_identity";
 import { migration0003 } from "./0003_audit_log";
 import { migration0004 } from "./0004_tickets";
+import { migration0005 } from "./0005_projects";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
   migration0002,
   migration0003,
   migration0004,
+  migration0005,
 ];

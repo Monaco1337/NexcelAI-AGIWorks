@@ -99,6 +99,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
               ? body.orgId
               : null
             : undefined,
+        projectId:
+          "projectId" in body
+            ? typeof body.projectId === "string" && body.projectId
+              ? body.projectId
+              : null
+            : undefined,
         labels: Array.isArray(body.labels)
           ? body.labels.filter((l): l is string => typeof l === "string").slice(0, 20)
           : undefined,

@@ -43,6 +43,12 @@ interface AssignableUser {
   role: string;
 }
 
+interface ProjectOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface HistoryEntry {
   id: string;
   actorEmail: string;
@@ -89,6 +95,7 @@ const FIELD_LABEL: Record<string, string> = {
   severity: "Schweregrad",
   assigneeId: "Bearbeiter",
   orgId: "Organisation",
+  projectId: "Projekt",
   labels: "Schlagworte",
   visibility: "Sichtbarkeit",
   dueAt: "Fälligkeit",
@@ -132,12 +139,14 @@ export default function TicketDetail({
   ticketId,
   accent,
   users,
+  projects,
   onClose,
   onChanged,
 }: {
   ticketId: string;
   accent: string;
   users: AssignableUser[];
+  projects: ProjectOption[];
   onClose: () => void;
   onChanged: () => void | Promise<void>;
 }) {
@@ -409,6 +418,28 @@ export default function TicketDetail({
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               {/* Eigenschaften */}
               <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-2">
+                <Row label="Projekt">
+                  <div className="flex items-center gap-2">
+                    {ticket.projectColor && (
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: ticket.projectColor }}
+                      />
+                    )}
+                    <select
+                      value={ticket.projectId ?? ""}
+                      disabled={busy}
+                      onChange={(e) => void patch({ projectId: e.target.value || null })}
+                      className="w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-xs text-white outline-none transition hover:border-white/10 hover:bg-white/[0.04]"
+                    >
+                      <option value="" className="bg-[#0B0B12]">Ohne Projekt</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id} className="bg-[#0B0B12]">{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </Row>
+
                 <Row label="Bearbeiter">
                   <select
                     value={ticket.assignee?.id ?? ""}

@@ -42,6 +42,13 @@ interface AssignableUser {
   role: string;
 }
 
+interface ProjectOption {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+}
+
 interface Stats {
   open: number;
   unassigned: number;
@@ -108,7 +115,14 @@ function initials(name: string, email: string): string {
 
 /* ── Hauptkomponente ────────────────────────────────────────────────── */
 
-export default function TicketControlCenter({ accent }: { accent: string }) {
+export default function TicketControlCenter({
+  accent,
+  initialProjectId,
+}: {
+  accent: string;
+  /** Vorauswahl beim Sprung aus der Projektübersicht. */
+  initialProjectId?: string | null;
+}) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [total, setTotal] = useState(0);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -118,12 +132,18 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<AssignableUser[]>([]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
 
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [typeFilter, setTypeFilter] = useState<TicketType[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string>("");
-  const [view, setView] = useState<"open" | "all" | "archived" | "trash">("open");
+  const [projectFilter, setProjectFilter] = useState<string>(initialProjectId ?? "");
+  const [view, setView] = useState<"open" | "all" | "archived" | "trash">(
+    // Beim Sprung aus einem Projekt sollen auch bereits erledigte Tickets
+    // sichtbar sein — sonst wirkt ein Projekt ohne offene Meldungen leer.
+    initialProjectId ? "all" : "open"
+  );
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
 
@@ -144,13 +164,14 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
     typeFilter.forEach((t) => p.append("type", t));
     priorityFilter.forEach((pr) => p.append("priority", pr));
     if (assigneeFilter) p.set("assignee", assigneeFilter);
+    if (projectFilter) p.set("project", projectFilter);
     if (search) p.set("q", search);
     if (view === "open") p.set("open", "1");
     if (view === "archived") p.set("archived", "1");
     if (view === "trash") p.set("deleted", "1");
     p.set("limit", String(PAGE_SIZE));
     return p.toString();
-  }, [statusFilter, typeFilter, priorityFilter, assigneeFilter, search, view]);
+  }, [statusFilter, typeFilter, priorityFilter, assigneeFilter, projectFilter, search, view]);
 
   /* Läuft eine neue Abfrage an, während eine alte noch unterwegs ist, darf
      die verspätete Antwort die neuere nicht überschreiben. */
@@ -183,6 +204,7 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
       const data = await res.json();
       setStats(data.stats ?? null);
       setUsers(data.users ?? []);
+      setProjects(data.projects ?? []);
     } catch {
       /* Kennzahlen sind nachrangig — die Liste funktioniert auch ohne. */
     }
@@ -251,7 +273,13 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
   };
 
   const activeFilterCount =
-    statusFilter.length + typeFilter.length + priorityFilter.length + (assigneeFilter ? 1 : 0);
+    statusFilter.length +
+    typeFilter.length +
+    priorityFilter.length +
+    (assigneeFilter ? 1 : 0) +
+    (projectFilter ? 1 : 0);
+
+  const activeProject = projects.find((p) => p.id === projectFilter) ?? null;
 
   /* ── Darstellung ──────────────────────────────────────────────────── */
 
@@ -279,6 +307,27 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
           </div>
         ))}
       </div>
+
+      {/* Hinweis auf die aktive Projekteingrenzung */}
+      {activeProject && (
+        <div
+          className="flex items-center gap-2 rounded-xl border px-3 py-2"
+          style={{ borderColor: `${activeProject.color}44`, background: `${activeProject.color}0F` }}
+        >
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: activeProject.color }}
+          />
+          <span className="text-xs font-semibold text-white">{activeProject.name}</span>
+          <span className="text-[11px] text-white/40">— nur Tickets dieses Projekts</span>
+          <button
+            onClick={() => setProjectFilter("")}
+            className="ml-auto text-[11px] text-white/40 hover:text-white/80"
+          >
+            Alle Projekte zeigen
+          </button>
+        </div>
+      )}
 
       {/* Ansicht, Suche, Anlegen */}
       <div className="flex flex-wrap items-center gap-2">
@@ -395,6 +444,21 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
             ))}
           </select>
 
+          <span className="ml-2 mr-1 text-[10px] font-semibold uppercase tracking-widest text-white/30">
+            Projekt
+          </span>
+          <select
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(e.target.value)}
+            className="max-w-[190px] rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-white outline-none focus:border-white/25"
+          >
+            <option value="" className="bg-[#0B0B12]">Alle Projekte</option>
+            <option value="none" className="bg-[#0B0B12]">Ohne Projekt</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id} className="bg-[#0B0B12]">{p.name}</option>
+            ))}
+          </select>
+
           {activeFilterCount > 0 && (
             <button
               onClick={() => {
@@ -402,6 +466,7 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
                 setTypeFilter([]);
                 setPriorityFilter([]);
                 setAssigneeFilter("");
+                setProjectFilter("");
               }}
               className="ml-1 text-[11px] text-white/40 underline-offset-2 hover:text-white/70 hover:underline"
             >
@@ -473,6 +538,27 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
               <option value="" className="bg-[#0B0B12]">Priorität…</option>
               {TICKET_PRIORITIES.map((p) => (
                 <option key={p} value={p} className="bg-[#0B0B12]">{PRIORITY_LABEL[p]}</option>
+              ))}
+            </select>
+
+            <select
+              disabled={busy}
+              defaultValue=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  void runBulk({
+                    operation: "project",
+                    projectId: e.target.value === "none" ? null : e.target.value,
+                  });
+                }
+                e.target.value = "";
+              }}
+              className="max-w-[170px] rounded-lg border border-white/15 bg-white/[0.05] px-2 py-1.5 text-[11px] text-white outline-none"
+            >
+              <option value="" className="bg-[#0B0B12]">Projekt zuordnen…</option>
+              <option value="none" className="bg-[#0B0B12]">Zuordnung entfernen</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id} className="bg-[#0B0B12]">{p.name}</option>
               ))}
             </select>
 
@@ -556,6 +642,9 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
                 ticket={t}
                 accent={accent}
                 selected={selected.has(t.id)}
+                // Ist ohnehin auf ein Projekt eingegrenzt, wäre die Spalte in
+                // jeder Zeile dieselbe Angabe.
+                showProject={!projectFilter}
                 onToggle={() => toggle(t.id)}
                 onOpen={() => setOpenTicketId(t.id)}
               />
@@ -580,6 +669,7 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
             ticketId={openTicketId}
             accent={accent}
             users={users}
+            projects={projects}
             onClose={() => setOpenTicketId(null)}
             onChanged={refresh}
           />
@@ -591,6 +681,8 @@ export default function TicketControlCenter({ accent }: { accent: string }) {
           <TicketComposer
             accent={accent}
             users={users}
+            projects={projects}
+            defaultProjectId={projectFilter && projectFilter !== "none" ? projectFilter : ""}
             onClose={() => setComposing(false)}
             onCreated={async (id) => {
               setComposing(false);
@@ -610,12 +702,14 @@ function TicketRow({
   ticket,
   accent,
   selected,
+  showProject,
   onToggle,
   onOpen,
 }: {
   ticket: Ticket;
   accent: string;
   selected: boolean;
+  showProject: boolean;
   onToggle: () => void;
   onOpen: () => void;
 }) {
@@ -646,6 +740,22 @@ function TicketRow({
         >
           {ticket.key}
         </span>
+
+        {showProject && (
+          <span className="hidden w-36 shrink-0 items-center gap-1.5 md:flex">
+            {ticket.projectName ? (
+              <>
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: ticket.projectColor ?? "#6B7280" }}
+                />
+                <span className="truncate text-[11px] text-white/45">{ticket.projectName}</span>
+              </>
+            ) : (
+              <span className="truncate text-[11px] text-white/20">Ohne Projekt</span>
+            )}
+          </span>
+        )}
 
         <span className="min-w-0 flex-1 truncate text-[13px] text-white/85 group-hover:text-white">
           {ticket.title}
@@ -722,14 +832,19 @@ function TicketRow({
 function TicketComposer({
   accent,
   users,
+  projects,
+  defaultProjectId,
   onClose,
   onCreated,
 }: {
   accent: string;
   users: AssignableUser[];
+  projects: ProjectOption[];
+  defaultProjectId: string;
   onClose: () => void;
   onCreated: (id: string) => void;
 }) {
+  const [projectId, setProjectId] = useState(defaultProjectId);
   const [type, setType] = useState<TicketType>("support");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -758,6 +873,7 @@ function TicketComposer({
           priority,
           severity: severityRequired(type) ? severity : null,
           assigneeId: assigneeId || null,
+          projectId: projectId || null,
           dueAt: dueAt || null,
         }),
       });
@@ -794,6 +910,24 @@ function TicketComposer({
         <h3 className="text-sm font-semibold text-white">Neues Ticket</h3>
 
         <div className="mt-4 space-y-3.5">
+          {/* Das Projekt steht bewusst an erster Stelle: es beantwortet die
+              Frage "wo?", ohne die der Rest der Meldung wenig wert ist. */}
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
+              Projekt
+            </label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-white/25"
+            >
+              <option value="" className="bg-[#0B0B12]">Ohne Projekt (interne Aufgabe)</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id} className="bg-[#0B0B12]">{p.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Art</label>
             <div className="mt-1.5 grid grid-cols-3 gap-1.5">
