@@ -16,6 +16,7 @@
  */
 
 import { db } from "@/lib/pg";
+import type { Tx } from "@/lib/db/migrationRunner";
 import { writeAuditTx, type AuditActor } from "@/lib/audit/auditLog";
 import {
   canTransition,
@@ -420,6 +421,23 @@ function newId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/**
+ * Prüft, ob eine Nutzer-ID in `crm_users` existiert, und gibt sonst NULL zurück.
+ *
+ * Notwendig, weil die Spiegelung der Nutzer erst beim Login greift: eine
+ * Sitzung aus der Zeit davor trägt eine ID, die es in `crm_users` noch nicht
+ * gibt. Ohne diese Prüfung würde der Fremdschlüssel greifen und das Anlegen
+ * eines Tickets mit einem Serverfehler abbrechen, statt es einfach ohne
+ * Personenbezug zu speichern.
+ */
+async function knownUserId(tx: Tx, id: string | null | undefined): Promise<string | null> {
+  if (!id) return null;
+  const rows = await tx<{ id: string }[]>`
+    SELECT id FROM crm_users WHERE id = ${id} LIMIT 1
+  `;
+  return rows[0]?.id ?? null;
+}
+
 export interface CreateTicketInput {
   type: TicketType;
   title: string;
@@ -460,6 +478,12 @@ export async function createTicket(
     `;
     const key = `TIC-${1000 + (counter?.value ?? 1)}`;
 
+    const [actorId, requesterId, assigneeId] = await Promise.all([
+      knownUserId(tx, actor.id),
+      knownUserId(tx, input.requesterId ?? actor.id),
+      knownUserId(tx, input.assigneeId),
+    ]);
+
     await tx`
       INSERT INTO tickets (
         id, key, type, status, priority, severity, title, description,
@@ -469,10 +493,10 @@ export async function createTicket(
         ${id}, ${key}, ${input.type}, 'new', ${input.priority ?? "normal"},
         ${input.severity ?? null}, ${title}, ${input.description ?? ""},
         ${input.brand ?? "nexcel"}, ${input.orgId ?? null},
-        ${input.requesterId ?? actor.id}, ${input.assigneeId ?? null},
+        ${requesterId}, ${assigneeId},
         ${input.source ?? "manual"}, ${input.labels ?? []},
         ${input.visibility ?? "internal"}, ${input.dueAt ?? null},
-        ${actor.id}, ${actor.id}
+        ${actorId}, ${actorId}
       )
     `;
 
@@ -486,7 +510,7 @@ export async function createTicket(
         type: input.type,
         title,
         priority: input.priority ?? "normal",
-        assigneeId: input.assigneeId ?? null,
+        assigneeId,
       },
       ...meta,
     });
@@ -548,6 +572,14 @@ export async function updateTicket(
       throw new TicketValidationError("Titel darf nicht leer sein");
     }
 
+    const actorId = await knownUserId(tx, actor.id);
+
+    // Ein gesetzter, aber unbekannter Bearbeiter ist ein Eingabefehler und
+    // darf nicht stillschweigend zu "nicht zugewiesen" werden.
+    if (input.assigneeId && !(await knownUserId(tx, input.assigneeId))) {
+      throw new TicketValidationError("Der gewählte Bearbeiter existiert nicht");
+    }
+
     await tx`
       UPDATE tickets SET
         title       = COALESCE(${title ?? null}, title),
@@ -561,7 +593,7 @@ export async function updateTicket(
         visibility  = COALESCE(${input.visibility ?? null}, visibility),
         due_at      = ${input.dueAt === undefined ? sql`due_at` : input.dueAt},
         version     = version + 1,
-        updated_by  = ${actor.id},
+        updated_by  = ${actorId},
         updated_at  = NOW()
       WHERE id = ${id}
     `;
@@ -659,6 +691,7 @@ export async function transitionTicket(
     // resolved_at und closed_at zurückgesetzt werden, sonst stimmen sämtliche
     // Auswertungen zur Bearbeitungsdauer nicht mehr.
     const reopening = isOpenStatus(to);
+    const actorId = await knownUserId(tx, actor.id);
 
     await tx`
       UPDATE tickets SET
@@ -674,7 +707,7 @@ export async function transitionTicket(
           to === "closed" ? sql`NOW()` : reopening ? null : sql`closed_at`
         },
         version     = version + 1,
-        updated_by  = ${actor.id},
+        updated_by  = ${actorId},
         updated_at  = NOW()
       WHERE id = ${id}
     `;
@@ -713,16 +746,18 @@ async function setLifecycle(
     `;
     if (!exists) throw new TicketValidationError("Ticket nicht gefunden");
 
+    const actorId = await knownUserId(tx, actor.id);
+
     if (field === "archived_at") {
       await tx`
         UPDATE tickets SET archived_at = ${value === "now" ? sql`NOW()` : null},
-          version = version + 1, updated_by = ${actor.id}, updated_at = NOW()
+          version = version + 1, updated_by = ${actorId}, updated_at = NOW()
         WHERE id = ${id}
       `;
     } else {
       await tx`
         UPDATE tickets SET deleted_at = ${value === "now" ? sql`NOW()` : null},
-          version = version + 1, updated_by = ${actor.id}, updated_at = NOW()
+          version = version + 1, updated_by = ${actorId}, updated_at = NOW()
         WHERE id = ${id}
       `;
     }
@@ -885,7 +920,7 @@ export async function addComment(
 
     await tx`
       INSERT INTO ticket_comments (id, ticket_id, author_id, body, is_internal)
-      VALUES (${id}, ${ticketId}, ${actor.id}, ${text}, ${isInternal})
+      VALUES (${id}, ${ticketId}, ${await knownUserId(tx, actor.id)}, ${text}, ${isInternal})
     `;
 
     // Erste nach außen sichtbare Antwort setzt die Reaktionszeit. Interne
@@ -1004,7 +1039,8 @@ export async function addRelation(
 
     const inserted = await tx<{ id: string }[]>`
       INSERT INTO ticket_relations (id, from_ticket, to_ticket, relation, created_by)
-      VALUES (${newId("rel")}, ${fromTicket}, ${toTicket}, ${relation}, ${actor.id})
+      VALUES (${newId("rel")}, ${fromTicket}, ${toTicket}, ${relation},
+              ${await knownUserId(tx, actor.id)})
       ON CONFLICT (from_ticket, to_ticket, relation) DO NOTHING
       RETURNING id
     `;
@@ -1103,7 +1139,7 @@ export async function addAttachment(
     await tx`
       INSERT INTO ticket_attachments (id, ticket_id, filename, content_type, byte_size, data, uploaded_by)
       VALUES (${id}, ${ticketId}, ${file.filename}, ${file.contentType},
-              ${file.data.byteLength}, ${file.data}, ${actor.id})
+              ${file.data.byteLength}, ${file.data}, ${await knownUserId(tx, actor.id)})
     `;
     await writeAuditTx(tx, {
       actor,
