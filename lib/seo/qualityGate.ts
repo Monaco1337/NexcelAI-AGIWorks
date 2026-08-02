@@ -41,6 +41,8 @@ const TYPE_THRESHOLDS: Record<SeoPageType, number> = {
   location: 90,
   // Knowledge/editorial pages carry E-E-A-T weight; hold a high bar too.
   knowledge: 80,
+  // System pages are commercial detail pages; same bar as money pages.
+  system: 80,
   tool: 70,
   content: 70,
   legal: 50,

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import SystemDetailView from "@/components/sections/SystemDetailView";
-import { getSystemBySlug, SYSTEM_SLUGS } from "@/lib/systems-data";
+import SystemRelatedLinks from "@/components/sections/SystemRelatedLinks";
+import { SYSTEM_SLUGS } from "@/lib/systems-data";
+import { getSystemPage } from "@/data/systemPages";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
 interface PageProps {
   params: { slug: string };
@@ -11,14 +15,15 @@ export function generateStaticParams() {
 }
 
 export function generateMetadata({ params }: PageProps): Metadata {
-  const system = getSystemBySlug(params.slug);
-  if (!system) return { title: "System • NEXCEL AI" };
-  return {
-    title: `${system.title} • NEXCEL AI`,
-    description: system.longDesc,
-  };
+  return generateSeoMetadata({ brand: "nexcel", path: `/systeme/${params.slug}` });
 }
 
 export default function SystemDetailPage({ params }: PageProps) {
-  return <SystemDetailView slug={params.slug} />;
+  const page = getSystemPage("nexcel", params.slug);
+  if (!page) notFound();
+  return (
+    <SystemDetailView slug={params.slug}>
+      <SystemRelatedLinks page={page} />
+    </SystemDetailView>
+  );
 }

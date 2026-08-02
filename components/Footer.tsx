@@ -7,6 +7,48 @@ import { useBrand } from "@/contexts/BrandContext";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
+import { SYSTEMS } from "@/lib/systems-data";
+import {
+  SYSTEM_CATEGORY,
+  SYSTEM_CATEGORY_LABEL,
+  type SystemCategory,
+} from "@/data/systemPages";
+import { LOCATION_PAGES } from "@/data/locationPages";
+import { CITY_SERVICE_PAGES } from "@/data/cityServicePages";
+
+/** Systems grouped by category for the footer directory (built once). */
+const FOOTER_SYSTEM_GROUPS: {
+  category: SystemCategory;
+  systems: { slug: string; title: string }[];
+}[] = (
+  ["vertrieb", "kunden", "unternehmen", "ki", "plattformen"] as SystemCategory[]
+).map((category) => ({
+  category,
+  systems: SYSTEMS.filter((s) => SYSTEM_CATEGORY[s.slug] === category).map((s) => ({
+    slug: s.slug,
+    title: s.title,
+  })),
+}));
+
+/**
+ * City directory for the footer. Cities carrying handpicked service pages are
+ * listed with those pages nested underneath, so every location route is
+ * reachable from any page without a separate hub click.
+ */
+const FOOTER_LOCATIONS: Record<
+  string,
+  { slug: string; city: string; path: string; services: { path: string; label: string }[] }[]
+> = ["nexcel", "agiworks"].reduce((acc, brandId) => {
+  acc[brandId] = LOCATION_PAGES.filter((p) => p.brand === brandId).map((p) => ({
+    slug: p.slug,
+    city: p.city,
+    path: p.path,
+    services: CITY_SERVICE_PAGES.filter(
+      (cs) => cs.brand === brandId && cs.citySlug === p.slug
+    ).map((cs) => ({ path: cs.path, label: cs.serviceLabel })),
+  }));
+  return acc;
+}, {} as Record<string, { slug: string; city: string; path: string; services: { path: string; label: string }[] }[]>);
 
 const linkedInIcon = (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -459,6 +501,83 @@ export default function Footer() {
             </ul>
           </motion.div>
         </div>
+
+        {/* System-Verzeichnis — die Systeme sind sonst nur im Mega-Menü
+            erreichbar, das erst clientseitig rendert und damit für Crawler
+            unsichtbar bleibt. Hier stehen sie serverseitig im HTML. */}
+        <motion.nav
+          aria-label="Alle Systeme"
+          className="mt-12 sm:mt-16 pt-8 border-t border-[#A45CFF]/10"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-5">
+            Alle Systeme
+          </h4>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 lg:grid-cols-5">
+            {FOOTER_SYSTEM_GROUPS.map((group) => (
+              <div key={group.category}>
+                <p className="mb-2.5 text-[10px] uppercase tracking-[0.18em] text-[#6B7280]">
+                  {SYSTEM_CATEGORY_LABEL[group.category]}
+                </p>
+                <ul className="space-y-2">
+                  {group.systems.map((system) => (
+                    <li key={system.slug}>
+                      <Link
+                        href={`/systeme/${system.slug}`}
+                        className="text-[#9CA3AF] transition-colors duration-300 text-[11.5px] sm:text-xs font-light hover:text-[var(--accent)]"
+                      >
+                        {system.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </motion.nav>
+
+        {/* Locations Directory */}
+        <motion.nav
+          aria-label="Standorte"
+          className="mt-10 sm:mt-12 pt-8 border-t border-[#A45CFF]/10"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-5">
+            Standorte
+          </h4>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
+            {(FOOTER_LOCATIONS[brand.id] ?? FOOTER_LOCATIONS.nexcel).map((location) => (
+              <div key={location.slug}>
+                <Link
+                  href={location.path}
+                  className="text-[#D1D5DB] transition-colors duration-300 text-[11.5px] sm:text-xs font-medium hover:text-[var(--accent)]"
+                >
+                  {location.city}
+                </Link>
+                {location.services.length > 0 && (
+                  <ul className="mt-2 space-y-1.5">
+                    {location.services.map((service) => (
+                      <li key={service.path}>
+                        <Link
+                          href={service.path}
+                          className="text-[#6B7280] transition-colors duration-300 text-[11px] font-light hover:text-[var(--accent)]"
+                        >
+                          {service.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.nav>
 
         {/* Bottom Bar */}
         <motion.div

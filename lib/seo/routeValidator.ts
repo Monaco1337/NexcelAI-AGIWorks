@@ -58,18 +58,44 @@ function expectedFileForPage(page: SeoPage): string {
 }
 
 /**
- * Some registry pages are served by a catch-all dynamic route (e.g. money pages
- * under app/loesungen/[slug]/page.tsx) instead of a static folder per slug.
- * Treat a page as present when its parent directory contains a `[param]/page.tsx`.
+ * Route patterns derived from every page.tsx in the app tree, with dynamic
+ * segments turned into wildcards. Built once per run.
+ *
+ * `[slug]` matches one segment, `[...slug]` matches the rest of the path.
+ */
+let ROUTE_PATTERNS: RegExp[] | null = null;
+
+function routePatterns(): RegExp[] {
+  if (ROUTE_PATTERNS) return ROUTE_PATTERNS;
+  const files = fg.sync("**/page.tsx", { cwd: APP_DIR, dot: false });
+  ROUTE_PATTERNS = files
+    .filter((f) => f.includes("["))
+    .map((file) => {
+      const route = fileToRoute(file);
+      const source = route
+        .split("/")
+        .map((seg) => {
+          if (/^\[\.\.\..+\]$/.test(seg)) return ".+";
+          if (/^\[.+\]$/.test(seg)) return "[^/]+";
+          return seg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        })
+        .join("/");
+      return new RegExp(`^${source}$`);
+    });
+  return ROUTE_PATTERNS;
+}
+
+/**
+ * Some registry pages are served by a dynamic route (e.g. money pages under
+ * app/loesungen/[slug]/page.tsx, or city-service pages under
+ * app/standorte/[city]/[service]/page.tsx) instead of a static folder per slug.
+ * Match the page's internal path against every dynamic route pattern, so
+ * nested dynamic segments resolve correctly and not just one level deep.
  */
 function hasDynamicBacking(page: SeoPage): boolean {
   const internal = page.internalPath;
   if (internal === "/") return false;
-  const parent = internal.replace(/\/[^/]+$/, "");
-  const parentDir = path.join(APP_DIR, parent.replace(/^\//, ""));
-  if (!existsSync(parentDir)) return false;
-  const matches = fg.sync("*/page.tsx", { cwd: parentDir, dot: false });
-  return matches.some((f) => /^\[[^\]]+\]\/page\.tsx$/.test(f));
+  return routePatterns().some((re) => re.test(internal));
 }
 
 export async function validateRoutes(pages: SeoPage[] = PAGE_REGISTRY): Promise<Finding[]> {

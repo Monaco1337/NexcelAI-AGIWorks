@@ -438,7 +438,274 @@ const NEXCEL_LOCATIONS: LocationPage[] = [
   },
 ];
 
-export const LOCATION_PAGES: LocationPage[] = [...AGI_LOCATIONS, ...NEXCEL_LOCATIONS];
+/* ── Tier 2 — überregionale Standorte (config/seo/scaling.ts) ──────────────── */
+
+/**
+ * Tier-2 cities are outside the home region, so the collaboration model is
+ * genuinely different: fully remote, no "vor Ort nach Vereinbarung" implied.
+ * Services and process steps get their own wording here — that is both more
+ * honest and keeps these pages clearly distinct from the NRW pages under the
+ * generic-city-template guard.
+ */
+
+const AGI_SERVICES_REMOTE: FeatureItem[] = [
+  { title: "Individualsoftware", description: "Anwendungen für Abläufe, die Standardprodukte nicht abdecken." },
+  { title: "Plattformen & SaaS", description: "Mandantenfähige Systeme mit Rollen und Abrechnung." },
+  { title: "Systemintegration", description: "Bestehende Software über belastbare Schnittstellen verbinden." },
+  { title: "Modernisierung", description: "Gewachsene Altsysteme schrittweise ablösen, ohne Betriebsstillstand." },
+];
+
+const AGI_PROCESS_REMOTE: ProcessStep[] = [
+  { title: "Remote-Analyse", description: "Anforderungen in strukturierten Videoterminen aufnehmen." },
+  { title: "Spezifikation", description: "Datenmodell und Funktionsumfang schriftlich festhalten." },
+  { title: "Iterative Lieferung", description: "In kurzen Zyklen testbare Stände bereitstellen." },
+  { title: "Übergabe & Betrieb", description: "Quellcode, Dokumentation und Wartung übergeben." },
+];
+
+const NEXCEL_SERVICES_REMOTE: FeatureItem[] = [
+  { title: "Prozessautomatisierung", description: "Wiederkehrende Abläufe regelbasiert erledigen lassen." },
+  { title: "KI-gestützte Bearbeitung", description: "Eingehende Vorgänge einordnen und vorbereiten." },
+  { title: "Lead- & Kundenprozesse", description: "Anfragen strukturiert erfassen und nachverfolgen." },
+  { title: "Auswertung", description: "Wirkung an definierten Kennzahlen sichtbar machen." },
+];
+
+const NEXCEL_PROCESS_REMOTE: ProcessStep[] = [
+  { title: "Potenzialanalyse", description: "Abläufe mit dem größten Zeitanteil identifizieren." },
+  { title: "Regelwerk", description: "Festlegen, was automatisch läuft und was Menschen entscheiden." },
+  { title: "Einführung", description: "Schrittweise ausrollen und im Betrieb beobachten." },
+  { title: "Nachsteuerung", description: "Regeln anhand der tatsächlichen Ergebnisse anpassen." },
+];
+
+interface Tier2Seed {
+  slug: string;
+  city: string;
+  region: string;
+  nearby: string[];
+  areaServed: string[];
+  industries: Record<BrandKey, string[]>;
+  localContext: Record<BrandKey, string>;
+  /** Short phrase describing the local economy, reused in the AEO answer. */
+  fit: Record<BrandKey, string>;
+  related: Record<BrandKey, string[]>;
+}
+
+const TIER2_SEEDS: Tier2Seed[] = [
+  {
+    slug: "koeln",
+    city: "Köln",
+    region: "Rheinland",
+    nearby: ["duesseldorf", "essen"],
+    areaServed: ["Köln", "Rheinland", "Nordrhein-Westfalen", "Deutschland"],
+    industries: {
+      agiworks: ["Medien & Rundfunk", "Versicherungen", "Handel & Messe", "Digitalwirtschaft"],
+      nexcel: ["Medien & Kreativwirtschaft", "Versicherungen", "Handel", "Veranstaltung & Messe"],
+    },
+    localContext: {
+      agiworks:
+        "Köln vereint Medienhäuser, Versicherungskonzerne und ein dichtes Netz mittelständischer Zulieferer rund um Messe und Handel. Viele dieser Betriebe arbeiten mit über Jahre gewachsenen Anwendungen, die fachlich passen, technisch aber schwer wartbar geworden sind. Eine schrittweise Modernisierung ist dort meist sinnvoller als ein vollständiger Systemwechsel.",
+      nexcel:
+        "In Köln prägen Medien, Versicherungen und Messegeschäft den Takt: Es gibt Phasen mit sehr hohem Anfragevolumen und ruhigere Zeiträume dazwischen. Abläufe müssen deshalb Spitzen abfangen können, ohne dass dauerhaft Personal für den Ausnahmefall vorgehalten wird.",
+    },
+    fit: {
+      agiworks: "Mittelstand im Rheinland mit gewachsenen Altsystemen",
+      nexcel: "Betriebe mit stark schwankendem Anfragevolumen",
+    },
+    related: {
+      agiworks: ["/leistungen/softwareentwicklung", "/leistungen/api-entwicklung", "/systeme/schnittstellen-integrationen"],
+      nexcel: ["/loesungen/automatisierung", "/loesungen/customer-experience-systeme", "/systeme/omnichannel-kommunikation"],
+    },
+  },
+  {
+    slug: "hamburg",
+    city: "Hamburg",
+    region: "Norddeutschland",
+    nearby: ["berlin"],
+    areaServed: ["Hamburg", "Norddeutschland", "Deutschland"],
+    industries: {
+      agiworks: ["Logistik & Hafen", "Außenhandel", "Verlage & Medien", "Konsumgüter"],
+      nexcel: ["Logistik", "Handel & Import", "Verlagswesen", "Dienstleistung"],
+    },
+    localContext: {
+      agiworks:
+        "Hamburg lebt von Hafen, Logistik und Außenhandel, und damit von Abläufen, an denen viele Beteiligte mit jeweils eigenen Systemen hängen: Spediteure, Zoll, Lager, Auftraggeber. Software muss hier vor allem eines können — Daten zuverlässig zwischen Parteien austauschen, auch wenn ein Gegenüber gerade nicht erreichbar ist.",
+      nexcel:
+        "Im Hamburger Handels- und Logistikumfeld entstehen viele Vorgänge aus wiederkehrenden Meldungen und Statusanfragen. Wer diese Kommunikation strukturiert und automatisch beantwortet, entlastet die Disposition spürbar und verkürzt gleichzeitig die Wartezeit für Auftraggeber.",
+    },
+    fit: {
+      agiworks: "Logistik- und Handelsbetriebe mit vielen Systempartnern",
+      nexcel: "Betriebe mit hohem Aufkommen an Status- und Rückfragen",
+    },
+    related: {
+      agiworks: ["/leistungen/api-entwicklung", "/leistungen/erp-system-entwicklung", "/systeme/warenwirtschaft-lagerverwaltung"],
+      nexcel: ["/loesungen/automatisierung", "/loesungen/email-automation", "/systeme/service-supportportal"],
+    },
+  },
+  {
+    slug: "berlin",
+    city: "Berlin",
+    region: "Berlin-Brandenburg",
+    nearby: ["hamburg"],
+    areaServed: ["Berlin", "Brandenburg", "Deutschland"],
+    industries: {
+      agiworks: ["Technologie & Startups", "Verbände & Organisationen", "Gesundheitswirtschaft", "Bildung"],
+      nexcel: ["Startups & Plattformen", "Verbände", "Bildung & Weiterbildung", "Dienstleistung"],
+    },
+    localContext: {
+      agiworks:
+        "Berlin ist wirtschaftlich ungewöhnlich heterogen: junge Technologieunternehmen stehen neben Verbänden, Bildungsträgern und Einrichtungen der Gesundheitswirtschaft. Entsprechend unterschiedlich fallen die Anforderungen aus — vom schnell lieferbaren ersten Produktstand bis zur Anwendung, die über viele Jahre dokumentiert betrieben werden muss.",
+      nexcel:
+        "Viele Berliner Organisationen wachsen schneller als ihre internen Abläufe. Prozesse, die mit einem kleinen Team funktioniert haben, tragen bei doppelter Größe nicht mehr. Automatisierung setzt hier an den Stellen an, die sonst zuerst zum Engpass werden: Aufnahme, Zuordnung und Nachverfolgung.",
+    },
+    fit: {
+      agiworks: "Technologieunternehmen, Verbände und Bildungsträger",
+      nexcel: "wachsende Organisationen mit überlasteten Abläufen",
+    },
+    related: {
+      agiworks: ["/leistungen/saas-entwicklung", "/leistungen/web-app-entwicklung", "/systeme/saas-plattform-multi-tenant"],
+      nexcel: ["/loesungen/digitale-betriebssysteme", "/loesungen/ki-systeme", "/systeme/projekt-aufgabenmanagement"],
+    },
+  },
+  {
+    slug: "muenchen",
+    city: "München",
+    region: "Bayern",
+    nearby: ["stuttgart", "frankfurt"],
+    areaServed: ["München", "Bayern", "Deutschland"],
+    industries: {
+      agiworks: ["Technologie & IT", "Versicherungen", "Verlage", "Gehobener Mittelstand"],
+      nexcel: ["Beratung & Kanzleien", "Versicherungen", "Technologie", "Gesundheit"],
+    },
+    localContext: {
+      agiworks:
+        "In München treffen forschungsnahe Technologieunternehmen auf etablierte Versicherer und einen anspruchsvollen Mittelstand. Der Anspruch an Dokumentation, Testbarkeit und Nachvollziehbarkeit liegt hier erfahrungsgemäß höher als anderswo — Software wird nicht nur nach Funktion beurteilt, sondern auch danach, wie gut sie sich später prüfen und übergeben lässt.",
+      nexcel:
+        "Beratungen, Kanzleien und Versicherungsbetriebe in München arbeiten stark dokumentengetrieben: Vorgänge bestehen aus Fristen, Freigaben und Nachweisen. Automatisierung wirkt hier vor allem dort, wo Fristen überwacht und Unterlagen aus mehreren Quellen vollständig zusammengeführt werden müssen.",
+    },
+    fit: {
+      agiworks: "Unternehmen mit hohen Anforderungen an Dokumentation",
+      nexcel: "dokumenten- und fristengetriebene Vorgänge",
+    },
+    related: {
+      agiworks: ["/leistungen/softwareentwicklung", "/leistungen/admin-panel-entwicklung", "/systeme/dokumentenmanagement-freigaben"],
+      nexcel: ["/loesungen/automatisierung", "/loesungen/digitale-betriebssysteme", "/systeme/dokumentenmanagement-freigaben"],
+    },
+  },
+  {
+    slug: "frankfurt",
+    city: "Frankfurt",
+    region: "Rhein-Main",
+    nearby: ["stuttgart", "koeln"],
+    areaServed: ["Frankfurt am Main", "Rhein-Main", "Hessen", "Deutschland"],
+    industries: {
+      agiworks: ["Finanzwirtschaft", "Beratung", "Logistik & Luftfracht", "IT-Infrastruktur"],
+      nexcel: ["Finanzdienstleistung", "Beratung", "Immobilien", "Logistik"],
+    },
+    localContext: {
+      agiworks:
+        "Frankfurt ist Finanz- und Rechenzentrumsstandort, und das prägt die Erwartungen an Software: Zugriffsschutz, Protokollierung und ein belastbarer Betrieb sind selten optional. Anwendungen müssen von Beginn an so gebaut sein, dass jede Änderung nachvollziehbar bleibt und Prüfungen ohne Nacharbeit bestanden werden.",
+      nexcel:
+        "Im Frankfurter Finanz- und Beratungsumfeld sind Prozesse eng an Nachweispflichten gebunden. Automatisierung darf dort keine Blackbox sein: Jeder automatische Schritt muss begründbar bleiben und sich im Nachhinein rekonstruieren lassen.",
+    },
+    fit: {
+      agiworks: "regulierte Umfelder mit Prüf- und Protokollpflichten",
+      nexcel: "Prozesse mit Nachweis- und Begründungspflicht",
+    },
+    related: {
+      agiworks: ["/leistungen/api-entwicklung", "/leistungen/kundenportal-entwicklung", "/systeme/admin-operations-system"],
+      nexcel: ["/loesungen/automatisierung", "/loesungen/crm-automation", "/systeme/dashboard-reporting"],
+    },
+  },
+  {
+    slug: "stuttgart",
+    city: "Stuttgart",
+    region: "Baden-Württemberg",
+    nearby: ["muenchen", "frankfurt"],
+    areaServed: ["Stuttgart", "Baden-Württemberg", "Deutschland"],
+    industries: {
+      agiworks: ["Maschinenbau", "Zulieferindustrie", "Ingenieurbüros", "Produktion"],
+      nexcel: ["Produktion & Fertigung", "Ingenieurdienstleistung", "Zulieferer", "Handwerk"],
+    },
+    localContext: {
+      agiworks:
+        "Rund um Stuttgart sitzt ein technisch tief spezialisierter Mittelstand aus Maschinenbau, Zulieferern und Ingenieurbüros. Diese Betriebe haben meist sehr genaue Vorstellungen von ihren Abläufen, finden dafür aber keine passende Standardsoftware. Individuelle Entwicklung heißt hier vor allem, bestehendes Fachwissen präzise abzubilden statt es zu vereinfachen.",
+      nexcel:
+        "Fertigungsnahe Betriebe im Raum Stuttgart arbeiten entlang klar definierter Arbeitsfolgen, dokumentieren diese aber häufig noch parallel auf Papier oder in Tabellen. Automatisierung setzt dort an, wo dieselbe Angabe mehrfach erfasst wird, und macht den Fortschritt eines Auftrags durchgängig sichtbar.",
+    },
+    fit: {
+      agiworks: "technisch spezialisierter Mittelstand ohne passende Standardsoftware",
+      nexcel: "fertigungsnahe Abläufe mit doppelter Erfassung",
+    },
+    related: {
+      agiworks: ["/leistungen/erp-system-entwicklung", "/leistungen/softwareentwicklung", "/systeme/erp-systeme"],
+      nexcel: ["/loesungen/digitale-betriebssysteme", "/loesungen/automatisierung", "/systeme/warenwirtschaft-lagerverwaltung"],
+    },
+  },
+];
+
+function buildTier2(brand: BrandKey): LocationPage[] {
+  const isAgi = brand === "agiworks";
+  return TIER2_SEEDS.map((s) => {
+    const serviceName = isAgi
+      ? `Softwareentwicklung ${s.city}`
+      : `KI-Automatisierung ${s.city}`;
+    return {
+      id: `${brand}:/standorte/${s.slug}`,
+      brand,
+      slug: s.slug,
+      path: `/standorte/${s.slug}`,
+      city: s.city,
+      region: s.region,
+      serviceName,
+      title: isAgi
+        ? `Softwareentwicklung ${s.city} | AGI Works`
+        : `KI-Automatisierung ${s.city} · NEXCEL AI`,
+      description: isAgi
+        ? `Individuelle Software, Plattformen und Schnittstellen für Unternehmen in ${s.city} — vollständig remote umgesetzt, mit Sitz in Unna.`
+        : `Prozessautomatisierung und KI-gestützte Abläufe für Unternehmen in ${s.city} — vollständig remote begleitet, mit Sitz in Unna.`,
+      eyebrow: "Standort",
+      h1: isAgi
+        ? `Softwareentwicklung für Unternehmen in ${s.city}`
+        : `Prozessautomatisierung für Unternehmen in ${s.city}`,
+      heroIntro: isAgi
+        ? `Individuelle Anwendungen für Betriebe in ${s.city}: entwickelt entlang Ihrer Abläufe, remote und ohne Reisekosten im Projekt.`
+        : `Automatisierte Abläufe für Betriebe in ${s.city}: weniger Routinearbeit, ohne dass jemand vor Ort sein muss.`,
+      aeoAnswer: isAgi
+        ? `AGI Works entwickelt individuelle Software, Plattformen und Schnittstellen für Unternehmen in ${s.city}. Die Zusammenarbeit läuft vollständig remote über Videotermine und schriftliche Spezifikation, der rechtliche Sitz des Unternehmens ist Unna in Nordrhein-Westfalen. Der Ansatz passt besonders für ${s.fit.agiworks}. Der Einstieg erfolgt über eine kostenlose Systemanalyse.`
+        : `NEXCEL AI automatisiert Geschäftsprozesse für Unternehmen in ${s.city} und setzt KI dort ein, wo Ergebnisse überprüfbar bleiben. Die Zusammenarbeit läuft vollständig remote, der rechtliche Sitz ist Unna in Nordrhein-Westfalen. Der Ansatz passt besonders für ${s.fit.nexcel}. Der Einstieg erfolgt über eine kostenlose Systemanalyse.`,
+      localContext: s.localContext[brand],
+      services: isAgi ? AGI_SERVICES_REMOTE : NEXCEL_SERVICES_REMOTE,
+      industries: s.industries[brand],
+      process: isAgi ? AGI_PROCESS_REMOTE : NEXCEL_PROCESS_REMOTE,
+      faq: isAgi
+        ? [
+            { question: `Arbeitet AGI Works vor Ort in ${s.city}?`, answer: `Nein, Projekte außerhalb von Nordrhein-Westfalen laufen vollständig remote. Der rechtliche Sitz des Unternehmens ist Unna.` },
+            { question: "Funktioniert Entwicklung ohne Vor-Ort-Termine?", answer: "Ja. Anforderungen werden in strukturierten Videoterminen aufgenommen und schriftlich festgehalten, sodass beide Seiten denselben Stand haben." },
+            { question: `Für welche Betriebe in ${s.city} eignet sich das?`, answer: `Vor allem für ${s.fit.agiworks}, deren Abläufe von Standardprodukten nicht sauber abgedeckt werden.` },
+            { question: "Wem gehört der entwickelte Quellcode?", answer: "Der Quellcode wird mit Dokumentation übergeben und gehört dem Auftraggeber; eine Bindung an einen Anbieter entsteht dadurch nicht." },
+            { question: "Wie beginnt ein Projekt?", answer: "Mit einer kostenlosen Systemanalyse, die Ziele, Umfang und einen realistischen Projektkorridor klärt." },
+          ]
+        : [
+            { question: `Arbeitet NEXCEL AI vor Ort in ${s.city}?`, answer: `Nein, außerhalb von Nordrhein-Westfalen läuft die Zusammenarbeit vollständig remote. Der rechtliche Sitz ist Unna.` },
+            { question: "Wo lohnt sich Automatisierung zuerst?", answer: "Bei Abläufen, die häufig vorkommen, klar beschreibbar sind und deren Ergebnis sich überprüfen lässt. Dort ist die Entlastung am schnellsten spürbar." },
+            { question: `Für welche Betriebe in ${s.city} eignet sich das?`, answer: `Besonders für ${s.fit.nexcel}, bei denen Routine einen großen Teil der Arbeitszeit bindet.` },
+            { question: "Bleibt die Kontrolle beim Team?", answer: "Ja. Es wird vorab festgelegt, welche Schritte automatisch laufen und an welchen Stellen ein Mensch entscheidet." },
+            { question: "Wie beginnt ein Projekt?", answer: "Mit einer kostenlosen Systemanalyse, die Potenziale und einen realistischen Projektkorridor klärt." },
+          ],
+      nearbyCities: s.nearby,
+      relatedPaths: [...s.related[brand], "/systemanalyse", "/kontakt"],
+      areaServed: s.areaServed,
+      approved: true,
+      manualIndexApproval: true,
+    } satisfies LocationPage;
+  });
+}
+
+export const LOCATION_PAGES: LocationPage[] = [
+  ...AGI_LOCATIONS,
+  ...NEXCEL_LOCATIONS,
+  ...buildTier2("agiworks"),
+  ...buildTier2("nexcel"),
+];
 
 export function getLocationPagesForBrand(brand: BrandKey): LocationPage[] {
   return LOCATION_PAGES.filter((p) => p.brand === brand);

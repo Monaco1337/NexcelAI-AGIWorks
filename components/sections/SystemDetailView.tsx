@@ -11,12 +11,38 @@
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import { getSystemBySlug, SYSTEMS } from "@/lib/systems-data";
+import { SYSTEM_CATEGORY } from "@/data/systemPages";
 
-export default function SystemDetailView({ slug }: { slug: string }) {
+/**
+ * Neighbouring systems for the "Weitere Systeme" grid.
+ *
+ * Prefers same-category siblings (topically relevant links) and rotates the
+ * starting offset by the current system's position, so inbound links spread
+ * across the whole catalogue instead of always pointing at the first entries.
+ */
+function relatedSystems(slug: string, count: number) {
+  const category = SYSTEM_CATEGORY[slug as keyof typeof SYSTEM_CATEGORY];
+  const others = SYSTEMS.filter((s) => s.slug !== slug);
+  const sameCategory = others.filter((s) => SYSTEM_CATEGORY[s.slug] === category);
+  const rest = others.filter((s) => SYSTEM_CATEGORY[s.slug] !== category);
+  const offset = SYSTEMS.findIndex((s) => s.slug === slug);
+  const rotated = rest.map((_, i) => rest[(offset + i) % rest.length]);
+  return [...sameCategory, ...rotated].slice(0, count);
+}
+
+export default function SystemDetailView({
+  slug,
+  children,
+}: {
+  slug: string;
+  /** Rendered directly above the footer (SEO/AEO block from the route). */
+  children?: ReactNode;
+}) {
   const brand = useBrand();
   const system = getSystemBySlug(slug);
 
@@ -41,7 +67,7 @@ export default function SystemDetailView({ slug }: { slug: string }) {
   }
 
   const contactHref = `${resolveBrandNavHref("/kontakt", brand.id)}?system=${system.slug}`;
-  const otherSystems = SYSTEMS.filter((s) => s.slug !== system.slug).slice(0, 4);
+  const otherSystems = relatedSystems(system.slug, 4);
 
   return (
     <main className="relative min-h-screen overflow-hidden">
@@ -269,6 +295,8 @@ export default function SystemDetailView({ slug }: { slug: string }) {
           </div>
         </div>
       </section>
+
+      {children}
 
       <Footer />
     </main>

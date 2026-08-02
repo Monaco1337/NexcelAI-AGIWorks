@@ -14,6 +14,7 @@
 import { getBrandConfig, type BrandKey } from "@/config/seo/brands";
 import { getBusinessLocation } from "@/config/businessLocations";
 import { getCanonicalDomain } from "@/config/seo/brands";
+import { sameAsUrls } from "@/config/seo/profiles";
 import type { SeoPage } from "@/config/seo/pageRegistry";
 import { canonicalForPage } from "./canonical";
 
@@ -34,12 +35,15 @@ function postalAddress(brand: BrandKey): JsonLdObject {
 /** Organization schema (legal entity, factual address, no ratings). */
 export function organizationSchema(brand: BrandKey): JsonLdObject {
   const cfg = getBrandConfig(brand);
+  const loc = getBusinessLocation(brand);
   const origin = getCanonicalDomain(brand);
+  const sameAs = sameAsUrls(brand);
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${origin}/#organization`,
     name: cfg.publicName,
+    legalName: loc.legalName,
     url: `${origin}/`,
     email: cfg.email,
     founder: {
@@ -48,7 +52,18 @@ export function organizationSchema(brand: BrandKey): JsonLdObject {
     },
     address: postalAddress(brand),
     areaServed: cfg.areaServed,
+    knowsAbout: cfg.topics,
     logo: `${origin}${cfg.defaultOgImage}`,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: cfg.email,
+      availableLanguage: ["de", "en"],
+      areaServed: "DE",
+    },
+    // Only verified, resolving profiles. Omitted entirely when none exist, so
+    // the property never ships as an empty array.
+    ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 }
 

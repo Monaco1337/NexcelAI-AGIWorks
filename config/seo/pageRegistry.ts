@@ -20,12 +20,16 @@ import { AGI_INTERNAL_PREFIX } from "./domains";
 import { MONEY_PAGES } from "@/data/moneyPages";
 import { LOCATION_PAGES } from "@/data/locationPages";
 import { KNOWLEDGE_PAGES } from "@/data/knowledgePages";
+import { SYSTEM_PAGES } from "@/data/systemPages";
+import { REFERENCE_PAGES } from "@/data/referencePages";
+import { CITY_SERVICE_PAGES } from "@/data/cityServicePages";
 
 export type SeoPageType =
   | "home"
   | "money"
   | "location"
   | "knowledge"
+  | "system"
   | "tool"
   | "content"
   | "legal";
@@ -146,6 +150,26 @@ const CORE_SEEDS: CoreSeed[] = [
     title: (n) => `Kontakt · ${n}`,
     description: (n) =>
       `Kontaktieren Sie ${n}. Beschreiben Sie Ihr Projekt – die Rückmeldung erfolgt persönlich.`,
+  },
+  {
+    path: "/uebersicht",
+    type: "content",
+    breadcrumbLabel: "Übersicht",
+    changefreq: "weekly",
+    priority: 0.4,
+    title: (n) => `Seitenübersicht · ${n}`,
+    description: (n) =>
+      `Alle Seiten von ${n} auf einen Blick: Leistungen, Systeme, Standorte, Fachbeiträge und Referenzen.`,
+  },
+  {
+    path: "/presse",
+    type: "content",
+    breadcrumbLabel: "Presse & Partner",
+    changefreq: "monthly",
+    priority: 0.4,
+    title: (n) => `Presse & Partner · ${n}`,
+    description: (n) =>
+      `Unternehmensangaben, freigegebene Kurzprofile und Logo von ${n} zur Übernahme in Verzeichnisse und Beiträge.`,
   },
   {
     path: "/impressum",
@@ -356,6 +380,71 @@ function buildRegistry(): SeoPage[] {
       quality: { index: true, score: 100 },
       changefreq: "monthly",
       priority: 0.5,
+    });
+  });
+
+  // System pages — the 23 /systeme/* detail routes per brand. They were live but
+  // outside the registry (and therefore outside the sitemap), so 46 pages of real
+  // content were effectively invisible to crawlers. They are now registered with
+  // brand-differentiated copy from data/systemPages.ts; the shared visual content
+  // in lib/systems-data.tsx stays untouched.
+  SYSTEM_PAGES.forEach((sp) => {
+    pages.push({
+      id: sp.id,
+      brand: sp.brand,
+      path: sp.path,
+      internalPath: internalPathFor(sp.brand, sp.path),
+      type: "system",
+      title: sp.title,
+      description: sp.description,
+      breadcrumbLabel: sp.systemName,
+      approved: sp.approved,
+      manualIndexApproval: sp.manualIndexApproval,
+      quality: { index: true, score: 100 },
+      changefreq: "monthly",
+      priority: 0.6,
+    });
+  });
+
+  // Reference detail pages — /projekte/<slug>. The project facts come from
+  // lib/references-data.ts; data/referencePages.ts only adds the per-brand
+  // editorial angle, so the /projekte hub is no longer a dead end.
+  REFERENCE_PAGES.forEach((rp) => {
+    pages.push({
+      id: rp.id,
+      brand: rp.brand,
+      path: rp.path,
+      internalPath: internalPathFor(rp.brand, rp.path),
+      type: "content",
+      title: rp.title,
+      description: rp.description,
+      breadcrumbLabel: rp.reference.title,
+      approved: rp.approved,
+      manualIndexApproval: rp.manualIndexApproval,
+      quality: { index: true, score: 100 },
+      changefreq: "yearly",
+      priority: 0.5,
+    });
+  });
+
+  // City × service pages — handpicked location/service combinations only (see
+  // data/cityServicePages.ts). Deliberately not a generated city × service
+  // matrix, which would be doorway content.
+  CITY_SERVICE_PAGES.forEach((cs) => {
+    pages.push({
+      id: cs.id,
+      brand: cs.brand,
+      path: cs.path,
+      internalPath: internalPathFor(cs.brand, cs.path),
+      type: "location",
+      title: cs.title,
+      description: cs.description,
+      breadcrumbLabel: cs.city,
+      approved: cs.approved,
+      manualIndexApproval: cs.manualIndexApproval,
+      quality: { index: true, score: 100 },
+      changefreq: "monthly",
+      priority: 0.45,
     });
   });
 

@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeading } from "@/components/sections/SystemsGrid";
 import { STATIC_REFERENCES, type ReferenceEntry } from "@/lib/references-data";
@@ -351,12 +352,19 @@ function ReferenceCard({
         <div className="mt-3.5">
           <MiniTransition project={project} />
         </div>
-        <span className="mt-4 inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold transition-transform duration-300 group-hover:translate-x-0.5" style={{ color: "var(--accent)" }}>
+        {/* Real link to the detail page: the card click opens the quick preview,
+            this keeps the case study crawlable and reachable without JS. */}
+        <Link
+          href={`/projekte/${project.slug}`}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-4 inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold transition-transform duration-300 group-hover:translate-x-0.5"
+          style={{ color: "var(--accent)" }}
+        >
           Details ansehen
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </span>
+        </Link>
       </div>
     </motion.article>
   );

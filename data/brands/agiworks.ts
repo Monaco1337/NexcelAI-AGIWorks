@@ -163,6 +163,8 @@ export const agiworksBrand: BrandConfig = {
       company: [
         { label: "Über uns", href: "/ueber-mich" },
         { label: "Kontakt", href: "/kontakt" },
+        { label: "Presse & Partner", href: "/presse" },
+        { label: "Seitenübersicht", href: "/uebersicht" },
       ],
       // Spalte „Rechtliches"
       legal: [

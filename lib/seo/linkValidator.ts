@@ -25,6 +25,7 @@ const ALLOWED_PREFIXES = [
   "/loesungen/",
   "/standorte/",
   "/wissen/",
+  "/projekte/",
   "/diagnose/",
   "/systemanalyse",
   "/admin",

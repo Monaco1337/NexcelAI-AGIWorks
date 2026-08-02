@@ -23,7 +23,7 @@ import { canonicalForPage } from "./canonical";
 import { blocker, warning, info, hasBlockers, type Finding } from "./findings";
 
 const BRANDS: BrandKey[] = ["nexcel", "agiworks"];
-const TYPES: SeoPageType[] = ["home", "money", "location", "knowledge", "tool", "content", "legal"];
+const TYPES: SeoPageType[] = ["home", "money", "location", "knowledge", "system", "tool", "content", "legal"];
 
 function hostOf(url: string): string | null {
   try {
@@ -73,7 +73,13 @@ export function auditReadiness(pages: SeoPage[] = PAGE_REGISTRY): Finding[] {
   }
 
   // Deny-by-default reaffirmation: scalable content ships as candidate.
-  const scalable = pages.filter((p) => p.type === "money" || p.type === "location" || p.type === "knowledge");
+  const scalable = pages.filter(
+    (p) =>
+      p.type === "money" ||
+      p.type === "location" ||
+      p.type === "knowledge" ||
+      p.type === "system"
+  );
   const leakedCandidates = scalable.filter((p) => isPageIndexable(p) && !(p.approved && p.manualIndexApproval));
   if (leakedCandidates.length > 0) {
     for (const p of leakedCandidates) {

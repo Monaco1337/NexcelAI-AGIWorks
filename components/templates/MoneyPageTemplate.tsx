@@ -15,20 +15,13 @@ import { TemplateSection, GlassCard, CardGrid } from "./primitives";
 import { serviceSchema } from "@/lib/seo/jsonld";
 import { toAbsoluteUrl } from "@/config/seo/domains";
 import { MONEY_PAGES, MONEY_PROOF_CONSTRAINTS, type MoneyPage } from "@/data/moneyPages";
+import { internalLinkLabel } from "@/lib/seo/internalLinks";
 import type { TemplateBase } from "@/lib/templates/types";
-
-const CORE_LINK_LABELS: Record<string, string> = {
-  "/systemanalyse": "Systemanalyse",
-  "/preiskalkulator": "Preiskalkulator",
-  "/preise": "Preise",
-  "/projekte": "Projekte",
-  "/kontakt": "Kontakt",
-};
 
 function linkLabel(brand: MoneyPage["brand"], href: string): string {
   const money = MONEY_PAGES.find((p) => p.brand === brand && p.path === href);
   if (money) return money.serviceName;
-  return CORE_LINK_LABELS[href] ?? href;
+  return internalLinkLabel(brand, href);
 }
 
 export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {

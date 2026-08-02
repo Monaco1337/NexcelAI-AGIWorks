@@ -34,7 +34,9 @@
     "seo:scaling": "tsx scripts/seo/run.ts scaling",
     "seo:readiness": "tsx scripts/seo/run.ts readiness",
     "seo:audit": "tsx scripts/seo/run.ts audit",
-    "seo:all": "tsx scripts/seo/run.ts all"
+    "seo:all": "tsx scripts/seo/run.ts all",
+    "seo:citations": "tsx scripts/seo/citation-dossier.ts",
+    "seo:internal-links": "tsx scripts/seo/count-internal-links.ts"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",

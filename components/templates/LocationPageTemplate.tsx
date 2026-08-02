@@ -17,6 +17,7 @@ import { serviceSchema } from "@/lib/seo/jsonld";
 import { toAbsoluteUrl } from "@/config/seo/domains";
 import { MONEY_PAGES } from "@/data/moneyPages";
 import { LOCATION_PAGES, type LocationPage } from "@/data/locationPages";
+import { getCityServicePagesForCity } from "@/data/cityServicePages";
 import type { TemplateBase } from "@/lib/templates/types";
 
 const CORE_LINK_LABELS: Record<string, string> = {
@@ -40,6 +41,7 @@ function cityLabel(brand: LocationPage["brand"], slug: string): string {
 
 export default function LocationPageTemplate({ page }: { page: LocationPage }) {
   const canonicalUrl = toAbsoluteUrl(page.brand, page.path);
+  const cityServices = getCityServicePagesForCity(page.brand, page.slug);
 
   const base: TemplateBase = {
     brand: page.brand,
@@ -123,6 +125,28 @@ export default function LocationPageTemplate({ page }: { page: LocationPage }) {
           ))}
         </ol>
       </TemplateSection>
+
+      {/* Handpicked service pages for this city */}
+      {cityServices.length > 0 && (
+        <TemplateSection
+          eyebrow="Vor Ort"
+          heading={`Leistungen für Unternehmen in ${page.city}`}
+        >
+          <div className="flex flex-wrap gap-3">
+            {cityServices.map((cs) => (
+              <Link
+                key={cs.path}
+                href={cs.path}
+                title={cs.description}
+                className="rounded-xl px-4 py-2 text-sm text-white/80"
+                style={{ border: "1px solid var(--brand-card-border, rgba(255,255,255,0.10))" }}
+              >
+                {cs.serviceLabel}
+              </Link>
+            ))}
+          </div>
+        </TemplateSection>
+      )}
 
       {/* Nearby cities */}
       {page.nearbyCities.length > 0 && (
