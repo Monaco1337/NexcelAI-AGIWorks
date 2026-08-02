@@ -5,10 +5,15 @@ import {
   createReference,
   updateSortOrders,
 } from "@/lib/references-store";
+import { authorize, requestMeta } from "@/lib/auth/authorize";
+import { writeAudit, actorFrom } from "@/lib/audit/auditLog";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const gate = await authorize("crm.content.manage");
+  if (!gate.ok) return gate.response;
+
   try {
     const refs = await getAllReferences();
     return NextResponse.json({ references: refs });
@@ -19,6 +24,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const gate = await authorize("crm.content.manage");
+  if (!gate.ok) return gate.response;
+
   try {
     const body = await req.json();
     const id = `ref_${randomUUID().replace(/-/g, "").slice(0, 12)}`;
@@ -52,6 +60,16 @@ export async function POST(req: NextRequest) {
       isPublished: body.isPublished ?? true,
     });
 
+    const meta = await requestMeta();
+    await writeAudit({
+      actor: actorFrom(gate.auth),
+      action: "reference.created",
+      entityType: "reference",
+      entityId: id,
+      after: { slug, title: body.title ?? "", clientName: body.clientName ?? "" },
+      ...meta,
+    });
+
     return NextResponse.json({ id, slug });
   } catch (err) {
     console.error("[API] POST /api/admin/references:", err);
@@ -60,11 +78,23 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const gate = await authorize("crm.content.manage");
+  if (!gate.ok) return gate.response;
+
   try {
     const body = await req.json();
     // Reorder: [{ id, sortOrder }]
     if (Array.isArray(body.order)) {
       await updateSortOrders(body.order);
+      const meta = await requestMeta();
+      await writeAudit({
+        actor: actorFrom(gate.auth),
+        action: "reference.reordered",
+        entityType: "reference",
+        entityId: "*",
+        after: { count: body.order.length },
+        ...meta,
+      });
       return NextResponse.json({ ok: true });
     }
     return NextResponse.json({ error: "Ungültige Anfrage" }, { status: 400 });

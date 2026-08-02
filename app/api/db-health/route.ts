@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isDbEnabled, getSql, ensureSchema } from "@/lib/pg";
+import { isDbEnabled, getSql, ensureSchema, getMigrationStatus } from "@/lib/pg";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +26,24 @@ export async function GET() {
   try {
     await sql`SELECT 1 AS ok`;
     const schema = await ensureSchema();
+    const migrations = getMigrationStatus();
     return NextResponse.json(
-      { envPresent: true, connected: true, schema },
+      {
+        envPresent: true,
+        connected: true,
+        schema,
+        migrations: migrations
+          ? {
+              appliedCount: migrations.applied.length,
+              pending: migrations.pending,
+              complete: migrations.complete,
+              // Nur ID und Name — die Fehlermeldung kann Schemadetails enthalten.
+              failed: migrations.failed
+                ? { id: migrations.failed.id, name: migrations.failed.name }
+                : null,
+            }
+          : null,
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error: any) {

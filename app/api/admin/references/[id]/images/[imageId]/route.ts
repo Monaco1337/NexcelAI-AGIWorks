@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/pg";
 import { deleteReferenceImage } from "@/lib/references-store";
+import { authorize, requestMeta } from "@/lib/auth/authorize";
+import { writeAudit, actorFrom } from "@/lib/audit/auditLog";
 
 export const dynamic = "force-dynamic";
 
-/** Serve an additional reference image */
+/**
+ * Liefert ein Zusatzbild einer Referenz.
+ *
+ * BEWUSST OHNE AUTHENTIFIZIERUNG: Bildquelle in der öffentlichen
+ * Projektgalerie. Die Abfrage bindet `reference_id` mit ein, damit sich fremde
+ * Bilder nicht über eine geratene Bild-ID abrufen lassen.
+ */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string; imageId: string } },
@@ -25,13 +33,26 @@ export async function GET(
   });
 }
 
-/** Delete an additional reference image */
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string; imageId: string } },
 ) {
+  const gate = await authorize("crm.content.manage");
+  if (!gate.ok) return gate.response;
+
   try {
     await deleteReferenceImage(params.imageId);
+
+    const meta = await requestMeta();
+    await writeAudit({
+      actor: actorFrom(gate.auth),
+      action: "reference.image_deleted",
+      entityType: "reference",
+      entityId: params.id,
+      before: { imageId: params.imageId },
+      ...meta,
+    });
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[API] DELETE image:", err);

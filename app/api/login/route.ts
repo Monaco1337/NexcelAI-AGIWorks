@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { findUserByEmail, updateUser } from "@/lib/demo-users";
 import { createSession } from "@/lib/auth";
+import { mirrorUser } from "@/lib/identity/usersStore";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,12 +19,6 @@ export async function POST(req: NextRequest) {
     let user;
     try {
       user = findUserByEmail(email);
-      console.log("Login attempt for:", email);
-      console.log("User found:", user ? "YES" : "NO");
-      if (user) {
-        console.log("User email:", user.email);
-        console.log("User role:", user.role);
-      }
     } catch (error) {
       console.error("Error finding user:", error);
       return NextResponse.json(
@@ -33,7 +28,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
-      console.log("User not found for email:", email);
       return NextResponse.json(
         { error: "Ungültige E-Mail-Adresse oder Passwort." },
         { status: 401 }
@@ -52,7 +46,6 @@ export async function POST(req: NextRequest) {
     let isValidPassword;
     try {
       isValidPassword = await bcrypt.compare(password, user.passwordHash);
-      console.log("Password comparison result:", isValidPassword);
     } catch (error) {
       console.error("Error comparing password:", error);
       return NextResponse.json(
@@ -62,7 +55,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isValidPassword) {
-      console.log("Password mismatch for user:", user.email);
       return NextResponse.json(
         { error: "Ungültige E-Mail-Adresse oder Passwort." },
         { status: 401 }
@@ -92,6 +84,23 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       console.error("Error updating user:", error);
       // Don't fail login if update fails
+    }
+
+    // Identität nach Postgres spiegeln, damit Tickets diesen Nutzer als
+    // Bearbeiter, Genehmiger oder Kommentarautor referenzieren können.
+    // Scheitert das (z. B. Datenbank nicht erreichbar), bleibt der Login
+    // gültig — die Anmeldung darf nicht von der Spiegelung abhängen.
+    try {
+      await mirrorUser({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        brand: user.brand ?? null,
+        source: process.env.ADMIN_USERS ? "env" : "file",
+      });
+    } catch (error) {
+      console.error("[LOGIN] Nutzerspiegelung fehlgeschlagen:", error);
     }
 
     const response = NextResponse.json({

@@ -1,18 +1,22 @@
 /**
  * NEXCEL AI / AGI WORKS · Zentraler Postgres-Layer
  *
- * Eine einzige, robuste Postgres-Verbindung für die gesamte App
- * (Kontakte, Demo-Anfragen, Kunden-Logos).
+ * Eine einzige, robuste Postgres-Verbindung für die gesamte App.
  *
  * Verbindung kommt aus Vercel Postgres / Neon Env-Variablen.
  * Wenn KEINE Datenbank konfiguriert ist, geben alle Helfer `null` zurück
  * und die App fällt sauber auf das bestehende Datei-/Memory-Verhalten zurück
  * — die Seite geht also nie kaputt, auch ohne DB.
  *
- * Schema wird beim ersten Zugriff automatisch angelegt (idempotent).
+ * Das Schema wird über versionierte Migrationen aufgebaut
+ * (lib/db/migrations). Der frühere Inline-Bootstrap per
+ * `CREATE TABLE IF NOT EXISTS` ist entfallen, weil er bestehende Tabellen
+ * nicht verändern konnte.
  */
 
 import postgres from "postgres";
+import { runMigrations, type MigrationStatus } from "./db/migrationRunner";
+import { MIGRATIONS } from "./db/migrations";
 
 /** Erste verfügbare Postgres-URL aus den üblichen Vercel/Neon-Variablen. */
 function resolveConnectionString(): string | null {
@@ -36,7 +40,7 @@ export function isDbEnabled(): boolean {
   return !!CONNECTION_STRING;
 }
 
-type Sql = ReturnType<typeof postgres>;
+export type Sql = ReturnType<typeof postgres>;
 
 let sql: Sql | null = null;
 
@@ -67,6 +71,16 @@ export function getSql(): Sql | null {
 /* ── Schema-Bootstrap (einmal pro Prozess) ─────────────────────────── */
 
 let schemaPromise: Promise<boolean> | null = null;
+let lastStatus: MigrationStatus | null = null;
+
+/**
+ * Status des letzten Migrationslaufs in diesem Prozess. Wird von
+ * /api/db-health ausgegeben, damit ein unvollständiges Schema sichtbar ist,
+ * statt still im Hintergrund zu bleiben.
+ */
+export function getMigrationStatus(): MigrationStatus | null {
+  return lastStatus;
+}
 
 export function ensureSchema(): Promise<boolean> {
   if (schemaPromise) return schemaPromise;
@@ -75,181 +89,27 @@ export function ensureSchema(): Promise<boolean> {
     const client = getSql();
     if (!client) return false;
 
-    /**
-     * Jede Tabelle wird ISOLIERT angelegt. Schlägt ein DDL fehl (z. B. wegen
-     * eines reservierten Spaltennamens oder eines Migrations-Konflikts), darf
-     * das NIEMALS den Zugriff auf alle anderen Tabellen blockieren.
-     * `db()` bleibt damit für bereits existierende Tabellen (Kontakte,
-     * Referenzen, Logos …) voll funktionsfähig.
-     */
-    let hadError = false;
-    const run = async (label: string, fn: () => Promise<unknown>) => {
-      try {
-        await fn();
-      } catch (error) {
-        hadError = true;
-        console.error(`❌ [PG] Migration "${label}" fehlgeschlagen:`, error);
-      }
-    };
-
-    await run("contact_posts", async () => {
-      await client`
-        CREATE TABLE IF NOT EXISTS contact_posts (
-          id           TEXT PRIMARY KEY,
-          vorname      TEXT NOT NULL DEFAULT '',
-          nachname     TEXT NOT NULL DEFAULT '',
-          email        TEXT NOT NULL DEFAULT '',
-          telefon      TEXT,
-          unternehmen  TEXT,
-          betreff      TEXT NOT NULL DEFAULT '',
-          nachricht    TEXT NOT NULL DEFAULT '',
-          status       TEXT NOT NULL DEFAULT 'open',
-          read         BOOLEAN NOT NULL DEFAULT FALSE,
-          archived     BOOLEAN NOT NULL DEFAULT FALSE,
-          brand        TEXT NOT NULL DEFAULT 'nexcel',
-          source_host  TEXT,
-          created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `;
-      await client`
-        CREATE INDEX IF NOT EXISTS idx_contact_posts_created_at
-        ON contact_posts (created_at DESC)
-      `;
-    });
-
-    await run("demo_requests", async () => {
-      await client`
-        CREATE TABLE IF NOT EXISTS demo_requests (
-          id           TEXT PRIMARY KEY,
-          name         TEXT NOT NULL DEFAULT '',
-          email        TEXT NOT NULL DEFAULT '',
-          unternehmen  TEXT,
-          status       TEXT NOT NULL DEFAULT 'pending',
-          expires_at   TIMESTAMPTZ,
-          read         BOOLEAN NOT NULL DEFAULT FALSE,
-          archived     BOOLEAN NOT NULL DEFAULT FALSE,
-          brand        TEXT NOT NULL DEFAULT 'nexcel',
-          created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `;
-      await client`
-        CREATE INDEX IF NOT EXISTS idx_demo_requests_created_at
-        ON demo_requests (created_at DESC)
-      `;
-    });
-
-    await run("customer_logos", async () => {
-      await client`
-        CREATE TABLE IF NOT EXISTS customer_logos (
-          id            TEXT PRIMARY KEY,
-          name          TEXT NOT NULL DEFAULT '',
-          brand         TEXT NOT NULL DEFAULT 'all',
-          image_data    BYTEA NOT NULL,
-          content_type  TEXT NOT NULL DEFAULT 'image/png',
-          class_name    TEXT NOT NULL DEFAULT 'max-h-[48px] max-w-[160px] sm:max-h-[56px] sm:max-w-[184px]',
-          filter_style  TEXT NOT NULL DEFAULT 'brightness(1.05) opacity(0.85)',
-          sort_order    INTEGER NOT NULL DEFAULT 0,
-          active        BOOLEAN NOT NULL DEFAULT TRUE,
-          created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `;
-      await client`
-        CREATE INDEX IF NOT EXISTS idx_customer_logos_sort
-        ON customer_logos (sort_order ASC, created_at ASC)
-      `;
-    });
-
-    await run("references_projects", async () => {
-      await client`
-        CREATE TABLE IF NOT EXISTS references_projects (
-          id               TEXT PRIMARY KEY,
-          title            TEXT NOT NULL DEFAULT '',
-          slug             TEXT NOT NULL DEFAULT '',
-          client_name      TEXT NOT NULL DEFAULT '',
-          short_description TEXT NOT NULL DEFAULT '',
-          full_description TEXT NOT NULL DEFAULT '',
-          type             TEXT NOT NULL DEFAULT '',
-          tags             TEXT[] NOT NULL DEFAULT '{}',
-          modules          TEXT[] NOT NULL DEFAULT '{}',
-          website_url      TEXT,
-          status           TEXT NOT NULL DEFAULT 'live',
-          cover_image      TEXT NOT NULL DEFAULT '',
-          cover_image_data BYTEA,
-          cover_content_type TEXT NOT NULL DEFAULT 'image/png',
-          sort_order       INTEGER NOT NULL DEFAULT 0,
-          is_published     BOOLEAN NOT NULL DEFAULT TRUE,
-          created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `;
-      await client`
-        CREATE INDEX IF NOT EXISTS idx_references_sort
-        ON references_projects (sort_order ASC, created_at ASC)
-      `;
-    });
-
-    await run("reference_images", async () => {
-      await client`
-        CREATE TABLE IF NOT EXISTS reference_images (
-          id           TEXT PRIMARY KEY,
-          reference_id TEXT NOT NULL REFERENCES references_projects(id) ON DELETE CASCADE,
-          image_data   BYTEA NOT NULL,
-          content_type TEXT NOT NULL DEFAULT 'image/png',
-          alt          TEXT NOT NULL DEFAULT '',
-          sort_order   INTEGER NOT NULL DEFAULT 0,
-          created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `;
-      await client`
-        CREATE INDEX IF NOT EXISTS idx_reference_images_ref
-        ON reference_images (reference_id, sort_order ASC)
-      `;
-    });
-
-    await run("systems_cards", async () => {
-      await client`
-        CREATE TABLE IF NOT EXISTS systems_cards (
-          id                  TEXT PRIMARY KEY,
-          slug                TEXT UNIQUE NOT NULL,
-          category            TEXT NOT NULL DEFAULT 'unternehmen',
-          title               TEXT NOT NULL DEFAULT '',
-          tagline             TEXT NOT NULL DEFAULT '',
-          card_desc           TEXT NOT NULL DEFAULT '',
-          long_desc           TEXT NOT NULL DEFAULT '',
-          bullets             JSONB NOT NULL DEFAULT '[]',
-          details             JSONB NOT NULL DEFAULT '[]',
-          image               TEXT NOT NULL DEFAULT '',
-          cover_image_data    BYTEA,
-          cover_content_type  TEXT NOT NULL DEFAULT 'image/png',
-          alt                 TEXT NOT NULL DEFAULT '',
-          sort_order          INTEGER NOT NULL DEFAULT 0,
-          is_published        BOOLEAN NOT NULL DEFAULT TRUE,
-          created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `;
-      // Falls eine frühere (kaputte) Version die Spalte "desc" hatte:
-      // sauber auf "card_desc" migrieren, ohne Daten zu verlieren.
-      await client`
-        ALTER TABLE systems_cards RENAME COLUMN "desc" TO card_desc
-      `.catch(() => {/* Spalte existiert nicht — ok */});
-      await client`
-        CREATE INDEX IF NOT EXISTS idx_systems_cards_sort
-        ON systems_cards (sort_order ASC, created_at ASC)
-      `;
-      await client`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_systems_cards_slug
-        ON systems_cards (slug)
-      `;
-    });
-
-    if (hadError) {
-      console.warn("⚠️ [PG] Schema teilweise mit Fehlern initialisiert — funktionsfähige Tabellen bleiben nutzbar.");
-    } else {
-      console.log("✅ [PG] Schema bereit");
+    try {
+      lastStatus = await runMigrations(client, MIGRATIONS);
+    } catch (error) {
+      console.error("❌ [PG] Migrationslauf abgebrochen:", error);
+      return true; // Verbindung steht; bestehende Tabellen bleiben nutzbar.
     }
-    // Verbindung steht → Client zurückgeben, auch bei einzelnen DDL-Fehlern.
+
+    if (lastStatus.failed) {
+      console.error(
+        `❌ [PG] Schema unvollständig — Migration ${lastStatus.failed.id} ` +
+          `(${lastStatus.failed.name}) fehlgeschlagen: ${lastStatus.failed.error}`
+      );
+    } else {
+      console.log(
+        `✅ [PG] Schema bereit (${lastStatus.applied.length} Migrationen)`
+      );
+    }
+
+    // Die Verbindung steht. Bereits migrierte Tabellen bleiben nutzbar, auch
+    // wenn eine spätere Migration scheitert — sonst legt ein Fehler in einem
+    // neuen Modul die gesamte Website lahm.
     return true;
   })();
 

@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/pg";
 import { updateSystemCoverImage } from "@/lib/systems-store";
+import { authorize, requestMeta } from "@/lib/auth/authorize";
+import { writeAudit, actorFrom } from "@/lib/audit/auditLog";
+import { validateImageUpload } from "@/lib/uploads/imageUpload";
 
 export const dynamic = "force-dynamic";
 
-/** Serve the cover image stored in DB */
+/**
+ * Liefert das in der Datenbank gespeicherte Coverbild.
+ *
+ * BEWUSST OHNE AUTHENTIFIZIERUNG: dieser Pfad wird in `systems_cards.image`
+ * hinterlegt und als Bildquelle auf der öffentlichen Website gerendert. Eine
+ * Absicherung würde die Systemkarten für Besucher leer erscheinen lassen.
+ * Der Upload (POST) ist selbstverständlich geschützt.
+ */
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const client = await db();
   if (!client) return NextResponse.json({ error: "Keine DB" }, { status: 503 });
@@ -22,16 +32,32 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   });
 }
 
-/** Upload a new cover image */
+/** Neues Coverbild hochladen. */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await authorize("crm.content.manage");
+  if (!gate.ok) return gate.response;
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    if (!file) return NextResponse.json({ error: "Keine Datei" }, { status: 400 });
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const contentType = file.type || "image/png";
+    const problem = validateImageUpload(file);
+    if (problem) return NextResponse.json({ error: problem }, { status: 400 });
+
+    const buffer = Buffer.from(await file!.arrayBuffer());
+    const contentType = file!.type || "image/png";
     await updateSystemCoverImage(params.id, buffer, contentType);
+
+    const meta = await requestMeta();
+    await writeAudit({
+      actor: actorFrom(gate.auth),
+      action: "system_card.cover_replaced",
+      entityType: "system_card",
+      entityId: params.id,
+      after: { contentType, bytes: buffer.byteLength },
+      ...meta,
+    });
+
     return NextResponse.json({ url: `/api/admin/systems/${params.id}/cover` });
   } catch (err) {
     console.error("[API] POST systems cover:", err);
