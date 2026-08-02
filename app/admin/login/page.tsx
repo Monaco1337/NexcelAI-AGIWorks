@@ -94,7 +94,7 @@ export default function AdminLogin() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-[#9CA3AF] focus:outline-none focus:border-[#A45CFF] focus:ring-2 focus:ring-[#A45CFF]/20 transition-all"
-              placeholder="admin@nexcel-ai.de"
+              placeholder="admin@nexcelai.de"
             />
           </div>
 
