@@ -3,9 +3,27 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import dynamicImport from "next/dynamic";
 import LogoManager from "@/components/admin/LogoManager";
 import ReferenceManager from "@/components/admin/ReferenceManager";
 import SystemsManager from "@/components/admin/SystemsManager";
+
+// Das Ticket Control Center wird erst beim Öffnen des Reiters geladen. Fest
+// eingebunden würde es den Start des gesamten Dashboards verlangsamen, obwohl
+// die meisten Sitzungen im Command Center beginnen.
+const TicketControlCenter = dynamicImport(
+  () => import("@/components/admin/tickets/TicketControlCenter"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-14 animate-pulse rounded-xl bg-white/[0.02]" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 const IS_PRODUCTION = process.env.NEXT_PUBLIC_VERCEL === "1" || process.env.NODE_ENV === "production";
 
@@ -142,6 +160,7 @@ type TabId =
   | "pipeline"
   | "unternehmen"
   | "demo"
+  | "tickets"
   | "automationen"
   | "analytics"
   | "logos"
@@ -256,6 +275,13 @@ function NavIcon({ name }: { name: TabId }) {
           <rect x="3" y="12" width="7" height="7" rx="1.5" />
         </svg>
       );
+    case "tickets":
+      return (
+        <svg {...common}>
+          <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5z" />
+          <path d="M13 6v2M13 11v2M13 16v2" />
+        </svg>
+      );
     case "settings":
       return (
         <svg {...common}>
@@ -313,6 +339,7 @@ export default function AdminDashboard() {
   // Zeitraum-Filter: wählt nur, welcher bestehende Analytics-Bucket angezeigt wird.
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [openTickets, setOpenTickets] = useState(0);
 
   // Filtered views derived from brandFilter. Legacy entries without a
   // brand tag default to "nexcel" so they remain visible under the
@@ -347,11 +374,12 @@ export default function AdminDashboard() {
       const { getAdminContacts } = await import("@/app/actions/admin");
       const brandQuery = brandFilter === "all" ? "" : `?brand=${brandFilter}`;
 
-      const [contactsData, statsRes, demoRes, userRes] = await Promise.all([
+      const [contactsData, statsRes, demoRes, userRes, ticketRes] = await Promise.all([
         getAdminContacts(),
         fetch(`/api/admin/stats${brandQuery}`),
         fetch("/api/admin/demo-requests?archived=false"),
         fetch("/api/admin/me"),
+        fetch("/api/admin/tickets/stats"),
       ]);
 
       // Fehlerpfad für Kontakte zuerst behandeln.
@@ -372,16 +400,22 @@ export default function AdminDashboard() {
         contactsData && Array.isArray(contactsData.contacts) ? contactsData.contacts : [];
       const nextDemos = demoRes.ok ? (await demoRes.json()).requests ?? [] : [];
       const nextUser = userRes.ok ? await userRes.json() : null;
+      // Nur die Zahl fürs Badge — die vollständige Ticketliste lädt erst der
+      // Reiter selbst.
+      const nextOpenTickets = ticketRes.ok
+        ? ((await ticketRes.json()).stats?.open ?? 0)
+        : 0;
 
       // Change-Detection: nur State setzen (= Re-Render auslösen), wenn sich
       // die Nutzdaten tatsächlich geändert haben. Das hält den Main-Thread frei
       // und macht Tab-Wechsel/Klicks sofort responsiv.
-      const signature = JSON.stringify([nextStats, nextContacts, nextDemos, nextUser]);
+      const signature = JSON.stringify([nextStats, nextContacts, nextDemos, nextUser, nextOpenTickets]);
       if (signature !== lastPayloadRef.current) {
         lastPayloadRef.current = signature;
         if (nextStats) setStats(nextStats);
         setContacts(nextContacts);
         setDemoRequests(nextDemos);
+        setOpenTickets(nextOpenTickets);
         if (nextUser) setUser(nextUser);
       }
 
@@ -545,6 +579,7 @@ export default function AdminDashboard() {
     { id: "pipeline", label: "Pipeline" },
     { id: "unternehmen", label: "Unternehmen" },
     { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
+    { id: "tickets", label: "Tickets", badge: openTickets },
     { id: "automationen", label: "Automationen" },
     { id: "analytics", label: "Analytics" },
     { id: "logos", label: "Logos / Slider" },
@@ -560,6 +595,7 @@ export default function AdminDashboard() {
     pipeline: "Pipeline",
     unternehmen: "Unternehmen",
     demo: "Demo-Anfragen",
+    tickets: "Ticket Control Center",
     automationen: "Automationen",
     analytics: "Analytics",
     logos: "Logos / Slider",
@@ -1286,6 +1322,11 @@ export default function AdminDashboard() {
             </p>
             <LogoManager accent={sessionBrand.accent} />
           </GlassCard>
+        )}
+
+        {/* ─── TICKET CONTROL CENTER ──────────────────────────────────── */}
+        {activeTab === "tickets" && (
+          <TicketControlCenter accent={sessionBrand.accent} />
         )}
 
         {/* ─── REFERENZEN ─────────────────────────────────────────────── */}
