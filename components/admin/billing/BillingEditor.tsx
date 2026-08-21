@@ -104,7 +104,11 @@ export default function BillingEditor({
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isDraft = detail?.invoice.status === "draft" || detail?.invoice.status === "ready_for_review";
+  const invoiceId = detail?.invoice.id;
 
+  // WICHTIG: dieser useEffect darf NICHT bei jedem Autosave feuern,
+  // sonst überschreibt der Server-Response die gerade getippte Eingabe
+  // des Users. Reset ausschließlich beim Wechsel der Rechnung.
   useEffect(() => {
     if (detail) {
       setDirty({});
@@ -113,7 +117,28 @@ export default function BillingEditor({
       setError(null);
       setPreviewNonce((n) => n + 1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceId]);
+
+  // Guard: verhindert, dass ein Server-Reload nach Autosave den lokalen
+  // items-State überschreibt, während der User weitertippt.
+  const skipHydrateItems = useRef(false);
+  useEffect(() => {
+    if (!detail) return;
+    if (skipHydrateItems.current) {
+      skipHydrateItems.current = false;
+      return;
+    }
   }, [detail]);
+
+  // Status-Toast fadet nach 2.5 s automatisch weg, damit der Editor
+  // nicht dauerhaft "Alle Änderungen gespeichert." anzeigt.
+  useEffect(() => {
+    if (!status) return;
+    if (status.startsWith("Speichere") || status.startsWith("Nicht gespeichert")) return;
+    const t = setTimeout(() => setStatus(""), 2500);
+    return () => clearTimeout(t);
+  }, [status]);
 
   const loadShareTokens = useCallback(async () => {
     if (!detail) return;
@@ -138,9 +163,10 @@ export default function BillingEditor({
   const scheduleAutosave = useCallback(() => {
     if (!isDraft || !detail) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    setStatus("Nicht gespeichert…");
     autosaveTimer.current = setTimeout(() => {
       void save(true);
-    }, 1200);
+    }, 500);
   }, [isDraft, detail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = useCallback(
@@ -148,19 +174,55 @@ export default function BillingEditor({
       if (!detail) return;
       setSaving(true);
       setError(null);
+      if (silent) setStatus("Speichere…");
       try {
-        // 1) Falls Kundendaten geändert wurden UND ein persistenter Kunde
-        //    verknüpft ist, spiegeln wir diese Änderungen zurück ins
-        //    Stammdaten-CRUD, damit sie beim nächsten Snapshot vorliegen.
-        const customerId = dirty.customer?.id ?? detail.invoice.customer.id;
+        // 1a) Empfängerverzeichnis: wenn keine customerId verknüpft ist
+        //     und der User eine Firma+Adresse getippt hat, legen wir
+        //     automatisch einen Kundenstammsatz an. Beim nächsten Mal
+        //     ist er dann im Empfänger-Suche wählbar.
+        let customerId: string | null = dirty.customer?.id ?? detail.invoice.customer.id ?? null;
+        const workingCustomer = {
+          ...detail.invoice.customer,
+          ...customerDirty,
+          address: {
+            ...(detail.invoice.customer.address ?? { line1: "", postalCode: "", city: "", country: "DE" }),
+            ...(customerDirty.address ?? {}),
+          },
+        };
+        if (!customerId && workingCustomer.name?.trim() && workingCustomer.address?.line1?.trim()) {
+          const create = await fetch(`/api/admin/billing/customers`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: workingCustomer.name.trim(),
+              contactPerson: workingCustomer.contactPerson ?? null,
+              address: {
+                line1: workingCustomer.address.line1,
+                line2: workingCustomer.address.line2 ?? null,
+                postalCode: workingCustomer.address.postalCode ?? "",
+                city: workingCustomer.address.city ?? "",
+                country: workingCustomer.address.country ?? "DE",
+              },
+              email: workingCustomer.email ?? null,
+              buyerReference: workingCustomer.buyerReference ?? null,
+            }),
+          });
+          if (create.ok) {
+            const cdata = await create.json();
+            customerId = cdata.customer?.id ?? cdata.id ?? null;
+          }
+        }
+
+        // 1b) Falls Kundendaten geändert wurden UND ein persistenter Kunde
+        //     verknüpft ist, spiegeln wir diese Änderungen zurück ins
+        //     Stammdaten-CRUD, damit sie beim nächsten Snapshot vorliegen.
         if (customerId && Object.keys(customerDirty).length > 0) {
-          const cust = { ...detail.invoice.customer, ...customerDirty };
           const patch = {
-            name: cust.name,
-            contactPerson: cust.contactPerson ?? null,
-            address: cust.address,
-            email: cust.email ?? null,
-            buyerReference: cust.buyerReference ?? null,
+            name: workingCustomer.name,
+            contactPerson: workingCustomer.contactPerson ?? null,
+            address: workingCustomer.address,
+            email: workingCustomer.email ?? null,
+            buyerReference: workingCustomer.buyerReference ?? null,
           };
           const rc = await fetch(`/api/admin/billing/customers/${customerId}`, {
             method: "PATCH",
@@ -168,8 +230,9 @@ export default function BillingEditor({
             body: JSON.stringify(patch),
           });
           if (!rc.ok) {
-            const err = await rc.json().catch(() => ({}));
-            throw new Error(err.error || "Kundendaten konnten nicht gespeichert werden");
+            // Best-effort: den Autosave nicht wegen einer Kunden-PATCH-
+            // Kollision brechen; die Rechnungsdaten werden trotzdem
+            // gespeichert.
           }
         }
 
@@ -205,11 +268,16 @@ export default function BillingEditor({
         if (!res.ok) throw new Error(data.error || "Speichern fehlgeschlagen");
         setDirty({});
         setCustomerDirty({});
-        if (!silent) setStatus("Gespeichert.");
+        // Wichtig: verhindern, dass der useEffect([detail]) den lokalen
+        // items-State beim nächsten reload überschreibt, während der
+        // User evtl. gerade weitertippt.
+        skipHydrateItems.current = true;
+        setStatus(silent ? "Alle Änderungen gespeichert." : "Gespeichert.");
         setPreviewNonce((n) => n + 1);
         await onChanged();
       } catch (e) {
         setError((e as Error).message);
+        setStatus("");
       } finally {
         setSaving(false);
       }
@@ -411,6 +479,15 @@ export default function BillingEditor({
           invoice={inv}
           overdue={dueSoon}
           onClose={onClose}
+          autosaveHint={
+            isDraft
+              ? saving
+                ? "Speichere…"
+                : status && !error
+                  ? status
+                  : "Automatisch gespeichert"
+              : undefined
+          }
         />
 
         <ActionsToolbar
@@ -436,7 +513,7 @@ export default function BillingEditor({
           />
         )}
 
-        {status && !error && (
+        {status && !error && !isDraft && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-3 text-xs text-emerald-200">
             {status}
           </div>
@@ -596,10 +673,12 @@ function StatusHero({
   invoice,
   overdue,
   onClose,
+  autosaveHint,
 }: {
   invoice: InvoiceDetail;
   overdue: boolean;
   onClose: () => void;
+  autosaveHint?: string;
 }) {
   const status = invoice.status as InvoiceStatus;
   const color = overdue ? "#EF4444" : INVOICE_STATUS_COLOR[status] || "#94A3B8";
@@ -626,10 +705,13 @@ function StatusHero({
         background: `linear-gradient(135deg, ${color}10 0%, rgba(15,17,22,0.7) 60%)`,
       }}
     >
-      <div className="mb-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <button onClick={onClose} className="text-[11px] text-[#9CA3AF] hover:text-white">
           ← Rechnungen
         </button>
+        {autosaveHint && (
+          <span className="text-[10px] text-[#6B7280]">{autosaveHint}</span>
+        )}
       </div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
@@ -773,19 +855,20 @@ function ActionsToolbar({
       {isDraft && (
         <>
           <button
-            onClick={onSave}
-            disabled={saving}
-            className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06] disabled:opacity-50"
-          >
-            {saving ? "Speichere…" : "Speichern"}
-          </button>
-          <button
             onClick={onFinalize}
             disabled={saving}
             className="rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
             style={{ boxShadow: "0 0 12px rgba(59,130,246,0.6)" }}
           >
             Finalisieren
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-[#9CA3AF] hover:bg-white/[0.06] disabled:opacity-50"
+            title="Änderungen werden automatisch gespeichert — dieser Button erzwingt es sofort."
+          >
+            {saving ? "Speichere…" : "Jetzt speichern"}
           </button>
           <button
             onClick={onDelete}
@@ -2291,12 +2374,34 @@ function ComplianceGate({ detail }: { detail: InvoiceDetail & { items: InvoiceIt
     const cust = detail.customer;
     const addr = cust.address || { line1: "", postalCode: "", city: "", country: "" };
 
-    c.push({ key: "issuer_name", label: "Vollständiger Name & Anschrift des Ausstellers", ok: !!iss.legalName && !!iss.address.line1 && !!iss.address.postalCode, severity: "error" });
-    c.push({ key: "customer_name", label: "Name des Leistungsempfängers", ok: !!cust.name?.trim(), severity: "error" });
-    c.push({ key: "customer_addr", label: "Anschrift des Leistungsempfängers (Straße, PLZ, Ort)", ok: !!addr.line1 && !!addr.postalCode && !!addr.city, severity: "error" });
-    c.push({ key: "invoice_date", label: "Ausstellungsdatum", ok: !!detail.invoiceDate, severity: "error" });
+    // Aussteller: legalName ODER brandLabel akzeptieren (viele Kleinunternehmer
+    // haben nur eine Marke, keinen abweichenden Handelsnamen).
+    const issuerNameOk = !!(iss.legalName?.trim() || iss.brandLabel?.trim());
+    const issuerAddrOk = !!iss.address?.line1?.trim() && !!iss.address?.postalCode?.trim() && !!iss.address?.city?.trim();
+    c.push({ key: "issuer_name", label: "Aussteller: Name & Anschrift vollständig", ok: issuerNameOk && issuerAddrOk, severity: "error" });
+    c.push({ key: "customer_name", label: "Empfänger: Firmenname", ok: !!cust.name?.trim(), severity: "error" });
+    c.push({ key: "customer_addr", label: "Empfänger: Straße, PLZ und Ort", ok: !!addr.line1?.trim() && !!addr.postalCode?.trim() && !!addr.city?.trim(), severity: "error" });
+    c.push({ key: "invoice_date", label: "Ausstellungsdatum gesetzt", ok: !!detail.invoiceDate, severity: "error" });
     c.push({ key: "period", label: "Leistungszeitraum (§ 14 Abs. 4 UStG)", ok: !!detail.servicePeriod?.start && !!detail.servicePeriod?.end, severity: "error" });
-    c.push({ key: "items", label: "Mindestens eine Position mit Menge, Preis und Beschreibung", ok: detail.items.length > 0 && detail.items.every((it) => it.title.trim() && it.quantityMilli > 0 && it.unitPriceCents > 0), severity: "error" });
+
+    // Positionen: klar getrennte Checks statt einer irreführenden
+    // Sammelmeldung "Position fehlt", die auch bei Preis 0 feuerte.
+    const hasAnyItem = detail.items.length > 0;
+    const allTitles = hasAnyItem && detail.items.every((it) => it.title.trim().length > 0);
+    const allQty = hasAnyItem && detail.items.every((it) => it.quantityMilli > 0);
+    const allPrice = hasAnyItem && detail.items.every((it) => it.unitPriceCents > 0);
+    c.push({ key: "items_any", label: "Mindestens eine Position", ok: hasAnyItem, severity: "error" });
+    if (hasAnyItem) {
+      c.push({ key: "items_titles", label: "Alle Positionen haben einen Titel", ok: allTitles, severity: "error" });
+      c.push({ key: "items_qty", label: "Alle Positionen haben eine Menge > 0", ok: allQty, severity: "error" });
+      c.push({
+        key: "items_price",
+        label: "Alle Positionen haben einen Einzelpreis > 0",
+        ok: allPrice,
+        severity: "warn",
+      });
+    }
+
     c.push({ key: "tax_id", label: "Steuernummer oder USt-ID des Ausstellers", ok: !!iss.taxNumber || !!iss.vatId, severity: "error" });
 
     const hasBank = !!iss.bank?.iban && !!iss.bank?.bic;
