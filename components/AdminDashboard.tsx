@@ -24,6 +24,11 @@ const TicketControlCenter = dynamicImport(
   { ssr: false, loading: listSkeleton }
 );
 
+const BillingCenter = dynamicImport(
+  () => import("@/components/admin/billing/BillingCenter"),
+  { ssr: false, loading: () => null }
+);
+
 const ProjectsManager = dynamicImport(
   () => import("@/components/admin/projects/ProjectsManager"),
   { ssr: false, loading: listSkeleton }
@@ -166,6 +171,7 @@ type TabId =
   | "demo"
   | "projekte"
   | "tickets"
+  | "rechnungen"
   | "automationen"
   | "analytics"
   | "logos"
@@ -293,6 +299,13 @@ function NavIcon({ name }: { name: TabId }) {
         <svg {...common}>
           <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5z" />
           <path d="M13 6v2M13 11v2M13 16v2" />
+        </svg>
+      );
+    case "rechnungen":
+      return (
+        <svg {...common}>
+          <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+          <path d="M9 8h6M9 12h6M9 16h4" />
         </svg>
       );
     case "settings":
@@ -604,6 +617,7 @@ export default function AdminDashboard() {
     { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
     { id: "projekte", label: "Projekte" },
     { id: "tickets", label: "Tickets", badge: openTickets },
+    { id: "rechnungen", label: "Rechnungen" },
     { id: "automationen", label: "Automationen" },
     { id: "analytics", label: "Analytics" },
     { id: "logos", label: "Logos / Slider" },
@@ -621,6 +635,7 @@ export default function AdminDashboard() {
     demo: "Demo-Anfragen",
     projekte: "Projekte",
     tickets: "Ticket Control Center",
+    rechnungen: "Rechnungen",
     automationen: "Automationen",
     analytics: "Analytics",
     logos: "Logos / Slider",
@@ -1376,6 +1391,11 @@ export default function AdminDashboard() {
             accent={sessionBrand.accent}
             initialProjectId={ticketProjectFilter}
           />
+        )}
+
+        {/* ─── RECHNUNGEN ─────────────────────────────────────────────── */}
+        {activeTab === "rechnungen" && (
+          <BillingCenter accent={sessionBrand.accent} />
         )}
 
         {/* ─── REFERENZEN ─────────────────────────────────────────────── */}

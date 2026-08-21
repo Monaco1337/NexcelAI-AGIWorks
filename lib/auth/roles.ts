@@ -50,6 +50,11 @@ export const PERMISSIONS = [
   "crm.contacts.read",
   "crm.contacts.manage",
   "crm.content.manage",
+  // — Rechnungswesen —
+  "billing.read",
+  "billing.manage",
+  "billing.finalize",
+  "billing.send",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -84,6 +89,10 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "crm.contacts.read",
     "crm.contacts.manage",
     "crm.content.manage",
+    "billing.read",
+    "billing.manage",
+    "billing.finalize",
+    "billing.send",
   ],
 
   /** Bearbeitet Tickets im Tagesgeschäft, ändert aber keine Konfiguration. */
@@ -102,6 +111,7 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "workflow.read",
     "user.read",
     "crm.contacts.read",
+    "billing.read",
   ],
 
   /**
