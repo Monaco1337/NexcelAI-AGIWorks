@@ -114,6 +114,7 @@ export interface InvoiceDetail {
     bank: { bankName: string; iban: string; bic: string };
     accentColor: string;
     templateKey: string;
+    logoPath?: string | null;
   };
   customer: {
     id: string | null;

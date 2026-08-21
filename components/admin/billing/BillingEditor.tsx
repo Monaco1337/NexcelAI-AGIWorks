@@ -14,7 +14,7 @@
  *   6. Dokumentenliste, Ereignisverlauf.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import {
   formatEUR,
   formatQty,
@@ -457,6 +457,17 @@ export default function BillingEditor({
             onConfirm={(v) => generateShareWith(Number(v.days) || null, v.recipient || null)}
           />
         )}
+
+        <IssuerBlock
+          issuer={currentDetail!.issuer}
+          isSnapshot={!isDraft}
+          onSaved={async () => {
+            setPreviewNonce((n) => n + 1);
+            await onChanged();
+            setStatus("Aussteller aktualisiert.");
+          }}
+          onError={(msg) => setError(msg)}
+        />
 
         <CustomerBlock
           value={currentDetail!.customer}
@@ -1236,7 +1247,7 @@ function formatEuro(cents: number): string {
  * verborgen bleibt. Sorgt dafür, dass die Positions-Tabelle auf Handys
  * lesbar wird, ohne den kompakten Desktop-Grid zu stören.
  */
-function MobileLabeled({ label, children }: { label: string; children: React.ReactNode }) {
+function MobileLabeled({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#6B7280] lg:hidden">
@@ -1518,6 +1529,449 @@ function ActionPrompt({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── Aussteller-Block (mit Drag-&-Drop-Logo) ──────────────────────── */
+
+function IssuerBlock({
+  issuer,
+  isSnapshot,
+  onSaved,
+  onError,
+}: {
+  issuer: InvoiceDetail["issuer"];
+  isSnapshot: boolean;
+  onSaved: () => Promise<void> | void;
+  onError: (msg: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [draft, setDraft] = useState<Partial<InvoiceDetail["issuer"]>>({});
+  const [saving, setSaving] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [logoVersion, setLogoVersion] = useState(0);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const merged = useMemo(() => {
+    const addr = { ...issuer.address, ...(draft.address ?? {}) };
+    const contact = { ...issuer.contact, ...(draft.contact ?? {}) };
+    const bank = { ...issuer.bank, ...(draft.bank ?? {}) };
+    return { ...issuer, ...draft, address: addr, contact, bank };
+  }, [issuer, draft]);
+
+  const dirty = Object.keys(draft).length > 0;
+  const issuerId = issuer.id;
+
+  const patchIssuer = async (payload: Record<string, unknown>): Promise<boolean> => {
+    if (!issuerId) {
+      onError("Diese Rechnung nutzt einen historischen Aussteller-Snapshot und kann nicht mehr geändert werden.");
+      return false;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/billing/issuers/${issuerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        onError(data.error || "Speichern fehlgeschlagen");
+        return false;
+      }
+      setDraft({});
+      await onSaved();
+      return true;
+    } catch (e) {
+      onError((e as Error).message);
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const save = () => patchIssuer(draft as Record<string, unknown>);
+
+  const uploadLogo = async (file: File) => {
+    if (!issuerId) {
+      onError("Aussteller-ID fehlt – Snapshot kann kein Logo ändern.");
+      return;
+    }
+    if (!/^image\/(png|jpe?g)$/i.test(file.type)) {
+      onError("Bitte PNG oder JPG hochladen.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      onError("Maximale Dateigröße 2 MB.");
+      return;
+    }
+    setLogoBusy(true);
+    try {
+      const form = new FormData();
+      form.append("logo", file);
+      const res = await fetch(`/api/admin/billing/issuers/${issuerId}/logo`, {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        onError(data.error || "Logo konnte nicht hochgeladen werden.");
+        return;
+      }
+      setLogoVersion((v) => v + 1);
+      await onSaved();
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    if (!issuerId) return;
+    if (!confirm("Logo entfernen? Das Vektor-Fallback (Play-Icon + Wortmarke) wird wieder verwendet.")) return;
+    setLogoBusy(true);
+    try {
+      const res = await fetch(`/api/admin/billing/issuers/${issuerId}/logo`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        onError(data.error || "Logo konnte nicht entfernt werden.");
+        return;
+      }
+      setLogoVersion((v) => v + 1);
+      await onSaved();
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
+  const onDropFile = (e: DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    if (isSnapshot) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) void uploadLogo(file);
+  };
+
+  const logoAssetId = merged.logoPath?.startsWith("asset:") ? merged.logoPath.slice(6) : null;
+  const logoSrc = logoAssetId ? `/api/admin/billing/assets/${logoAssetId}?v=${logoVersion}` : null;
+  const accent = merged.accentColor || "#4CB4EE";
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02]">
+      {/* Header — always visible */}
+      <div className="flex flex-wrap items-center gap-3 p-4">
+        <div
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-black/40 text-xs font-semibold"
+          style={{ color: accent }}
+        >
+          {merged.brandLabel?.slice(0, 2).toUpperCase() || "AW"}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">
+            Aussteller
+            {isSnapshot && (
+              <span className="ml-2 rounded-full border border-white/10 px-2 py-0.5 text-[10px] normal-case text-[#9CA3AF]">
+                historischer Snapshot · read-only
+              </span>
+            )}
+          </div>
+          <div className="truncate text-sm text-white">
+            {merged.brandLabel} · {merged.address?.line1}, {merged.address?.postalCode} {merged.address?.city}
+          </div>
+        </div>
+        <button
+          onClick={() => setExpanded((x) => !x)}
+          className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]"
+        >
+          {expanded ? "Schließen" : isSnapshot ? "Ansehen" : "Bearbeiten"}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="border-t border-white/[0.06] p-4">
+          {!isSnapshot && (
+            <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.05] p-2 text-[11px] text-amber-200">
+              Achtung: Änderungen am Aussteller wirken sich auf <b>alle zukünftigen Rechnungen</b> dieses Ausstellers aus.
+              Bereits finalisierte Rechnungen behalten ihren historischen Snapshot.
+            </div>
+          )}
+
+          {/* Drag-&-Drop Logo-Zone */}
+          <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
+            <div>
+              <div className="mb-1 text-[10px] uppercase tracking-widest text-[#6B7280]">Logo</div>
+              <div
+                onDragOver={(e) => {
+                  if (isSnapshot) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "copy";
+                  setDragActive(true);
+                }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={onDropFile}
+                onClick={() => !isSnapshot && !logoBusy && fileRef.current?.click()}
+                className={`group relative flex h-40 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-all ${
+                  dragActive
+                    ? "border-blue-400 bg-blue-500/[0.08]"
+                    : "border-white/10 bg-black/30 hover:border-white/20"
+                } ${isSnapshot ? "cursor-not-allowed opacity-70" : ""}`}
+                style={{ borderColor: dragActive ? accent : undefined }}
+              >
+                {logoSrc ? (
+                  <>
+                    { }
+                    <img
+                      src={logoSrc}
+                      alt="Logo"
+                      className="max-h-32 max-w-[85%] object-contain"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 flex justify-between border-t border-white/10 bg-black/60 px-3 py-1.5 text-[10px] text-[#9CA3AF] opacity-0 transition-opacity group-hover:opacity-100">
+                      <span>Klicken oder Datei ziehen zum Ersetzen</span>
+                      {!isSnapshot && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void removeLogo();
+                          }}
+                          className="text-red-200 hover:text-red-100"
+                        >
+                          Entfernen
+                        </button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-[#6B7280]">
+                      <path d="M4 16.5V5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v11" />
+                      <path d="M4 16.5 8.5 12l4.5 4 3-3 4 4" />
+                      <circle cx="9" cy="8" r="1.5" />
+                    </svg>
+                    <div className="mt-2 text-xs text-white">
+                      Logo hier ablegen
+                    </div>
+                    <div className="text-[10px] text-[#6B7280]">
+                      oder klicken · PNG/JPG · bis 2 MB
+                    </div>
+                  </>
+                )}
+                {logoBusy && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-xs text-white">
+                    Lade …
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadLogo(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <div className="mt-2 text-[10px] text-[#6B7280]">
+                Kein Logo? Der Renderer zeichnet automatisch das AGI-Vektor-Logo (Play-Icon + Wortmarke) als Platzhalter.
+              </div>
+            </div>
+
+            {/* Farbe + Brand */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <LabeledInput
+                label="Brand-Label (im Logo & Header)"
+                value={merged.brandLabel ?? ""}
+                disabled={isSnapshot}
+                onChange={(v) => setDraft((d) => ({ ...d, brandLabel: v }))}
+              />
+              <LabeledInput
+                label="Firmierung (Legal Name)"
+                value={merged.legalName ?? ""}
+                disabled={isSnapshot}
+                onChange={(v) => setDraft((d) => ({ ...d, legalName: v }))}
+              />
+              <LabeledInput
+                label="Inhaber / Owner"
+                value={merged.owner ?? ""}
+                disabled={isSnapshot}
+                onChange={(v) => setDraft((d) => ({ ...d, owner: v }))}
+              />
+              <LabeledInput
+                label="Header-Tagline (Absenderzeile & Footer)"
+                value={merged.headerTagline ?? ""}
+                disabled={isSnapshot}
+                onChange={(v) => setDraft((d) => ({ ...d, headerTagline: v }))}
+              />
+              <div className="sm:col-span-2">
+                <label className="text-[10px] uppercase tracking-widest text-[#6B7280]">
+                  Akzentfarbe (Titel, Gesamtpreis, Tabellenkopf, Footer)
+                </label>
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    type="color"
+                    disabled={isSnapshot}
+                    value={merged.accentColor || "#4CB4EE"}
+                    onChange={(e) => setDraft((d) => ({ ...d, accentColor: e.target.value }))}
+                    className="h-10 w-14 cursor-pointer rounded-lg border border-white/10 bg-black/40 disabled:opacity-60"
+                  />
+                  <input
+                    type="text"
+                    disabled={isSnapshot}
+                    value={merged.accentColor || "#4CB4EE"}
+                    onChange={(e) => setDraft((d) => ({ ...d, accentColor: e.target.value }))}
+                    className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 font-mono text-sm text-white focus:outline-none disabled:opacity-60"
+                  />
+                  <div
+                    className="flex h-10 w-24 items-center justify-center rounded-lg text-xs font-semibold text-white"
+                    style={{ background: merged.accentColor || "#4CB4EE" }}
+                  >
+                    Vorschau
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Adresse + Kontakt */}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-white/[0.06] bg-black/30 p-3">
+              <div className="mb-2 text-[10px] uppercase tracking-widest text-[#6B7280]">Postanschrift</div>
+              <div className="space-y-2">
+                <LabeledInput
+                  label="Straße + Hausnummer"
+                  value={merged.address?.line1 ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, address: { ...merged.address, line1: v } }))}
+                />
+                <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2">
+                  <LabeledInput
+                    label="PLZ"
+                    value={merged.address?.postalCode ?? ""}
+                    disabled={isSnapshot}
+                    onChange={(v) => setDraft((d) => ({ ...d, address: { ...merged.address, postalCode: v } }))}
+                  />
+                  <LabeledInput
+                    label="Ort"
+                    value={merged.address?.city ?? ""}
+                    disabled={isSnapshot}
+                    onChange={(v) => setDraft((d) => ({ ...d, address: { ...merged.address, city: v } }))}
+                  />
+                </div>
+                <LabeledInput
+                  label="Land (ISO, z. B. DE)"
+                  value={merged.address?.country ?? "DE"}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, address: { ...merged.address, country: v.toUpperCase() } }))}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.06] bg-black/30 p-3">
+              <div className="mb-2 text-[10px] uppercase tracking-widest text-[#6B7280]">Kontakt</div>
+              <div className="space-y-2">
+                <LabeledInput
+                  label="E-Mail"
+                  type="email"
+                  value={merged.contact?.email ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, contact: { ...merged.contact, email: v } }))}
+                />
+                <LabeledInput
+                  label="Telefon"
+                  value={merged.contact?.phone ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, contact: { ...merged.contact, phone: v || null } }))}
+                />
+                <LabeledInput
+                  label="Handy"
+                  value={merged.contact?.mobile ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, contact: { ...merged.contact, mobile: v || null } }))}
+                />
+                <LabeledInput
+                  label="Website"
+                  value={merged.contact?.website ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, contact: { ...merged.contact, website: v || null } }))}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.06] bg-black/30 p-3">
+              <div className="mb-2 text-[10px] uppercase tracking-widest text-[#6B7280]">Steuer</div>
+              <div className="space-y-2">
+                <LabeledInput
+                  label="Steuernummer (Finanzamt)"
+                  value={merged.taxNumber ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, taxNumber: v || null }))}
+                />
+                <LabeledInput
+                  label="USt-ID (falls vorhanden)"
+                  value={merged.vatId ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, vatId: v || null }))}
+                />
+                <LabeledInput
+                  label="Kleinunternehmer-Hinweis"
+                  value={merged.smallBusinessNote ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, smallBusinessNote: v }))}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.06] bg-black/30 p-3">
+              <div className="mb-2 text-[10px] uppercase tracking-widest text-[#6B7280]">Bankverbindung</div>
+              <div className="space-y-2">
+                <LabeledInput
+                  label="Bankname"
+                  value={merged.bank?.bankName ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, bank: { ...merged.bank, bankName: v } }))}
+                />
+                <LabeledInput
+                  label="IBAN"
+                  value={merged.bank?.iban ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, bank: { ...merged.bank, iban: v } }))}
+                />
+                <LabeledInput
+                  label="BIC"
+                  value={merged.bank?.bic ?? ""}
+                  disabled={isSnapshot}
+                  onChange={(v) => setDraft((d) => ({ ...d, bank: { ...merged.bank, bic: v } }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          {!isSnapshot && (
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+              {dirty && (
+                <span className="text-[11px] text-[#9CA3AF]">Ungespeicherte Änderungen</span>
+              )}
+              <button
+                disabled={!dirty || saving}
+                onClick={() => setDraft({})}
+                className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06] disabled:opacity-40"
+              >
+                Verwerfen
+              </button>
+              <button
+                disabled={!dirty || saving}
+                onClick={() => void save()}
+                className="rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
+                style={{ boxShadow: "0 0 12px rgba(59,130,246,0.55)" }}
+              >
+                {saving ? "Speichere …" : "Aussteller speichern"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
