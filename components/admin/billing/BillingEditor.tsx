@@ -73,6 +73,7 @@ export default function BillingEditor({
 }) {
   const [dirty, setDirty] = useState<Partial<InvoiceDetail>>({});
   const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [customerDirty, setCustomerDirty] = useState<Partial<InvoiceDetail["customer"]>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("");
@@ -80,6 +81,10 @@ export default function BillingEditor({
   const [shareOpen, setShareOpen] = useState(false);
   const [shareTokens, setShareTokens] = useState<ShareTokenView[]>([]);
   const [copyState, setCopyState] = useState<string>("");
+  const [askPay, setAskPay] = useState(false);
+  const [askCancel, setAskCancel] = useState(false);
+  const [askCorrection, setAskCorrection] = useState(false);
+  const [askShare, setAskShare] = useState(false);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isDraft = detail?.invoice.status === "draft" || detail?.invoice.status === "ready_for_review";
@@ -87,6 +92,7 @@ export default function BillingEditor({
   useEffect(() => {
     if (detail) {
       setDirty({});
+      setCustomerDirty({});
       setItems(detail.invoice.items);
       setError(null);
       setPreviewNonce((n) => n + 1);
@@ -127,9 +133,34 @@ export default function BillingEditor({
       setSaving(true);
       setError(null);
       try {
+        // 1) Falls Kundendaten geändert wurden UND ein persistenter Kunde
+        //    verknüpft ist, spiegeln wir diese Änderungen zurück ins
+        //    Stammdaten-CRUD, damit sie beim nächsten Snapshot vorliegen.
+        const customerId = dirty.customer?.id ?? detail.invoice.customer.id;
+        if (customerId && Object.keys(customerDirty).length > 0) {
+          const cust = { ...detail.invoice.customer, ...customerDirty };
+          const patch = {
+            name: cust.name,
+            contactPerson: cust.contactPerson ?? null,
+            address: cust.address,
+            email: cust.email ?? null,
+            buyerReference: cust.buyerReference ?? null,
+          };
+          const rc = await fetch(`/api/admin/billing/customers/${customerId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(patch),
+          });
+          if (!rc.ok) {
+            const err = await rc.json().catch(() => ({}));
+            throw new Error(err.error || "Kundendaten konnten nicht gespeichert werden");
+          }
+        }
+
+        // 2) Rechnungs-Draft mit allen Feldern speichern.
         const body = {
           version: computeVersion(detail),
-          customerId: dirty.customer?.id ?? detail.invoice.customer.id,
+          customerId,
           projectId: dirty.project?.id ?? detail.invoice.project?.id ?? null,
           invoiceDate: dirty.invoiceDate ?? detail.invoice.invoiceDate,
           dueDate: dirty.dueDate ?? detail.invoice.dueDate,
@@ -157,6 +188,7 @@ export default function BillingEditor({
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Speichern fehlgeschlagen");
         setDirty({});
+        setCustomerDirty({});
         if (!silent) setStatus("Gespeichert.");
         setPreviewNonce((n) => n + 1);
         await onChanged();
@@ -166,7 +198,7 @@ export default function BillingEditor({
         setSaving(false);
       }
     },
-    [detail, dirty, items, onChanged]
+    [detail, dirty, customerDirty, items, onChanged]
   );
 
   const finalize = useCallback(async () => {
@@ -201,76 +233,94 @@ export default function BillingEditor({
     }
   }, [detail, isDraft, onClose]);
 
-  const markPaid = useCallback(async () => {
-    if (!detail) return;
-    const reference = prompt("Zahlungsreferenz (optional):", "") ?? "";
-    const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/pay`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference }),
-    });
-    const data = await res.json();
-    if (!res.ok) setError(data.error || "Fehler");
-    else {
-      setStatus("Als bezahlt markiert.");
-      await onChanged();
-    }
-  }, [detail, onChanged]);
+  const markPaidWith = useCallback(
+    async (reference: string) => {
+      if (!detail) return;
+      const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Fehler");
+      else {
+        setStatus("Als bezahlt markiert.");
+        setAskPay(false);
+        await onChanged();
+      }
+    },
+    [detail, onChanged]
+  );
 
-  const createCorrection = useCallback(async () => {
-    if (!detail) return;
-    const reason = prompt("Grund für die Korrektur:", "") ?? "";
-    const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/correction`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
-    });
-    const data = await res.json();
-    if (!res.ok) setError(data.error || "Fehler");
-    else if (data.invoice?.id) window.location.hash = `#inv-${data.invoice.id}`;
-  }, [detail]);
+  const createCorrectionWith = useCallback(
+    async (reason: string) => {
+      if (!detail) return;
+      const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/correction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Fehler");
+      else if (data.invoice?.id) {
+        setAskCorrection(false);
+        window.location.hash = `#inv-${data.invoice.id}`;
+      }
+    },
+    [detail]
+  );
 
-  const cancel = useCallback(async () => {
-    if (!detail) return;
-    const reason = prompt("Grund für Stornierung:", "") ?? "";
-    const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
-    });
-    const data = await res.json();
-    if (!res.ok) setError(data.error || "Fehler");
-    else {
-      setStatus("Storniert.");
-      await onChanged();
-    }
-  }, [detail, onChanged]);
+  const cancelWith = useCallback(
+    async (reason: string) => {
+      if (!detail) return;
+      const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Fehler");
+      else {
+        setStatus("Storniert.");
+        setAskCancel(false);
+        await onChanged();
+      }
+    },
+    [detail, onChanged]
+  );
 
-  const generateShare = useCallback(async () => {
-    if (!detail) return;
-    const days = Number(prompt("Ablauf in Tagen (leer = unbegrenzt):", "30") || 0);
-    const recipient = prompt("Empfängerhinweis (optional):", "") || "";
-    const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/share`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        expiresInDays: days > 0 ? days : null,
-        recipientHint: recipient || null,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) return setError(data.error || "Share fehlgeschlagen");
-    setShareTokens((t) => [data.share, ...t]);
-    setShareOpen(true);
-    const url = `${window.location.origin}/rechnung/${data.share.token}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopyState("Link kopiert.");
-      setTimeout(() => setCopyState(""), 2500);
-    } catch {
-      // Clipboard nicht verfügbar — Nutzer kann Link manuell markieren.
-    }
-  }, [detail]);
+  const generateShareWith = useCallback(
+    async (days: number | null, recipient: string | null) => {
+      if (!detail) return;
+      const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expiresInDays: days && days > 0 ? days : null,
+          recipientHint: recipient || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setError(data.error || "Share fehlgeschlagen");
+      setShareTokens((t) => [data.share, ...t]);
+      setShareOpen(true);
+      setAskShare(false);
+      const url = `${window.location.origin}/rechnung/${data.share.token}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopyState("Link kopiert.");
+        setTimeout(() => setCopyState(""), 2500);
+      } catch {
+        // Clipboard nicht verfügbar — Nutzer kann Link manuell markieren.
+      }
+    },
+    [detail]
+  );
+
+  const markPaid = useCallback(() => setAskPay(true), []);
+  const createCorrection = useCallback(() => setAskCorrection(true), []);
+  const cancel = useCallback(() => setAskCancel(true), []);
+  const generateShare = useCallback(() => setAskShare(true), []);
 
   const revokeShare = useCallback(
     async (token: string) => {
@@ -284,12 +334,21 @@ export default function BillingEditor({
 
   const currentDetail = useMemo(() => {
     if (!detail) return null;
+    const mergedCustomer = {
+      ...detail.invoice.customer,
+      ...customerDirty,
+      address: {
+        ...detail.invoice.customer.address,
+        ...(customerDirty.address ?? {}),
+      },
+    };
     return {
       ...detail.invoice,
       ...dirty,
+      customer: mergedCustomer,
       items,
     };
-  }, [detail, dirty, items]);
+  }, [detail, dirty, customerDirty, items]);
 
   if (loading || !detail) {
     return (
@@ -307,8 +366,8 @@ export default function BillingEditor({
     inv.dueDate < todayIso();
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
-      <div className="space-y-5">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_min(46vw,520px)]">
+      <div className="min-w-0 space-y-5">
         <StatusHero
           invoice={inv}
           overdue={dueSoon}
@@ -354,6 +413,69 @@ export default function BillingEditor({
           />
         )}
 
+        {askPay && (
+          <ActionPrompt
+            title="Als bezahlt markieren"
+            description="Erfassen Sie optional die Zahlungsreferenz (z. B. Ihre Kontoauszug-Buchungs-ID)."
+            confirmLabel="Bezahlt markieren"
+            fields={[{ key: "reference", label: "Zahlungsreferenz (optional)", placeholder: "z. B. Umsatz-Nr." }]}
+            onCancel={() => setAskPay(false)}
+            onConfirm={(v) => markPaidWith(v.reference || "")}
+          />
+        )}
+        {askCancel && (
+          <ActionPrompt
+            title="Rechnung stornieren"
+            description="Eine Stornierung erzeugt ein Storno-Dokument. Das ist endgültig – der Betrag wird als 0 verbucht."
+            confirmLabel="Endgültig stornieren"
+            confirmDanger
+            fields={[{ key: "reason", label: "Grund für die Stornierung", placeholder: "z. B. Adress­änderung, Fehlbuchung", required: true, textarea: true }]}
+            onCancel={() => setAskCancel(false)}
+            onConfirm={(v) => cancelWith(v.reason || "")}
+          />
+        )}
+        {askCorrection && (
+          <ActionPrompt
+            title="Korrekturrechnung erstellen"
+            description="Erzeugt einen neuen Draft, der auf diese Rechnung verweist. Bitte begründen Sie die Korrektur klar (z. B. „Position 2 wurde doppelt berechnet)."
+            confirmLabel="Korrektur anlegen"
+            fields={[{ key: "reason", label: "Grund der Korrektur", placeholder: "Kurzer Sachtext", required: true, textarea: true }]}
+            onCancel={() => setAskCorrection(false)}
+            onConfirm={(v) => createCorrectionWith(v.reason || "")}
+          />
+        )}
+        {askShare && (
+          <ActionPrompt
+            title="Öffentlichen Link generieren"
+            description="Der Kunde erhält einen sicheren, tokenbasierten Link – ohne Login – zum Ansehen und Download der PDF/E-Rechnung. Zugriff wird protokolliert."
+            confirmLabel="Link erstellen und kopieren"
+            fields={[
+              { key: "days", label: "Ablauf in Tagen (leer = unbegrenzt)", placeholder: "z. B. 30", inputType: "number" },
+              { key: "recipient", label: "Empfänger-Hinweis (optional)", placeholder: "z. B. buchhaltung@kunde.de" },
+            ]}
+            onCancel={() => setAskShare(false)}
+            onConfirm={(v) => generateShareWith(Number(v.days) || null, v.recipient || null)}
+          />
+        )}
+
+        <CustomerBlock
+          value={currentDetail!.customer}
+          isDraft={!!isDraft}
+          onChange={(patch) => {
+            setCustomerDirty((c) => {
+              if (patch.address) {
+                return {
+                  ...c,
+                  ...patch,
+                  address: { ...(c.address ?? {}), ...patch.address } as InvoiceDetail["customer"]["address"],
+                };
+              }
+              return { ...c, ...patch };
+            });
+            scheduleAutosave();
+          }}
+        />
+
         <MetaEditor
           value={currentDetail!}
           isDraft={!!isDraft}
@@ -375,6 +497,8 @@ export default function BillingEditor({
         />
 
         <TotalsBlock detail={currentDetail!} />
+
+        <ComplianceGate detail={currentDetail!} />
 
         <TextEditor
           value={currentDetail!.texts}
@@ -957,18 +1081,27 @@ function ItemsEditor({
                     : "border-white/[0.05] bg-black/30"
               }`}
             >
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[24px_28px_minmax(0,1fr)_100px_120px_120px] md:items-start">
-                {!readonly && (
+              <div className="grid grid-cols-[24px_1fr] gap-3 lg:grid-cols-[24px_28px_minmax(0,1fr)_110px_130px_130px] lg:items-start">
+                {!readonly ? (
                   <div
                     className="mt-2 flex cursor-grab select-none items-center justify-center text-[#4B5563] hover:text-white"
                     title="Ziehen zum Sortieren"
                   >
                     ⋮⋮
                   </div>
+                ) : (
+                  <div />
                 )}
-                {readonly && <div />}
-                <div className="text-xs font-semibold text-white">{it.position}</div>
-                <div className="space-y-1">
+                <div className="hidden text-xs font-semibold text-white lg:block">{it.position}</div>
+
+                {/* Titel + Beschreibung (auf mobil ganze Breite) */}
+                <div className="space-y-1 lg:col-auto">
+                  <div className="flex items-center gap-2 lg:hidden">
+                    <span className="text-[10px] uppercase tracking-widest text-[#6B7280]">Pos {it.position}</span>
+                    <span className="ml-auto text-sm font-semibold text-white tabular-nums">
+                      {formatEUR(it.lineGrossCents, currency)}
+                    </span>
+                  </div>
                   <input
                     value={it.title}
                     disabled={readonly}
@@ -985,67 +1118,100 @@ function ItemsEditor({
                     className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
                   />
                 </div>
-                <div className="space-y-1">
-                  <input
-                    value={formatQty(it.quantityMilli)}
-                    disabled={readonly}
-                    onChange={(e) => {
-                      try {
-                        patchItem(idx, { quantityMilli: parseQtyInput(e.target.value) });
-                      } catch {
-                        // ignoriere temporäre Zwischenzustände
-                      }
-                    }}
-                    placeholder="Menge"
-                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
-                  />
-                  <input
-                    value={it.unit}
-                    disabled={readonly}
-                    onChange={(e) => patchItem(idx, { unit: e.target.value })}
-                    placeholder="Einheit"
-                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
-                  />
+
+                {/* Menge + Einheit + Rabatt */}
+                <div className="col-span-2 grid grid-cols-2 gap-2 lg:col-auto lg:block lg:space-y-1">
+                  <MobileLabeled label="Menge">
+                    <input
+                      value={formatQty(it.quantityMilli)}
+                      disabled={readonly}
+                      onChange={(e) => {
+                        try {
+                          patchItem(idx, { quantityMilli: parseQtyInput(e.target.value) });
+                        } catch {
+                          // temporäre Eingabe
+                        }
+                      }}
+                      placeholder="Menge"
+                      className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
+                    />
+                  </MobileLabeled>
+                  <MobileLabeled label="Einheit">
+                    <input
+                      value={it.unit}
+                      disabled={readonly}
+                      onChange={(e) => patchItem(idx, { unit: e.target.value })}
+                      placeholder="z. B. Stk., Std., Monat"
+                      className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
+                    />
+                  </MobileLabeled>
                 </div>
-                <div className="space-y-1">
-                  <input
-                    value={formatEuro(it.unitPriceCents)}
-                    disabled={readonly}
-                    onChange={(e) => {
-                      try {
-                        patchItem(idx, { unitPriceCents: parseEuroInput(e.target.value) });
-                      } catch {}
-                    }}
-                    placeholder="Preis"
-                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
-                  />
-                  <select
-                    value={`${it.taxCategory}:${it.taxRatePercentMilli}`}
-                    disabled={readonly}
-                    onChange={(e) => {
-                      const [cat, rate] = e.target.value.split(":");
-                      patchItem(idx, {
-                        taxCategory: cat as TaxCategory,
-                        taxRatePercentMilli: Number(rate),
-                      });
-                    }}
-                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
-                  >
-                    <option value="S:19000">USt 19 %</option>
-                    <option value="AA:7000">USt 7 %</option>
-                    <option value="Z:0">Nullsatz</option>
-                    <option value="E:0">§ 19 UStG (Kleinunternehmer)</option>
-                    <option value="K:0">Reverse Charge</option>
-                  </select>
+
+                {/* Preis + Steuersatz + Rabatt */}
+                <div className="col-span-2 grid grid-cols-2 gap-2 lg:col-auto lg:block lg:space-y-1">
+                  <MobileLabeled label="Einzelpreis">
+                    <input
+                      value={formatEuro(it.unitPriceCents)}
+                      disabled={readonly}
+                      onChange={(e) => {
+                        try {
+                          patchItem(idx, { unitPriceCents: parseEuroInput(e.target.value) });
+                        } catch {}
+                      }}
+                      placeholder="Preis"
+                      className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
+                    />
+                  </MobileLabeled>
+                  <MobileLabeled label="Rabatt %">
+                    <input
+                      value={(it.discountPercentMilli / 1000).toFixed(2).replace(".", ",")}
+                      disabled={readonly}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                        const n = Number(raw);
+                        if (!Number.isNaN(n)) {
+                          patchItem(idx, { discountPercentMilli: Math.max(0, Math.min(100_000, Math.round(n * 1000))) });
+                        }
+                      }}
+                      placeholder="0"
+                      className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
+                    />
+                  </MobileLabeled>
+                  <div className="col-span-2 lg:col-span-1">
+                    <select
+                      value={`${it.taxCategory}:${it.taxRatePercentMilli}`}
+                      disabled={readonly}
+                      onChange={(e) => {
+                        const [cat, rate] = e.target.value.split(":");
+                        patchItem(idx, {
+                          taxCategory: cat as TaxCategory,
+                          taxRatePercentMilli: Number(rate),
+                        });
+                      }}
+                      className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
+                    >
+                      <option value="S:19000">USt 19 %</option>
+                      <option value="AA:7000">USt 7 %</option>
+                      <option value="Z:0">Nullsatz</option>
+                      <option value="E:0">§ 19 UStG (Kleinunternehmer)</option>
+                      <option value="K:0">Reverse Charge</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end justify-between gap-2">
-                  <div className="text-right text-sm font-semibold text-white tabular-nums">
+
+                {/* Total + Actions */}
+                <div className="col-span-2 flex items-center justify-between gap-2 lg:col-auto lg:flex-col lg:items-end lg:justify-between">
+                  <div className="hidden text-right text-sm font-semibold text-white tabular-nums lg:block">
                     {formatEUR(it.lineGrossCents, currency)}
                   </div>
                   {!readonly && (
                     <div className="flex gap-1 text-[10px]">
-                      <button onClick={() => duplicate(idx)} className="rounded border border-white/10 px-1.5 py-0.5 text-[#9CA3AF] hover:text-white">Dupl.</button>
-                      <button onClick={() => removeItem(idx)} className="rounded border border-red-500/30 px-1.5 py-0.5 text-red-200 hover:bg-red-500/10">×</button>
+                      <button onClick={() => duplicate(idx)} className="rounded border border-white/10 px-2 py-1 text-[#9CA3AF] hover:text-white">
+                        Duplizieren
+                      </button>
+                      <button onClick={() => removeItem(idx)} className="rounded border border-red-500/30 px-2 py-1 text-red-200 hover:bg-red-500/10">
+                        Entfernen
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1063,6 +1229,22 @@ function formatEuro(cents: number): string {
   const whole = Math.floor(abs / 100);
   const frac = abs % 100;
   return `${cents < 0 ? "-" : ""}${whole},${String(frac).padStart(2, "0")}`;
+}
+
+/**
+ * Kleines Label, das auf Mobile über dem Input erscheint und auf Desktop
+ * verborgen bleibt. Sorgt dafür, dass die Positions-Tabelle auf Handys
+ * lesbar wird, ohne den kompakten Desktop-Grid zu stören.
+ */
+function MobileLabeled({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#6B7280] lg:hidden">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
 }
 
 /* ── Summen ────────────────────────────────────────────────────────── */
@@ -1236,6 +1418,274 @@ function PreviewPanel({
       <div className="aspect-[210/297] w-full overflow-hidden rounded-xl bg-white">
         <iframe title="Rechnungs-Vorschau" src={src} className="h-full w-full border-0" />
       </div>
+    </div>
+  );
+}
+
+/* ── Action-Prompt (Modal für Aktionen) ───────────────────────────── */
+
+interface PromptField {
+  key: string;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  textarea?: boolean;
+  inputType?: string;
+}
+
+function ActionPrompt({
+  title,
+  description,
+  confirmLabel,
+  confirmDanger,
+  fields,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  description?: string;
+  confirmLabel: string;
+  confirmDanger?: boolean;
+  fields: PromptField[];
+  onCancel: () => void;
+  onConfirm: (values: Record<string, string>) => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const canSubmit = fields.every((f) => !f.required || (values[f.key] ?? "").trim().length > 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0E14] p-5 shadow-2xl">
+        <div className="text-base font-semibold text-white">{title}</div>
+        {description && (
+          <div className="mt-1 text-xs leading-relaxed text-[#9CA3AF]">{description}</div>
+        )}
+        <div className="mt-4 space-y-3">
+          {fields.map((f) => (
+            <div key={f.key}>
+              <label className="text-[10px] uppercase tracking-widest text-[#6B7280]">
+                {f.label}
+                {f.required && <span className="ml-1 text-red-400">*</span>}
+              </label>
+              {f.textarea ? (
+                <textarea
+                  rows={3}
+                  value={values[f.key] ?? ""}
+                  placeholder={f.placeholder}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none"
+                />
+              ) : (
+                <input
+                  type={f.inputType || "text"}
+                  value={values[f.key] ?? ""}
+                  placeholder={f.placeholder}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onCancel}
+            disabled={submitting}
+            className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-xs text-white hover:bg-white/[0.06]"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={async () => {
+              if (!canSubmit) return;
+              setSubmitting(true);
+              try {
+                await onConfirm(values);
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+            disabled={!canSubmit || submitting}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 ${
+              confirmDanger
+                ? "bg-red-500 hover:bg-red-400"
+                : "bg-blue-500 hover:bg-blue-400"
+            }`}
+          >
+            {submitting ? "…" : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Kunden-Block (Empfänger) ─────────────────────────────────────── */
+
+function CustomerBlock({
+  value,
+  isDraft,
+  onChange,
+}: {
+  value: InvoiceDetail["customer"];
+  isDraft: boolean;
+  onChange: (patch: Partial<InvoiceDetail["customer"]>) => void;
+}) {
+  const addr = value.address || { line1: "", line2: "", postalCode: "", city: "", country: "DE" };
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">Empfänger</div>
+        {!isDraft && (
+          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-[#9CA3AF]">
+            historischer Snapshot · read-only
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <LabeledInput
+          label="Firmen-/Empfängername *"
+          value={value.name ?? ""}
+          disabled={!isDraft}
+          onChange={(v) => onChange({ name: v })}
+        />
+        <LabeledInput
+          label="Ansprechpartner (optional)"
+          value={value.contactPerson ?? ""}
+          disabled={!isDraft}
+          onChange={(v) => onChange({ contactPerson: v || null })}
+        />
+        <LabeledInput
+          label="Straße + Hausnummer *"
+          value={addr.line1 ?? ""}
+          disabled={!isDraft}
+          onChange={(v) => onChange({ address: { ...addr, line1: v } })}
+        />
+        <LabeledInput
+          label="Zusatz (z. B. Etage, Postfach)"
+          value={addr.line2 ?? ""}
+          disabled={!isDraft}
+          onChange={(v) => onChange({ address: { ...addr, line2: v || null } })}
+        />
+        <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2">
+          <LabeledInput
+            label="PLZ *"
+            value={addr.postalCode ?? ""}
+            disabled={!isDraft}
+            onChange={(v) => onChange({ address: { ...addr, postalCode: v } })}
+          />
+          <LabeledInput
+            label="Ort *"
+            value={addr.city ?? ""}
+            disabled={!isDraft}
+            onChange={(v) => onChange({ address: { ...addr, city: v } })}
+          />
+        </div>
+        <LabeledInput
+          label="Land (ISO, z. B. DE)"
+          value={addr.country ?? "DE"}
+          disabled={!isDraft}
+          onChange={(v) => onChange({ address: { ...addr, country: v.toUpperCase() } })}
+        />
+        <LabeledInput
+          label="E-Mail (für E-Rechnungs-Versand)"
+          type="email"
+          value={value.email ?? ""}
+          disabled={!isDraft}
+          onChange={(v) => onChange({ email: v || null })}
+        />
+        <LabeledInput
+          label="Bestellnummer / Buyer-Reference"
+          value={value.buyerReference ?? ""}
+          disabled={!isDraft}
+          onChange={(v) => onChange({ buyerReference: v || null })}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ── Compliance-Gate (E-Rechnung/§14 UStG) ────────────────────────── */
+
+function ComplianceGate({ detail }: { detail: InvoiceDetail & { items: InvoiceItem[] } }) {
+  const checks = useMemo(() => {
+    const c: { key: string; label: string; ok: boolean; severity: "error" | "warn" }[] = [];
+    const iss = detail.issuer;
+    const cust = detail.customer;
+    const addr = cust.address || { line1: "", postalCode: "", city: "", country: "" };
+
+    c.push({ key: "issuer_name", label: "Vollständiger Name & Anschrift des Ausstellers", ok: !!iss.legalName && !!iss.address.line1 && !!iss.address.postalCode, severity: "error" });
+    c.push({ key: "customer_name", label: "Name des Leistungsempfängers", ok: !!cust.name?.trim(), severity: "error" });
+    c.push({ key: "customer_addr", label: "Anschrift des Leistungsempfängers (Straße, PLZ, Ort)", ok: !!addr.line1 && !!addr.postalCode && !!addr.city, severity: "error" });
+    c.push({ key: "invoice_date", label: "Ausstellungsdatum", ok: !!detail.invoiceDate, severity: "error" });
+    c.push({ key: "period", label: "Leistungszeitraum (§ 14 Abs. 4 UStG)", ok: !!detail.servicePeriod?.start && !!detail.servicePeriod?.end, severity: "error" });
+    c.push({ key: "items", label: "Mindestens eine Position mit Menge, Preis und Beschreibung", ok: detail.items.length > 0 && detail.items.every((it) => it.title.trim() && it.quantityMilli > 0 && it.unitPriceCents > 0), severity: "error" });
+    c.push({ key: "tax_id", label: "Steuernummer oder USt-ID des Ausstellers", ok: !!iss.taxNumber || !!iss.vatId, severity: "error" });
+
+    const hasBank = !!iss.bank?.iban && !!iss.bank?.bic;
+    c.push({ key: "bank", label: "Bankverbindung (IBAN/BIC) für Zahlungsverkehr", ok: hasBank, severity: "warn" });
+
+    if (iss.taxRegime === "kleinunternehmer") {
+      c.push({
+        key: "kus_note",
+        label: "Kleinunternehmer-Hinweis nach § 19 UStG",
+        ok: !!(detail.texts.smallBusinessNote?.trim() || iss.smallBusinessNote?.trim()),
+        severity: "error",
+      });
+    } else {
+      c.push({
+        key: "tax_breakdown",
+        label: "Steueraufschlüsselung pro Steuersatz",
+        ok: (detail.totals.taxBreakdown?.length ?? 0) > 0 && detail.totals.taxCents >= 0,
+        severity: "error",
+      });
+    }
+
+    return c;
+  }, [detail]);
+
+  const errors = checks.filter((c) => !c.ok && c.severity === "error");
+  const warnings = checks.filter((c) => !c.ok && c.severity === "warn");
+  const ok = errors.length === 0;
+  const color = ok ? "#22C55E" : errors.length > 0 ? "#EF4444" : "#F59E0B";
+  const label = ok
+    ? warnings.length === 0
+      ? "E-Rechnungs-tauglich · Alle Pflichtangaben erfüllt"
+      : `E-Rechnungs-tauglich · ${warnings.length} Hinweis(e)`
+    : `Nicht finalisierbar · ${errors.length} Pflichtfeld(er) fehlen`;
+
+  return (
+    <div
+      className="rounded-2xl border p-4"
+      style={{ borderColor: `${color}55`, background: `${color}0F` }}
+    >
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full" style={{ background: `${color}22`, color }}>
+          {ok ? "✓" : "!"}
+        </span>
+        <div>
+          <div className="text-sm font-semibold" style={{ color }}>{label}</div>
+          <div className="text-[11px] text-[#9CA3AF]">EN 16931 · § 14 UStG · XRechnung/ZUGFeRD-ready</div>
+        </div>
+      </div>
+      {(errors.length > 0 || warnings.length > 0) && (
+        <ul className="mt-3 space-y-1 text-xs">
+          {errors.map((e) => (
+            <li key={e.key} className="flex items-start gap-2 text-red-200">
+              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-red-400" />
+              <span>{e.label}</span>
+            </li>
+          ))}
+          {warnings.map((w) => (
+            <li key={w.key} className="flex items-start gap-2 text-amber-200">
+              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
+              <span>{w.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -179,10 +179,12 @@ class RenderState {
     this.drawIntro();              // Intro-Text
     this.drawItemsTable();         // Positionen
     this.drawTotals();             // ggf. USt + „Gesamtpreis:"
+    this.drawPaymentPanel();       // Zahlungsdaten in dezentem Panel
     this.drawOutro();              // Outro
     this.drawSalutationClose();    // „Mit freundlichen Grüßen"
     this.drawSmallBusinessNote();  // Fett, zentriert
     this.drawFooter();             // Blauer Balken unten
+    this.drawPageNumbers();        // Seite X von Y (nur bei > 1 Seite)
     this.drawWatermarkIfDraft();
   }
 
@@ -845,6 +847,137 @@ class RenderState {
         });
         y -= lineHeight;
       }
+    }
+  }
+
+  /* ── Zahlungsdaten-Panel ─────────────────────────────────────────── */
+
+  /**
+   * Kompaktes Zahlungspanel direkt über dem Outro: Fälligkeit, IBAN, BIC,
+   * Bank, optional Zahlungsreferenz. Dient dem Kunden als
+   * Copy-and-Paste-Vorlage für die Überweisung und ist zugleich das
+   * Pflichtfeld nach § 14 UStG bzw. EN 16931 (Zahlungsdaten).
+   */
+  private drawPaymentPanel(): void {
+    const bank = this.invoice.issuer.bank || { bankName: "", iban: "", bic: "" };
+    const hasBank = bank.iban || bank.bic || bank.bankName;
+    const termsDays = this.invoice.payment?.paymentTermsDays ?? 0;
+    if (!hasBank && !termsDays) return;
+
+    this.ensureSpace(22 * MM);
+    this.cursorY -= 4 * MM;
+    const width = A4.width - (MARGIN.left + MARGIN.right) * MM;
+    const leftX = MARGIN.left * MM;
+    const height = 18 * MM;
+    const boxY = this.cursorY - height;
+
+    // Sehr dezenter, leicht kolorierter Kasten.
+    this.page.drawRectangle({
+      x: leftX,
+      y: boxY,
+      width,
+      height,
+      color: rgb(0.95, 0.97, 1.0),
+      borderColor: rgb(0.83, 0.90, 0.96),
+      borderWidth: 0.6,
+    });
+
+    const paddingX = 6 * MM;
+    const paddingY = 4 * MM;
+
+    // Kopfzeile.
+    this.page.drawText("Zahlungsinformationen", {
+      x: leftX + paddingX,
+      y: boxY + height - paddingY - 2,
+      size: 9,
+      font: this.fonts.bold,
+      color: COLOR_ACCENT_DARK,
+    });
+
+    // Zwei Spalten: links Fälligkeit + Bank, rechts IBAN + BIC.
+    const colWidth = (width - paddingX * 2) / 2;
+    const col1X = leftX + paddingX;
+    const col2X = col1X + colWidth;
+    let y1 = boxY + height - paddingY - 9;
+    let y2 = y1;
+    const lineSize = 8.5;
+
+    const dueDate = this.invoice.dueDate ? formatDeDate(this.invoice.dueDate) : "";
+    if (dueDate) {
+      this.drawKeyValue(col1X, y1, "Fällig am", dueDate, lineSize);
+      y1 -= 4.2 * MM;
+    }
+    if (bank.bankName) {
+      this.drawKeyValue(col1X, y1, "Bank", bank.bankName, lineSize);
+      y1 -= 4.2 * MM;
+    }
+
+    if (bank.iban) {
+      this.drawKeyValue(col2X, y2, "IBAN", bank.iban, lineSize);
+      y2 -= 4.2 * MM;
+    }
+    if (bank.bic) {
+      this.drawKeyValue(col2X, y2, "BIC", bank.bic, lineSize);
+      y2 -= 4.2 * MM;
+    }
+
+    // Verwendungszweck: Rechnungsnummer, damit die Bank sie automatisch
+    // zuordnen kann.
+    const purpose =
+      this.invoice.payment?.paymentReference ||
+      (this.invoice.invoiceNumber ? `Rechnung ${this.invoice.invoiceNumber}` : "");
+    if (purpose) {
+      const w = this.fonts.regular.widthOfTextAtSize(`Verwendungszweck: ${purpose}`, 8);
+      this.page.drawText(safeText(`Verwendungszweck: ${purpose}`), {
+        x: leftX + width - paddingX - w,
+        y: boxY + paddingY,
+        size: 8,
+        font: this.fonts.italic,
+        color: COLOR_TEXT_SOFT,
+      });
+    }
+
+    this.cursorY = boxY - 2 * MM;
+  }
+
+  private drawKeyValue(x: number, y: number, key: string, value: string, size: number): void {
+    const labelText = safeText(`${key}: `);
+    this.page.drawText(labelText, {
+      x,
+      y,
+      size,
+      font: this.fonts.regular,
+      color: COLOR_TEXT_SOFT,
+    });
+    const labelW = this.fonts.regular.widthOfTextAtSize(labelText, size);
+    this.page.drawText(safeText(value), {
+      x: x + labelW,
+      y,
+      size,
+      font: this.fonts.bold,
+      color: COLOR_TEXT,
+    });
+  }
+
+  /* ── Seitennummerierung ──────────────────────────────────────────── */
+
+  private drawPageNumbers(): void {
+    const total = this.pdf.getPageCount();
+    if (total <= 1) return;
+    for (let i = 0; i < total; i++) {
+      const page = this.pdf.getPage(i);
+      const text = safeText(`Seite ${i + 1} von ${total}`);
+      const size = 7.5;
+      const w = this.fonts.regular.widthOfTextAtSize(text, size);
+      // Direkt oberhalb des blauen Footer-Balkens.
+      const y = MARGIN.bottom * MM + FOOTER_HEIGHT_MM * MM + 3 * MM;
+      page.drawText(text, {
+        x: A4.width - MARGIN.right * MM - w,
+        y,
+        size,
+        font: this.fonts.regular,
+        color: COLOR_MUTED,
+      });
     }
   }
 
