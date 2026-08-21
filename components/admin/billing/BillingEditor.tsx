@@ -34,6 +34,16 @@ import type {
   ProjectOption,
 } from "./shared";
 
+interface RelatedInvoice {
+  id: string;
+  invoiceNumber: string | null;
+  status: InvoiceStatus;
+  type: string;
+  invoiceDate: string;
+  grossCents: number;
+  currency: string;
+}
+
 interface Detail {
   invoice: InvoiceDetail;
   documents: {
@@ -43,6 +53,10 @@ interface Detail {
     validationStatus: string;
     specVersion: string | null;
   }[];
+  relations?: {
+    original: RelatedInvoice | null;
+    corrections: RelatedInvoice[];
+  };
 }
 
 interface ShareTokenView {
@@ -414,6 +428,14 @@ export default function BillingEditor({
           onFollowup={createFollowup}
         />
 
+        {detail.relations && (detail.relations.original || detail.relations.corrections.length > 0) && (
+          <RelationChain
+            original={detail.relations.original}
+            corrections={detail.relations.corrections}
+            onOpen={(id) => onOpen?.(id)}
+          />
+        )}
+
         {status && !error && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-3 text-xs text-emerald-200">
             {status}
@@ -650,6 +672,57 @@ function StatusHero({
           </div>
           <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">Gesamtbetrag</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Referenz-Chain (Original ↔ Korrektur) ────────────────────────── */
+
+function RelationChain({
+  original,
+  corrections,
+  onOpen,
+}: {
+  original: RelatedInvoice | null;
+  corrections: RelatedInvoice[];
+  onOpen?: (id: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.05] p-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+        {original && (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-amber-300/70">Korrektur zu</span>
+            <button
+              onClick={() => onOpen?.(original.id)}
+              className="rounded-md border border-amber-400/30 bg-amber-500/10 px-2 py-1 font-medium text-amber-100 hover:bg-amber-500/20"
+            >
+              Rechnung Nr. {original.invoiceNumber ?? "—"}
+            </button>
+            <span className="text-[11px] text-amber-200/60">
+              {formatDeDate(original.invoiceDate)} · {formatEUR(original.grossCents, original.currency)}
+            </span>
+          </div>
+        )}
+        {corrections.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-amber-300/70">Korrigiert durch</span>
+            {corrections.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => onOpen?.(c.id)}
+                className="rounded-md border border-amber-400/30 bg-amber-500/10 px-2 py-1 font-medium text-amber-100 hover:bg-amber-500/20"
+                title={`${c.status} · ${formatDeDate(c.invoiceDate)}`}
+              >
+                {c.invoiceNumber ? `Rechnung Nr. ${c.invoiceNumber}` : "Entwurf"}
+                <span className="ml-1 text-[10px] text-amber-200/70">
+                  {formatEUR(c.grossCents, c.currency)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { actorFrom } from "@/lib/audit/auditLog";
 import { db } from "@/lib/pg";
 import {
   deleteDraft,
+  getCorrectionsFor,
   getInvoice,
   InvoiceError,
   listInvoiceDocuments,
@@ -37,17 +38,40 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
   const { id } = await ctx.params;
 
   try {
-    const [invoice, documents, events, version] = await Promise.all([
+    const [invoice, documents, events, version, corrections] = await Promise.all([
       getInvoice(id),
       listInvoiceDocuments(id),
       listInvoiceEvents(id),
       versionOf(id),
+      getCorrectionsFor(id),
     ]);
     if (!invoice) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+    // Referenz auf das Original (falls diese Rechnung selbst eine Korrektur ist).
+    let original: unknown = null;
+    if (invoice.references.originalInvoiceId) {
+      const origRaw = await getInvoice(invoice.references.originalInvoiceId);
+      if (origRaw) {
+        original = {
+          id: origRaw.id,
+          invoiceNumber: origRaw.invoiceNumber,
+          status: origRaw.status,
+          type: origRaw.type,
+          invoiceDate: origRaw.invoiceDate,
+          grossCents: origRaw.totals.grossCents,
+          currency: origRaw.totals.currency,
+        };
+      }
+    }
+
     return NextResponse.json({
       invoice: { ...invoice, version },
       documents,
       events,
+      relations: {
+        original,
+        corrections,
+      },
     });
   } catch (error) {
     console.error("[BILLING] Detail fehlgeschlagen:", error);

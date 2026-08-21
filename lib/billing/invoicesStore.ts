@@ -612,6 +612,48 @@ function rowToInvoice(
   };
 }
 
+export interface InvoiceRelation {
+  id: string;
+  invoiceNumber: string | null;
+  status: InvoiceStatus;
+  type: InvoiceType;
+  invoiceDate: string;
+  grossCents: number;
+  currency: string;
+}
+
+/**
+ * Findet Rechnungen, die sich per originalInvoiceId auf `id` beziehen —
+ * also Korrekturen/Nachfolger, die aus dieser Rechnung entstanden sind.
+ */
+export async function getCorrectionsFor(id: string): Promise<InvoiceRelation[]> {
+  const sql = await db();
+  if (!sql) return [];
+  const rows = await sql<{
+    id: string;
+    invoice_number: string | null;
+    status: string;
+    type: string;
+    invoice_date: Date;
+    totals_gross_cents: number;
+    currency: string;
+  }[]>`
+    SELECT id, invoice_number, status, type, invoice_date, totals_gross_cents, currency
+    FROM invoices
+    WHERE original_invoice_id = ${id}
+    ORDER BY invoice_date ASC, created_at ASC
+  `;
+  return rows.map((r) => ({
+    id: r.id,
+    invoiceNumber: r.invoice_number,
+    status: r.status as InvoiceStatus,
+    type: r.type as InvoiceType,
+    invoiceDate: r.invoice_date.toISOString().slice(0, 10),
+    grossCents: Number(r.totals_gross_cents),
+    currency: r.currency,
+  }));
+}
+
 export async function getInvoiceRefIds(
   id: string
 ): Promise<{ issuerId: string; customerId: string | null; projectId: string | null } | null> {

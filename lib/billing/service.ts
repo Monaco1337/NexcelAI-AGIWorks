@@ -16,6 +16,7 @@ import {
   createInvoiceDraft,
   finalizeInvoice,
   getInvoice,
+  getInvoiceRefIds,
   InvoiceError,
 } from "./invoicesStore";
 import {
@@ -158,11 +159,18 @@ export async function createCorrectionDraft(
     throw new InvoiceError("Nur finalisierte Rechnungen können korrigiert werden.");
   }
 
+  // WICHTIG: Die live Aussteller/Kunden/Projekt-IDs aus der DB holen —
+  // der Snapshot enthält historische Daten, nicht zwingend eine 'id'.
+  const refIds = await getInvoiceRefIds(originalId);
+  if (!refIds) {
+    throw new InvoiceError("Ursprungsrechnung konnte nicht referenziert werden.");
+  }
+
   const draft = await createInvoiceDraft(
     {
-      issuerId: (original.issuer as { id?: string }).id ?? "",
-      customerId: original.customer.id ?? undefined,
-      projectId: original.project?.id ?? undefined,
+      issuerId: refIds.issuerId,
+      customerId: refIds.customerId ?? undefined,
+      projectId: refIds.projectId ?? undefined,
       type: "correction",
       invoiceDate: todayIso(),
       dueDate: addDays(todayIso(), original.payment.paymentTermsDays),
@@ -172,11 +180,20 @@ export async function createCorrectionDraft(
       },
       currency: original.currency,
       paymentTermsDays: original.payment.paymentTermsDays,
-      texts: original.texts,
+      texts: {
+        // Anrede/Intro/Outro voll übernehmen; interne Notiz nicht.
+        salutation: original.texts.salutation ?? "",
+        intro: original.texts.intro ?? "",
+        outro: original.texts.outro ?? "",
+        customerNote: original.texts.customerNote ?? "",
+        internalNote: `Korrektur zu Rechnung Nr. ${original.invoiceNumber}${reason ? ` — ${reason}` : ""}`,
+        smallBusinessNote: original.texts.smallBusinessNote ?? "",
+      },
       references: {
         originalInvoiceId: original.id,
         originalInvoiceNumber: original.invoiceNumber,
         correctionReason: reason,
+        buyerReference: original.references.buyerReference ?? null,
       },
       items: original.items.map((it) => ({
         title: it.title,

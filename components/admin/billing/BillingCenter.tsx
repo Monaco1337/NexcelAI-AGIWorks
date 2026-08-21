@@ -44,6 +44,26 @@ export default function BillingCenter({ accent }: { accent: string }) {
   const [detail, setDetail] = useState<{
     invoice: InvoiceDetail;
     documents: { id: string; kind: string; filename: string; validationStatus: string; specVersion: string | null }[];
+    relations?: {
+      original: {
+        id: string;
+        invoiceNumber: string | null;
+        status: InvoiceDetail["status"];
+        type: string;
+        invoiceDate: string;
+        grossCents: number;
+        currency: string;
+      } | null;
+      corrections: {
+        id: string;
+        invoiceNumber: string | null;
+        status: InvoiceDetail["status"];
+        type: string;
+        invoiceDate: string;
+        grossCents: number;
+        currency: string;
+      }[];
+    };
   } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,8 +121,28 @@ export default function BillingCenter({ accent }: { accent: string }) {
       const data = (await res.json()) as {
         invoice: InvoiceDetail;
         documents: { id: string; kind: string; filename: string; validationStatus: string; specVersion: string | null }[];
+        relations?: {
+          original: {
+            id: string;
+            invoiceNumber: string | null;
+            status: InvoiceDetail["status"];
+            type: string;
+            invoiceDate: string;
+            grossCents: number;
+            currency: string;
+          } | null;
+          corrections: {
+            id: string;
+            invoiceNumber: string | null;
+            status: InvoiceDetail["status"];
+            type: string;
+            invoiceDate: string;
+            grossCents: number;
+            currency: string;
+          }[];
+        };
       };
-      setDetail({ invoice: data.invoice, documents: data.documents });
+      setDetail({ invoice: data.invoice, documents: data.documents, relations: data.relations });
     } catch (e) {
       setError((e as Error).message);
     } finally {
