@@ -612,6 +612,19 @@ function rowToInvoice(
   };
 }
 
+export async function getInvoiceRefIds(
+  id: string
+): Promise<{ issuerId: string; customerId: string | null; projectId: string | null } | null> {
+  const sql = await db();
+  if (!sql) return null;
+  const rows = await sql<{ issuer_id: string; customer_id: string | null; project_id: string | null }[]>`
+    SELECT issuer_id, customer_id, project_id FROM invoices WHERE id = ${id} LIMIT 1
+  `;
+  const r = rows[0];
+  if (!r) return null;
+  return { issuerId: r.issuer_id, customerId: r.customer_id, projectId: r.project_id };
+}
+
 async function loadInvoiceRow(id: string): Promise<InvoiceJoinRow | null> {
   const sql = await db();
   if (!sql) return null;

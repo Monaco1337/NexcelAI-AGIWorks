@@ -62,12 +62,14 @@ export default function BillingEditor({
   detail,
   onClose,
   onChanged,
+  onOpen,
   projects,
 }: {
   loading: boolean;
   detail: Detail | null;
   onClose: () => void;
   onChanged: () => Promise<void>;
+  onOpen?: (id: string) => void;
   projects: ProjectOption[];
   issuers: IssuerInfo[];
 }) {
@@ -264,10 +266,11 @@ export default function BillingEditor({
       if (!res.ok) setError(data.error || "Fehler");
       else if (data.invoice?.id) {
         setAskCorrection(false);
-        window.location.hash = `#inv-${data.invoice.id}`;
+        if (onOpen) onOpen(data.invoice.id);
+        else window.location.hash = `#inv-${data.invoice.id}`;
       }
     },
-    [detail]
+    [detail, onOpen]
   );
 
   const cancelWith = useCallback(
@@ -321,6 +324,28 @@ export default function BillingEditor({
   const createCorrection = useCallback(() => setAskCorrection(true), []);
   const cancel = useCallback(() => setAskCancel(true), []);
   const generateShare = useCallback(() => setAskShare(true), []);
+
+  const createFollowup = useCallback(async () => {
+    if (!detail) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/followup`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Folgerechnung fehlgeschlagen");
+      if (data.invoice?.id) {
+        if (onOpen) onOpen(data.invoice.id);
+        else window.location.hash = `#inv-${data.invoice.id}`;
+        await onChanged();
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }, [detail, onOpen, onChanged]);
 
   const revokeShare = useCallback(
     async (token: string) => {
@@ -386,6 +411,7 @@ export default function BillingEditor({
           onCorrection={createCorrection}
           onCancel={cancel}
           onShare={generateShare}
+          onFollowup={createFollowup}
         />
 
         {status && !error && (
@@ -501,6 +527,7 @@ export default function BillingEditor({
           items={items}
           currency={currentDetail!.currency}
           readonly={!isDraft}
+          taxRegime={currentDetail!.issuer.taxRegime}
           onChange={(next) => {
             setItems(next);
             scheduleAutosave();
@@ -571,90 +598,58 @@ function StatusHero({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border p-5"
+      className="rounded-2xl border px-4 py-3"
       style={{
-        borderColor: `${color}55`,
-        background: `linear-gradient(135deg, ${color}18 0%, rgba(15,17,22,0.85) 55%)`,
+        borderColor: `${color}44`,
+        background: `linear-gradient(135deg, ${color}10 0%, rgba(15,17,22,0.7) 60%)`,
       }}
     >
-      <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-30 blur-3xl"
-           style={{ background: color }} />
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <button onClick={onClose} className="text-[11px] text-[#9CA3AF] hover:text-white">
-            ← Zurück zur Liste
-          </button>
-          <div className="mt-2 flex items-center gap-3">
+      <div className="mb-2">
+        <button onClick={onClose} className="text-[11px] text-[#9CA3AF] hover:text-white">
+          ← Rechnungen
+        </button>
+      </div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <div className="truncate text-lg font-semibold text-white">
+              {invoice.invoiceNumber ? `Rechnung Nr. ${invoice.invoiceNumber}` : "Neuer Entwurf"}
+            </div>
             <span
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium"
-              style={{ borderColor: `${color}66`, background: `${color}22`, color }}
+              className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest"
+              style={{ borderColor: `${color}55`, background: `${color}20`, color }}
             >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+              <span className="h-1 w-1 rounded-full" style={{ background: color }} />
               {label}
             </span>
             {invoice.type === "credit_note" && (
               <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-[#9CA3AF]">
-                Korrektur/Gutschrift
+                Gutschrift
               </span>
             )}
+          </div>
+          <div className="mt-1 truncate text-xs text-[#9CA3AF]">
+            {invoice.customer.name || "Kein Kunde"}
+            {invoice.project?.name && <> · {invoice.project.name}</>}
+            <span className="mx-1.5">·</span>
+            <span>{formatDeDate(invoice.invoiceDate)}</span>
+            <span className="mx-1.5">·</span>
+            <span style={{ color: overdue ? "#EF4444" : undefined }}>fällig {formatDeDate(invoice.dueDate)}</span>
             {invoice.references?.originalInvoiceNumber && (
-              <span className="text-[11px] text-[#9CA3AF]">
-                bezogen auf Nr. {invoice.references.originalInvoiceNumber}
-              </span>
+              <>
+                <span className="mx-1.5">·</span>
+                <span>Korrektur zu Nr. {invoice.references.originalInvoiceNumber}</span>
+              </>
             )}
           </div>
-          <div className="mt-2 text-2xl font-semibold text-white">
-            {invoice.invoiceNumber ? `Rechnung Nr. ${invoice.invoiceNumber}` : "Neuer Entwurf"}
-          </div>
-          <div className="mt-1 text-xs text-[#9CA3AF]">
-            {invoice.issuer.brandLabel} · {invoice.customer.name || "Kein Kunde"}
-            {invoice.project?.name && ` · ${invoice.project.name}`}
-          </div>
+          <div className="mt-0.5 text-[10px] text-[#6B7280]">{dueHint}</div>
         </div>
-        <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-right">
-          <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">Gesamtbetrag</div>
-          <div className="text-2xl font-semibold" style={{ color: accent }}>
+        <div className="text-right">
+          <div className="text-2xl font-semibold tabular-nums" style={{ color: accent }}>
             {formatEUR(invoice.totals.grossCents, invoice.totals.currency)}
           </div>
-          <div className="mt-1 text-[10px] text-[#9CA3AF]">{dueHint}</div>
+          <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">Gesamtbetrag</div>
         </div>
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
-        <MicroStat label="Rechnungsdatum" value={formatDeDate(invoice.invoiceDate)} />
-        <MicroStat label="Fälligkeit" value={formatDeDate(invoice.dueDate)} highlight={overdue} />
-        <MicroStat
-          label="Bezahlt am"
-          value={invoice.status === "paid" ? "erledigt" : "—"}
-          highlight={invoice.status === "paid"}
-          color={invoice.status === "paid" ? "#22C55E" : undefined}
-        />
-        <MicroStat
-          label="E-Rechnung"
-          value={
-            invoice.status === "draft" ? "—" : "verfügbar"
-          }
-        />
-      </div>
-    </div>
-  );
-}
-
-function MicroStat({
-  label,
-  value,
-  highlight,
-  color,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-  color?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">{label}</div>
-      <div className="text-sm font-medium" style={{ color: color || (highlight ? "#EF4444" : "#E5E7EB") }}>
-        {value}
       </div>
     </div>
   );
@@ -680,6 +675,7 @@ function ActionsToolbar({
   onCorrection,
   onCancel,
   onShare,
+  onFollowup,
 }: {
   isDraft: boolean;
   invoice: InvoiceDetail;
@@ -692,6 +688,7 @@ function ActionsToolbar({
   onCorrection: () => void;
   onCancel: () => void;
   onShare: () => void;
+  onFollowup?: () => void;
 }) {
   const pdf = documents.find((d) => d.kind === "pdf");
   const zug = documents.find((d) => d.kind === "zugferd");
@@ -733,6 +730,15 @@ function ActionsToolbar({
               className="rounded-lg border border-green-500/40 bg-green-500/10 px-3 py-1.5 text-xs text-green-200 hover:bg-green-500/20"
             >
               Als bezahlt markieren
+            </button>
+          )}
+          {onFollowup && invoice.status !== "cancelled" && (
+            <button
+              onClick={onFollowup}
+              className="rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 text-xs text-blue-200 hover:bg-blue-500/20"
+              title="Folgerechnung mit denselben Positionen für die nächste Periode"
+            >
+              + Folgerechnung
             </button>
           )}
           <button
@@ -982,12 +988,15 @@ function ItemsEditor({
   currency,
   readonly,
   onChange,
+  taxRegime,
 }: {
   items: InvoiceItem[];
   currency: string;
   readonly: boolean;
   onChange: (items: InvoiceItem[]) => void;
+  taxRegime?: string;
 }) {
+  const hideTaxSelector = taxRegime === "kleinunternehmer";
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
@@ -1188,26 +1197,30 @@ function ItemsEditor({
                       className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
                     />
                   </MobileLabeled>
-                  <div className="col-span-2 lg:col-span-1">
-                    <select
-                      value={`${it.taxCategory}:${it.taxRatePercentMilli}`}
-                      disabled={readonly}
-                      onChange={(e) => {
-                        const [cat, rate] = e.target.value.split(":");
-                        patchItem(idx, {
-                          taxCategory: cat as TaxCategory,
-                          taxRatePercentMilli: Number(rate),
-                        });
-                      }}
-                      className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
-                    >
-                      <option value="S:19000">USt 19 %</option>
-                      <option value="AA:7000">USt 7 %</option>
-                      <option value="Z:0">Nullsatz</option>
-                      <option value="E:0">§ 19 UStG (Kleinunternehmer)</option>
-                      <option value="K:0">Reverse Charge</option>
-                    </select>
-                  </div>
+                  {!hideTaxSelector && (
+                    <div className="col-span-2 lg:col-span-1">
+                      <MobileLabeled label="Steuer">
+                        <select
+                          value={`${it.taxCategory}:${it.taxRatePercentMilli}`}
+                          disabled={readonly}
+                          onChange={(e) => {
+                            const [cat, rate] = e.target.value.split(":");
+                            patchItem(idx, {
+                              taxCategory: cat as TaxCategory,
+                              taxRatePercentMilli: Number(rate),
+                            });
+                          }}
+                          className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
+                        >
+                          <option value="S:19000">USt 19 %</option>
+                          <option value="AA:7000">USt 7 %</option>
+                          <option value="Z:0">Nullsatz</option>
+                          <option value="E:0">§ 19 UStG (Kleinunternehmer)</option>
+                          <option value="K:0">Reverse Charge</option>
+                        </select>
+                      </MobileLabeled>
+                    </div>
+                  )}
                 </div>
 
                 {/* Total + Actions */}
@@ -1294,22 +1307,118 @@ function TextEditor({
   readonly: boolean;
   onChange: (v: InvoiceDetail["texts"]) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+
+  const compact = !editing;
+
+  const truncate = (s?: string | null, n = 90) => {
+    if (!s) return "—";
+    const t = s.trim();
+    if (t.length <= n) return t;
+    return t.slice(0, n).trim() + "…";
+  };
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-      <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">Texte</div>
-      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-        <Textarea label="Anrede" value={value.salutation ?? ""} readonly={readonly}
-          onChange={(v) => onChange({ ...value, salutation: v })} />
-        <Textarea label="Einleitung" value={value.intro ?? ""} readonly={readonly}
-          onChange={(v) => onChange({ ...value, intro: v })} />
-        <Textarea label="Schlusstext" value={value.outro ?? ""} readonly={readonly}
-          onChange={(v) => onChange({ ...value, outro: v })} />
-        <Textarea label="Kundenhinweis" value={value.customerNote ?? ""} readonly={readonly}
-          onChange={(v) => onChange({ ...value, customerNote: v })} />
-        <Textarea label="Interne Notiz (nicht auf Rechnung)" value={value.internalNote ?? ""} readonly={readonly}
-          onChange={(v) => onChange({ ...value, internalNote: v })} full />
-        <Textarea label="Kleinunternehmer-Hinweis (aus Aussteller)" value={value.smallBusinessNote ?? ""} readonly full />
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">Texte</div>
+        {!readonly && (
+          <button
+            onClick={() => setEditing((v) => !v)}
+            className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1 text-[11px] text-white hover:bg-white/[0.06]"
+          >
+            {editing ? "Fertig" : "Bearbeiten"}
+          </button>
+        )}
       </div>
+
+      {compact ? (
+        <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-3">
+          <SummaryText label="Anrede" text={value.salutation} />
+          <SummaryText label="Einleitung" text={truncate(value.intro)} />
+          <SummaryText label="Schlusstext" text={truncate(value.outro)} />
+          {(value.customerNote || value.internalNote) && (
+            <div className="md:col-span-3 mt-1 flex flex-wrap gap-4 text-[11px] text-[#9CA3AF]">
+              {value.customerNote && (
+                <span>
+                  <span className="text-[#6B7280]">Kundenhinweis: </span>
+                  {truncate(value.customerNote, 60)}
+                </span>
+              )}
+              {value.internalNote && (
+                <span className="rounded border border-dashed border-amber-400/40 bg-amber-400/[0.04] px-1.5 py-0.5 text-amber-200">
+                  <span className="text-amber-400/70">Interne Notiz (nicht auf Rechnung): </span>
+                  {truncate(value.internalNote, 60)}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Textarea
+              label="Anrede"
+              value={value.salutation ?? ""}
+              readonly={readonly}
+              onChange={(v) => onChange({ ...value, salutation: v })}
+            />
+            <Textarea
+              label="Einleitung"
+              value={value.intro ?? ""}
+              readonly={readonly}
+              onChange={(v) => onChange({ ...value, intro: v })}
+            />
+            <Textarea
+              label="Schlusstext"
+              value={value.outro ?? ""}
+              readonly={readonly}
+              onChange={(v) => onChange({ ...value, outro: v })}
+              full
+            />
+          </div>
+
+          <button
+            onClick={() => setShowMore((v) => !v)}
+            className="text-[11px] text-[#9CA3AF] hover:text-white"
+          >
+            {showMore ? "− Weitere Texte ausblenden" : "+ Weitere Texte (Kundenhinweis, interne Notiz, Kleinunternehmer)"}
+          </button>
+
+          {showMore && (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Textarea
+                label="Kundenhinweis"
+                value={value.customerNote ?? ""}
+                readonly={readonly}
+                onChange={(v) => onChange({ ...value, customerNote: v })}
+              />
+              <Textarea
+                label="Interne Notiz (nicht auf Rechnung)"
+                value={value.internalNote ?? ""}
+                readonly={readonly}
+                onChange={(v) => onChange({ ...value, internalNote: v })}
+              />
+              <Textarea
+                label="Kleinunternehmer-Hinweis (aus Aussteller)"
+                value={value.smallBusinessNote ?? ""}
+                readonly
+                full
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryText({ label, text }: { label: string; text?: string | null }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">{label}</div>
+      <div className="mt-0.5 truncate text-[#D1D5DB]">{text || "—"}</div>
     </div>
   );
 }
@@ -1987,76 +2096,115 @@ function CustomerBlock({
   isDraft: boolean;
   onChange: (patch: Partial<InvoiceDetail["customer"]>) => void;
 }) {
+  const [editing, setEditing] = useState(false);
   const addr = value.address || { line1: "", line2: "", postalCode: "", city: "", country: "DE" };
+  const summaryLines = useMemo(() => {
+    const out = [
+      value.name?.trim(),
+      value.contactPerson?.trim() || null,
+      addr.line1?.trim(),
+      addr.line2?.trim() || null,
+      `${addr.postalCode ?? ""} ${addr.city ?? ""}`.trim(),
+      addr.country && addr.country !== "DE" ? addr.country : null,
+    ].filter((s): s is string => !!s && s.length > 0);
+    return out;
+  }, [value, addr]);
+
+  const compact = !editing;
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">Empfänger</div>
-        {!isDraft && (
-          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-[#9CA3AF]">
-            historischer Snapshot · read-only
-          </span>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">Empfänger</div>
+          {!isDraft && (
+            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-[#9CA3AF]">
+              historisch · unveränderlich
+            </span>
+          )}
+        </div>
+        {isDraft && (
+          <button
+            onClick={() => setEditing((v) => !v)}
+            className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1 text-[11px] text-white hover:bg-white/[0.06]"
+          >
+            {editing ? "Fertig" : "Ändern"}
+          </button>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <LabeledInput
-          label="Firmen-/Empfängername *"
-          value={value.name ?? ""}
-          disabled={!isDraft}
-          onChange={(v) => onChange({ name: v })}
-        />
-        <LabeledInput
-          label="Ansprechpartner (optional)"
-          value={value.contactPerson ?? ""}
-          disabled={!isDraft}
-          onChange={(v) => onChange({ contactPerson: v || null })}
-        />
-        <LabeledInput
-          label="Straße + Hausnummer *"
-          value={addr.line1 ?? ""}
-          disabled={!isDraft}
-          onChange={(v) => onChange({ address: { ...addr, line1: v } })}
-        />
-        <LabeledInput
-          label="Zusatz (z. B. Etage, Postfach)"
-          value={addr.line2 ?? ""}
-          disabled={!isDraft}
-          onChange={(v) => onChange({ address: { ...addr, line2: v || null } })}
-        />
-        <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2">
+
+      {compact ? (
+        summaryLines.length > 0 ? (
+          <div className="space-y-0.5 text-sm text-white">
+            {summaryLines.map((line, i) => (
+              <div key={i} className={i === 0 ? "font-medium" : "text-[#D1D5DB]"}>
+                {line}
+              </div>
+            ))}
+            {(value.email || value.buyerReference) && (
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#9CA3AF]">
+                {value.email && <span>{value.email}</span>}
+                {value.buyerReference && <span>Buyer-Ref: {value.buyerReference}</span>}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-white/10 bg-black/20 p-3 text-xs text-[#9CA3AF]">
+            Noch keine Empfängerdaten. Klicke &quot;Ändern&quot;, um Firma und Anschrift zu erfassen.
+          </div>
+        )
+      ) : (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <LabeledInput
-            label="PLZ *"
-            value={addr.postalCode ?? ""}
-            disabled={!isDraft}
-            onChange={(v) => onChange({ address: { ...addr, postalCode: v } })}
+            label="Firmenname *"
+            value={value.name ?? ""}
+            onChange={(v) => onChange({ name: v })}
           />
           <LabeledInput
-            label="Ort *"
-            value={addr.city ?? ""}
-            disabled={!isDraft}
-            onChange={(v) => onChange({ address: { ...addr, city: v } })}
+            label="Ansprechpartner"
+            value={value.contactPerson ?? ""}
+            onChange={(v) => onChange({ contactPerson: v || null })}
+          />
+          <LabeledInput
+            label="Straße + Hausnummer *"
+            value={addr.line1 ?? ""}
+            onChange={(v) => onChange({ address: { ...addr, line1: v } })}
+          />
+          <LabeledInput
+            label="Zusatz (Etage, Postfach)"
+            value={addr.line2 ?? ""}
+            onChange={(v) => onChange({ address: { ...addr, line2: v || null } })}
+          />
+          <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2">
+            <LabeledInput
+              label="PLZ *"
+              value={addr.postalCode ?? ""}
+              onChange={(v) => onChange({ address: { ...addr, postalCode: v } })}
+            />
+            <LabeledInput
+              label="Ort *"
+              value={addr.city ?? ""}
+              onChange={(v) => onChange({ address: { ...addr, city: v } })}
+            />
+          </div>
+          <LabeledInput
+            label="Land (ISO)"
+            value={addr.country ?? "DE"}
+            onChange={(v) => onChange({ address: { ...addr, country: v.toUpperCase() } })}
+          />
+          <LabeledInput
+            label="E-Mail"
+            type="email"
+            value={value.email ?? ""}
+            onChange={(v) => onChange({ email: v || null })}
+          />
+          <LabeledInput
+            label="Buyer-Reference / Bestellnr."
+            value={value.buyerReference ?? ""}
+            onChange={(v) => onChange({ buyerReference: v || null })}
           />
         </div>
-        <LabeledInput
-          label="Land (ISO, z. B. DE)"
-          value={addr.country ?? "DE"}
-          disabled={!isDraft}
-          onChange={(v) => onChange({ address: { ...addr, country: v.toUpperCase() } })}
-        />
-        <LabeledInput
-          label="E-Mail (für E-Rechnungs-Versand)"
-          type="email"
-          value={value.email ?? ""}
-          disabled={!isDraft}
-          onChange={(v) => onChange({ email: v || null })}
-        />
-        <LabeledInput
-          label="Bestellnummer / Buyer-Reference"
-          value={value.buyerReference ?? ""}
-          disabled={!isDraft}
-          onChange={(v) => onChange({ buyerReference: v || null })}
-        />
-      </div>
+      )}
     </div>
   );
 }
@@ -2104,41 +2252,75 @@ function ComplianceGate({ detail }: { detail: InvoiceDetail & { items: InvoiceIt
   const warnings = checks.filter((c) => !c.ok && c.severity === "warn");
   const ok = errors.length === 0;
   const color = ok ? "#22C55E" : errors.length > 0 ? "#EF4444" : "#F59E0B";
-  const label = ok
+  const compactLabel = ok
     ? warnings.length === 0
-      ? "E-Rechnungs-tauglich · Alle Pflichtangaben erfüllt"
-      : `E-Rechnungs-tauglich · ${warnings.length} Hinweis(e)`
-    : `Nicht finalisierbar · ${errors.length} Pflichtfeld(er) fehlen`;
+      ? "E-Rechnungs-tauglich"
+      : `${warnings.length} Hinweis${warnings.length === 1 ? "" : "e"}`
+    : `${errors.length} Angabe${errors.length === 1 ? "" : "n"} fehlt`;
+
+  const [open, setOpen] = useState(false);
 
   return (
     <div
-      className="rounded-2xl border p-4"
-      style={{ borderColor: `${color}55`, background: `${color}0F` }}
+      className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2"
+      style={{ borderColor: `${color}44`, background: `${color}0A` }}
     >
-      <div className="flex items-center gap-3">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full" style={{ background: `${color}22`, color }}>
+      <div className="flex min-w-0 items-center gap-2">
+        <span
+          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+          style={{ background: `${color}22`, color }}
+        >
           {ok ? "✓" : "!"}
         </span>
-        <div>
-          <div className="text-sm font-semibold" style={{ color }}>{label}</div>
-          <div className="text-[11px] text-[#9CA3AF]">EN 16931 · § 14 UStG · XRechnung/ZUGFeRD-ready</div>
+        <div className="min-w-0">
+          <div className="truncate text-xs font-semibold" style={{ color }}>
+            {compactLabel}
+          </div>
+          <div className="truncate text-[10px] text-[#6B7280]">
+            EN 16931 · § 14 UStG · XRechnung / ZUGFeRD
+          </div>
         </div>
       </div>
       {(errors.length > 0 || warnings.length > 0) && (
-        <ul className="mt-3 space-y-1 text-xs">
-          {errors.map((e) => (
-            <li key={e.key} className="flex items-start gap-2 text-red-200">
-              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-red-400" />
-              <span>{e.label}</span>
+        <button
+          onClick={() => setOpen(true)}
+          className="shrink-0 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[10px] font-medium text-white hover:bg-white/10"
+        >
+          Prüfen
+        </button>
+      )}
+
+      {open && (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0E14] p-5 shadow-2xl"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold text-white">Rechnung prüfen</div>
+              <button onClick={() => setOpen(false)} className="text-[11px] text-[#9CA3AF] hover:text-white">
+                Schließen
+              </button>
+            </div>
+            <ul className="space-y-2 text-xs">
+              {errors.map((e) => (
+                <li key={e.key} className="flex items-start gap-2 text-red-200">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
+                  <span>{e.label}</span>
+                </li>
+              ))}
+              {warnings.map((w) => (
+                <li key={w.key} className="flex items-start gap-2 text-amber-200">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                  <span>{w.label}</span>
             </li>
-          ))}
-          {warnings.map((w) => (
-            <li key={w.key} className="flex items-start gap-2 text-amber-200">
-              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
-              <span>{w.label}</span>
-            </li>
-          ))}
-        </ul>
+              ))}
+            </ul>
+          </div>
+        </div>
       )}
     </div>
   );

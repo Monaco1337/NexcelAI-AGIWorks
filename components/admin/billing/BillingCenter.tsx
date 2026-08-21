@@ -280,6 +280,7 @@ export default function BillingCenter({ accent }: { accent: string }) {
               loadList(),
             ]);
           }}
+          onOpen={openInvoice}
           projects={projects}
           issuers={issuers}
         />
