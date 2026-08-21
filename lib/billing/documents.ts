@@ -125,3 +125,54 @@ export async function renderPreviewPdf(invoice: InvoiceDomain): Promise<Buffer> 
   const bytes = await renderInvoicePdf(invoice);
   return Buffer.from(bytes);
 }
+
+/**
+ * Erzeugt ein einseitiges Notfall-PDF mit klarer Fehlermeldung. Wir setzen
+ * bewusst kein Layout aus dem Rechnungs-Renderer ein — hier reicht der
+ * StandardFont in einer A4-Seite, damit der iframe die Ursache lesbar
+ * anzeigt, statt einen JSON-Blob als „Quelltext" zu präsentieren.
+ */
+export async function renderErrorPdf(title: string, message: string): Promise<Buffer> {
+  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+  const pdf = await PDFDocument.create();
+  const page = pdf.addPage([595.28, 841.89]);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const regular = await pdf.embedFont(StandardFonts.Helvetica);
+  const safe = (s: string) => s.replace(/[^\x20-\x7E\xA0-\xFF]/g, "?");
+  page.drawText(safe(title), {
+    x: 60,
+    y: 780,
+    size: 20,
+    font: bold,
+    color: rgb(0.85, 0.25, 0.25),
+  });
+  page.drawRectangle({ x: 60, y: 770, width: 475, height: 2, color: rgb(0.85, 0.25, 0.25) });
+
+  // Nachricht umbrechen.
+  const words = safe(message).split(/\s+/);
+  let line = "";
+  let y = 740;
+  const size = 11;
+  const max = 475;
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (regular.widthOfTextAtSize(test, size) > max && line) {
+      page.drawText(line, { x: 60, y, size, font: regular, color: rgb(0.15, 0.15, 0.2) });
+      y -= size + 4;
+      line = w;
+    } else {
+      line = test;
+    }
+  }
+  if (line) page.drawText(line, { x: 60, y, size, font: regular, color: rgb(0.15, 0.15, 0.2) });
+
+  page.drawText("Bitte den Aussteller-Datensatz prüfen oder den Entwurf neu speichern.", {
+    x: 60,
+    y: 40,
+    size: 9,
+    font: regular,
+    color: rgb(0.5, 0.55, 0.6),
+  });
+
+  return Buffer.from(await pdf.save());
+}

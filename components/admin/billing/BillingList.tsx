@@ -137,7 +137,15 @@ export default function BillingList({
               </tr>
             )}
             {filtered.map((inv) => {
-              const color = INVOICE_STATUS_COLOR[inv.status];
+              const today = new Date().toISOString().slice(0, 10);
+              const isOverdue =
+                inv.status !== "paid" &&
+                inv.status !== "cancelled" &&
+                inv.status !== "draft" &&
+                inv.status !== "ready_for_review" &&
+                inv.dueDate < today;
+              const color = isOverdue ? "#EF4444" : INVOICE_STATUS_COLOR[inv.status];
+              const label = isOverdue ? "Überfällig" : INVOICE_STATUS_LABEL[inv.status];
               return (
                 <tr
                   key={inv.id}
@@ -173,7 +181,7 @@ export default function BillingList({
                   </td>
                   <td className="px-4 py-3 text-xs text-[#9CA3AF]">{inv.servicePeriod.label || "—"}</td>
                   <td className="px-4 py-3 text-xs text-[#E5E7EB] tabular-nums">{formatDeDate(inv.invoiceDate)}</td>
-                  <td className="px-4 py-3 text-xs text-[#E5E7EB] tabular-nums">{formatDeDate(inv.dueDate)}</td>
+                  <td className="px-4 py-3 text-xs tabular-nums" style={{ color: isOverdue ? "#F87171" : "#E5E7EB" }}>{formatDeDate(inv.dueDate)}</td>
                   <td className="px-4 py-3 text-right font-semibold text-white tabular-nums">
                     {formatEUR(inv.totals.grossCents, inv.totals.currency)}
                   </td>
@@ -183,7 +191,7 @@ export default function BillingList({
                       style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
                     >
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-                      {INVOICE_STATUS_LABEL[inv.status]}
+                      {label}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs">

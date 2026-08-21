@@ -167,6 +167,7 @@ export interface UpdateIssuerInput {
   numberPrefix?: string;
   numberPadding?: number;
   active?: boolean;
+  logoPath?: string | null;
 }
 
 export async function updateIssuer(
@@ -205,6 +206,7 @@ export async function updateIssuer(
         number_prefix         = COALESCE(${input.numberPrefix ?? null}, number_prefix),
         number_padding        = COALESCE(${input.numberPadding ?? null}, number_padding),
         active                = COALESCE(${input.active ?? null}, active),
+        logo_path             = ${input.logoPath === undefined ? sql`logo_path` : input.logoPath},
         updated_at            = NOW()
       WHERE id = ${id}
     `;

@@ -29,6 +29,7 @@ interface IssuerFull extends IssuerInfo {
   defaultIntro: string;
   defaultOutro: string;
   accentColor: string;
+  logoPath?: string | null;
 }
 
 export default function BillingSettings({
@@ -163,6 +164,9 @@ function IssuerCard({ issuer, onReload }: { issuer: IssuerFull; onReload: () => 
       {error && <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/[0.05] p-3 text-xs text-red-200">{error}</div>}
       {message && <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.05] p-3 text-xs text-emerald-200">{message}</div>}
 
+      <LogoBlock issuer={issuer} onReload={onReload} />
+
+
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
         {field("Anzeigename", values.brandLabel, (v) => setValues({ ...values, brandLabel: v }))}
         {field("Rechtlicher Name", values.legalName, (v) => setValues({ ...values, legalName: v }))}
@@ -201,6 +205,95 @@ function IssuerCard({ issuer, onReload }: { issuer: IssuerFull; onReload: () => 
         {textarea("Standard-Schlusstext", values.defaultOutro, (v) => setValues({ ...values, defaultOutro: v }))}
         {textarea("Hinweis Kleinunternehmer", values.smallBusinessNote, (v) => setValues({ ...values, smallBusinessNote: v }))}
       </div>
+    </div>
+  );
+}
+
+function LogoBlock({ issuer, onReload }: { issuer: IssuerFull; onReload: () => Promise<void> }) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewPath, setPreviewPath] = useState<string | null>(issuer.logoPath ?? null);
+
+  const logoUrl = previewPath?.startsWith("asset:")
+    ? `/api/admin/billing/assets/${previewPath.slice("asset:".length)}`
+    : null;
+
+  const upload = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const form = new FormData();
+      form.append("logo", file);
+      const res = await fetch(`/api/admin/billing/issuers/${issuer.id}/logo`, {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload fehlgeschlagen");
+      setPreviewPath(data.issuer?.logoPath ?? null);
+      await onReload();
+    } catch (e) {
+      setUploadError((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!confirm("Logo entfernen?")) return;
+    await fetch(`/api/admin/billing/issuers/${issuer.id}/logo`, { method: "DELETE" });
+    setPreviewPath(null);
+    await onReload();
+  };
+
+  return (
+    <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">Logo</div>
+        <div className="flex gap-2">
+          <label className="inline-flex cursor-pointer items-center rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]">
+            {uploading ? "Lade hoch…" : logoUrl ? "Ersetzen" : "Hochladen"}
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void upload(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {logoUrl && (
+            <button
+              onClick={remove}
+              className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/20"
+            >
+              Entfernen
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-4">
+        <div className="flex h-24 w-40 items-center justify-center rounded-lg border border-white/10 bg-white p-3">
+          {logoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+          ) : (
+            <span className="text-[10px] text-[#94A3B8]">Kein Logo</span>
+          )}
+        </div>
+        <div className="text-[11px] text-[#9CA3AF]">
+          PNG oder JPG · max. 2 MB · Empfehlung: transparenter Hintergrund,
+          querformatig, Höhe ≥ 120 px. Das Logo erscheint oben rechts auf
+          jeder Rechnung und im Kunden-Portal.
+        </div>
+      </div>
+      {uploadError && (
+        <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/[0.05] p-2 text-[11px] text-red-200">
+          {uploadError}
+        </div>
+      )}
     </div>
   );
 }

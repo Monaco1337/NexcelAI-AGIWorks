@@ -10,7 +10,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authorize } from "@/lib/auth/authorize";
 import { getInvoice } from "@/lib/billing/invoicesStore";
-import { renderPreviewPdf } from "@/lib/billing/documents";
+import { renderPreviewPdf, renderErrorPdf } from "@/lib/billing/documents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,18 +22,32 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
 
   try {
     const invoice = await getInvoice(id);
-    if (!invoice) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    if (!invoice) {
+      const errPdf = await renderErrorPdf(
+        "Rechnung nicht gefunden",
+        "Die angeforderte Rechnung existiert nicht mehr oder wurde entfernt."
+      );
+      return pdfResponse(errPdf, `not-found-${id}.pdf`, 200);
+    }
     const buf = await renderPreviewPdf(invoice);
-    return new NextResponse(new Uint8Array(buf), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="preview-${id}.pdf"`,
-        "Cache-Control": "no-store",
-      },
-    });
+    return pdfResponse(buf, `preview-${id}.pdf`, 200);
   } catch (error) {
-    console.error("[BILLING] Preview fehlgeschlagen:", error);
-    return NextResponse.json({ error: "preview_failed" }, { status: 500 });
+    const msg = (error as Error)?.message || "Unbekannter Fehler beim Rendern der Vorschau.";
+    // Kein JSON — der iframe würde nur „Quelltextformatierung" zeigen. Wir
+    // liefern stattdessen ein PDF mit der klaren Fehlermeldung, damit der
+    // Admin sofort sieht, was schiefläuft.
+    const errPdf = await renderErrorPdf("Vorschau konnte nicht erzeugt werden", msg);
+    return pdfResponse(errPdf, `preview-error-${id}.pdf`, 200);
   }
+}
+
+function pdfResponse(buf: Buffer, filename: string, status: number): NextResponse {
+  return new NextResponse(new Uint8Array(buf), {
+    status,
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="${filename}"`,
+      "Cache-Control": "no-store",
+    },
+  });
 }

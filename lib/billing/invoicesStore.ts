@@ -19,8 +19,8 @@ import type { Tx } from "@/lib/db/migrationRunner";
 import { writeAuditTx, type AuditActor } from "@/lib/audit/auditLog";
 
 import { buildItems, computeTotals } from "./calc";
-import { getIssuerTx, toIssuerSnapshot } from "./issuersStore";
-import { getCustomerTx } from "./customersStore";
+import { getIssuer, getIssuerTx, toIssuerSnapshot } from "./issuersStore";
+import { getCustomer, getCustomerTx } from "./customersStore";
 import { defaultTaxTreatment, exemptionsForIssuer } from "./tax";
 import { addDays, buildPeriod, formatDeDate, todayIso } from "./period";
 import type {
@@ -404,17 +404,110 @@ async function loadItemsSql(invoiceId: string): Promise<InvoiceItem[]> {
   return rows.map(itemRowToItem);
 }
 
+/**
+ * Beim historischen Import wurde der Issuer-Snapshot mit `to_jsonb(i)`
+ * gespeichert — d.h. mit Postgres-Spaltennamen im Snake-Case. Die restliche
+ * Codebasis erwartet aber die Domain-Struktur (`brandLabel`, `taxRegime`,
+ * `smallBusinessNote`, …). Ohne diese Normalisierung greift der Renderer auf
+ * `undefined`-Werte zu und die Vorschau bricht mit `preview_failed` ab.
+ *
+ * Wir akzeptieren beide Formate und liefern einen sauber typisierten Snapshot
+ * zurück; unbekannte Zusatzfelder werden verworfen.
+ */
+function normalizeIssuerSnapshot(raw: unknown): IssuerSnapshot | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const g = <T>(...keys: string[]): T | undefined => {
+    for (const key of keys) {
+      const v = r[key];
+      if (v !== undefined && v !== null) return v as T;
+    }
+    return undefined;
+  };
+  const address = g<Record<string, unknown>>("address") ?? {};
+  const contact = g<Record<string, unknown>>("contact") ?? {};
+  const bank = g<Record<string, unknown>>("bank") ?? {};
+  return {
+    key: g<string>("key") ?? "",
+    brandLabel: g<string>("brandLabel", "brand_label") ?? "",
+    legalName: g<string>("legalName", "legal_name") ?? "",
+    owner: g<string>("owner") ?? "",
+    headerTagline: g<string>("headerTagline", "header_tagline") ?? "",
+    address: {
+      line1: (address.line1 as string) ?? "",
+      line2: (address.line2 as string | null | undefined) ?? null,
+      postalCode: (address.postalCode as string) ?? (address.postal_code as string) ?? "",
+      city: (address.city as string) ?? "",
+      country: (address.country as string) ?? "DE",
+      countryLabel: (address.countryLabel as string | undefined) ?? (address.country_label as string | undefined),
+    },
+    contact: {
+      email: (contact.email as string) ?? "",
+      phone: (contact.phone as string | null | undefined) ?? null,
+      mobile: (contact.mobile as string | null | undefined) ?? null,
+      website: (contact.website as string | null | undefined) ?? null,
+    },
+    taxNumber: g<string | null>("taxNumber", "tax_number") ?? null,
+    vatId: g<string | null>("vatId", "vat_id") ?? null,
+    taxRegime: (g<string>("taxRegime", "tax_regime") as IssuerSnapshot["taxRegime"]) ?? "regelbesteuerung",
+    smallBusinessNote: g<string>("smallBusinessNote", "small_business_note") ?? "",
+    bank: {
+      bankName: (bank.bankName as string) ?? (bank.bank_name as string) ?? "",
+      iban: (bank.iban as string) ?? "",
+      bic: (bank.bic as string) ?? "",
+    },
+    defaultCurrency: g<string>("defaultCurrency", "default_currency") ?? "EUR",
+    defaultPaymentTerms: Number(g<number | string>("defaultPaymentTerms", "default_payment_terms") ?? 14),
+    defaultIntro: g<string>("defaultIntro", "default_intro") ?? "",
+    defaultOutro: g<string>("defaultOutro", "default_outro") ?? "",
+    defaultFooter: g<string>("defaultFooter", "default_footer") ?? "",
+    accentColor: g<string>("accentColor", "accent_color") ?? "#1F6DD8",
+    logoPath: g<string | null>("logoPath", "logo_path") ?? null,
+    templateKey: g<string>("templateKey", "template_key") ?? "agiworks_classic",
+    numberFormat: g<string>("numberFormat", "number_format") ?? "numeric",
+    numberPrefix: g<string>("numberPrefix", "number_prefix") ?? "",
+    numberPadding: Number(g<number | string>("numberPadding", "number_padding") ?? 0),
+  };
+}
+
+function normalizeCustomerSnapshot(raw: unknown): CustomerSnapshot | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const address = (r.address as Record<string, unknown>) ?? {};
+  return {
+    id: (r.id as string | null | undefined) ?? null,
+    name: (r.name as string) ?? "",
+    contactPerson: (r.contactPerson as string | null | undefined) ?? (r.contact_person as string | null | undefined) ?? null,
+    address: {
+      line1: (address.line1 as string) ?? "",
+      line2: (address.line2 as string | null | undefined) ?? null,
+      postalCode: (address.postalCode as string) ?? (address.postal_code as string) ?? "",
+      city: (address.city as string) ?? "",
+      country: (address.country as string) ?? "DE",
+      countryLabel: (address.countryLabel as string | undefined) ?? (address.country_label as string | undefined),
+    },
+    email: (r.email as string | null | undefined) ?? null,
+    buyerReference: (r.buyerReference as string | null | undefined) ?? (r.buyer_reference as string | null | undefined) ?? null,
+    leitwegId: (r.leitwegId as string | null | undefined) ?? (r.leitweg_id as string | null | undefined) ?? null,
+    vatId: (r.vatId as string | null | undefined) ?? (r.vat_id as string | null | undefined) ?? null,
+    customerNumber: (r.customerNumber as string | null | undefined) ?? (r.customer_number as string | null | undefined) ?? null,
+  };
+}
+
 function rowToInvoice(
   row: InvoiceJoinRow,
-  items: InvoiceItem[]
+  items: InvoiceItem[],
+  liveIssuer?: IssuerSnapshot | null,
+  liveCustomer?: CustomerSnapshot | null
 ): InvoiceDomain {
-  const isSnapshot = !!row.issuer_snapshot && !!row.customer_snapshot;
-
-  const issuerSnapshot = row.issuer_snapshot as IssuerSnapshot | null;
-  const customerSnapshot = row.customer_snapshot as CustomerSnapshot | null;
+  const issuerSnapshot = normalizeIssuerSnapshot(row.issuer_snapshot);
+  const customerSnapshot = normalizeCustomerSnapshot(row.customer_snapshot);
   const paymentSnapshot = row.payment_snapshot as InvoicePaymentInfo | null;
+  const isSnapshot = !!issuerSnapshot && !!customerSnapshot;
 
-  const issuer: IssuerSnapshot | undefined = issuerSnapshot ?? undefined;
+  // Finalisierte Rechnungen: bevorzugt den (jetzt normalisierten) Snapshot.
+  // Drafts: nutzen die aktuellen Stammdaten aus dem Live-Issuer.
+  const issuer: IssuerSnapshot | undefined = issuerSnapshot ?? liveIssuer ?? undefined;
   const currency = row.currency;
 
   const totals: InvoiceTotals = {
@@ -451,11 +544,13 @@ function rowToInvoice(
     paymentTermsDays: row.payment_terms_days,
   };
 
-  const customer: CustomerRef = customerSnapshot ?? {
-    id: row.customer_id,
-    name: row.customer_name || "",
-    address: { line1: "", postalCode: "", city: "", country: "DE" },
-  };
+  const customer: CustomerRef =
+    customerSnapshot ??
+    liveCustomer ?? {
+      id: row.customer_id,
+      name: row.customer_name || "",
+      address: { line1: "", postalCode: "", city: "", country: "DE" },
+    };
 
   const project: ProjectRef | null = row.project_id
     ? {
@@ -532,7 +627,38 @@ export async function getInvoice(id: string): Promise<InvoiceDomain | null> {
   const row = await loadInvoiceRow(id);
   if (!row) return null;
   const items = await loadItemsSql(id);
-  return rowToInvoice(row, items);
+
+  // Fallback-Stammdaten für Drafts (der Snapshot wird erst bei der Finalisierung
+  // eingefroren). So kann die Live-Vorschau ohne Datenverlust rendern.
+  let liveIssuer: IssuerSnapshot | null = null;
+  let liveCustomer: CustomerSnapshot | null = null;
+  try {
+    const iss = await getIssuer(row.issuer_id);
+    if (iss) liveIssuer = toIssuerSnapshot(iss);
+  } catch {
+    // best-effort
+  }
+  if (row.customer_id) {
+    try {
+      const cust = await getCustomer(row.customer_id);
+      if (cust) {
+        liveCustomer = {
+          id: cust.id,
+          name: cust.name,
+          contactPerson: cust.contactPerson ?? null,
+          address: cust.address,
+          email: cust.email ?? null,
+          buyerReference: cust.buyerReference ?? null,
+          leitwegId: cust.leitwegId ?? null,
+          vatId: cust.vatId ?? null,
+          customerNumber: cust.customerNumber ?? null,
+        };
+      }
+    } catch {
+      // best-effort
+    }
+  }
+  return rowToInvoice(row, items, liveIssuer, liveCustomer);
 }
 
 /* ── Draft anlegen ──────────────────────────────────────────────────── */
@@ -1193,6 +1319,26 @@ export async function listInvoiceDocuments(id: string): Promise<InvoiceDocumentI
     validationReport: r.validation_report ?? {},
     createdAt: r.created_at.toISOString(),
   }));
+}
+
+export async function loadInvoiceDocumentContent(
+  documentId: string
+): Promise<{ mimeType: string; filename: string; content: Buffer } | null> {
+  const sql = await db();
+  if (!sql) return null;
+  const rows = await sql<
+    { mime_type: string; filename: string; content: Buffer }[]
+  >`
+    SELECT mime_type, filename, content
+    FROM invoice_documents WHERE id = ${documentId}
+    LIMIT 1
+  `;
+  if (!rows[0]) return null;
+  return {
+    mimeType: rows[0].mime_type,
+    filename: rows[0].filename,
+    content: Buffer.isBuffer(rows[0].content) ? rows[0].content : Buffer.from(rows[0].content),
+  };
 }
 
 export async function getInvoiceDocumentContent(

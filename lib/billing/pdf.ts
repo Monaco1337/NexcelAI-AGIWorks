@@ -18,8 +18,10 @@
 import {
   PDFDocument,
   StandardFonts,
+  degrees,
   rgb,
   type PDFFont,
+  type PDFImage,
   type PDFPage,
   type RGB,
 } from "pdf-lib";
@@ -28,6 +30,7 @@ import type { InvoiceDomain } from "./model";
 import { formatEUR, formatQty } from "./money";
 import { formatDeDate } from "./period";
 import { formatRate } from "./tax";
+import { loadLogoBytes } from "./logoStore";
 
 export const PDF_TEMPLATE_VERSION = "agiworks_classic:1.0.0";
 export const PDF_GENERATOR = "internal-pdflib";
@@ -57,11 +60,75 @@ interface Fonts {
   italic: PDFFont;
 }
 
+/**
+ * Ersetzt Zeichen, die die WinAnsi-Kodierung der Standard-PDF-Fonts
+ * nicht abbilden kann. Ohne diesen Wrapper stirbt pdf-lib an einem
+ * "WinAnsi cannot encode …"-Fehler, sobald in Kunden- oder
+ * Positionsdaten typografische Anführungszeichen, Bindestriche oder
+ * exotischere Unicode-Codepunkte auftauchen.
+ */
+const CHAR_REPLACEMENTS: Record<string, string> = {
+  "\u2013": "-", // en dash
+  "\u2014": "-", // em dash
+  "\u2212": "-", // minus sign
+  "\u2018": "'",
+  "\u2019": "'",
+  "\u201a": ",",
+  "\u201b": "'",
+  "\u201c": '"',
+  "\u201d": '"',
+  "\u201e": '"',
+  "\u201f": '"',
+  "\u2032": "'",
+  "\u2033": '"',
+  "\u2026": "...",
+  "\u00a0": " ",
+  "\u2007": " ",
+  "\u2009": " ",
+  "\u200a": " ",
+  "\u200b": "",
+  "\u200c": "",
+  "\u200d": "",
+  "\ufeff": "",
+};
+
+/** Winansi-Codepunkte, die die Standard-Fonts von pdf-lib kennen. */
+const WINANSI_ALLOWED = new Set<number>();
+for (let i = 0x20; i <= 0x7e; i++) WINANSI_ALLOWED.add(i);
+for (let i = 0xa0; i <= 0xff; i++) WINANSI_ALLOWED.add(i);
+for (const cp of [
+  0x20ac, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021, 0x02c6, 0x2030, 0x0160,
+  0x2039, 0x0152, 0x017d, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+  0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x017e, 0x0178,
+]) {
+  WINANSI_ALLOWED.add(cp);
+}
+
+function safeText(input: string | null | undefined): string {
+  if (input == null) return "";
+  const raw = typeof input === "string" ? input : String(input);
+  let out = "";
+  for (const ch of raw) {
+    const replacement = CHAR_REPLACEMENTS[ch];
+    if (replacement !== undefined) {
+      out += replacement;
+      continue;
+    }
+    const cp = ch.codePointAt(0)!;
+    if (WINANSI_ALLOWED.has(cp)) {
+      out += ch;
+    } else {
+      out += "?";
+    }
+  }
+  return out;
+}
+
 export async function renderInvoicePdf(invoice: InvoiceDomain): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  pdf.setTitle(`Rechnung ${invoice.invoiceNumber ?? "Entwurf"}`);
-  pdf.setAuthor(invoice.issuer.legalName);
-  pdf.setSubject(`Rechnung an ${invoice.customer.name}`);
+  pdf.setTitle(safeText(`Rechnung ${invoice.invoiceNumber ?? "Entwurf"}`));
+  pdf.setAuthor(safeText(invoice.issuer.legalName));
+  pdf.setSubject(safeText(`Rechnung an ${invoice.customer.name}`));
   pdf.setProducer("NEXCEL AI Billing");
   pdf.setCreator("NEXCEL AI Billing");
   pdf.setCreationDate(new Date());
@@ -74,10 +141,33 @@ export async function renderInvoicePdf(invoice: InvoiceDomain): Promise<Uint8Arr
     italic: await pdf.embedFont(StandardFonts.HelveticaOblique),
   };
 
-  const state = new RenderState(pdf, fonts, invoice);
+  const logo = await tryLoadLogo(pdf, invoice.issuer.logoPath);
+
+  const state = new RenderState(pdf, fonts, invoice, logo);
   await state.render();
 
   return pdf.save();
+}
+
+async function tryLoadLogo(
+  pdf: PDFDocument,
+  path: string | null | undefined
+): Promise<PDFImage | null> {
+  if (!path) return null;
+  try {
+    const bytes = await loadLogoBytes(path);
+    if (!bytes) return null;
+    // PDF-lib erkennt PNG und JPG automatisch anhand des Headers.
+    if (bytes[0] === 0x89 && bytes[1] === 0x50) {
+      return await pdf.embedPng(bytes);
+    }
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) {
+      return await pdf.embedJpg(bytes);
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 class RenderState {
@@ -88,7 +178,8 @@ class RenderState {
   constructor(
     private readonly pdf: PDFDocument,
     private readonly fonts: Fonts,
-    private readonly invoice: InvoiceDomain
+    private readonly invoice: InvoiceDomain,
+    private readonly logo: PDFImage | null
   ) {}
 
   async render(): Promise<void> {
@@ -102,12 +193,46 @@ class RenderState {
     this.drawOutro();
     this.drawSmallBusinessNote();
 
-    // Footer auf jede Seite malen.
+    // Footer + Wasserzeichen auf jede Seite malen.
     const total = this.pdf.getPageCount();
     for (let i = 0; i < total; i++) {
       const page = this.pdf.getPage(i);
       this.drawFooter(page, i + 1, total);
+      this.drawWatermark(page);
     }
+  }
+
+  private drawWatermark(page: PDFPage): void {
+    const status = this.invoice.status;
+    let label = "";
+    let color: RGB | null = null;
+    if (status === "draft" || status === "ready_for_review" || !this.invoice.invoiceNumber) {
+      label = "ENTWURF";
+      color = rgb(0.75, 0.78, 0.85);
+    } else if (status === "paid") {
+      label = "BEZAHLT";
+      color = rgb(0.55, 0.85, 0.6);
+    } else if (status === "cancelled") {
+      label = "STORNIERT";
+      color = rgb(0.9, 0.55, 0.55);
+    } else if (status === "overdue") {
+      label = "UEBERFAELLIG";
+      color = rgb(0.95, 0.6, 0.5);
+    } else {
+      return;
+    }
+    const size = 96;
+    const font = this.fonts.bold;
+    const width = font.widthOfTextAtSize(label, size);
+    page.drawText(label, {
+      x: (A4.width - width) / 2 + 40,
+      y: A4.height / 2 - 40,
+      size,
+      font,
+      color,
+      opacity: 0.12,
+      rotate: degrees(-24),
+    });
   }
 
   /* ── Seitenverwaltung ────────────────────────────────────────────── */
@@ -131,9 +256,11 @@ class RenderState {
   private drawHeaderTagline(): void {
     const iss = this.invoice.issuer;
     const tag = iss.headerTagline || "";
-    const parts = [tag, iss.address.line1, `${iss.address.postalCode} ${iss.address.city}`]
-      .filter(Boolean)
-      .join("   ");
+    const parts = safeText(
+      [tag, iss.address?.line1, `${iss.address?.postalCode ?? ""} ${iss.address?.city ?? ""}`.trim()]
+        .filter(Boolean)
+        .join("   ")
+    );
     this.page.drawText(parts, {
       x: MARGIN.left * MM,
       y: A4.height - (MARGIN.top - 4) * MM,
@@ -142,18 +269,29 @@ class RenderState {
       color: COLOR_MUTED,
     });
 
-    // Brand-Wortmarke oben rechts, statt echtes Logo — die Referenz nutzt
-    // ebenfalls einen dezenten Textblock; ein tatsächliches Logofile pflegen
-    // wir separat über den Aussteller-Store.
-    const brandText = iss.brandLabel;
-    const brandWidth = this.fonts.bold.widthOfTextAtSize(brandText, 18);
-    this.page.drawText(brandText, {
-      x: A4.width - MARGIN.right * MM - brandWidth,
-      y: A4.height - (MARGIN.top + 8) * MM,
-      size: 18,
-      font: this.fonts.bold,
-      color: COLOR_ACCENT,
-    });
+    // Brand oben rechts: bevorzugt das eingebettete Logo-Bild; Fallback ist
+    // ein sauber gesetzter Text-Titel im Corporate-Blau.
+    const brandY = A4.height - (MARGIN.top + 10) * MM;
+    if (this.logo) {
+      const targetHeight = 18 * MM;
+      const dims = this.logo.scaleToFit(50 * MM, targetHeight);
+      this.page.drawImage(this.logo, {
+        x: A4.width - MARGIN.right * MM - dims.width,
+        y: brandY - dims.height + 6,
+        width: dims.width,
+        height: dims.height,
+      });
+    } else {
+      const brandText = safeText(iss.brandLabel || "");
+      const brandWidth = this.fonts.bold.widthOfTextAtSize(brandText, 18);
+      this.page.drawText(brandText, {
+        x: A4.width - MARGIN.right * MM - brandWidth,
+        y: brandY,
+        size: 18,
+        font: this.fonts.bold,
+        color: COLOR_ACCENT,
+      });
+    }
 
     this.cursorY = A4.height - (MARGIN.top + 22) * MM;
   }
@@ -161,15 +299,18 @@ class RenderState {
   private drawRecipientAndDate(): void {
     const cust = this.invoice.customer;
     const startY = this.cursorY;
+    const custAddress = cust.address || { line1: "", postalCode: "", city: "", country: "DE" };
 
     // Empfänger links.
     const recipientLines = [
-      cust.name,
+      cust.name || "",
       cust.contactPerson ?? "",
-      cust.address.line1,
-      cust.address.line2 ?? "",
-      `${cust.address.postalCode} ${cust.address.city}`,
-    ].filter((l) => l.trim().length > 0);
+      custAddress.line1 ?? "",
+      custAddress.line2 ?? "",
+      `${custAddress.postalCode ?? ""} ${custAddress.city ?? ""}`.trim(),
+    ]
+      .map((l) => safeText(l))
+      .filter((l) => l.trim().length > 0);
 
     let y = startY;
     for (const line of recipientLines) {
@@ -184,7 +325,8 @@ class RenderState {
     }
 
     // Datum rechts, in derselben Höhe wie die erste Empfängerzeile.
-    const dateText = `${this.invoice.issuer.address.city}, ${formatDeDate(this.invoice.invoiceDate)}`;
+    const issuerCity = this.invoice.issuer.address?.city ?? "";
+    const dateText = safeText(`${issuerCity}, ${formatDeDate(this.invoice.invoiceDate)}`);
     const dateWidth = this.fonts.regular.widthOfTextAtSize(dateText, 10);
     this.page.drawText(dateText, {
       x: A4.width - MARGIN.right * MM - dateWidth,
@@ -198,9 +340,11 @@ class RenderState {
   }
 
   private drawHeading(): void {
-    const heading = this.invoice.invoiceNumber
-      ? `Rechnung Nr. ${this.invoice.invoiceNumber}`
-      : "Rechnung (Entwurf)";
+    const heading = safeText(
+      this.invoice.invoiceNumber
+        ? `Rechnung Nr. ${this.invoice.invoiceNumber}`
+        : "Rechnung (Entwurf)"
+    );
     this.page.drawText(heading, {
       x: MARGIN.left * MM,
       y: this.cursorY,
@@ -210,8 +354,8 @@ class RenderState {
     });
     this.cursorY -= 12 * MM;
 
-    if (this.invoice.servicePeriod.label) {
-      this.page.drawText(`Leistungszeitraum: ${this.invoice.servicePeriod.label}`, {
+    if (this.invoice.servicePeriod?.label) {
+      this.page.drawText(safeText(`Leistungszeitraum: ${this.invoice.servicePeriod.label}`), {
         x: MARGIN.left * MM,
         y: this.cursorY,
         size: 9,
@@ -223,7 +367,7 @@ class RenderState {
   }
 
   private drawIntro(): void {
-    const salutation = this.invoice.texts.salutation?.trim() || this.deriveSalutation();
+    const salutation = safeText(this.invoice.texts.salutation?.trim() || this.deriveSalutation());
     if (salutation) {
       this.page.drawText(salutation, {
         x: MARGIN.left * MM,
@@ -237,7 +381,7 @@ class RenderState {
 
     if (this.invoice.texts.intro) {
       this.cursorY = this.drawWrapped(
-        this.invoice.texts.intro,
+        safeText(this.invoice.texts.intro),
         MARGIN.left * MM,
         this.cursorY,
         A4.width - (MARGIN.left + MARGIN.right) * MM,
@@ -318,9 +462,9 @@ class RenderState {
     for (const item of this.invoice.items) {
       const descWidth = columns.desc.w - 6;
 
-      const titleLines = wrapText(this.fonts.bold, 10, item.title, descWidth);
+      const titleLines = wrapText(this.fonts.bold, 10, safeText(item.title), descWidth);
       const descLines = item.description
-        ? wrapText(this.fonts.regular, 9.5, item.description, descWidth)
+        ? wrapText(this.fonts.regular, 9.5, safeText(item.description), descWidth)
         : [];
       const lineHeight = 4.6 * MM;
       const rowHeight =
@@ -366,7 +510,7 @@ class RenderState {
       }
 
       // Menge / Einheit.
-      const qtyText = `${formatQty(item.quantityMilli)} ${item.unit}`.trim();
+      const qtyText = safeText(`${formatQty(item.quantityMilli)} ${item.unit || ""}`.trim());
       const qtyW = this.fonts.regular.widthOfTextAtSize(qtyText, 10);
       this.page.drawText(qtyText, {
         x: MARGIN.left * MM + columns.qty.x + columns.qty.w - qtyW - 3,
@@ -377,7 +521,7 @@ class RenderState {
       });
 
       // Einzelpreis.
-      const priceText = formatEUR(item.unitPriceCents);
+      const priceText = safeText(formatEUR(item.unitPriceCents));
       const priceW = this.fonts.regular.widthOfTextAtSize(priceText, 10);
       this.page.drawText(priceText, {
         x: MARGIN.left * MM + columns.price.x + columns.price.w - priceW - 3,
@@ -388,7 +532,7 @@ class RenderState {
       });
 
       // Gesamt.
-      const totalText = formatEUR(item.lineGrossCents);
+      const totalText = safeText(formatEUR(item.lineGrossCents));
       const totalW = this.fonts.bold.widthOfTextAtSize(totalText, 10);
       this.page.drawText(totalText, {
         x: MARGIN.left * MM + columns.total.x + columns.total.w - totalW - 3,
@@ -423,17 +567,17 @@ class RenderState {
     // Wenn Steuer > 0, jeweils separate Zeilen anzeigen. Sonst nur die
     // Bruttosumme (Kleinunternehmer).
     if (totals.taxCents > 0) {
-      rows.push(["Nettosumme", formatEUR(totals.netCents), false]);
+      rows.push(["Nettosumme", safeText(formatEUR(totals.netCents)), false]);
       for (const bucket of totals.taxBreakdown) {
         if (bucket.taxCents === 0) continue;
         rows.push([
-          `USt ${formatRate(bucket.ratePercentMilli)}`,
-          formatEUR(bucket.taxCents),
+          safeText(`USt ${formatRate(bucket.ratePercentMilli)}`),
+          safeText(formatEUR(bucket.taxCents)),
           false,
         ]);
       }
     }
-    rows.push(["Gesamtbetrag", formatEUR(totals.grossCents), true]);
+    rows.push(["Gesamtbetrag", safeText(formatEUR(totals.grossCents)), true]);
 
     for (const [label, value, bold] of rows) {
       const font = bold ? this.fonts.bold : this.fonts.regular;
@@ -448,7 +592,7 @@ class RenderState {
           color: COLOR_ACCENT_SOFT,
         });
       }
-      this.page.drawText(label, {
+      this.page.drawText(safeText(label), {
         x: labelX,
         y: yBaseline,
         size,
@@ -471,7 +615,7 @@ class RenderState {
     if (!this.invoice.texts.outro) return;
     this.cursorY -= 6 * MM;
     this.cursorY = this.drawWrapped(
-      this.invoice.texts.outro,
+      safeText(this.invoice.texts.outro),
       MARGIN.left * MM,
       this.cursorY,
       A4.width - (MARGIN.left + MARGIN.right) * MM,
@@ -480,7 +624,7 @@ class RenderState {
       COLOR_TEXT
     );
     this.cursorY -= 4 * MM;
-    const footer = "Mit freundlichen Grüßen";
+    const footer = safeText("Mit freundlichen Grüßen");
     this.page.drawText(footer, {
       x: MARGIN.left * MM,
       y: this.cursorY,
@@ -489,7 +633,7 @@ class RenderState {
       color: COLOR_TEXT,
     });
     this.cursorY -= 6 * MM;
-    this.page.drawText(this.invoice.issuer.owner, {
+    this.page.drawText(safeText(this.invoice.issuer.owner || ""), {
       x: MARGIN.left * MM,
       y: this.cursorY,
       size: 10,
@@ -504,7 +648,7 @@ class RenderState {
     if (!note) return;
     this.cursorY -= 4 * MM;
     this.cursorY = this.drawWrapped(
-      note,
+      safeText(note),
       MARGIN.left * MM,
       this.cursorY,
       A4.width - (MARGIN.left + MARGIN.right) * MM,
@@ -539,29 +683,31 @@ class RenderState {
     const size = 8;
     const lineHeight = 3.4 * MM;
 
-    // Spalten.
+    const address = iss.address || { line1: "", postalCode: "", city: "", country: "" };
+    const contact = iss.contact || { email: "" };
+    const bank = iss.bank || { bankName: "", iban: "", bic: "" };
     const columns: [string, string[]][] = [
       [
-        iss.brandLabel,
+        iss.brandLabel || "",
         [
-          iss.address.line1,
-          `${iss.address.postalCode} ${iss.address.city}`,
-          iss.address.countryLabel ?? iss.address.country,
+          address.line1 || "",
+          `${address.postalCode ?? ""} ${address.city ?? ""}`.trim(),
+          address.countryLabel ?? address.country ?? "",
         ].filter(Boolean),
       ],
       [
         "Kontakt",
         [
-          iss.contact?.phone ? `Tel.: ${iss.contact.phone}` : "",
-          iss.contact?.mobile ? `Mobil: ${iss.contact.mobile}` : "",
-          iss.contact?.email ? `Mail: ${iss.contact.email}` : "",
-          iss.contact?.website ? iss.contact.website.replace(/^https?:\/\//, "") : "",
+          contact.phone ? `Tel.: ${contact.phone}` : "",
+          contact.mobile ? `Mobil: ${contact.mobile}` : "",
+          contact.email ? `Mail: ${contact.email}` : "",
+          contact.website ? contact.website.replace(/^https?:\/\//, "") : "",
         ].filter(Boolean),
       ],
       [
         "Inhaber & Steuer",
         [
-          `Inhaber: ${iss.owner}`,
+          `Inhaber: ${iss.owner ?? ""}`,
           iss.taxNumber ? `Steuernr.: ${iss.taxNumber}` : "",
           iss.vatId ? `USt-ID: ${iss.vatId}` : "",
         ].filter(Boolean),
@@ -569,9 +715,9 @@ class RenderState {
       [
         "Bankverbindung",
         [
-          iss.bank.bankName,
-          `IBAN: ${iss.bank.iban}`,
-          `BIC: ${iss.bank.bic}`,
+          bank.bankName || "",
+          bank.iban ? `IBAN: ${bank.iban}` : "",
+          bank.bic ? `BIC: ${bank.bic}` : "",
         ].filter(Boolean),
       ],
     ];
@@ -579,7 +725,7 @@ class RenderState {
     for (let i = 0; i < columns.length; i++) {
       const [title, rows] = columns[i];
       const x = MARGIN.left * MM + i * colWidth + paddingX;
-      page.drawText(title, {
+      page.drawText(safeText(title), {
         x,
         y: baseline,
         size: 9,
@@ -588,7 +734,7 @@ class RenderState {
       });
       let y = baseline - lineHeight - 1;
       for (const line of rows) {
-        page.drawText(line, {
+        page.drawText(safeText(line), {
           x,
           y,
           size,
@@ -600,7 +746,7 @@ class RenderState {
     }
 
     // Seitenzahl unten rechts, unter dem farbigen Block.
-    const pageText = `Seite ${pageNumber} / ${totalPages}`;
+    const pageText = safeText(`Seite ${pageNumber} / ${totalPages}`);
     const pw = this.fonts.small.widthOfTextAtSize(pageText, 8);
     page.drawText(pageText, {
       x: A4.width - MARGIN.right * MM - pw,
@@ -622,7 +768,7 @@ class RenderState {
     font: PDFFont,
     color: RGB
   ): number {
-    const lines = wrapText(font, size, text, width);
+    const lines = wrapText(font, size, safeText(text), width);
     let curY = y;
     for (const line of lines) {
       this.page.drawText(line, { x, y: curY, size, font, color });

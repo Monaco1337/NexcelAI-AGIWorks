@@ -1,22 +1,17 @@
 "use client";
 
 /**
- * Rechnungs-Editor mit Live-Preview.
+ * Rechnungs-Editor.
  *
- * Links werden alle Rechnungsdaten und -positionen bearbeitet, rechts
- * erscheint eine PDF-Vorschau. Die Vorschau wird direkt vom Server gerendert
- * (`/api/admin/billing/invoices/[id]/preview`) — damit sieht die A4 exakt so
- * aus wie später der Ausdruck.
- *
- * Wichtige Regeln:
- *  - Drafts sind editierbar; jeder Speichervorgang schickt die aktuelle
- *    `version` mit — parallele Bearbeitung wird sichtbar abgewiesen.
- *  - Finalisierte Rechnungen sind unveränderlich; der Editor blendet die
- *    Eingaben aus und zeigt stattdessen Dokumente, Aktionen (Zahlung,
- *    Korrektur, Storno) und den Ereignisverlauf.
- *  - Der „Finalisieren"-Knopf ist idempotent: er trägt die Version, mit der
- *    er ausgelöst wurde. Ein doppelter Klick erhält aus dem Backend die
- *    Antwort „bereits erhöht" und produziert keine zweite Rechnung.
+ * Aufbau:
+ *   1. Prominenter Status-Header (Bezahlt/Überfällig/Offen/Entwurf sofort
+ *      erkennbar, mit Fälligkeitshinweis und Aussteller-Akzentfarbe).
+ *   2. Aktions-Toolbar: Speichern, Finalisieren, Bezahlt markieren, Share-Link
+ *      generieren, PDF/ZUGFeRD/XRechnung-Downloads, Korrektur, Storno.
+ *   3. Metadaten (Datum, Fälligkeit, Leistungszeitraum, Projekt, Buyer-Ref).
+ *   4. Positionen mit Drag-&-Drop, Duplizieren, Löschen.
+ *   5. Live-Preview als PDF-iframe (Server-gerendert).
+ *   6. Dokumentenliste, Ereignisverlauf.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -27,7 +22,10 @@ import {
   parseEuroInput,
   parseQtyInput,
   TAX_CATEGORY_LABEL,
+  INVOICE_STATUS_LABEL,
+  INVOICE_STATUS_COLOR,
   type TaxCategory,
+  type InvoiceStatus,
 } from "@/lib/billing/uiModel";
 import type {
   InvoiceDetail,
@@ -47,13 +45,24 @@ interface Detail {
   }[];
 }
 
+interface ShareTokenView {
+  token: string;
+  invoiceId: string;
+  createdAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  allowDownloads: boolean;
+  lastAccessedAt: string | null;
+  accessCount: number;
+  recipientHint: string | null;
+}
+
 export default function BillingEditor({
   loading,
   detail,
   onClose,
   onChanged,
   projects,
-  issuers,
 }: {
   loading: boolean;
   detail: Detail | null;
@@ -68,6 +77,9 @@ export default function BillingEditor({
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("");
   const [previewNonce, setPreviewNonce] = useState<number>(0);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareTokens, setShareTokens] = useState<ShareTokenView[]>([]);
+  const [copyState, setCopyState] = useState<string>("");
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isDraft = detail?.invoice.status === "draft" || detail?.invoice.status === "ready_for_review";
@@ -80,6 +92,22 @@ export default function BillingEditor({
       setPreviewNonce((n) => n + 1);
     }
   }, [detail]);
+
+  const loadShareTokens = useCallback(async () => {
+    if (!detail) return;
+    try {
+      const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/share`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setShareTokens(data.tokens || []);
+    } catch {
+      // best-effort
+    }
+  }, [detail]);
+
+  useEffect(() => {
+    if (shareOpen) void loadShareTokens();
+  }, [shareOpen, loadShareTokens]);
 
   const patch = useCallback(<K extends keyof InvoiceDetail>(key: K, value: InvoiceDetail[K]) => {
     setDirty((d) => ({ ...d, [key]: value }));
@@ -183,7 +211,10 @@ export default function BillingEditor({
     });
     const data = await res.json();
     if (!res.ok) setError(data.error || "Fehler");
-    else await onChanged();
+    else {
+      setStatus("Als bezahlt markiert.");
+      await onChanged();
+    }
   }, [detail, onChanged]);
 
   const createCorrection = useCallback(async () => {
@@ -209,8 +240,47 @@ export default function BillingEditor({
     });
     const data = await res.json();
     if (!res.ok) setError(data.error || "Fehler");
-    else await onChanged();
+    else {
+      setStatus("Storniert.");
+      await onChanged();
+    }
   }, [detail, onChanged]);
+
+  const generateShare = useCallback(async () => {
+    if (!detail) return;
+    const days = Number(prompt("Ablauf in Tagen (leer = unbegrenzt):", "30") || 0);
+    const recipient = prompt("Empfängerhinweis (optional):", "") || "";
+    const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        expiresInDays: days > 0 ? days : null,
+        recipientHint: recipient || null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) return setError(data.error || "Share fehlgeschlagen");
+    setShareTokens((t) => [data.share, ...t]);
+    setShareOpen(true);
+    const url = `${window.location.origin}/rechnung/${data.share.token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyState("Link kopiert.");
+      setTimeout(() => setCopyState(""), 2500);
+    } catch {
+      // Clipboard nicht verfügbar — Nutzer kann Link manuell markieren.
+    }
+  }, [detail]);
+
+  const revokeShare = useCallback(
+    async (token: string) => {
+      if (!detail) return;
+      if (!confirm("Diesen Link deaktivieren?")) return;
+      await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/share/${token}`, { method: "DELETE" });
+      await loadShareTokens();
+    },
+    [detail, loadShareTokens]
+  );
 
   const currentDetail = useMemo(() => {
     if (!detail) return null;
@@ -230,75 +300,43 @@ export default function BillingEditor({
   }
 
   const inv = detail.invoice;
+  const dueSoon =
+    !isDraft &&
+    inv.status !== "paid" &&
+    inv.status !== "cancelled" &&
+    inv.dueDate < todayIso();
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
       <div className="space-y-5">
-        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-          <div>
-            <button onClick={onClose} className="text-xs text-[#9CA3AF] hover:text-white">← Zurück zur Liste</button>
-            <div className="mt-1 text-lg font-semibold text-white">
-              {inv.invoiceNumber ? `Rechnung Nr. ${inv.invoiceNumber}` : "Neuer Entwurf"}
-              {!inv.invoiceNumber && (
-                <span className="ml-2 rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-[#9CA3AF]">
-                  Entwurf
-                </span>
-              )}
-            </div>
-            <div className="mt-1 text-xs text-[#9CA3AF]">
-              {inv.issuer.brandLabel} · {inv.customer.name || "Kein Kunde"}
-              {inv.project?.name && ` · ${inv.project.name}`}
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {isDraft && (
-              <>
-                <button
-                  onClick={() => save(false)}
-                  disabled={saving}
-                  className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  {saving ? "Speichere…" : "Speichern"}
-                </button>
-                <button
-                  onClick={finalize}
-                  disabled={saving}
-                  className="rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
-                  style={{ boxShadow: "0 0 12px rgba(59,130,246,0.6)" }}
-                >
-                  Finalisieren
-                </button>
-                <button
-                  onClick={remove}
-                  className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/20"
-                >
-                  Entwurf löschen
-                </button>
-              </>
-            )}
-            {!isDraft && (
-              <>
-                {inv.status !== "paid" && inv.status !== "cancelled" && (
-                  <button onClick={markPaid} className="rounded-lg border border-green-500/40 bg-green-500/10 px-3 py-1.5 text-xs text-green-200 hover:bg-green-500/20">
-                    Als bezahlt markieren
-                  </button>
-                )}
-                <button onClick={createCorrection} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]">
-                  Korrektur erstellen
-                </button>
-                {inv.status !== "cancelled" && (
-                  <button onClick={cancel} className="rounded-lg border border-red-500/30 bg-red-500/[0.05] px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/20">
-                    Stornieren
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+        <StatusHero
+          invoice={inv}
+          overdue={dueSoon}
+          onClose={onClose}
+        />
+
+        <ActionsToolbar
+          isDraft={!!isDraft}
+          invoice={inv}
+          documents={detail.documents}
+          saving={saving}
+          onSave={() => save(false)}
+          onFinalize={finalize}
+          onDelete={remove}
+          onMarkPaid={markPaid}
+          onCorrection={createCorrection}
+          onCancel={cancel}
+          onShare={generateShare}
+        />
 
         {status && !error && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-3 text-xs text-emerald-200">
             {status}
+          </div>
+        )}
+        {copyState && (
+          <div className="rounded-xl border border-blue-500/30 bg-blue-500/[0.05] p-3 text-xs text-blue-200">
+            {copyState}
           </div>
         )}
         {error && (
@@ -307,8 +345,16 @@ export default function BillingEditor({
           </div>
         )}
 
+        {shareOpen && (
+          <ShareLinks
+            invoiceId={inv.id}
+            tokens={shareTokens}
+            onClose={() => setShareOpen(false)}
+            onRevoke={revokeShare}
+          />
+        )}
+
         <MetaEditor
-          detail={detail}
           value={currentDetail!}
           isDraft={!!isDraft}
           projects={projects}
@@ -342,31 +388,378 @@ export default function BillingEditor({
         <DocumentsSection invoiceId={inv.id} documents={detail.documents} />
       </div>
 
-      <PreviewPanel invoiceId={inv.id} nonce={previewNonce} />
+      <PreviewPanel
+        invoiceId={inv.id}
+        nonce={previewNonce}
+        onShare={generateShare}
+      />
     </div>
   );
 }
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function computeVersion(detail: Detail): number {
-  // Nur der Server kennt die aktuelle Version im Datensatz. Diese liegt in
-  // `invoice.version` — der Detail-Endpoint überträgt sie derzeit nicht
-  // separat, wir tragen sie über einen späteren Refresh nach. Bis dahin
-  // reicht 0 als Basiswert, weil der Server bei Änderungen antwortet und wir
-  // dann sofort neu laden.
   const v = (detail.invoice as unknown as { version?: number }).version;
   return typeof v === "number" ? v : 0;
+}
+
+/* ── Status-Hero ────────────────────────────────────────────────────── */
+
+function StatusHero({
+  invoice,
+  overdue,
+  onClose,
+}: {
+  invoice: InvoiceDetail;
+  overdue: boolean;
+  onClose: () => void;
+}) {
+  const status = invoice.status as InvoiceStatus;
+  const color = overdue ? "#EF4444" : INVOICE_STATUS_COLOR[status] || "#94A3B8";
+  const label = overdue ? "Überfällig" : INVOICE_STATUS_LABEL[status] || status;
+  const accent = invoice.issuer.accentColor || "#1F6DD8";
+
+  const dueInDays = daysBetween(todayIso(), invoice.dueDate);
+  let dueHint = "";
+  if (invoice.status === "paid") {
+    dueHint = "Vollständig bezahlt.";
+  } else if (invoice.status === "cancelled") {
+    dueHint = "Beleg wurde storniert.";
+  } else if (overdue) {
+    dueHint = `Überfällig seit ${Math.abs(dueInDays)} Tag${Math.abs(dueInDays) === 1 ? "" : "en"}.`;
+  } else {
+    dueHint = `Fällig in ${dueInDays} Tag${dueInDays === 1 ? "" : "en"}.`;
+  }
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl border p-5"
+      style={{
+        borderColor: `${color}55`,
+        background: `linear-gradient(135deg, ${color}18 0%, rgba(15,17,22,0.85) 55%)`,
+      }}
+    >
+      <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-30 blur-3xl"
+           style={{ background: color }} />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <button onClick={onClose} className="text-[11px] text-[#9CA3AF] hover:text-white">
+            ← Zurück zur Liste
+          </button>
+          <div className="mt-2 flex items-center gap-3">
+            <span
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium"
+              style={{ borderColor: `${color}66`, background: `${color}22`, color }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+              {label}
+            </span>
+            {invoice.type === "credit_note" && (
+              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-[#9CA3AF]">
+                Korrektur/Gutschrift
+              </span>
+            )}
+            {invoice.references?.originalInvoiceNumber && (
+              <span className="text-[11px] text-[#9CA3AF]">
+                bezogen auf Nr. {invoice.references.originalInvoiceNumber}
+              </span>
+            )}
+          </div>
+          <div className="mt-2 text-2xl font-semibold text-white">
+            {invoice.invoiceNumber ? `Rechnung Nr. ${invoice.invoiceNumber}` : "Neuer Entwurf"}
+          </div>
+          <div className="mt-1 text-xs text-[#9CA3AF]">
+            {invoice.issuer.brandLabel} · {invoice.customer.name || "Kein Kunde"}
+            {invoice.project?.name && ` · ${invoice.project.name}`}
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-right">
+          <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">Gesamtbetrag</div>
+          <div className="text-2xl font-semibold" style={{ color: accent }}>
+            {formatEUR(invoice.totals.grossCents, invoice.totals.currency)}
+          </div>
+          <div className="mt-1 text-[10px] text-[#9CA3AF]">{dueHint}</div>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
+        <MicroStat label="Rechnungsdatum" value={formatDeDate(invoice.invoiceDate)} />
+        <MicroStat label="Fälligkeit" value={formatDeDate(invoice.dueDate)} highlight={overdue} />
+        <MicroStat
+          label="Bezahlt am"
+          value={invoice.status === "paid" ? "erledigt" : "—"}
+          highlight={invoice.status === "paid"}
+          color={invoice.status === "paid" ? "#22C55E" : undefined}
+        />
+        <MicroStat
+          label="E-Rechnung"
+          value={
+            invoice.status === "draft" ? "—" : "verfügbar"
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function MicroStat({
+  label,
+  value,
+  highlight,
+  color,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  color?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-widest text-[#6B7280]">{label}</div>
+      <div className="text-sm font-medium" style={{ color: color || (highlight ? "#EF4444" : "#E5E7EB") }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function daysBetween(from: string, to: string): number {
+  const a = new Date(from + "T00:00:00Z").getTime();
+  const b = new Date(to + "T00:00:00Z").getTime();
+  return Math.round((b - a) / 86_400_000);
+}
+
+/* ── Aktionen ──────────────────────────────────────────────────────── */
+
+function ActionsToolbar({
+  isDraft,
+  invoice,
+  documents,
+  saving,
+  onSave,
+  onFinalize,
+  onDelete,
+  onMarkPaid,
+  onCorrection,
+  onCancel,
+  onShare,
+}: {
+  isDraft: boolean;
+  invoice: InvoiceDetail;
+  documents: Detail["documents"];
+  saving: boolean;
+  onSave: () => void;
+  onFinalize: () => void;
+  onDelete: () => void;
+  onMarkPaid: () => void;
+  onCorrection: () => void;
+  onCancel: () => void;
+  onShare: () => void;
+}) {
+  const pdf = documents.find((d) => d.kind === "pdf");
+  const zug = documents.find((d) => d.kind === "zugferd");
+  const xml = documents.find((d) => d.kind === "xrechnung");
+  const previewUrl = `/api/admin/billing/invoices/${invoice.id}/preview`;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+      {isDraft && (
+        <>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06] disabled:opacity-50"
+          >
+            {saving ? "Speichere…" : "Speichern"}
+          </button>
+          <button
+            onClick={onFinalize}
+            disabled={saving}
+            className="rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
+            style={{ boxShadow: "0 0 12px rgba(59,130,246,0.6)" }}
+          >
+            Finalisieren
+          </button>
+          <button
+            onClick={onDelete}
+            className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/20"
+          >
+            Entwurf löschen
+          </button>
+        </>
+      )}
+      {!isDraft && (
+        <>
+          {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+            <button
+              onClick={onMarkPaid}
+              className="rounded-lg border border-green-500/40 bg-green-500/10 px-3 py-1.5 text-xs text-green-200 hover:bg-green-500/20"
+            >
+              Als bezahlt markieren
+            </button>
+          )}
+          <button
+            onClick={onCorrection}
+            className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]"
+          >
+            Korrektur erstellen
+          </button>
+          {invoice.status !== "cancelled" && (
+            <button
+              onClick={onCancel}
+              className="rounded-lg border border-red-500/30 bg-red-500/[0.05] px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/20"
+            >
+              Stornieren
+            </button>
+          )}
+        </>
+      )}
+
+      <div className="mx-1 h-6 w-px bg-white/10" />
+
+      <a
+        href={previewUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]"
+      >
+        Vorschau öffnen
+      </a>
+      {pdf ? (
+        <a
+          href={`/api/admin/billing/invoices/${invoice.id}/documents/${pdf.id}`}
+          className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]"
+        >
+          ↓ PDF
+        </a>
+      ) : null}
+      {zug ? (
+        <a
+          href={`/api/admin/billing/invoices/${invoice.id}/documents/${zug.id}`}
+          className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]"
+        >
+          ↓ ZUGFeRD
+        </a>
+      ) : null}
+      {xml ? (
+        <a
+          href={`/api/admin/billing/invoices/${invoice.id}/documents/${xml.id}`}
+          className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]"
+        >
+          ↓ XRechnung
+        </a>
+      ) : null}
+
+      {!isDraft && (
+        <button
+          onClick={onShare}
+          className="ml-auto rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]"
+          title="Öffentlichen Link kopieren"
+        >
+          Link teilen
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ShareLinks({
+  tokens,
+  onClose,
+  onRevoke,
+}: {
+  invoiceId: string;
+  tokens: ShareTokenView[];
+  onClose: () => void;
+  onRevoke: (token: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">
+          Öffentliche Links
+        </div>
+        <button onClick={onClose} className="text-[11px] text-[#9CA3AF] hover:text-white">
+          Schließen
+        </button>
+      </div>
+      {tokens.length === 0 && (
+        <div className="text-xs text-[#6B7280]">Noch keine Links vorhanden.</div>
+      )}
+      <div className="space-y-2">
+        {tokens.map((t) => {
+          const url = `${window.location.origin}/rechnung/${t.token}`;
+          const revoked = !!t.revokedAt;
+          const expired = !!t.expiresAt && new Date(t.expiresAt).getTime() < Date.now();
+          return (
+            <div
+              key={t.token}
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-black/30 p-2 text-xs"
+            >
+              <span
+                className="rounded-full border px-2 py-0.5 text-[10px]"
+                style={
+                  revoked
+                    ? { borderColor: "#71717A55", color: "#A1A1AA" }
+                    : expired
+                      ? { borderColor: "#F59E0B55", color: "#FBBF24" }
+                      : { borderColor: "#22C55E55", color: "#4ADE80" }
+                }
+              >
+                {revoked ? "Widerrufen" : expired ? "Abgelaufen" : "Aktiv"}
+              </span>
+              <input
+                readOnly
+                value={url}
+                className="flex-1 rounded border border-white/10 bg-black/50 px-2 py-1 font-mono text-[11px] text-white outline-none"
+              />
+              <button
+                onClick={() => {
+                  void navigator.clipboard.writeText(url);
+                }}
+                className="rounded border border-white/10 bg-white/[0.03] px-2 py-1 text-white hover:bg-white/[0.08]"
+              >
+                Kopieren
+              </button>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded border border-white/10 bg-white/[0.03] px-2 py-1 text-white hover:bg-white/[0.08]"
+              >
+                Öffnen
+              </a>
+              {!revoked && (
+                <button
+                  onClick={() => onRevoke(t.token)}
+                  className="rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-red-200 hover:bg-red-500/20"
+                >
+                  Widerrufen
+                </button>
+              )}
+              <span className="ml-1 text-[10px] text-[#6B7280]">
+                {t.accessCount}× aufgerufen
+                {t.expiresAt && ` · gültig bis ${formatDeDate(t.expiresAt.slice(0, 10))}`}
+                {t.recipientHint && ` · ${t.recipientHint}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 /* ── Metadaten ─────────────────────────────────────────────────────── */
 
 function MetaEditor({
-  detail,
   value,
   isDraft,
   projects,
   onChangeField,
 }: {
-  detail: Detail;
   value: InvoiceDetail & { items: InvoiceItem[] };
   isDraft: boolean;
   projects: ProjectOption[];
@@ -409,7 +802,11 @@ function MetaEditor({
       <div className="mt-4 rounded-xl border border-white/[0.05] bg-black/30 p-3 text-xs text-[#9CA3AF]">
         <div className="mb-1 uppercase tracking-widest text-[10px] text-[#6B7280]">Aussteller · unveränderlich für diese Rechnung</div>
         <div className="text-white">{value.issuer.brandLabel}</div>
-        <div>{value.issuer.address.line1}, {value.issuer.address.postalCode} {value.issuer.address.city}</div>
+        <div>
+          {value.issuer.address.line1}
+          {value.issuer.address.line1 && ", "}
+          {value.issuer.address.postalCode} {value.issuer.address.city}
+        </div>
         <div>USt-Regelung: {value.issuer.taxRegime}</div>
       </div>
     </div>
@@ -443,7 +840,7 @@ function LabeledInput({
   );
 }
 
-/* ── Positionen ────────────────────────────────────────────────────── */
+/* ── Positionen (Drag & Drop) ─────────────────────────────────────── */
 
 function ItemsEditor({
   items,
@@ -456,6 +853,9 @@ function ItemsEditor({
   readonly: boolean;
   onChange: (items: InvoiceItem[]) => void;
 }) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
   const patchItem = (idx: number, patch: Partial<InvoiceItem>) => {
     const next = items.slice();
     const current = { ...next[idx], ...patch };
@@ -494,15 +894,6 @@ function ItemsEditor({
     onChange(items.filter((_, i) => i !== idx).map((it, i) => ({ ...it, position: i + 1 })));
   };
 
-  const move = (idx: number, direction: -1 | 1) => {
-    const target = idx + direction;
-    if (target < 0 || target >= items.length) return;
-    const next = items.slice();
-    const [row] = next.splice(idx, 1);
-    next.splice(target, 0, row);
-    onChange(next.map((it, i) => ({ ...it, position: i + 1 })));
-  };
-
   const duplicate = (idx: number) => {
     const clone = { ...items[idx], id: `new-${Date.now()}` };
     const next = items.slice();
@@ -510,10 +901,22 @@ function ItemsEditor({
     onChange(next.map((it, i) => ({ ...it, position: i + 1 })));
   };
 
+  const commitDrag = (targetIdx: number) => {
+    if (dragIndex === null || dragIndex === targetIdx) return;
+    const next = items.slice();
+    const [row] = next.splice(dragIndex, 1);
+    next.splice(targetIdx, 0, row);
+    onChange(next.map((it, i) => ({ ...it, position: i + 1 })));
+    setDragIndex(null);
+    setDragOver(null);
+  };
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">Positionen</div>
+        <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">
+          Positionen {!readonly && <span className="ml-2 text-[10px] normal-case text-[#4B5563]">· Drag & Drop zum Sortieren</span>}
+        </div>
         {!readonly && (
           <button onClick={addItem} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]">
             + Position
@@ -521,96 +924,135 @@ function ItemsEditor({
         )}
       </div>
       <div className="space-y-3">
-        {items.map((it, idx) => (
-          <div key={it.id} className="rounded-xl border border-white/[0.05] bg-black/30 p-3">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-[40px_minmax(0,1fr)_100px_120px_120px] md:items-start">
-              <div className="text-xs font-semibold text-white">{it.position}</div>
-              <div className="space-y-1">
-                <input
-                  value={it.title}
-                  disabled={readonly}
-                  onChange={(e) => patchItem(idx, { title: e.target.value })}
-                  placeholder="Titel"
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
-                />
-                <textarea
-                  value={it.description}
-                  disabled={readonly}
-                  rows={2}
-                  onChange={(e) => patchItem(idx, { description: e.target.value })}
-                  placeholder="Ausführliche Beschreibung"
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
-                />
-              </div>
-              <div className="space-y-1">
-                <input
-                  value={formatQty(it.quantityMilli)}
-                  disabled={readonly}
-                  onChange={(e) => {
-                    try {
-                      patchItem(idx, { quantityMilli: parseQtyInput(e.target.value) });
-                    } catch {
-                      // ignoriere temporäre Zwischenzustände
-                    }
-                  }}
-                  placeholder="Menge"
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
-                />
-                <input
-                  value={it.unit}
-                  disabled={readonly}
-                  onChange={(e) => patchItem(idx, { unit: e.target.value })}
-                  placeholder="Einheit"
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
-                />
-              </div>
-              <div className="space-y-1">
-                <input
-                  value={formatEuro(it.unitPriceCents)}
-                  disabled={readonly}
-                  onChange={(e) => {
-                    try {
-                      patchItem(idx, { unitPriceCents: parseEuroInput(e.target.value) });
-                    } catch {}
-                  }}
-                  placeholder="Preis"
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
-                />
-                <select
-                  value={`${it.taxCategory}:${it.taxRatePercentMilli}`}
-                  disabled={readonly}
-                  onChange={(e) => {
-                    const [cat, rate] = e.target.value.split(":");
-                    patchItem(idx, {
-                      taxCategory: cat as TaxCategory,
-                      taxRatePercentMilli: Number(rate),
-                    });
-                  }}
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
-                >
-                  <option value="S:19000">USt 19 %</option>
-                  <option value="AA:7000">USt 7 %</option>
-                  <option value="Z:0">Nullsatz</option>
-                  <option value="E:0">§ 19 UStG (Kleinunternehmer)</option>
-                  <option value="K:0">Reverse Charge</option>
-                </select>
-              </div>
-              <div className="flex flex-col items-end justify-between gap-2">
-                <div className="text-right text-sm font-semibold text-white tabular-nums">
-                  {formatEUR(it.lineGrossCents, currency)}
-                </div>
+        {items.map((it, idx) => {
+          const isDragging = dragIndex === idx;
+          const isOver = dragOver === idx && !isDragging;
+          return (
+            <div
+              key={it.id}
+              draggable={!readonly}
+              onDragStart={(e) => {
+                setDragIndex(idx);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragEnd={() => {
+                setDragIndex(null);
+                setDragOver(null);
+              }}
+              onDragOver={(e) => {
+                if (readonly) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDragOver(idx);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                commitDrag(idx);
+              }}
+              className={`rounded-xl border p-3 transition-all ${
+                isDragging
+                  ? "border-blue-500/60 bg-blue-500/[0.06] opacity-70"
+                  : isOver
+                    ? "border-blue-500/40 bg-blue-500/[0.03]"
+                    : "border-white/[0.05] bg-black/30"
+              }`}
+            >
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[24px_28px_minmax(0,1fr)_100px_120px_120px] md:items-start">
                 {!readonly && (
-                  <div className="flex gap-1 text-[10px]">
-                    <button onClick={() => move(idx, -1)} className="rounded border border-white/10 px-1 py-0.5 text-[#9CA3AF] hover:text-white">↑</button>
-                    <button onClick={() => move(idx, 1)} className="rounded border border-white/10 px-1 py-0.5 text-[#9CA3AF] hover:text-white">↓</button>
-                    <button onClick={() => duplicate(idx)} className="rounded border border-white/10 px-1 py-0.5 text-[#9CA3AF] hover:text-white">Dupl.</button>
-                    <button onClick={() => removeItem(idx)} className="rounded border border-red-500/30 px-1 py-0.5 text-red-200 hover:bg-red-500/10">×</button>
+                  <div
+                    className="mt-2 flex cursor-grab select-none items-center justify-center text-[#4B5563] hover:text-white"
+                    title="Ziehen zum Sortieren"
+                  >
+                    ⋮⋮
                   </div>
                 )}
+                {readonly && <div />}
+                <div className="text-xs font-semibold text-white">{it.position}</div>
+                <div className="space-y-1">
+                  <input
+                    value={it.title}
+                    disabled={readonly}
+                    onChange={(e) => patchItem(idx, { title: e.target.value })}
+                    placeholder="Titel"
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
+                  />
+                  <textarea
+                    value={it.description}
+                    disabled={readonly}
+                    rows={2}
+                    onChange={(e) => patchItem(idx, { description: e.target.value })}
+                    placeholder="Ausführliche Beschreibung"
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <input
+                    value={formatQty(it.quantityMilli)}
+                    disabled={readonly}
+                    onChange={(e) => {
+                      try {
+                        patchItem(idx, { quantityMilli: parseQtyInput(e.target.value) });
+                      } catch {
+                        // ignoriere temporäre Zwischenzustände
+                      }
+                    }}
+                    placeholder="Menge"
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
+                  />
+                  <input
+                    value={it.unit}
+                    disabled={readonly}
+                    onChange={(e) => patchItem(idx, { unit: e.target.value })}
+                    placeholder="Einheit"
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <input
+                    value={formatEuro(it.unitPriceCents)}
+                    disabled={readonly}
+                    onChange={(e) => {
+                      try {
+                        patchItem(idx, { unitPriceCents: parseEuroInput(e.target.value) });
+                      } catch {}
+                    }}
+                    placeholder="Preis"
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none disabled:opacity-60"
+                  />
+                  <select
+                    value={`${it.taxCategory}:${it.taxRatePercentMilli}`}
+                    disabled={readonly}
+                    onChange={(e) => {
+                      const [cat, rate] = e.target.value.split(":");
+                      patchItem(idx, {
+                        taxCategory: cat as TaxCategory,
+                        taxRatePercentMilli: Number(rate),
+                      });
+                    }}
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none disabled:opacity-60"
+                  >
+                    <option value="S:19000">USt 19 %</option>
+                    <option value="AA:7000">USt 7 %</option>
+                    <option value="Z:0">Nullsatz</option>
+                    <option value="E:0">§ 19 UStG (Kleinunternehmer)</option>
+                    <option value="K:0">Reverse Charge</option>
+                  </select>
+                </div>
+                <div className="flex flex-col items-end justify-between gap-2">
+                  <div className="text-right text-sm font-semibold text-white tabular-nums">
+                    {formatEUR(it.lineGrossCents, currency)}
+                  </div>
+                  {!readonly && (
+                    <div className="flex gap-1 text-[10px]">
+                      <button onClick={() => duplicate(idx)} className="rounded border border-white/10 px-1.5 py-0.5 text-[#9CA3AF] hover:text-white">Dupl.</button>
+                      <button onClick={() => removeItem(idx)} className="rounded border border-red-500/30 px-1.5 py-0.5 text-red-200 hover:bg-red-500/10">×</button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -768,15 +1210,28 @@ function ValidationDot({ status }: { status: string }) {
 
 /* ── Vorschau ──────────────────────────────────────────────────────── */
 
-function PreviewPanel({ invoiceId, nonce }: { invoiceId: string; nonce: number }) {
+function PreviewPanel({
+  invoiceId,
+  nonce,
+  onShare,
+}: {
+  invoiceId: string;
+  nonce: number;
+  onShare: () => void;
+}) {
   const src = `/api/admin/billing/invoices/${invoiceId}/preview?v=${nonce}`;
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+    <div className="sticky top-4 rounded-2xl border border-white/10 bg-black/40 p-3">
       <div className="mb-2 flex items-center justify-between px-1 text-xs text-[#9CA3AF]">
         <span>Live-Vorschau</span>
-        <a href={src} target="_blank" rel="noopener noreferrer" className="text-white hover:underline">
-          Öffnen
-        </a>
+        <div className="flex items-center gap-2">
+          <button onClick={onShare} className="text-white hover:underline">
+            Teilen
+          </button>
+          <a href={src} target="_blank" rel="noopener noreferrer" className="text-white hover:underline">
+            Öffnen
+          </a>
+        </div>
       </div>
       <div className="aspect-[210/297] w-full overflow-hidden rounded-xl bg-white">
         <iframe title="Rechnungs-Vorschau" src={src} className="h-full w-full border-0" />
