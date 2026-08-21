@@ -112,8 +112,12 @@ export default function BillingCenter({ accent }: { accent: string }) {
     };
   }, [loadStats, loadList, loadQueue]);
 
-  const loadDetail = useCallback(async (id: string) => {
-    setDetailLoading(true);
+  const loadDetail = useCallback(async (id: string, silent = false) => {
+    // Beim initialen Öffnen zeigen wir den Ladehinweis; bei Silent-
+    // Reloads (nach Autosave) bleiben Editor + Inputs unverändert
+    // sichtbar. Sonst würde jeder Autosave-Reload alle Formularfelder
+    // aus dem DOM räumen und der User "springt raus".
+    if (!silent) setDetailLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/admin/billing/invoices/${id}`, { cache: "no-store" });
@@ -146,7 +150,7 @@ export default function BillingCenter({ accent }: { accent: string }) {
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setDetailLoading(false);
+      if (!silent) setDetailLoading(false);
     }
   }, []);
 
@@ -314,8 +318,10 @@ export default function BillingCenter({ accent }: { accent: string }) {
             setView("list");
           }}
           onChanged={async () => {
+            // silent=true → detailLoading bleibt false, Editor bleibt
+            // gerendert, User verliert weder Fokus noch Zwischenstand.
             await Promise.all([
-              loadDetail(selectedInvoiceId),
+              loadDetail(selectedInvoiceId, true),
               loadStats(),
               loadList(),
             ]);

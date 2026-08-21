@@ -186,14 +186,19 @@ export default function BillingEditor({
     setDirty((d) => ({ ...d, [key]: value }));
   }, []);
 
+  // saveRef sichert die neueste save-Closure ab, damit setTimeout- und
+  // pendingSave-Aufrufe niemals eine veraltete Version mit veralteten
+  // dirty/customerDirty/items feuern (React-Closure-Trap).
+  const saveRef = useRef<(silent?: boolean) => Promise<void>>();
+
   const scheduleAutosave = useCallback(() => {
     if (!isDraft || !detail) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     setStatus("Nicht gespeichert…");
     autosaveTimer.current = setTimeout(() => {
-      void save(true);
+      void saveRef.current?.(true);
     }, 500);
-  }, [isDraft, detail]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDraft, detail]);
 
   const save = useCallback(
     async (silent = false) => {
@@ -314,8 +319,15 @@ export default function BillingEditor({
           setStatus("");
           return;
         }
-        setDirty({});
-        setCustomerDirty({});
+        // WICHTIG: dirty / customerDirty NICHT leeren! Sie enthalten
+        // die soeben persistierten Werte. Wenn wir sie leeren, springt
+        // der merged view kurz auf den alten `detail`-Zustand zurück
+        // (bis der loadDetail-Response da ist) — der User sieht seine
+        // gerade getippte Straße für einen Moment als leer, verliert
+        // den Fokus und tippt neu. Das ist der "springt raus"-Bug.
+        // Der merge im currentDetail zeigt einfach identische Werte,
+        // sobald der detail-Reload eintrifft, ist alles konsistent.
+
         // Neue Server-Version übernehmen bevor onChanged() den detail-
         // Reload triggert, damit der nächste Autosave die richtige
         // Version schickt.
@@ -340,12 +352,18 @@ export default function BillingEditor({
         // sofort nachtippen.
         if (pendingSaveRef.current) {
           pendingSaveRef.current = false;
-          setTimeout(() => void save(true), 50);
+          setTimeout(() => void saveRef.current?.(true), 50);
         }
       }
     },
     [detail, dirty, customerDirty, items, onChanged]
   );
+
+  // saveRef immer auf die aktuelle save-Closure zeigen lassen, damit
+  // Timer- und Queue-Callbacks die neuesten dirty-Snapshots verwenden.
+  useEffect(() => {
+    saveRef.current = save;
+  }, [save]);
 
   const finalize = useCallback(async () => {
     if (!detail) return;
@@ -519,7 +537,11 @@ export default function BillingEditor({
     };
   }, [detail, dirty, customerDirty, items]);
 
-  if (loading || !detail) {
+  // KRITISCH: 'loading' darf den Editor NICHT bei jedem Autosave-
+  // Reload zerreißen. Nur wenn tatsächlich kein detail vorhanden ist
+  // (initialer Ladevorgang), zeigen wir den Ladehinweis. Sonst rendert
+  // der Editor stabil weiter und lediglich der Autosave-Status wechselt.
+  if (!detail) {
     return (
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-10 text-center text-xs text-[#6B7280]">
         Lade Rechnung…
