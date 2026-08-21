@@ -19,6 +19,7 @@ import BillingList from "./BillingList";
 import BillingEditor from "./BillingEditor";
 import BillingQueue from "./BillingQueue";
 import BillingSettings from "./BillingSettings";
+import NewInvoiceModal from "./NewInvoiceModal";
 import type {
   InvoiceDetail,
   InvoiceSummary,
@@ -48,6 +49,7 @@ export default function BillingCenter({ accent }: { accent: string }) {
   const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [showNewInvoice, setShowNewInvoice] = useState(false);
 
   const loadStats = useCallback(async () => {
     const res = await fetch("/api/admin/billing/stats", { cache: "no-store" });
@@ -196,10 +198,17 @@ export default function BillingCenter({ accent }: { accent: string }) {
           <button
             onClick={createFromQueue}
             disabled={busy === "queue"}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all disabled:opacity-50"
-            style={{ background: accent, boxShadow: `0 0 12px ${accent}55` }}
+            className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-[#D1D5DB] hover:bg-white/[0.06] disabled:opacity-50"
+            title="Nächste geplante Folgerechnung aus der Queue erstellen"
           >
             {busy === "queue" ? "…" : "Nächste Folgerechnung"}
+          </button>
+          <button
+            onClick={() => setShowNewInvoice(true)}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all"
+            style={{ background: accent, boxShadow: `0 0 16px ${accent}66` }}
+          >
+            + Neue Rechnung
           </button>
         </div>
       </div>
@@ -273,6 +282,19 @@ export default function BillingCenter({ accent }: { accent: string }) {
           }}
           projects={projects}
           issuers={issuers}
+        />
+      )}
+
+      {showNewInvoice && (
+        <NewInvoiceModal
+          issuers={issuers}
+          accent={accent}
+          onCancel={() => setShowNewInvoice(false)}
+          onCreated={async (id) => {
+            setShowNewInvoice(false);
+            openInvoice(id);
+            await Promise.all([loadStats(), loadList()]);
+          }}
         />
       )}
     </div>

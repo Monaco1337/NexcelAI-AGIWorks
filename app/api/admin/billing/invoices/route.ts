@@ -100,9 +100,24 @@ export async function POST(request: NextRequest) {
       invoice = await createDraftForNextInQueue(actor, meta);
     } else {
       if (!body.issuerId) throw new InvoiceError("Aussteller fehlt.");
-      if (!Array.isArray(body.items) || body.items.length === 0) {
-        throw new InvoiceError("Mindestens eine Position ist erforderlich.");
-      }
+      // Simplified quick-create: leere Rechnung startet automatisch mit
+      // einer neutralen Default-Position, damit der Editor sofort
+      // bearbeitbar ist. Der Nutzer ersetzt Titel und Preise inline.
+      const items: InvoiceItemInput[] =
+        Array.isArray(body.items) && body.items.length > 0
+          ? body.items
+          : [
+              {
+                title: "Leistung",
+                description: "",
+                quantityMilli: 1000,
+                unit: "Stk.",
+                unitPriceCents: 0,
+                discountPercentMilli: 0,
+                taxCategory: "E",
+                taxRatePercentMilli: 0,
+              },
+            ];
       invoice = await createInvoiceDraft(
         {
           issuerId: body.issuerId,
@@ -115,7 +130,7 @@ export async function POST(request: NextRequest) {
           paymentTermsDays: body.paymentTermsDays,
           texts: body.texts,
           references: body.references,
-          items: body.items,
+          items,
         },
         actor,
         meta
