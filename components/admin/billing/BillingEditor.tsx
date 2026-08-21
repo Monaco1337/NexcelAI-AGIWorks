@@ -78,6 +78,7 @@ export default function BillingEditor({
   onChanged,
   onOpen,
   projects,
+  issuers,
 }: {
   loading: boolean;
   detail: Detail | null;
@@ -103,6 +104,12 @@ export default function BillingEditor({
   const [askShare, setAskShare] = useState(false);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Lokale Version-Tracking + Save-Queue: verhindert 409 concurrent_update,
+  // wenn der User schneller tippt als der Server antwortet.
+  const versionRef = useRef<number>(0);
+  const savingRef = useRef<boolean>(false);
+  const pendingSaveRef = useRef<boolean>(false);
+
   const isDraft = detail?.invoice.status === "draft" || detail?.invoice.status === "ready_for_review";
   const invoiceId = detail?.invoice.id;
 
@@ -116,9 +123,19 @@ export default function BillingEditor({
       setItems(detail.invoice.items);
       setError(null);
       setPreviewNonce((n) => n + 1);
+      versionRef.current = computeVersion(detail);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceId]);
+
+  // Version-Sync: bei jedem detail-Update (auch nach Autosave) die Server-
+  // Version übernehmen, damit nachfolgende Saves nicht in 409 laufen.
+  useEffect(() => {
+    if (detail) {
+      const v = computeVersion(detail);
+      if (v > versionRef.current) versionRef.current = v;
+    }
+  }, [detail]);
 
   // Guard: verhindert, dass ein Server-Reload nach Autosave den lokalen
   // items-State überschreibt, während der User weitertippt.
@@ -139,6 +156,15 @@ export default function BillingEditor({
     const t = setTimeout(() => setStatus(""), 2500);
     return () => clearTimeout(t);
   }, [status]);
+
+  // Fehler-Banner ebenfalls nach 4 s automatisch schließen, damit ein
+  // einzelner Server-Konflikt den Editor nicht dauerhaft mit einem
+  // roten Balken blockiert.
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(null), 4000);
+    return () => clearTimeout(t);
+  }, [error]);
 
   const loadShareTokens = useCallback(async () => {
     if (!detail) return;
@@ -172,8 +198,16 @@ export default function BillingEditor({
   const save = useCallback(
     async (silent = false) => {
       if (!detail) return;
+      // Save-Queue: wenn bereits ein Save läuft, den Wunsch merken und
+      // nach Fertigstellung nachziehen. Verhindert überlappende Requests
+      // die zwangsläufig in Version-Konflikte laufen würden.
+      if (savingRef.current) {
+        pendingSaveRef.current = true;
+        return;
+      }
+      savingRef.current = true;
       setSaving(true);
-      setError(null);
+      if (!silent) setError(null);
       if (silent) setStatus("Speichere…");
       try {
         // 1a) Empfängerverzeichnis: wenn keine customerId verknüpft ist
@@ -238,7 +272,7 @@ export default function BillingEditor({
 
         // 2) Rechnungs-Draft mit allen Feldern speichern.
         const body = {
-          version: computeVersion(detail),
+          version: versionRef.current,
           customerId,
           projectId: dirty.project?.id ?? detail.invoice.project?.id ?? null,
           invoiceDate: dirty.invoiceDate ?? detail.invoice.invoiceDate,
@@ -265,21 +299,49 @@ export default function BillingEditor({
           body: JSON.stringify(body),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Speichern fehlgeschlagen");
+        if (!res.ok) {
+          // Bei Autosave-Fehler: still schlucken (User bekommt keinen
+          // roten Banner, während er tippt). Bei manuellen Saves laut
+          // werden. Konfliktcode 409 wird sowieso durch die Save-Queue
+          // + optimistische Version-Nachziehung verhindert; falls doch,
+          // versuchen wir automatisch neu zu laden.
+          if (res.status === 409) {
+            await onChanged();
+            if (!silent) setError("Rechnung wurde extern verändert — neu geladen.");
+          } else if (!silent) {
+            setError(data.error || "Speichern fehlgeschlagen");
+          }
+          setStatus("");
+          return;
+        }
         setDirty({});
         setCustomerDirty({});
-        // Wichtig: verhindern, dass der useEffect([detail]) den lokalen
-        // items-State beim nächsten reload überschreibt, während der
-        // User evtl. gerade weitertippt.
+        // Neue Server-Version übernehmen bevor onChanged() den detail-
+        // Reload triggert, damit der nächste Autosave die richtige
+        // Version schickt.
+        if (data.invoice && typeof (data.invoice as { version?: number }).version === "number") {
+          versionRef.current = (data.invoice as { version: number }).version;
+        } else {
+          versionRef.current += 1;
+        }
         skipHydrateItems.current = true;
         setStatus(silent ? "Alle Änderungen gespeichert." : "Gespeichert.");
         setPreviewNonce((n) => n + 1);
-        await onChanged();
+        // onChanged() (loadDetail) im Hintergrund — kein await, damit
+        // der User sofort weitertippen kann.
+        void onChanged();
       } catch (e) {
-        setError((e as Error).message);
+        if (!silent) setError((e as Error).message);
         setStatus("");
       } finally {
+        savingRef.current = false;
         setSaving(false);
+        // Wenn während des Saves neue Änderungen aufgelaufen sind,
+        // sofort nachtippen.
+        if (pendingSaveRef.current) {
+          pendingSaveRef.current = false;
+          setTimeout(() => void save(true), 50);
+        }
       }
     },
     [detail, dirty, customerDirty, items, onChanged]
@@ -294,7 +356,7 @@ export default function BillingEditor({
       const res = await fetch(`/api/admin/billing/invoices/${detail.invoice.id}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version: computeVersion(detail) }),
+        body: JSON.stringify({ version: versionRef.current }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Finalisierung fehlgeschlagen");
@@ -479,6 +541,11 @@ export default function BillingEditor({
           invoice={inv}
           overdue={dueSoon}
           onClose={onClose}
+          previewNumber={
+            isDraft
+              ? issuers.find((i) => i.key === inv.issuer.key || i.id === (inv.issuer as { id?: string }).id)?.nextNumber ?? null
+              : null
+          }
           autosaveHint={
             isDraft
               ? saving
@@ -674,11 +741,13 @@ function StatusHero({
   overdue,
   onClose,
   autosaveHint,
+  previewNumber,
 }: {
   invoice: InvoiceDetail;
   overdue: boolean;
   onClose: () => void;
   autosaveHint?: string;
+  previewNumber?: number | null;
 }) {
   const status = invoice.status as InvoiceStatus;
   const color = overdue ? "#EF4444" : INVOICE_STATUS_COLOR[status] || "#94A3B8";
@@ -717,8 +786,17 @@ function StatusHero({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <div className="truncate text-lg font-semibold text-white">
-              {invoice.invoiceNumber ? `Rechnung Nr. ${invoice.invoiceNumber}` : "Neuer Entwurf"}
+              {invoice.invoiceNumber
+                ? `Rechnung Nr. ${invoice.invoiceNumber}`
+                : previewNumber
+                  ? `Rechnung Nr. ${previewNumber}`
+                  : "Neuer Entwurf"}
             </div>
+            {!invoice.invoiceNumber && previewNumber && (
+              <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[10px] text-[#9CA3AF]">
+                vorläufig
+              </span>
+            )}
             <span
               className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest"
               style={{ borderColor: `${color}55`, background: `${color}20`, color }}

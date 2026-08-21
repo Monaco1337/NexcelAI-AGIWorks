@@ -916,12 +916,17 @@ export async function updateInvoiceDraft(
 
     let items: InvoiceItem[];
     if (input.items) {
+      // Drafts dürfen temporär 0 Positionen haben (User löscht die letzte,
+      // um sie zu ersetzen). Die 'mindestens 1 Position'-Regel wird erst
+      // bei der Finalisierung erzwungen.
       if (input.items.length === 0) {
-        throw new InvoiceError("Mindestens eine Position ist erforderlich.");
+        items = [];
+        await tx`DELETE FROM invoice_items WHERE invoice_id = ${id}`;
+      } else {
+        items = buildItems(input.items);
+        await tx`DELETE FROM invoice_items WHERE invoice_id = ${id}`;
+        for (const item of items) await insertItem(tx, id, item);
       }
-      items = buildItems(input.items);
-      await tx`DELETE FROM invoice_items WHERE invoice_id = ${id}`;
-      for (const item of items) await insertItem(tx, id, item);
     } else {
       items = await loadItems(tx, id);
     }
