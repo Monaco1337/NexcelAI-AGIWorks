@@ -1846,6 +1846,8 @@ function PreviewPanel({
 }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [lastRendered, setLastRendered] = useState<number>(0);
   const openHref = `/api/admin/billing/invoices/${invoiceId}/preview?v=${nonce}`;
 
   // Overrides stabilisieren: kleiner Signatur-Hash, damit useEffect
@@ -1854,16 +1856,24 @@ function PreviewPanel({
 
   useEffect(() => {
     let cancelled = false;
+    // Sehr kurzer Debounce (120 ms) — der User empfindet das als
+    // "sofort", die Sprünge in der Preview sind aber trotzdem ruhig.
     const t = setTimeout(async () => {
       setRendering(true);
+      setPreviewError(null);
       try {
-        const res = await fetch(`/api/admin/billing/invoices/${invoiceId}/preview?v=${nonce}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: signature,
-          cache: "no-store",
-        });
-        if (!res.ok) throw new Error("preview_failed");
+        const res = await fetch(
+          `/api/admin/billing/invoices/${invoiceId}/preview?ts=${Date.now()}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: signature,
+            cache: "no-store",
+          }
+        );
+        if (!res.ok) {
+          throw new Error(`Preview-Server antwortete mit HTTP ${res.status}`);
+        }
         const buf = await res.arrayBuffer();
         if (cancelled) return;
         const blob = new Blob([buf], { type: "application/pdf" });
@@ -1872,12 +1882,16 @@ function PreviewPanel({
           if (prev) URL.revokeObjectURL(prev);
           return url;
         });
-      } catch {
-        // still — der iframe fällt automatisch auf openHref zurück
+        setLastRendered(Date.now());
+      } catch (e) {
+        if (cancelled) return;
+        setPreviewError(
+          e instanceof Error ? e.message : "Preview-Rendering fehlgeschlagen"
+        );
       } finally {
         if (!cancelled) setRendering(false);
       }
-    }, 250);
+    }, 120);
     return () => {
       cancelled = true;
       clearTimeout(t);
@@ -1895,14 +1909,21 @@ function PreviewPanel({
 
   return (
     <div className="sticky top-4 rounded-2xl border border-white/10 bg-black/40 p-3">
-      <div className="mb-2 flex items-center justify-between px-1 text-xs text-[#9CA3AF]">
-        <span className="flex items-center gap-2">
+      <div className="mb-2 flex items-center justify-between gap-2 px-1 text-xs">
+        <span className="flex items-center gap-2 text-[#9CA3AF]">
           Live-Vorschau
-          {rendering && (
-            <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-[#5BB8FF]" />
-          )}
+          {rendering ? (
+            <span className="inline-flex items-center gap-1 text-[10px] text-[#5BB8FF]">
+              <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-[#5BB8FF]" />
+              rendert…
+            </span>
+          ) : lastRendered ? (
+            <span className="text-[10px] text-[#22C55E]">
+              live
+            </span>
+          ) : null}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-[#9CA3AF]">
           <button onClick={onShare} className="text-white hover:underline">
             Teilen
           </button>
@@ -1911,8 +1932,62 @@ function PreviewPanel({
           </a>
         </div>
       </div>
+      {previewError && (
+        <div className="mb-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] leading-relaxed text-red-300">
+          Preview-Fehler: {previewError}
+        </div>
+      )}
+      <LivePreviewSummary overrides={overrides} />
       <div className="aspect-[210/297] w-full overflow-hidden rounded-xl bg-white">
-        <iframe title="Rechnungs-Vorschau" src={iframeSrc} className="h-full w-full border-0" />
+        <iframe
+          key={iframeSrc}
+          title="Rechnungs-Vorschau"
+          src={iframeSrc}
+          className="h-full w-full border-0"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Sofort-Vorschau als HTML — zeigt Empfänger, Datum und Positionen live
+ * auf, während der PDF-Renderer im Hintergrund läuft. So sieht der User
+ * SOFORT (0 ms), was er eintippt, ohne auf den POST warten zu müssen.
+ * Der PDF-Renderer unten ist die endgültige Wahrheit; das HTML-Panel
+ * ist die zusätzliche Sofort-Bestätigung.
+ */
+function LivePreviewSummary({ overrides }: { overrides: PreviewOverrides }) {
+  const c = overrides.customer;
+  const addr = c.address;
+  const lines = [
+    c.name?.trim(),
+    c.contactPerson?.trim() || null,
+    addr?.line1?.trim(),
+    `${addr?.postalCode ?? ""} ${addr?.city ?? ""}`.trim(),
+  ].filter((s): s is string => !!s && s.length > 0);
+  return (
+    <div className="mb-2 rounded-lg border border-white/[0.06] bg-black/40 px-3 py-2 text-[11px] leading-snug text-[#D1D5DB]">
+      <div className="mb-1 text-[9px] uppercase tracking-widest text-[#5BB8FF]">
+        Sofort-Live · zeigt eingegebene Werte
+      </div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+        <div>
+          <div className="text-[9px] uppercase tracking-widest text-[#6B7280]">Empfänger</div>
+          {lines.length ? (
+            lines.map((l, i) => <div key={i}>{l}</div>)
+          ) : (
+            <div className="text-[#6B7280]">— leer —</div>
+          )}
+        </div>
+        <div>
+          <div className="text-[9px] uppercase tracking-widest text-[#6B7280]">Rechnungsdatum</div>
+          <div>{overrides.invoiceDate || "—"}</div>
+          <div className="mt-1 text-[9px] uppercase tracking-widest text-[#6B7280]">Fällig</div>
+          <div>{overrides.dueDate || "—"}</div>
+          <div className="mt-1 text-[9px] uppercase tracking-widest text-[#6B7280]">Positionen</div>
+          <div>{overrides.items.length} × Leistung</div>
+        </div>
       </div>
     </div>
   );
