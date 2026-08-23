@@ -699,6 +699,10 @@ export default function BillingEditor({
             });
             scheduleAutosave();
           }}
+          onDone={() => {
+            if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+            void saveRef.current?.(true);
+          }}
         />
 
         <MetaEditor
@@ -742,6 +746,32 @@ export default function BillingEditor({
         invoiceId={inv.id}
         nonce={previewNonce}
         onShare={generateShare}
+        overrides={{
+          customer: {
+            name: currentDetail!.customer.name,
+            contactPerson: currentDetail!.customer.contactPerson ?? null,
+            email: currentDetail!.customer.email ?? null,
+            buyerReference: currentDetail!.customer.buyerReference ?? null,
+            address: currentDetail!.customer.address,
+          },
+          invoiceDate: currentDetail!.invoiceDate,
+          dueDate: currentDetail!.dueDate,
+          servicePeriod: currentDetail!.servicePeriod,
+          currency: currentDetail!.currency,
+          paymentTermsDays: currentDetail!.payment.paymentTermsDays,
+          texts: currentDetail!.texts,
+          references: currentDetail!.references,
+          items: items.map((it) => ({
+            title: it.title,
+            description: it.description,
+            quantityMilli: it.quantityMilli,
+            unit: it.unit,
+            unitPriceCents: it.unitPriceCents,
+            discountPercentMilli: it.discountPercentMilli,
+            taxCategory: it.taxCategory,
+            taxRatePercentMilli: it.taxRatePercentMilli,
+          })),
+        }}
       />
     </div>
   );
@@ -1768,31 +1798,121 @@ function ValidationDot({ status }: { status: string }) {
 
 /* ── Vorschau ──────────────────────────────────────────────────────── */
 
+interface PreviewOverrides {
+  customer: {
+    name: string;
+    contactPerson: string | null;
+    email: string | null;
+    buyerReference: string | null;
+    address: InvoiceDetail["customer"]["address"];
+  };
+  invoiceDate: string;
+  dueDate: string;
+  servicePeriod: InvoiceDetail["servicePeriod"];
+  currency: string;
+  paymentTermsDays: number;
+  texts: InvoiceDetail["texts"];
+  references: InvoiceDetail["references"];
+  items: Array<{
+    title: string;
+    description: string;
+    quantityMilli: number;
+    unit: string;
+    unitPriceCents: number;
+    discountPercentMilli: number;
+    taxCategory: string;
+    taxRatePercentMilli: number;
+  }>;
+}
+
+/**
+ * Echte Live-Vorschau: rendert die PDF serverseitig mit den lokalen
+ * Editor-Dirty-Werten (POST /preview mit Overrides). Der User sieht
+ * seine Änderungen SOFORT (~250 ms Debounce) — ohne auf den Autosave-
+ * Roundtrip warten zu müssen.
+ *
+ * Fallback ist der klassische GET (falls POST einmal fehlschlägt).
+ */
 function PreviewPanel({
   invoiceId,
   nonce,
   onShare,
+  overrides,
 }: {
   invoiceId: string;
   nonce: number;
   onShare: () => void;
+  overrides: PreviewOverrides;
 }) {
-  const src = `/api/admin/billing/invoices/${invoiceId}/preview?v=${nonce}`;
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [rendering, setRendering] = useState(false);
+  const openHref = `/api/admin/billing/invoices/${invoiceId}/preview?v=${nonce}`;
+
+  // Overrides stabilisieren: kleiner Signatur-Hash, damit useEffect
+  // nicht bei jedem Referenzwechsel neu feuert.
+  const signature = useMemo(() => JSON.stringify(overrides), [overrides]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setRendering(true);
+      try {
+        const res = await fetch(`/api/admin/billing/invoices/${invoiceId}/preview?v=${nonce}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: signature,
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("preview_failed");
+        const buf = await res.arrayBuffer();
+        if (cancelled) return;
+        const blob = new Blob([buf], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        setBlobUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+      } catch {
+        // still — der iframe fällt automatisch auf openHref zurück
+      } finally {
+        if (!cancelled) setRendering(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [invoiceId, nonce, signature]);
+
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const iframeSrc = blobUrl ?? openHref;
+
   return (
     <div className="sticky top-4 rounded-2xl border border-white/10 bg-black/40 p-3">
       <div className="mb-2 flex items-center justify-between px-1 text-xs text-[#9CA3AF]">
-        <span>Live-Vorschau</span>
+        <span className="flex items-center gap-2">
+          Live-Vorschau
+          {rendering && (
+            <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-[#5BB8FF]" />
+          )}
+        </span>
         <div className="flex items-center gap-2">
           <button onClick={onShare} className="text-white hover:underline">
             Teilen
           </button>
-          <a href={src} target="_blank" rel="noopener noreferrer" className="text-white hover:underline">
+          <a href={openHref} target="_blank" rel="noopener noreferrer" className="text-white hover:underline">
             Öffnen
           </a>
         </div>
       </div>
       <div className="aspect-[210/297] w-full overflow-hidden rounded-xl bg-white">
-        <iframe title="Rechnungs-Vorschau" src={src} className="h-full w-full border-0" />
+        <iframe title="Rechnungs-Vorschau" src={iframeSrc} className="h-full w-full border-0" />
       </div>
     </div>
   );
@@ -2347,10 +2467,12 @@ function CustomerBlock({
   value,
   isDraft,
   onChange,
+  onDone,
 }: {
   value: InvoiceDetail["customer"];
   isDraft: boolean;
   onChange: (patch: Partial<InvoiceDetail["customer"]>) => void;
+  onDone?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const addr = value.address || { line1: "", line2: "", postalCode: "", city: "", country: "DE" };
@@ -2381,7 +2503,15 @@ function CustomerBlock({
         </div>
         {isDraft && (
           <button
-            onClick={() => setEditing((v) => !v)}
+            onClick={() => {
+              // Wenn der User "Fertig" klickt, sofort speichern statt
+              // auf den 500-ms-Autosave-Debounce zu warten — damit
+              // die Preview UND die zentrale Kundendatenbank sofort
+              // konsistent sind.
+              const wasEditing = editing;
+              setEditing((v) => !v);
+              if (wasEditing) onDone?.();
+            }}
             className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1 text-[11px] text-white hover:bg-white/[0.06]"
           >
             {editing ? "Fertig" : "Ändern"}
