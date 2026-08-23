@@ -744,7 +744,9 @@ export default function BillingEditor({
 
       <PreviewPanel
         invoiceId={inv.id}
-        nonce={previewNonce}
+        issuer={currentDetail!.issuer}
+        status={currentDetail!.status}
+        invoiceNumber={currentDetail!.invoiceNumber}
         onShare={generateShare}
         overrides={{
           customer: {
@@ -1826,171 +1828,348 @@ interface PreviewOverrides {
 }
 
 /**
- * Echte Live-Vorschau: rendert die PDF serverseitig mit den lokalen
- * Editor-Dirty-Werten (POST /preview mit Overrides). Der User sieht
- * seine Änderungen SOFORT (~250 ms Debounce) — ohne auf den Autosave-
- * Roundtrip warten zu müssen.
- *
- * Fallback ist der klassische GET (falls POST einmal fehlschlägt).
+ * Vollständige clientseitige Live-Vorschau in HTML — sieht optisch aus
+ * wie die finale PDF (gleiches Layout, gleiche Farben, gleiche Blau-
+ * Töne), reagiert aber in 0 ms auf jede Eingabe. Kein Server-Roundtrip,
+ * kein Debounce, kein iframe-Reload. Der PDF-Renderer ist weiterhin
+ * über "PDF öffnen" und "Teilen" für Print/Export nutzbar.
  */
 function PreviewPanel({
   invoiceId,
-  nonce,
+  issuer,
+  status,
+  invoiceNumber,
   onShare,
   overrides,
 }: {
   invoiceId: string;
-  nonce: number;
+  issuer: InvoiceDetail["issuer"];
+  status: InvoiceDetail["status"];
+  invoiceNumber: string | null;
   onShare: () => void;
   overrides: PreviewOverrides;
 }) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [rendering, setRendering] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [lastRendered, setLastRendered] = useState<number>(0);
-  const openHref = `/api/admin/billing/invoices/${invoiceId}/preview?v=${nonce}`;
-
-  // Overrides stabilisieren: kleiner Signatur-Hash, damit useEffect
-  // nicht bei jedem Referenzwechsel neu feuert.
-  const signature = useMemo(() => JSON.stringify(overrides), [overrides]);
-
-  useEffect(() => {
-    let cancelled = false;
-    // Sehr kurzer Debounce (120 ms) — der User empfindet das als
-    // "sofort", die Sprünge in der Preview sind aber trotzdem ruhig.
-    const t = setTimeout(async () => {
-      setRendering(true);
-      setPreviewError(null);
-      try {
-        const res = await fetch(
-          `/api/admin/billing/invoices/${invoiceId}/preview?ts=${Date.now()}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: signature,
-            cache: "no-store",
-          }
-        );
-        if (!res.ok) {
-          throw new Error(`Preview-Server antwortete mit HTTP ${res.status}`);
-        }
-        const buf = await res.arrayBuffer();
-        if (cancelled) return;
-        const blob = new Blob([buf], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        setBlobUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
-        setLastRendered(Date.now());
-      } catch (e) {
-        if (cancelled) return;
-        setPreviewError(
-          e instanceof Error ? e.message : "Preview-Rendering fehlgeschlagen"
-        );
-      } finally {
-        if (!cancelled) setRendering(false);
-      }
-    }, 120);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [invoiceId, nonce, signature]);
-
-  useEffect(() => {
-    return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const iframeSrc = blobUrl ?? openHref;
+  const openHref = `/api/admin/billing/invoices/${invoiceId}/preview?ts=${Date.now()}`;
+  const accent = issuer.accentColor || "#00A3DA";
+  const isDraft = status === "draft" || status === "ready_for_review" || !invoiceNumber;
+  const isCancelled = status === "cancelled";
 
   return (
     <div className="sticky top-4 rounded-2xl border border-white/10 bg-black/40 p-3">
       <div className="mb-2 flex items-center justify-between gap-2 px-1 text-xs">
         <span className="flex items-center gap-2 text-[#9CA3AF]">
           Live-Vorschau
-          {rendering ? (
-            <span className="inline-flex items-center gap-1 text-[10px] text-[#5BB8FF]">
-              <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-[#5BB8FF]" />
-              rendert…
-            </span>
-          ) : lastRendered ? (
-            <span className="text-[10px] text-[#22C55E]">
-              live
-            </span>
-          ) : null}
+          <span className="inline-flex items-center gap-1 text-[10px] text-[#22C55E]">
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
+            live · 0 ms
+          </span>
         </span>
         <div className="flex items-center gap-2 text-[#9CA3AF]">
           <button onClick={onShare} className="text-white hover:underline">
             Teilen
           </button>
           <a href={openHref} target="_blank" rel="noopener noreferrer" className="text-white hover:underline">
-            Öffnen
+            PDF öffnen
           </a>
         </div>
       </div>
-      {previewError && (
-        <div className="mb-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] leading-relaxed text-red-300">
-          Preview-Fehler: {previewError}
+      <div className="relative aspect-[210/297] w-full overflow-hidden rounded-xl bg-white text-[#000]">
+        <div className="absolute inset-0 overflow-auto">
+          <HtmlInvoice
+            issuer={issuer}
+            invoiceNumber={invoiceNumber}
+            accent={accent}
+            overrides={overrides}
+            isDraft={isDraft}
+            isCancelled={isCancelled}
+          />
         </div>
-      )}
-      <LivePreviewSummary overrides={overrides} />
-      <div className="aspect-[210/297] w-full overflow-hidden rounded-xl bg-white">
-        <iframe
-          key={iframeSrc}
-          title="Rechnungs-Vorschau"
-          src={iframeSrc}
-          className="h-full w-full border-0"
-        />
       </div>
     </div>
   );
 }
 
 /**
- * Sofort-Vorschau als HTML — zeigt Empfänger, Datum und Positionen live
- * auf, während der PDF-Renderer im Hintergrund läuft. So sieht der User
- * SOFORT (0 ms), was er eintippt, ohne auf den POST warten zu müssen.
- * Der PDF-Renderer unten ist die endgültige Wahrheit; das HTML-Panel
- * ist die zusätzliche Sofort-Bestätigung.
+ * Volles HTML-Rendering einer Rechnung. Verwendet die gleichen Blau-Töne
+ * (#00A3DA / #0091C2), Abstände und Zeilenreihenfolgen wie der PDF-
+ * Renderer (lib/billing/pdf.ts) — damit HTML-Vorschau und PDF-Export
+ * visuell identisch wirken.
  */
-function LivePreviewSummary({ overrides }: { overrides: PreviewOverrides }) {
-  const c = overrides.customer;
-  const addr = c.address;
-  const lines = [
-    c.name?.trim(),
-    c.contactPerson?.trim() || null,
-    addr?.line1?.trim(),
-    `${addr?.postalCode ?? ""} ${addr?.city ?? ""}`.trim(),
+function HtmlInvoice({
+  issuer,
+  invoiceNumber,
+  accent,
+  overrides,
+  isDraft,
+  isCancelled,
+}: {
+  issuer: InvoiceDetail["issuer"];
+  invoiceNumber: string | null;
+  accent: string;
+  overrides: PreviewOverrides;
+  isDraft: boolean;
+  isCancelled: boolean;
+}) {
+  const cust = overrides.customer;
+  const addr = cust.address ?? { line1: "", postalCode: "", city: "", country: "DE" };
+  const items = overrides.items;
+  const currency = overrides.currency || "EUR";
+
+  const netCents = items.reduce((sum, it) => {
+    const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
+    const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
+    return sum + (gross - discount);
+  }, 0);
+  const taxCents = items.reduce((sum, it) => {
+    const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
+    const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
+    const net = gross - discount;
+    return sum + Math.round((net * it.taxRatePercentMilli) / 100_000);
+  }, 0);
+  const grossCents = netCents + taxCents;
+
+  const iAddr = issuer.address ?? { line1: "", postalCode: "", city: "", country: "DE" };
+  const iContact = issuer.contact ?? { email: "" };
+
+  const headerParts = [
+    issuer.headerTagline,
+    iAddr.line1,
+    `${iAddr.postalCode ?? ""} ${iAddr.city ?? ""}`.trim(),
+  ].filter((p) => p && p.trim().length > 0);
+
+  const recipientLines = [
+    cust.name?.trim(),
+    cust.contactPerson?.trim() || null,
+    addr.line1?.trim(),
+    addr.line2?.trim() || null,
+    `${addr.postalCode ?? ""} ${addr.city ?? ""}`.trim(),
   ].filter((s): s is string => !!s && s.length > 0);
+
+  const dateStr = formatDeDate(overrides.invoiceDate);
+  const dueStr = formatDeDate(overrides.dueDate);
+  const cityForDate = iAddr.city || "";
+
+  const salutation = overrides.texts?.salutation?.trim() || "Sehr geehrte Damen und Herren,";
+  const intro = overrides.texts?.intro?.trim() || "";
+  const outro = overrides.texts?.outro?.trim() || "";
+  const smallBiz = overrides.texts?.smallBusinessNote?.trim() || (issuer.taxRegime === "kleinunternehmer" ? issuer.smallBusinessNote : "");
+
   return (
-    <div className="mb-2 rounded-lg border border-white/[0.06] bg-black/40 px-3 py-2 text-[11px] leading-snug text-[#D1D5DB]">
-      <div className="mb-1 text-[9px] uppercase tracking-widest text-[#5BB8FF]">
-        Sofort-Live · zeigt eingegebene Werte
+    <div
+      style={{
+        fontFamily: '-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',
+        fontSize: 11,
+        lineHeight: 1.45,
+        color: "#111",
+        padding: "28px 34px 0",
+        position: "relative",
+        minHeight: "100%",
+      }}
+    >
+      {/* Wasserzeichen ENTWURF / STORNIERT */}
+      {(isDraft || isCancelled) && (
+        <div
+          style={{
+            position: "absolute",
+            top: "42%",
+            left: 0,
+            right: 0,
+            textAlign: "center",
+            fontSize: 82,
+            fontWeight: 700,
+            letterSpacing: 4,
+            color: isCancelled ? "#F19A96" : "#BFC5D0",
+            opacity: 0.12,
+            transform: "rotate(-24deg)",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          {isCancelled ? "STORNIERT" : "ENTWURF"}
+        </div>
+      )}
+
+      {/* Kopf: Absender-Zeile links, Logo rechts */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ fontSize: 8, color: "#333", flex: 1 }}>
+          {headerParts.length > 0 ? headerParts.join(" · ") : <span style={{ color: "#c00" }}>Aussteller unvollständig — Straße/PLZ/Ort im Aussteller-Profil ergänzen</span>}
+        </div>
+        <div style={{ fontWeight: 700, color: accent, fontSize: 14, letterSpacing: 1 }}>
+          {issuer.brandLabel}
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+      <div style={{ height: 1, background: "#000", marginTop: 6, marginBottom: 22 }} />
+
+      {/* Empfänger */}
+      <div style={{ minHeight: 90 }}>
+        {recipientLines.length > 0 ? (
+          recipientLines.map((line, i) => (
+            <div key={i} style={{ fontSize: 11, lineHeight: 1.4 }}>{line}</div>
+          ))
+        ) : (
+          <div style={{ fontSize: 10, color: "#c00", fontStyle: "italic" }}>
+            Empfänger fehlt — bitte Firmenname und Adresse links im Empfänger-Block eintragen
+          </div>
+        )}
+      </div>
+
+      {/* Titel + Datum */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 22 }}>
+        <div style={{ color: accent, fontSize: 15, fontWeight: 400 }}>
+          Rechnung Nr.{invoiceNumber ?? "(Entwurf)"}
+        </div>
+        <div style={{ fontSize: 10, color: "#111" }}>
+          {cityForDate ? `${cityForDate}, ${dateStr}` : dateStr}
+        </div>
+      </div>
+
+      {/* Anrede + Intro */}
+      <div style={{ marginTop: 20, fontSize: 11 }}>{salutation}</div>
+      {intro && (
+        <div style={{ marginTop: 10, fontSize: 11, whiteSpace: "pre-wrap" }}>{intro}</div>
+      )}
+
+      {/* Tabelle */}
+      <div style={{ marginTop: 22 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "34px 1fr 60px 80px 90px",
+            background: accent,
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 10,
+            padding: "6px 8px",
+          }}
+        >
+          <div>Pos</div>
+          <div>Beschreibung</div>
+          <div style={{ textAlign: "right" }}>Menge</div>
+          <div style={{ textAlign: "right" }}>Preis</div>
+          <div style={{ textAlign: "right" }}>Gesamt</div>
+        </div>
+        {items.length === 0 ? (
+          <div style={{ padding: "10px 8px", fontSize: 10, color: "#888", fontStyle: "italic" }}>
+            Keine Positionen — bitte im Editor mindestens eine Position hinzufügen
+          </div>
+        ) : (
+          items.map((it, i) => {
+            const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
+            const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
+            const net = gross - discount;
+            const tax = Math.round((net * it.taxRatePercentMilli) / 100_000);
+            const lineGross = net + tax;
+            const qty = it.quantityMilli / 1000;
+            return (
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "34px 1fr 60px 80px 90px",
+                  padding: "6px 8px",
+                  borderBottom: "1px solid #eee",
+                  fontSize: 10.5,
+                  minHeight: 24,
+                }}
+              >
+                <div>{i + 1}</div>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{it.title || <span style={{ color: "#c00" }}>ohne Titel</span>}</div>
+                  {it.description && (
+                    <div style={{ color: "#555", fontSize: 9.5, marginTop: 2, whiteSpace: "pre-wrap" }}>
+                      {it.description}
+                    </div>
+                  )}
+                </div>
+                <div style={{ textAlign: "right" }}>{qty.toLocaleString("de-DE", { maximumFractionDigits: 3 })}</div>
+                <div style={{ textAlign: "right" }}>{formatMoney(it.unitPriceCents, currency)}</div>
+                <div style={{ textAlign: "right" }}>{formatMoney(lineGross, currency)}</div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Summe */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+        <div style={{ width: 220, borderTop: `2px solid ${accent}`, paddingTop: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10 }}>
+            <span>Netto:</span>
+            <span>{formatMoney(netCents, currency)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10 }}>
+            <span>USt.:</span>
+            <span>{formatMoney(taxCents, currency)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, marginTop: 4 }}>
+            <span>Gesamtpreis:</span>
+            <span>{formatMoney(grossCents, currency)}</span>
+          </div>
+          <div style={{ fontSize: 8, color: "#666", marginTop: 2, textAlign: "right" }}>
+            Fällig am {dueStr}
+          </div>
+        </div>
+      </div>
+
+      {/* Outro */}
+      {outro && (
+        <div style={{ marginTop: 20, fontSize: 10.5, whiteSpace: "pre-wrap" }}>{outro}</div>
+      )}
+      <div style={{ marginTop: 12, fontSize: 10.5 }}>Mit freundlichen Grüßen</div>
+
+      {/* Kleinunternehmer */}
+      {smallBiz && (
+        <div style={{ marginTop: 20, fontSize: 9, color: "#333", fontStyle: "italic" }}>
+          {smallBiz}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div
+        style={{
+          marginTop: 32,
+          marginLeft: -34,
+          marginRight: -34,
+          marginBottom: 0,
+          background: accent,
+          color: "#fff",
+          padding: "10px 34px",
+          fontSize: 8,
+          display: "grid",
+          gridTemplateColumns: "1.4fr 1.2fr 1fr 1.4fr",
+          gap: 8,
+        }}
+      >
         <div>
-          <div className="text-[9px] uppercase tracking-widest text-[#6B7280]">Empfänger</div>
-          {lines.length ? (
-            lines.map((l, i) => <div key={i}>{l}</div>)
-          ) : (
-            <div className="text-[#6B7280]">— leer —</div>
-          )}
+          <div style={{ fontWeight: 700 }}>{issuer.legalName || issuer.brandLabel}</div>
+          <div>{iAddr.line1}</div>
+          <div>{`${iAddr.postalCode ?? ""} ${iAddr.city ?? ""}`.trim()}</div>
         </div>
         <div>
-          <div className="text-[9px] uppercase tracking-widest text-[#6B7280]">Rechnungsdatum</div>
-          <div>{overrides.invoiceDate || "—"}</div>
-          <div className="mt-1 text-[9px] uppercase tracking-widest text-[#6B7280]">Fällig</div>
-          <div>{overrides.dueDate || "—"}</div>
-          <div className="mt-1 text-[9px] uppercase tracking-widest text-[#6B7280]">Positionen</div>
-          <div>{overrides.items.length} × Leistung</div>
+          {iContact.phone && <div>Tel.: {iContact.phone}</div>}
+          {iContact.email && <div>{iContact.email}</div>}
+          {iContact.website && <div>{iContact.website}</div>}
+        </div>
+        <div>
+          {issuer.taxNumber && <div>Steuer-Nr.: {issuer.taxNumber}</div>}
+          {issuer.vatId && <div>USt-ID: {issuer.vatId}</div>}
+        </div>
+        <div>
+          {issuer.bank?.bankName && <div>{issuer.bank.bankName}</div>}
+          {issuer.bank?.iban && <div style={{ letterSpacing: 0.3 }}>{issuer.bank.iban}</div>}
+          {issuer.bank?.bic && <div>BIC: {issuer.bank.bic}</div>}
         </div>
       </div>
     </div>
   );
+}
+
+function formatMoney(cents: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("de-DE", { style: "currency", currency, minimumFractionDigits: 2 }).format(cents / 100);
+  } catch {
+    return `${(cents / 100).toFixed(2)} ${currency}`;
+  }
 }
 
 /* ── Action-Prompt (Modal für Aktionen) ───────────────────────────── */
