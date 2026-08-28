@@ -55,6 +55,14 @@ export const PERMISSIONS = [
   "billing.manage",
   "billing.finalize",
   "billing.send",
+  // — Vertrieb —
+  "sales.read",
+  "sales.manage",
+  "sales.ai.execute",
+  "sales.proposal.approve",
+  "sales.proposal.send",
+  "sales.playbook.manage",
+  "sales.prompt.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -93,6 +101,13 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "billing.manage",
     "billing.finalize",
     "billing.send",
+    "sales.read",
+    "sales.manage",
+    "sales.ai.execute",
+    "sales.proposal.approve",
+    "sales.proposal.send",
+    "sales.playbook.manage",
+    "sales.prompt.manage",
   ],
 
   /** Bearbeitet Tickets im Tagesgeschäft, ändert aber keine Konfiguration. */
@@ -112,6 +127,10 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "user.read",
     "crm.contacts.read",
     "billing.read",
+    "sales.read",
+    "sales.manage",
+    "sales.ai.execute",
+    "sales.proposal.approve",
   ],
 
   /**

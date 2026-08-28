@@ -14,7 +14,7 @@
  *   6. Dokumentenliste, Ereignisverlauf.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import {
   formatEUR,
   formatQty,
@@ -1873,27 +1873,74 @@ function PreviewPanel({
           </a>
         </div>
       </div>
-      <div className="relative aspect-[210/297] w-full overflow-hidden rounded-xl bg-white text-[#000]">
-        <div className="absolute inset-0 overflow-auto">
-          <HtmlInvoice
-            issuer={issuer}
-            invoiceNumber={invoiceNumber}
-            accent={accent}
-            overrides={overrides}
-            isDraft={isDraft}
-            isCancelled={isCancelled}
-          />
-        </div>
+      <ScaledA4>
+        <HtmlInvoice
+          issuer={issuer}
+          invoiceNumber={invoiceNumber}
+          accent={accent}
+          overrides={overrides}
+          isDraft={isDraft}
+          isCancelled={isCancelled}
+        />
+      </ScaledA4>
+    </div>
+  );
+}
+
+/**
+ * Rendert Kinder mit fester A4-Größe (595×842 px) und skaliert sie per
+ * transform:scale auf die Container-Breite herunter — damit alle
+ * absoluten pt-Koordinaten aus reference16.ts genau passen und die
+ * HTML-Preview 1:1 wie das PDF aussieht.
+ */
+function ScaledA4({ children }: { children: ReactNode }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.clientWidth;
+      if (w > 0) setScale(w / 595);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const height = 842 * scale;
+
+  return (
+    <div
+      ref={wrapRef}
+      className="relative w-full overflow-hidden rounded-xl bg-white text-[#000] shadow-lg"
+      style={{ height }}
+    >
+      <div
+        style={{
+          width: 595,
+          height: 842,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
+      >
+        {children}
       </div>
     </div>
   );
 }
 
 /**
- * Volles HTML-Rendering einer Rechnung. Verwendet die gleichen Blau-Töne
- * (#00A3DA / #0091C2), Abstände und Zeilenreihenfolgen wie der PDF-
- * Renderer (lib/billing/pdf.ts) — damit HTML-Vorschau und PDF-Export
- * visuell identisch wirken.
+ * Volles HTML-Rendering einer Rechnung — pixel-genau nach der Master-
+ * Referenz „Rechnung Nr. 16". Rendert in einem fixen 595×842 px A4-
+ * Canvas (dieselben Punkte wie das PDF). Alle X/Y-Koordinaten stammen
+ * aus reference16.ts, damit HTML-Preview und PDF-Export optisch
+ * identisch aussehen.
  */
 function HtmlInvoice({
   issuer,
@@ -1915,28 +1962,33 @@ function HtmlInvoice({
   const items = overrides.items;
   const currency = overrides.currency || "EUR";
 
-  const netCents = items.reduce((sum, it) => {
-    const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
-    const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
-    return sum + (gross - discount);
-  }, 0);
-  const taxCents = items.reduce((sum, it) => {
-    const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
-    const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
-    const net = gross - discount;
-    return sum + Math.round((net * it.taxRatePercentMilli) / 100_000);
-  }, 0);
-  const grossCents = netCents + taxCents;
+  // Summen live nachrechnen (identisch zur PDF-Server-Berechnung)
+  const totals = items.reduce(
+    (acc, it) => {
+      const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
+      const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
+      const net = gross - discount;
+      const tax = Math.round((net * it.taxRatePercentMilli) / 100_000);
+      acc.netCents += net;
+      acc.taxCents += tax;
+      return acc;
+    },
+    { netCents: 0, taxCents: 0 }
+  );
+  const grossCents = totals.netCents + totals.taxCents;
 
   const iAddr = issuer.address ?? { line1: "", postalCode: "", city: "", country: "DE" };
   const iContact = issuer.contact ?? { email: "" };
 
-  const headerParts = [
+  // Sender-Zeile im Kopf (klein, oben links über der schwarzen Linie)
+  const senderParts = [
     issuer.headerTagline,
     iAddr.line1,
     `${iAddr.postalCode ?? ""} ${iAddr.city ?? ""}`.trim(),
   ].filter((p) => p && p.trim().length > 0);
+  const senderLine = senderParts.length ? senderParts.join("  \u2022  ") : "";
 
+  // Empfänger
   const recipientLines = [
     cust.name?.trim(),
     cust.contactPerson?.trim() || null,
@@ -1945,218 +1997,274 @@ function HtmlInvoice({
     `${addr.postalCode ?? ""} ${addr.city ?? ""}`.trim(),
   ].filter((s): s is string => !!s && s.length > 0);
 
+  const cityForDate = iAddr.city || "";
   const dateStr = formatDeDate(overrides.invoiceDate);
   const dueStr = formatDeDate(overrides.dueDate);
-  const cityForDate = iAddr.city || "";
+  const dateLabel = cityForDate ? `${cityForDate}, ${dateStr}` : dateStr;
 
   const salutation = overrides.texts?.salutation?.trim() || "Sehr geehrte Damen und Herren,";
-  const intro = overrides.texts?.intro?.trim() || "";
-  const outro = overrides.texts?.outro?.trim() || "";
-  const smallBiz = overrides.texts?.smallBusinessNote?.trim() || (issuer.taxRegime === "kleinunternehmer" ? issuer.smallBusinessNote : "");
+  const intro =
+    overrides.texts?.intro?.trim() ||
+    "die Rechnung zur der im Rahmen unserer Zusammenarbeit eingesetzten technischen Infrastruktur und Tools.";
+  const outroText =
+    overrides.texts?.outro?.trim() ||
+    "Wir bedanken uns für die Zusammenarbeit und stehen Ihnen bei weiteren Anliegen gerne zur Verfügung.";
+  const smallBiz =
+    overrides.texts?.smallBusinessNote?.trim() ||
+    (issuer.taxRegime === "kleinunternehmer" ? issuer.smallBusinessNote : "");
+
+  const fontStack = 'Helvetica, "Helvetica Neue", Arial, sans-serif';
+
+  // Absolute Positionierung ist Pflicht, damit die HTML-Vorschau exakt
+  // wie das PDF aussieht. Alle Werte in Punkten (=px im 595×842-Canvas).
+  const abs = (top: number, left: number, extra: React.CSSProperties = {}): React.CSSProperties => ({
+    position: "absolute",
+    top,
+    left,
+    fontFamily: fontStack,
+    color: "#000",
+    ...extra,
+  });
 
   return (
-    <div
-      style={{
-        fontFamily: '-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',
-        fontSize: 11,
-        lineHeight: 1.45,
-        color: "#111",
-        padding: "28px 34px 0",
-        position: "relative",
-        minHeight: "100%",
-      }}
-    >
-      {/* Wasserzeichen ENTWURF / STORNIERT */}
+    <div style={{ position: "relative", width: 595, height: 842, background: "#fff", overflow: "hidden" }}>
+      {/* ── Kopf: Sender-Zeile links + AGI Works Wortmarke rechts ── */}
+      <div
+        style={abs(80, 70.866, {
+          fontSize: 9,
+          color: "#000",
+          maxWidth: 340,
+          letterSpacing: 0.1,
+        })}
+      >
+        {senderLine || (
+          <span style={{ color: "#c00" }}>
+            Aussteller unvollständig — Straße/PLZ/Ort im Aussteller-Profil ergänzen
+          </span>
+        )}
+      </div>
+
+      {/* Wortmarke rechts oben (steht anstelle des Logos, bis ein Logo hochgeladen ist) */}
+      <div
+        style={abs(35, 458, {
+          width: 97.545,
+          height: 24.386,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          fontWeight: 700,
+          fontSize: 14,
+          color: accent,
+          letterSpacing: 1,
+        })}
+      >
+        {issuer.brandLabel}
+      </div>
+
+      {/* Horizontale schwarze Linie unter dem Kopf */}
+      <div
+        style={{
+          position: "absolute",
+          top: 90.532,
+          left: 70.866,
+          right: 595 - 411.291,
+          height: 0.45,
+          background: "#000",
+        }}
+      />
+
+      {/* ── Empfänger ── */}
+      <div style={abs(114.136, 72.043, { fontSize: 11, lineHeight: "19px" })}>
+        {recipientLines.length > 0 ? (
+          recipientLines.map((line, i) => <div key={i}>{line}</div>)
+        ) : (
+          <div style={{ color: "#c00", fontStyle: "italic", fontSize: 10 }}>
+            Empfänger fehlt — Firmenname und Adresse im Empfänger-Block eintragen
+          </div>
+        )}
+      </div>
+
+      {/* ── Titel „Rechnung Nr. …" links, Datum rechts ── */}
+      <div style={abs(191.687, 72.043, { fontSize: 15, color: "#0091C2" })}>
+        Rechnung Nr.{invoiceNumber ?? "(Entwurf)"}
+      </div>
+      <div style={abs(195.687, 408.539, { fontSize: 11, color: "#000" })}>{dateLabel}</div>
+
+      {/* ── Anrede + Intro ── */}
+      <div style={abs(234.34, 70.866, { fontSize: 10 })}>{salutation}</div>
+      <div style={abs(258.34, 70.866, { fontSize: 10, lineHeight: "14px", maxWidth: 460, whiteSpace: "pre-wrap" })}>
+        {intro}
+      </div>
+
+      {/* ── Tabelle ── */}
+      {/* Header-Rechteck */}
+      <div
+        style={{
+          position: "absolute",
+          top: 297,
+          left: 70.866,
+          width: 467,
+          height: 22.686,
+          background: accent,
+        }}
+      />
+      {/* Header-Texte */}
+      <div style={abs(303, 83.284, { fontSize: 10, color: "#fff", fontWeight: 600 })}>Pos</div>
+      <div style={abs(303, 124.501, { fontSize: 10, color: "#fff", fontWeight: 600 })}>Beschreibung</div>
+      <div style={abs(303, 317.882, { fontSize: 10, color: "#fff", fontWeight: 600 })}>Menge</div>
+      <div style={abs(303, 360.244, { fontSize: 10, color: "#fff", fontWeight: 600 })}>Preis</div>
+      <div style={abs(303, 436.831, { fontSize: 10, color: "#fff", fontWeight: 600 })}>Gesamt</div>
+
+      {/* Feine Trennlinie unter dem Header */}
+      <div
+        style={{
+          position: "absolute",
+          top: 319.686,
+          left: 70.866,
+          width: 467,
+          height: 1,
+          background: "#CBCBCB",
+        }}
+      />
+
+      {/* Positionen */}
+      {items.length === 0 ? (
+        <div style={abs(330, 90, { fontSize: 10, color: "#888", fontStyle: "italic" })}>
+          Keine Positionen — im Editor mindestens eine hinzufügen
+        </div>
+      ) : (
+        items.map((it, i) => {
+          const rowTop = 325 + i * 90;
+          const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
+          const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
+          const net = gross - discount;
+          const tax = Math.round((net * it.taxRatePercentMilli) / 100_000);
+          const lineGross = net + tax;
+          const qty = it.quantityMilli / 1000;
+          return (
+            <Fragment key={i}>
+              {/* Pos */}
+              <div style={abs(rowTop, 83.284, { fontSize: 10, color: "#606060" })}>{i + 1}</div>
+              {/* Beschreibung: Titel bold + Description regular darunter */}
+              <div
+                style={abs(rowTop, 124.501, {
+                  fontSize: 12.32,
+                  lineHeight: "16.5px",
+                  maxWidth: 190,
+                  color: "#000",
+                })}
+              >
+                <div style={{ fontWeight: 700 }}>
+                  {it.title || <span style={{ color: "#c00" }}>ohne Titel</span>}
+                </div>
+                {it.description && (
+                  <div style={{ fontWeight: 400, whiteSpace: "pre-wrap" }}>{it.description}</div>
+                )}
+              </div>
+              {/* Menge */}
+              <div style={abs(rowTop, 350.44, { fontSize: 10, color: "#000" })}>
+                {qty.toLocaleString("de-DE", { maximumFractionDigits: 3 })}
+              </div>
+              {/* Preis */}
+              <div style={abs(rowTop, 398.731, { fontSize: 10, color: "#000" })}>
+                {formatMoney(it.unitPriceCents, currency)}
+              </div>
+              {/* Gesamt */}
+              <div style={abs(rowTop, 499.766, { fontSize: 10, color: "#000" })}>
+                {formatMoney(lineGross, currency)}
+              </div>
+            </Fragment>
+          );
+        })
+      )}
+
+      {/* ── Gesamtpreis ── */}
+      <div style={abs(525.369, 358.866, { fontSize: 12, fontWeight: 700 })}>Gesamtpreis:</div>
+      <div style={abs(525.369, 487.026, { fontSize: 12, fontWeight: 700 })}>
+        {formatMoney(grossCents, currency)}
+      </div>
+      {/* Nettosumme + USt darüber, klein */}
+      <div style={abs(505, 358.866, { fontSize: 8.5, color: "#333" })}>
+        Netto: {formatMoney(totals.netCents, currency)} · USt: {formatMoney(totals.taxCents, currency)}
+      </div>
+      <div style={abs(542, 487.026, { fontSize: 8.5, color: "#666" })}>Fällig am {dueStr}</div>
+
+      {/* ── Outro ── */}
+      <div style={abs(592.101, 70.866, { fontSize: 10, lineHeight: "14px", maxWidth: 460, whiteSpace: "pre-wrap" })}>
+        {outroText}
+      </div>
+      <div style={abs(630.101, 70.866, { fontSize: 10 })}>Mit freundlichen Grüßen</div>
+
+      {/* ── Kleinunternehmer-Hinweis ── */}
+      {smallBiz && (
+        <div
+          style={abs(726.101, 87.302, {
+            fontSize: 10,
+            maxWidth: 420,
+            fontStyle: "italic",
+            whiteSpace: "pre-wrap",
+          })}
+        >
+          {smallBiz}
+        </div>
+      )}
+
+      {/* ── Wasserzeichen ENTWURF / STORNIERT ── */}
       {(isDraft || isCancelled) && (
         <div
           style={{
             position: "absolute",
-            top: "42%",
+            top: 340,
             left: 0,
             right: 0,
             textAlign: "center",
-            fontSize: 82,
+            fontSize: 96,
             fontWeight: 700,
-            letterSpacing: 4,
+            letterSpacing: 6,
             color: isCancelled ? "#F19A96" : "#BFC5D0",
             opacity: 0.12,
             transform: "rotate(-24deg)",
             pointerEvents: "none",
             userSelect: "none",
+            fontFamily: fontStack,
           }}
         >
           {isCancelled ? "STORNIERT" : "ENTWURF"}
         </div>
       )}
 
-      {/* Kopf: Absender-Zeile links, Logo rechts */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ fontSize: 8, color: "#333", flex: 1 }}>
-          {headerParts.length > 0 ? headerParts.join(" · ") : <span style={{ color: "#c00" }}>Aussteller unvollständig — Straße/PLZ/Ort im Aussteller-Profil ergänzen</span>}
-        </div>
-        <div style={{ fontWeight: 700, color: accent, fontSize: 14, letterSpacing: 1 }}>
-          {issuer.brandLabel}
-        </div>
-      </div>
-      <div style={{ height: 1, background: "#000", marginTop: 6, marginBottom: 22 }} />
-
-      {/* Empfänger */}
-      <div style={{ minHeight: 90 }}>
-        {recipientLines.length > 0 ? (
-          recipientLines.map((line, i) => (
-            <div key={i} style={{ fontSize: 11, lineHeight: 1.4 }}>{line}</div>
-          ))
-        ) : (
-          <div style={{ fontSize: 10, color: "#c00", fontStyle: "italic" }}>
-            Empfänger fehlt — bitte Firmenname und Adresse links im Empfänger-Block eintragen
-          </div>
-        )}
-      </div>
-
-      {/* Titel + Datum */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 22 }}>
-        <div style={{ color: accent, fontSize: 15, fontWeight: 400 }}>
-          Rechnung Nr.{invoiceNumber ?? "(Entwurf)"}
-        </div>
-        <div style={{ fontSize: 10, color: "#111" }}>
-          {cityForDate ? `${cityForDate}, ${dateStr}` : dateStr}
-        </div>
-      </div>
-
-      {/* Anrede + Intro */}
-      <div style={{ marginTop: 20, fontSize: 11 }}>{salutation}</div>
-      {intro && (
-        <div style={{ marginTop: 10, fontSize: 11, whiteSpace: "pre-wrap" }}>{intro}</div>
-      )}
-
-      {/* Tabelle */}
-      <div style={{ marginTop: 22 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "34px 1fr 60px 80px 90px",
-            background: accent,
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 10,
-            padding: "6px 8px",
-          }}
-        >
-          <div>Pos</div>
-          <div>Beschreibung</div>
-          <div style={{ textAlign: "right" }}>Menge</div>
-          <div style={{ textAlign: "right" }}>Preis</div>
-          <div style={{ textAlign: "right" }}>Gesamt</div>
-        </div>
-        {items.length === 0 ? (
-          <div style={{ padding: "10px 8px", fontSize: 10, color: "#888", fontStyle: "italic" }}>
-            Keine Positionen — bitte im Editor mindestens eine Position hinzufügen
-          </div>
-        ) : (
-          items.map((it, i) => {
-            const gross = Math.round((it.quantityMilli * it.unitPriceCents) / 1000);
-            const discount = Math.round((gross * it.discountPercentMilli) / 100_000);
-            const net = gross - discount;
-            const tax = Math.round((net * it.taxRatePercentMilli) / 100_000);
-            const lineGross = net + tax;
-            const qty = it.quantityMilli / 1000;
-            return (
-              <div
-                key={i}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "34px 1fr 60px 80px 90px",
-                  padding: "6px 8px",
-                  borderBottom: "1px solid #eee",
-                  fontSize: 10.5,
-                  minHeight: 24,
-                }}
-              >
-                <div>{i + 1}</div>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{it.title || <span style={{ color: "#c00" }}>ohne Titel</span>}</div>
-                  {it.description && (
-                    <div style={{ color: "#555", fontSize: 9.5, marginTop: 2, whiteSpace: "pre-wrap" }}>
-                      {it.description}
-                    </div>
-                  )}
-                </div>
-                <div style={{ textAlign: "right" }}>{qty.toLocaleString("de-DE", { maximumFractionDigits: 3 })}</div>
-                <div style={{ textAlign: "right" }}>{formatMoney(it.unitPriceCents, currency)}</div>
-                <div style={{ textAlign: "right" }}>{formatMoney(lineGross, currency)}</div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Summe */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-        <div style={{ width: 220, borderTop: `2px solid ${accent}`, paddingTop: 8 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10 }}>
-            <span>Netto:</span>
-            <span>{formatMoney(netCents, currency)}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10 }}>
-            <span>USt.:</span>
-            <span>{formatMoney(taxCents, currency)}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, marginTop: 4 }}>
-            <span>Gesamtpreis:</span>
-            <span>{formatMoney(grossCents, currency)}</span>
-          </div>
-          <div style={{ fontSize: 8, color: "#666", marginTop: 2, textAlign: "right" }}>
-            Fällig am {dueStr}
-          </div>
-        </div>
-      </div>
-
-      {/* Outro */}
-      {outro && (
-        <div style={{ marginTop: 20, fontSize: 10.5, whiteSpace: "pre-wrap" }}>{outro}</div>
-      )}
-      <div style={{ marginTop: 12, fontSize: 10.5 }}>Mit freundlichen Grüßen</div>
-
-      {/* Kleinunternehmer */}
-      {smallBiz && (
-        <div style={{ marginTop: 20, fontSize: 9, color: "#333", fontStyle: "italic" }}>
-          {smallBiz}
-        </div>
-      )}
-
-      {/* Footer */}
+      {/* ── Blauer Footer, full-bleed ── */}
       <div
         style={{
-          marginTop: 32,
-          marginLeft: -34,
-          marginRight: -34,
-          marginBottom: 0,
+          position: "absolute",
+          top: 767.128,
+          left: 0,
+          width: 595,
+          height: 74.872,
           background: accent,
           color: "#fff",
-          padding: "10px 34px",
-          fontSize: 8,
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1.2fr 1fr 1.4fr",
-          gap: 8,
+          fontFamily: fontStack,
         }}
       >
-        <div>
+        <div style={{ position: "absolute", top: 10, left: 14, fontSize: 7.5, lineHeight: "10px" }}>
           <div style={{ fontWeight: 700 }}>{issuer.legalName || issuer.brandLabel}</div>
+          <div>{issuer.headerTagline || ""}</div>
           <div>{iAddr.line1}</div>
           <div>{`${iAddr.postalCode ?? ""} ${iAddr.city ?? ""}`.trim()}</div>
         </div>
-        <div>
-          {iContact.phone && <div>Tel.: {iContact.phone}</div>}
-          {iContact.email && <div>{iContact.email}</div>}
-          {iContact.website && <div>{iContact.website}</div>}
+        <div style={{ position: "absolute", top: 10, left: 165, fontSize: 7.5, lineHeight: "10px" }}>
+          {iContact.phone && <div>Telefon: {iContact.phone}</div>}
+          {iContact.mobile && <div>Handy: {iContact.mobile}</div>}
+          {iContact.email && <div>Email: {iContact.email}</div>}
         </div>
-        <div>
+        <div style={{ position: "absolute", top: 10, left: 300, fontSize: 7.5, lineHeight: "10px" }}>
+          <div>Inhaber: {issuer.owner || ""}</div>
           {issuer.taxNumber && <div>Steuer-Nr.: {issuer.taxNumber}</div>}
           {issuer.vatId && <div>USt-ID: {issuer.vatId}</div>}
         </div>
-        <div>
+        <div style={{ position: "absolute", top: 10, left: 420, fontSize: 7.5, lineHeight: "10px" }}>
           {issuer.bank?.bankName && <div>{issuer.bank.bankName}</div>}
-          {issuer.bank?.iban && <div style={{ letterSpacing: 0.3 }}>{issuer.bank.iban}</div>}
+          {issuer.bank?.iban && <div>IBAN: {issuer.bank.iban}</div>}
           {issuer.bank?.bic && <div>BIC: {issuer.bank.bic}</div>}
         </div>
       </div>

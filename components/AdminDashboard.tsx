@@ -29,6 +29,11 @@ const BillingCenter = dynamicImport(
   { ssr: false, loading: () => null }
 );
 
+const SalesCenter = dynamicImport(
+  () => import("@/components/admin/sales/SalesCenter"),
+  { ssr: false, loading: listSkeleton }
+);
+
 const ProjectsManager = dynamicImport(
   () => import("@/components/admin/projects/ProjectsManager"),
   { ssr: false, loading: listSkeleton }
@@ -168,6 +173,7 @@ type TabId =
   | "contacts"
   | "pipeline"
   | "unternehmen"
+  | "vertrieb"
   | "demo"
   | "projekte"
   | "tickets"
@@ -299,6 +305,14 @@ function NavIcon({ name }: { name: TabId }) {
         <svg {...common}>
           <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5z" />
           <path d="M13 6v2M13 11v2M13 16v2" />
+        </svg>
+      );
+    case "vertrieb":
+      return (
+        <svg {...common}>
+          <path d="M4 20V8l6-4 6 4v12" />
+          <path d="M9 20v-5h6v5" />
+          <path d="M20 20V12l-4-3" />
         </svg>
       );
     case "rechnungen":
@@ -614,6 +628,7 @@ export default function AdminDashboard() {
     { id: "contacts", label: "Leads / Kontakte", badge: unreadContacts },
     { id: "pipeline", label: "Pipeline" },
     { id: "unternehmen", label: "Unternehmen" },
+    { id: "vertrieb", label: "Vertrieb" },
     { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
     { id: "projekte", label: "Projekte" },
     { id: "tickets", label: "Tickets", badge: openTickets },
@@ -632,6 +647,7 @@ export default function AdminDashboard() {
     contacts: "Leads / Kontakte",
     pipeline: "Pipeline",
     unternehmen: "Unternehmen",
+    vertrieb: "Vertrieb",
     demo: "Demo-Anfragen",
     projekte: "Projekte",
     tickets: "Ticket Control Center",
@@ -1391,6 +1407,11 @@ export default function AdminDashboard() {
             accent={sessionBrand.accent}
             initialProjectId={ticketProjectFilter}
           />
+        )}
+
+        {/* ─── VERTRIEB ───────────────────────────────────────────────── */}
+        {activeTab === "vertrieb" && (
+          <SalesCenter accent={sessionBrand.accent} />
         )}
 
         {/* ─── RECHNUNGEN ─────────────────────────────────────────────── */}
