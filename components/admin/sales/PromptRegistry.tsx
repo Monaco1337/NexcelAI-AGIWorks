@@ -41,7 +41,7 @@ export default function PromptRegistry({ accent }: { accent: string }) {
           onClick={() => setSub("runs")}
           className={`rounded-xl px-3 py-1.5 text-sm font-medium ${sub === "runs" ? "bg-white/[0.08] text-white" : "text-white/60"}`}
         >
-          Alle Runs
+          Alle Analysen
         </button>
       </div>
       {sub === "prompts" ? <PromptList accent={accent} /> : <RunsList accent={accent} />}
@@ -238,7 +238,7 @@ function RunsList({ accent }: { accent: string }) {
   };
 
   return (
-    <Section title={`AI-Runs (${runs.length})`}>
+    <Section title={`KI-Analysen (${runs.length})`}>
       <div className="mb-3 flex flex-wrap gap-2">
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as RunStatus | "")} className={`${selectClasses} w-auto`}>
           <option value="">Alle Stati</option>
@@ -250,14 +250,16 @@ function RunsList({ accent }: { accent: string }) {
         </select>
         <select value={keyFilter} onChange={(e) => setKeyFilter(e.target.value as SalesPromptKey | "")} className={`${selectClasses} w-auto`}>
           <option value="">Alle Workflows</option>
-          {["LEAD_RESEARCH", "PRE_CALL", "POST_CALL", "CLIENT_PREVIEW", "DISCOVERY_PREP", "SOLUTION_SCOPE", "PROPOSAL"].map((k) => (
-            <option key={k} value={k}>{k}</option>
+          {(["LEAD_RESEARCH", "PRE_CALL", "POST_CALL", "CLIENT_PREVIEW", "DISCOVERY_PREP", "SOLUTION_SCOPE", "PROPOSAL"] as SalesPromptKey[]).map((k) => (
+            <option key={k} value={k}>{promptLabel(k)}</option>
           ))}
         </select>
       </div>
 
       {runs.length === 0 ? (
-        <div className="text-sm text-white/45">Keine Runs.</div>
+        <div className="rounded-xl border border-dashed border-white/[0.08] p-5 text-sm text-white/50">
+          Keine Analysen im ausgewählten Filter. Ändere Filter oder starte eine Analyse aus einer Firmenakte im Tab KI-Analyse.
+        </div>
       ) : (
         <ul className="space-y-2">
           {runs.map((r) => (
@@ -268,9 +270,9 @@ function RunsList({ accent }: { accent: string }) {
               >
                 <div>
                   <div className="flex items-center gap-2 text-sm text-white/90">
-                    {r.promptKey}
-                    <Pill color={statusColor(r.status)}>{r.status}</Pill>
-                    <span className="text-[11px] text-white/45">{r.entityType} · {r.entityId?.slice(-6) ?? "—"}</span>
+                    {promptLabel(r.promptKey)}
+                    <Pill color={statusColor(r.status)}>{runStatusLabel(r.status)}</Pill>
+                    <span className="text-[11px] text-white/45">{entityLabel(r.entityType)} · {r.entityId?.slice(-6) ?? "—"}</span>
                   </div>
                   <div className="text-[11px] text-white/45">{formatDateTimeDe(r.createdAt)} · {r.model}</div>
                 </div>
@@ -312,4 +314,40 @@ function statusColor(status: RunStatus): string {
     default:
       return "#0091C2";
   }
+}
+
+function promptLabel(key: SalesPromptKey): string {
+  const map: Record<SalesPromptKey, string> = {
+    LEAD_RESEARCH: "Lead-Recherche",
+    PRE_CALL: "Pre-Call-Briefing",
+    POST_CALL: "Post-Call-Analyse",
+    CLIENT_PREVIEW: "Kundenvorschau",
+    DISCOVERY_PREP: "Bedarfs-Vorbereitung",
+    SOLUTION_SCOPE: "Lösung & Umfang",
+    PROPOSAL: "Angebot",
+  };
+  return map[key] ?? key;
+}
+
+function runStatusLabel(status: RunStatus): string {
+  const map: Record<RunStatus, string> = {
+    QUEUED: "In Warteschlange",
+    PROCESSING: "Wird analysiert…",
+    REVIEW_REQUIRED: "Prüfung nötig",
+    APPROVED: "Freigegeben",
+    REJECTED: "Abgelehnt",
+    SUPERSEDED: "Überschrieben",
+    FAILED: "Fehlgeschlagen",
+  };
+  return map[status] ?? status;
+}
+
+function entityLabel(entity: string): string {
+  const map: Record<string, string> = {
+    company: "Firma",
+    opportunity: "Opportunity",
+    contact: "Kontakt",
+    lead: "Lead",
+  };
+  return map[entity] ?? entity;
 }

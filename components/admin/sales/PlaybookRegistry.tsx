@@ -9,8 +9,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SalesPlaybook } from "./shared";
-import { BrandChip, Field, Pill, Section, buttonPrimary, buttonSecondary, inputClasses, selectClasses, textareaClasses } from "./HelperUI";
+import { BrandChip, Field, Pill, Section, buttonPrimary, buttonSecondary, buttonGhost, inputClasses, selectClasses, textareaClasses } from "./HelperUI";
 import { formatDateTimeDe } from "./shared";
+import PlaybookView from "./PlaybookView";
 
 const KEY_LABEL: Record<string, string> = {
   ICP: "Ideal Customer Profile",
@@ -26,6 +27,8 @@ export default function PlaybookRegistry({ accent }: { accent: string }) {
   const [json, setJson] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [showRaw, setShowRaw] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/sales/playbooks", { cache: "no-store" });
@@ -141,12 +144,34 @@ export default function PlaybookRegistry({ accent }: { accent: string }) {
         actions={
           selected && (
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRaw((v) => !v);
+                  setEditMode(false);
+                }}
+                className={buttonGhost}
+                title="Zeigt die technische Datenstruktur"
+              >
+                {showRaw ? "Lesbare Ansicht" : "Rohdaten anzeigen"}
+              </button>
+              {showRaw && (
+                <button
+                  type="button"
+                  onClick={() => setEditMode((v) => !v)}
+                  className={buttonSecondary}
+                >
+                  {editMode ? "Nur lesen" : "Bearbeiten"}
+                </button>
+              )}
               <button onClick={() => selected && toggleActive(selected)} className={buttonSecondary}>
                 {selected.isActive ? "Deaktivieren" : "Aktivieren"}
               </button>
-              <button onClick={saveNewVersion} disabled={busy} className={buttonPrimary} style={{ backgroundColor: accent }}>
-                {busy ? "…" : "Als neue Version speichern"}
-              </button>
+              {showRaw && editMode && (
+                <button onClick={saveNewVersion} disabled={busy} className={buttonPrimary} style={{ backgroundColor: accent }}>
+                  {busy ? "…" : "Als neue Version speichern"}
+                </button>
+              )}
             </div>
           )
         }
@@ -154,20 +179,50 @@ export default function PlaybookRegistry({ accent }: { accent: string }) {
         {message && <div className="mb-3 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs text-white/70">{message}</div>}
         {selected ? (
           <>
-            <div className="mb-2 text-[11px] text-white/45">
-              Erstellt {formatDateTimeDe(selected.createdAt)} · Zuletzt aktualisiert {formatDateTimeDe(selected.updatedAt)}
+            <div className="mb-3 flex flex-wrap items-center gap-3 text-[11px] text-white/45">
+              <span>Erstellt {formatDateTimeDe(selected.createdAt)}</span>
+              <span>·</span>
+              <span>Aktualisiert {formatDateTimeDe(selected.updatedAt)}</span>
+              <span>·</span>
+              <span>Marke: {selected.brandContext}</span>
+              {selected.isActive && (
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-emerald-300">
+                  aktiv
+                </span>
+              )}
             </div>
-            <textarea
-              value={json}
-              onChange={(e) => setJson(e.target.value)}
-              className={`${textareaClasses} min-h-[420px] font-mono text-[12px]`}
-              spellCheck={false}
-            />
+            {showRaw ? (
+              editMode ? (
+                <textarea
+                  value={json}
+                  onChange={(e) => setJson(e.target.value)}
+                  className={`${textareaClasses} min-h-[420px] font-mono text-[12px]`}
+                  spellCheck={false}
+                />
+              ) : (
+                <pre className="max-h-[520px] overflow-auto rounded-xl border border-white/[0.05] bg-black/40 p-4 text-[12px] leading-relaxed text-white/70">
+{json}
+                </pre>
+              )
+            ) : (
+              <PlaybookView playbookKey={selected.key} structured={selected.structured} />
+            )}
           </>
         ) : (
-          <div className="text-sm text-white/50">Wähle ein Playbook aus.</div>
+          <EmptyPlaybook />
         )}
       </Section>
+    </div>
+  );
+}
+
+function EmptyPlaybook() {
+  return (
+    <div className="rounded-2xl border border-dashed border-white/[0.08] px-6 py-10 text-center">
+      <div className="text-sm font-medium text-white/70">Wähle links ein Playbook aus.</div>
+      <div className="mx-auto mt-2 max-w-md text-xs text-white/40">
+        Playbooks sind versionierte, freigegebene Standard-Vorgehen deines Vertriebs — Ideal Customer Profile, Telefonskript, Discovery-Leitfaden, Kundenvorschau-Storyline. Sie werden in Firmen- und Gesprächskontext automatisch verwendet.
+      </div>
     </div>
   );
 }

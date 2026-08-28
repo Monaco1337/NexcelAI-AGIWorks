@@ -690,7 +690,7 @@ function ProposalsBlock({
   };
 
   const generateVersion = async (proposalId: string) => {
-    const runId = prompt("ID des freigegebenen Angebots-Runs?");
+    const runId = prompt("ID der freigegebenen Angebots-Analyse?");
     if (!runId) return;
     const res = await fetch(`/api/admin/sales/proposals/${proposalId}/versions`, {
       method: "POST",
@@ -701,7 +701,7 @@ function ProposalsBlock({
       setVersionsById((m) => ({ ...m, [proposalId]: [] }));
       onChanged();
     } else {
-      alert("Version fehlgeschlagen. Ist der Run freigegeben?");
+      alert("Version konnte nicht erzeugt werden. Ist die Angebots-Analyse freigegeben?");
     }
   };
 
@@ -773,10 +773,10 @@ function ProposalsBlock({
                 {expanded && (
                   <div className="border-t border-white/[0.05] px-4 py-3">
                     <div className="mb-3 flex items-center justify-end gap-2">
-                      <button onClick={() => generateVersion(p.id)} className={buttonSecondary}>+ Version aus Run</button>
+                      <button onClick={() => generateVersion(p.id)} className={buttonSecondary}>+ Version aus Analyse</button>
                     </div>
                     {versions.length === 0 ? (
-                      <div className="text-sm text-white/45">Noch keine Versionen. Erzeuge eine Version aus einem freigegebenen Angebots-Run.</div>
+                      <div className="text-sm text-white/45">Noch keine Versionen. Erzeuge eine Version aus einer freigegebenen Angebots-Analyse.</div>
                     ) : (
                       <ul className="space-y-2">
                         {versions.map((v) => (

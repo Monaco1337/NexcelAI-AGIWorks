@@ -236,7 +236,7 @@ export default function AiPanel({
                           className={buttonPrimary}
                           style={{ backgroundColor: accent }}
                         >
-                          {busy ? "…" : "Ausführen"}
+                          {busy ? "…" : "Analyse starten"}
                         </button>
                       </div>
                     </div>
@@ -248,11 +248,13 @@ export default function AiPanel({
         </ul>
       </Section>
 
-      <Section title={`Runs (${runs.length})`}>
+      <Section title={`Analysen (${runs.length})`}>
         {loading ? (
-          <div className="text-sm text-white/45">Laden…</div>
+          <div className="text-sm text-white/45">Analysen werden geladen…</div>
         ) : runs.length === 0 ? (
-          <div className="text-sm text-white/45">Noch keine Runs für diese Firma.</div>
+          <div className="rounded-xl border border-dashed border-white/[0.08] p-5 text-sm text-white/50">
+            Noch keine KI-Analysen erstellt. Wähle links einen Workflow und starte die Analyse — Ergebnisse landen zur Prüfung hier.
+          </div>
         ) : (
           <ul className="space-y-2">
             {runs.map((r) => {
@@ -266,8 +268,8 @@ export default function AiPanel({
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 text-sm text-white/90">
-                        {r.promptKey}
-                        <Pill color={statusColor(r.status)}>{r.status}</Pill>
+                        {promptLabel(r.promptKey)}
+                        <Pill color={statusColor(r.status)}>{runStatusLabel(r.status)}</Pill>
                       </div>
                       <div className="text-[11px] text-white/45">
                         {r.model} · {formatDateTimeDe(r.finishedAt ?? r.createdAt)}
@@ -394,6 +396,32 @@ function WorkflowFields({
         </>
       );
   }
+}
+
+function promptLabel(key: SalesPromptKey): string {
+  const map: Record<SalesPromptKey, string> = {
+    LEAD_RESEARCH: "Lead-Recherche",
+    PRE_CALL: "Pre-Call-Briefing",
+    POST_CALL: "Post-Call-Analyse",
+    CLIENT_PREVIEW: "Kundenvorschau",
+    DISCOVERY_PREP: "Bedarfs-Vorbereitung",
+    SOLUTION_SCOPE: "Lösung & Umfang",
+    PROPOSAL: "Angebot",
+  };
+  return map[key] ?? key;
+}
+
+function runStatusLabel(status: RunStatus): string {
+  const map: Record<RunStatus, string> = {
+    QUEUED: "In Warteschlange",
+    PROCESSING: "Wird analysiert…",
+    REVIEW_REQUIRED: "Prüfung nötig",
+    APPROVED: "Freigegeben",
+    REJECTED: "Abgelehnt",
+    SUPERSEDED: "Überschrieben",
+    FAILED: "Fehlgeschlagen",
+  };
+  return map[status] ?? status;
 }
 
 function statusColor(status: RunStatus): string {
