@@ -29,11 +29,30 @@ import type {
 import { normalizeCategoryFromTags } from "../categoryMap";
 import { getProviderHealthSnapshot, markProviderFailure, markProviderSuccess } from "./health";
 
-const OVERPASS_ENDPOINTS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
-];
+/**
+ * Overpass-Endpoints, absteigend nach Vertrauenswürdigkeit.
+ *
+ * Zwei Lehren aus der Messung an einer NRW-Kachel (Achse `shop`):
+ *
+ *  - Ein Mirror muss den weltweiten Datenbestand führen.
+ *    `overpass.osm.ch` stand ursprünglich in dieser Liste und war die
+ *    Ursache stiller Leerläufe: die Instanz kennt nur Schweizer Daten
+ *    und beantwortet eine NRW-Box in 93 ms mit HTTP 200 und null
+ *    Elementen — für den Aufrufer nicht von „Region ohne Unternehmen"
+ *    zu unterscheiden.
+ *  - Ein toter Mirror kostet mehr, als er nützt.
+ *    `overpass.kumi.systems` lieferte HTTP 504 nach 65 s,
+ *    `overpass.private.coffee` HTTP 500. Beide hätten pro Segment das
+ *    Zeitbudget aufgebraucht, ohne je Daten zu liefern; die Haupt-
+ *    instanz antwortete dieselbe Anfrage in 7,9 s mit 12.000 Elementen.
+ *
+ * Über `OVERPASS_ENDPOINTS` lassen sich Mirrors ohne Code-Änderung
+ * ergänzen, sobald wieder ein verlässlicher verfügbar ist.
+ */
+const OVERPASS_ENDPOINTS = (process.env.OVERPASS_ENDPOINTS ?? "https://overpass-api.de/api/interpreter")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 /** Overpass akzeptiert einen Radius in Metern; Max ~50 km sinnvoll. */
 const MAX_RADIUS_M = 50_000;
@@ -187,13 +206,13 @@ export class OverpassProvider implements DiscoveryProvider {
         limit: request.limit,
         timeoutS: BBOX_OVERPASS_TIMEOUT_S,
       });
-      const { ok, elements, log } = await runQueryWithFallback(
+      const { ok, elements, attempts } = await runQueryWithFallback(
         query,
         this.key,
         BBOX_HTTP_TIMEOUT_MS,
         BBOX_TOTAL_BUDGET_MS
       );
-      logs.push(log);
+      logs.push(...attempts);
       if (!ok) continue;
       anyOk = true;
       for (const el of elements) {
@@ -333,11 +352,16 @@ async function runQueryWithFallback(
   ok: boolean;
   elements: OverpassElement[];
   log: { provider: string; endpoint: string; latencyMs: number; ok: boolean; error?: string };
+  attempts: Array<{ provider: string; endpoint: string; latencyMs: number; ok: boolean; error?: string }>;
 }> {
   let lastError = "no endpoint responded";
   let lastLatency = 0;
   const endpoints = orderedEndpoints(providerKey);
   let lastEndpoint = endpoints[0];
+  // Jeder Versuch wird protokolliert, nicht nur der letzte: sonst bleibt
+  // unsichtbar, dass ein Mirror lange blockiert hat, bevor ein anderer
+  // geantwortet hat.
+  const attempts: Array<{ provider: string; endpoint: string; latencyMs: number; ok: boolean; error?: string }> = [];
   const deadline = totalBudgetMs ? Date.now() + totalBudgetMs : null;
   for (const endpoint of endpoints) {
     const started = Date.now();
@@ -368,6 +392,7 @@ async function runQueryWithFallback(
       lastLatency = latency;
       if (!resp.ok) {
         lastError = `HTTP ${resp.status}`;
+        attempts.push({ provider: providerKey, endpoint, latencyMs: latency, ok: false, error: lastError });
         markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
         continue;
       }
@@ -379,18 +404,23 @@ async function runQueryWithFallback(
       // dauerhaft aus dem Katalog fallen.
       if (json.remark && (json.elements?.length ?? 0) === 0) {
         lastError = `Overpass-Abbruch: ${json.remark.slice(0, 200)}`;
+        attempts.push({ provider: providerKey, endpoint, latencyMs: latency, ok: false, error: lastError });
         markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
         continue;
       }
+      const elements = json.elements ?? [];
+      attempts.push({ provider: providerKey, endpoint, latencyMs: latency, ok: true });
       markProviderSuccess(mirrorKey(providerKey, endpoint));
       return {
         ok: true,
-        elements: json.elements ?? [],
+        elements,
         log: { provider: providerKey, endpoint, latencyMs: latency, ok: true },
+        attempts,
       };
     } catch (err) {
       lastLatency = Date.now() - started;
       lastError = (err as Error).message || "network error";
+      attempts.push({ provider: providerKey, endpoint, latencyMs: lastLatency, ok: false, error: lastError });
       markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
     }
   }
@@ -398,6 +428,7 @@ async function runQueryWithFallback(
     ok: false,
     elements: [],
     log: { provider: providerKey, endpoint: lastEndpoint, latencyMs: lastLatency, ok: false, error: `Overpass: ${lastError}` },
+    attempts,
   };
 }
 
