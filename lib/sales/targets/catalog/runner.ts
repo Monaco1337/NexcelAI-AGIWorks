@@ -18,11 +18,13 @@ import {
   completeSearchJob,
   failSearchJob,
   reclaimExpiredSearchJobs,
+  requeueSearchJob,
   resetFailedSearchJobs,
   searchJobProgress,
 } from "../store";
 import type { SearchJob } from "../model";
 import { getConfiguredDiscoveryProviders } from "../providers/registry";
+import { parseSlotBusy } from "../providers/overpassProvider";
 import type { DiscoveryResponse } from "../providers/types";
 import { bulkIngestCompanies } from "./bulkIngest";
 import { buildSegments, findScope, NRW_SCOPE, type CatalogScope } from "./scope";
@@ -148,6 +150,8 @@ export interface SegmentOutcome {
   duplicates: number;
   durationMs: number;
   error?: string;
+  /** Provider hat keinen Slot vergeben; das Segment wartet unbeschädigt weiter. */
+  slotBusy?: boolean;
   /** Welcher Mirror wie geantwortet hat — für Diagnose bei Leerläufen. */
   providerLogs?: Array<{ endpoint: string; latencyMs: number; ok: boolean; error?: string }>;
 }
@@ -174,7 +178,13 @@ export async function runCatalogSegments(opts: {
     if (Date.now() - startedAt > budgetMs) break;
     const job = await takeNextSearchJob({ areaScanId: opts.areaScanId ?? null });
     if (!job) break;
-    outcomes.push(await runSegmentJob(job));
+    const outcome = await runSegmentJob(job);
+    outcomes.push(outcome);
+
+    // Sperrt der Provider die IP, hilft es nicht, sofort das nächste
+    // Segment zu ziehen — es liefe in dieselbe Sperre. Der Tick endet
+    // hier; der nächste Cron-Lauf setzt die Arbeit fort.
+    if (outcome.slotBusy) break;
   }
 
   return { outcomes, reclaimed };
@@ -236,6 +246,24 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
         : null);
 
     if (companies.length === 0 && providerError) {
+      // Slot-Sperre ist kein Segmentfehler: zurück in die Queue, ohne
+      // Versuch zu verbrauchen, mit der vom Provider genannten Wartezeit.
+      const retryAfter = parseSlotBusy(providerError);
+      if (retryAfter !== null) {
+        await requeueSearchJob(job.id, providerError, retryAfter);
+        return {
+          jobId: job.id,
+          segment,
+          ok: false,
+          discovered: 0,
+          inserted: 0,
+          duplicates: 0,
+          durationMs: Date.now() - started,
+          error: providerError,
+          slotBusy: true,
+        };
+      }
+
       await failSearchJob(job.id, providerError);
       return {
         jobId: job.id,

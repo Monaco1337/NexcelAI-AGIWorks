@@ -15,7 +15,11 @@ import {
   segmentKey,
   tileBBox,
 } from "../../lib/sales/targets/catalog/scope";
-import { OVERPASS_TAG_AXES } from "../../lib/sales/targets/providers/overpassProvider";
+import {
+  OVERPASS_TAG_AXES,
+  SLOT_BUSY_MARKER,
+  parseSlotBusy,
+} from "../../lib/sales/targets/providers/overpassProvider";
 
 function main() {
   /* ── Kacheln decken die Scope-bbox lückenlos ab ─────────────────── */
@@ -121,6 +125,28 @@ function main() {
     );
     assert.equal(hits.length, 1, `${name} liegt in ${hits.length} Kacheln statt genau einer`);
   }
+
+  /* ── Slot-Sperre ist von einem Segmentfehler unterscheidbar ─────── */
+  // Overpass sperrt die aufrufende IP nach wenigen grossen Abfragen fuer
+  // rund eine Minute. Das darf nicht als Fehler des Segments gelten,
+  // sonst waeren nach max_attempts Ticks alle Segmente 'failed', ohne
+  // dass je eine Abfrage gelaufen ist.
+  assert.equal(
+    parseSlotBusy("Segment ohne Geometrie"),
+    null,
+    "echter Segmentfehler darf nicht als Slot-Sperre gelten"
+  );
+  assert.equal(
+    parseSlotBusy(`${SLOT_BUSY_MARKER} retry_after=56 — Overpass vergibt derzeit keinen Slot`),
+    56,
+    "angekuendigte Wartezeit muss uebernommen werden"
+  );
+  assert.equal(
+    parseSlotBusy(`${SLOT_BUSY_MARKER} — kein Slot`),
+    60,
+    "ohne genannte Wartezeit gilt der Standardwert"
+  );
+  assert.equal(parseSlotBusy(null), null, "fehlende Meldung ist keine Slot-Sperre");
 
   console.log(
     `OK · Katalog-Segmentierung (${tiles.length} Kacheln × ${OVERPASS_TAG_AXES.length} Achsen = ${segments.length} Segmente)`

@@ -334,8 +334,27 @@ function orderedEndpoints(providerKey: string): string[] {
 const MIN_REQUEST_GAP_MS = 1_200;
 let lastRequestAt = 0;
 
-/** So lange warten wir höchstens auf einen freien Overpass-Slot. */
-const SLOT_MAX_WAIT_MS = 20_000;
+/**
+ * So lange warten wir höchstens auf einen freien Overpass-Slot.
+ *
+ * Gemessen: nach etwa drei umfangreichen bbox-Abfragen sperrt Overpass die
+ * IP für rund 60 s. Ein kürzeres Limit würde die Wartezeit nie aussitzen
+ * und stattdessen jedes Segment sofort zurückweisen.
+ */
+const SLOT_MAX_WAIT_MS = 90_000;
+
+/**
+ * Kennzeichnet Fehler, die auf eine Slot-Sperre zurückgehen. Der Aufrufer
+ * unterscheidet daran, ob das Segment fehlerhaft ist oder nur warten muss.
+ */
+export const SLOT_BUSY_MARKER = "OVERPASS_SLOT_BUSY";
+
+/** Liest die Wartezeit aus einer mit SLOT_BUSY_MARKER markierten Meldung. */
+export function parseSlotBusy(message: string | null | undefined): number | null {
+  if (!message || !message.includes(SLOT_BUSY_MARKER)) return null;
+  const m = /retry_after=(\d+)/.exec(message);
+  return m ? Number(m[1]) : 60;
+}
 
 const USER_AGENT = "NEXCEL-SalesIntel/1.0 (+https://nexcel.ai/bot)";
 
@@ -460,10 +479,10 @@ async function runQueryWithFallback(
           await new Promise((r) => setTimeout(r, waitMs));
         } else {
           lastLatency = Date.now() - started;
+          const retryAfter = slots.waitSeconds ?? 60;
           lastError =
-            slots.waitSeconds === null
-              ? "Overpass: kein Slot frei (geteilte Ausgangs-IP ausgelastet)"
-              : `Overpass: kein Slot frei, naechster in ${slots.waitSeconds}s`;
+            `${SLOT_BUSY_MARKER} retry_after=${retryAfter} — Overpass vergibt derzeit keinen Slot` +
+            (slots.waitSeconds === null ? " (geteilte Ausgangs-IP ausgelastet)" : `, naechster in ${retryAfter}s`);
           attempts.push({ provider: providerKey, endpoint, latencyMs: lastLatency, ok: false, error: lastError });
           markProviderRateLimited(mirrorKey(providerKey, endpoint), lastError);
           continue;

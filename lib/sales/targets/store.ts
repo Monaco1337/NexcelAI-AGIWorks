@@ -1330,6 +1330,37 @@ export async function failSearchJob(id: string, error: string): Promise<void> {
 }
 
 /**
+ * Legt ein Segment unbenutzt zurück in die Queue.
+ *
+ * Gedacht für den Fall, dass der Provider gerade keinen Slot vergibt: das
+ * Segment selbst ist einwandfrei, es kam nur nicht an die Reihe. Deshalb
+ * wird der Versuchszähler wieder zurückgenommen — sonst wäre eine
+ * Drosselungsphase nach `max_attempts` Ticks in der Lage, sämtliche
+ * Segmente endgültig auf `failed` zu setzen, obwohl nie eine Abfrage lief.
+ *
+ * `retryAfterSeconds` stammt aus der Slot-Auskunft des Providers, damit der
+ * nächste Zugriff nicht erneut in dieselbe Sperre läuft.
+ */
+export async function requeueSearchJob(
+  id: string,
+  reason: string,
+  retryAfterSeconds: number
+): Promise<void> {
+  const sql = await db();
+  if (!sql) return;
+  const delay = Math.max(5, Math.min(900, Math.round(retryAfterSeconds)));
+  await sql`
+    UPDATE sales_target_search_jobs
+       SET status = 'queued',
+           attempts = GREATEST(0, attempts - 1),
+           error = ${reason.slice(0, 1000)},
+           lease_expires_at = NULL,
+           next_attempt_at = NOW() + (${delay}::int * INTERVAL '1 second')
+     WHERE id = ${id}
+  `;
+}
+
+/**
  * Stellt gescheiterte Segmente eines Runs wieder in die Queue und setzt
  * ihren Versuchszähler zurück. Wird beim Resume aufgerufen.
  */
