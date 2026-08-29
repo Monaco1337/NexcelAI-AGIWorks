@@ -13,9 +13,10 @@
  * Ist der Katalog bereits veröffentlicht, kehrt der Tick sofort zurück
  * und verursacht keinen einzigen externen Aufruf.
  *
- * Zugang: Vercel-Cron (`x-vercel-cron`), ein geteiltes `CRON_SECRET`
- * oder eine angemeldete Sitzung mit `sales.manage` für manuelles
- * Auslösen aus dem Admin. Kein zusätzliches Auth-System.
+ * Zugang: `CRON_SECRET` als Bearer-Token — Vercel setzt es bei eigenen
+ * Cron-Aufrufen automatisch — oder eine angemeldete Sitzung mit
+ * `sales.manage` für manuelles Auslösen aus dem Admin. Kein
+ * zusätzliches Auth-System.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -62,9 +63,14 @@ async function handle(request: NextRequest) {
   const startedAt = Date.now();
 
   try {
-    // Bereits veröffentlicht: nichts tun, keine externen Aufrufe.
+    // Veröffentlicht und nichts mehr offen: nichts tun, keine externen
+    // Aufrufe. Offene Segmente werden dagegen weiter abgearbeitet — die
+    // Freigabe wartet nicht auf Vollständigkeit.
     const before = await catalogStatus(scopeKey);
-    if (before.published && !before.run) {
+    const openBefore = before.progress
+      ? before.progress.queued + before.progress.running + before.progress.failed
+      : 0;
+    if (before.published && !before.run && openBefore === 0) {
       return NextResponse.json({
         correlationId,
         scope: scopeKey,
@@ -112,10 +118,9 @@ async function handle(request: NextRequest) {
 async function gate(
   request: NextRequest
 ): Promise<{ ok: true; actorId: string | null } | { ok: false; reason: string }> {
-  // 1. Vercel-Cron setzt diesen Header und ist von aussen nicht fälschbar.
-  if (request.headers.get("x-vercel-cron")) return { ok: true, actorId: null };
-
-  // 2. Geteiltes Secret für externe Scheduler.
+  // 1. Geteiltes Secret. Ist CRON_SECRET gesetzt, legt Vercel es bei
+  //    eigenen Cron-Aufrufen selbst als Bearer-Token an — derselbe Pfad
+  //    deckt also Vercel-Cron und externe Scheduler ab.
   const secret = process.env.CRON_SECRET;
   if (secret) {
     const provided =
@@ -123,6 +128,15 @@ async function gate(
       request.nextUrl.searchParams.get("token") ??
       "";
     if (provided && safeEqual(provided, secret)) return { ok: true, actorId: null };
+  }
+
+  // 2. Nur wenn kein Secret konfiguriert ist, dient der Vercel-Header als
+  //    Notbehelf. Er ist ausdruecklich KEIN Nachweis: `x-vercel-*` wird
+  //    eingehenden Anfragen nicht entfernt, ein beliebiger Client kann ihn
+  //    also setzen. Mit gesetztem CRON_SECRET wuerde er sonst die
+  //    Absicherung vollstaendig aushebeln.
+  if (!secret && request.headers.get("x-vercel-cron")) {
+    return { ok: true, actorId: null };
   }
 
   // 3. Angemeldeter Admin — manuelles Auslösen aus dem Panel.

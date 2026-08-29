@@ -79,6 +79,20 @@ export async function ensureCatalogRun(
   const scope = findScope(scopeKey);
   if (!scope) throw new Error(`Unbekannter Katalog-Scope: ${scopeKey}`);
 
+  // Ein bereits veroeffentlichter Katalog kann noch offene Segmente haben,
+  // weil die Freigabe nicht auf Vollstaendigkeit wartet. Diese Segmente
+  // gehoeren weiter abgearbeitet — ein neuer Run wuerde stattdessen 128
+  // Duplikate einreihen.
+  const published = await findPublishedCatalogRun(scope.key);
+  if (published) {
+    const progress = await searchJobProgress(published.id);
+    if (progress.queued + progress.running + progress.failed > 0) {
+      const revived = await resetFailedSearchJobs(published.id);
+      return { run: published, created: false, segmentsQueued: revived };
+    }
+    return { run: published, created: false, segmentsQueued: 0 };
+  }
+
   const existing = await findActiveCatalogRun(scope.key);
   if (existing) {
     // Resume heisst auch: endgültig gescheiterte Segmente bekommen eine
@@ -344,13 +358,19 @@ export async function maybePublishCatalog(
     return { attempted: false, published: false, reason: `Bereits ${run.publishState}`, report: null };
   }
 
+  // Bewusst NICHT auf alle Segmente warten. Das Gate misst Brauchbarkeit,
+  // nicht Vollstaendigkeit: die Mindestmenge von 5.000 Firmen ist gemessen
+  // schon nach wenigen Segmenten deutlich ueberschritten. Wuerde die
+  // Freigabe an allen 128 Segmenten haengen, koennte eine Drosselung des
+  // oeffentlichen Endpoints den Katalog tagelang unsichtbar halten, obwohl
+  // laengst genug belastbare Daten vorliegen. Die restlichen Segmente
+  // laufen nach der Veroeffentlichung weiter und ergaenzen den Katalog.
   const progress = await searchJobProgress(areaScanId);
-  const open = progress.queued + progress.running;
-  if (open > 0) {
+  if (progress.completed === 0) {
     return {
       attempted: false,
       published: false,
-      reason: `${open} von ${progress.total} Segmenten offen`,
+      reason: `noch kein Segment abgeschlossen (${progress.total} offen)`,
       report: null,
     };
   }
@@ -411,6 +431,9 @@ export async function catalogStatus(scopeKey: string = NRW_SCOPE.key): Promise<{
   const scope = findScope(scopeKey);
   const run = await findActiveCatalogRun(scopeKey);
   const published = await findPublishedCatalogRun(scopeKey);
-  const progress = run ? await searchJobProgress(run.id) : null;
+  // Nach der Freigabe koennen weiter Segmente laufen; der Fortschritt
+  // gehoert dann zum veroeffentlichten Run, sonst zeigte die UI nichts an.
+  const current = run ?? published;
+  const progress = current ? await searchJobProgress(current.id) : null;
   return { scope, run, published, progress };
 }
