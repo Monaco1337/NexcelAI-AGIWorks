@@ -27,7 +27,12 @@ import type {
   DiscoveryResponse,
 } from "./types";
 import { normalizeCategoryFromTags } from "../categoryMap";
-import { getProviderHealthSnapshot, markProviderFailure, markProviderSuccess } from "./health";
+import {
+  getProviderHealthSnapshot,
+  markProviderFailure,
+  markProviderRateLimited,
+  markProviderSuccess,
+} from "./health";
 
 /**
  * Overpass-Endpoints, absteigend nach Vertrauenswürdigkeit.
@@ -329,10 +334,61 @@ function orderedEndpoints(providerKey: string): string[] {
 const MIN_REQUEST_GAP_MS = 1_200;
 let lastRequestAt = 0;
 
+/** So lange warten wir höchstens auf einen freien Overpass-Slot. */
+const SLOT_MAX_WAIT_MS = 20_000;
+
+const USER_AGENT = "NEXCEL-SalesIntel/1.0 (+https://nexcel.ai/bot)";
+
 async function pace(): Promise<void> {
   const wait = lastRequestAt + MIN_REQUEST_GAP_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastRequestAt = Date.now();
+}
+
+/**
+ * Slot-Verfügbarkeit vor der eigentlichen Abfrage prüfen.
+ *
+ * Overpass vergibt pro Client-IP eine feste Zahl gleichzeitiger Slots
+ * (aktuell 2) und veröffentlicht den Stand unter `/api/status`. Ist
+ * kein Slot frei, nimmt der Server die Verbindung entweder gar nicht
+ * an oder lässt sie auflaufen — beobachtet als „fetch failed" nach rund
+ * 10,5 s. In einer geteilten Cloud-Umgebung teilen sich viele Clients
+ * dieselbe ausgehende IP, weshalb dieser Fall dort die Regel ist.
+ *
+ * Die Statusabfrage kostet rund 100 ms und ersetzt einen 10-Sekunden-
+ * Fehlversuch durch eine sofortige, benannte Absage. Das Segment wandert
+ * dann mit Backoff zurück in die Queue, statt Zeitbudget zu verbrennen.
+ */
+interface SlotStatus {
+  available: number;
+  waitSeconds: number | null;
+  raw: string;
+}
+
+async function readSlotStatus(endpoint: string): Promise<SlotStatus | null> {
+  try {
+    const statusUrl = endpoint.replace(/\/interpreter\/?$/, "/status");
+    const resp = await fetch(statusUrl, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!resp.ok) return null;
+    const raw = await resp.text();
+
+    const availableMatch = /(\d+)\s+slots?\s+available\s+now/i.exec(raw);
+    if (availableMatch) {
+      return { available: Number(availableMatch[1]), waitSeconds: null, raw };
+    }
+    // "Slot available after: 2026-08-29T12:40:00Z, in 42 seconds."
+    const waitMatches = [...raw.matchAll(/in\s+(-?\d+)\s+seconds?/gi)].map((m) => Number(m[1]));
+    if (waitMatches.length > 0) {
+      return { available: 0, waitSeconds: Math.max(0, Math.min(...waitMatches)), raw };
+    }
+    return { available: 0, waitSeconds: null, raw };
+  } catch {
+    // Status nicht abrufbar: nicht blockieren, normal weiterversuchen.
+    return null;
+  }
 }
 
 function mirrorKey(providerKey: string, endpoint: string): string {
@@ -341,6 +397,21 @@ function mirrorKey(providerKey: string, endpoint: string): string {
   } catch {
     return `${providerKey}:${endpoint}`;
   }
+}
+
+/**
+ * `fetch` meldet Netzwerkprobleme pauschal als „fetch failed"; die
+ * eigentliche Ursache steckt in `cause`. Ohne sie ist nicht zu
+ * unterscheiden, ob ein Endpoint die Verbindung zurücksetzt, DNS
+ * scheitert oder ein Timeout greift.
+ */
+function describeFetchError(err: unknown): string {
+  const e = err as { message?: string; cause?: { code?: string; message?: string } };
+  const base = e?.message || "network error";
+  const cause = e?.cause;
+  if (!cause) return base;
+  const detail = [cause.code, cause.message].filter(Boolean).join(" ");
+  return detail ? `${base} (${detail})` : base;
 }
 
 async function runQueryWithFallback(
@@ -379,11 +450,31 @@ async function runQueryWithFallback(
     }
     try {
       await pace();
+
+      // Auf einen freien Slot warten, solange das im Budget liegt.
+      const slots = await readSlotStatus(endpoint);
+      if (slots && slots.available === 0) {
+        const waitMs = (slots.waitSeconds ?? 0) * 1000 + 500;
+        const affordable = deadline ? deadline - Date.now() - 3_000 : SLOT_MAX_WAIT_MS;
+        if (waitMs > 0 && waitMs <= Math.min(SLOT_MAX_WAIT_MS, affordable)) {
+          await new Promise((r) => setTimeout(r, waitMs));
+        } else {
+          lastLatency = Date.now() - started;
+          lastError =
+            slots.waitSeconds === null
+              ? "Overpass: kein Slot frei (geteilte Ausgangs-IP ausgelastet)"
+              : `Overpass: kein Slot frei, naechster in ${slots.waitSeconds}s`;
+          attempts.push({ provider: providerKey, endpoint, latencyMs: lastLatency, ok: false, error: lastError });
+          markProviderRateLimited(mirrorKey(providerKey, endpoint), lastError);
+          continue;
+        }
+      }
+
       const resp = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent": "NEXCEL-SalesIntel/1.0 (+https://nexcel.ai/bot)",
+          "User-Agent": USER_AGENT,
         },
         body: `data=${encodeURIComponent(query)}`,
         signal: AbortSignal.timeout(attemptTimeout),
@@ -419,7 +510,7 @@ async function runQueryWithFallback(
       };
     } catch (err) {
       lastLatency = Date.now() - started;
-      lastError = (err as Error).message || "network error";
+      lastError = describeFetchError(err);
       attempts.push({ provider: providerKey, endpoint, latencyMs: lastLatency, ok: false, error: lastError });
       markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
     }
