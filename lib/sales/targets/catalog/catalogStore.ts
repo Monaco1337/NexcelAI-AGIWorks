@@ -8,7 +8,7 @@
  * eigene Katalogtabelle.
  */
 
-import { db } from "@/lib/pg";
+import { db, jsonParam } from "@/lib/pg";
 import { newTargetId } from "../model";
 
 export type PublishState = "DRAFT" | "PUBLISHED" | "FAILED";
@@ -99,7 +99,7 @@ export async function createCatalogRun(input: CreateCatalogRunInput): Promise<Ca
       NULL, 0, ARRAY[]::text[], 'STANDARD', 0, ${input.totalSegments},
       ${input.totalSegments}, ARRAY[]::text[],
       'running', 'DRAFT', ${input.scopeKey},
-      ${JSON.stringify(input.bbox)}::jsonb, ${input.createdBy}
+      ${sql.json(jsonParam(input.bbox))}, ${input.createdBy}
     )
     ON CONFLICT (scope_key) WHERE scope_key IS NOT NULL AND publish_state = 'DRAFT' DO NOTHING
     RETURNING *
@@ -129,8 +129,8 @@ export async function updateCatalogRun(
            target_count     = COALESCE(${patch.targetCount ?? null}::int, target_count),
            status           = COALESCE(${patch.status ?? null}, status),
            first_error      = ${patch.firstError === undefined ? sql`first_error` : patch.firstError},
-           quality_report   = COALESCE(${patch.qualityReport ? JSON.stringify(patch.qualityReport) : null}::jsonb, quality_report),
-           checkpoint       = COALESCE(${patch.checkpoint ? JSON.stringify(patch.checkpoint) : null}::jsonb, checkpoint)
+           quality_report   = COALESCE(${patch.qualityReport ? sql.json(jsonParam(patch.qualityReport)) : null}, quality_report),
+           checkpoint       = COALESCE(${patch.checkpoint ? sql.json(jsonParam(patch.checkpoint)) : null}, checkpoint)
      WHERE id = ${id}
   `;
 }
@@ -154,7 +154,7 @@ export async function publishCatalogRun(
            finished_at    = NOW(),
            status         = 'completed',
            target_count   = ${targetCount},
-           quality_report = ${JSON.stringify(qualityReport)}::jsonb
+           quality_report = ${sql.json(jsonParam(qualityReport))}
      WHERE id = ${id} AND publish_state = 'DRAFT'
     RETURNING id
   `;
@@ -169,13 +169,30 @@ export async function markCatalogRunFailed(id: string, report: Record<string, un
        SET publish_state  = 'FAILED',
            status         = 'failed',
            finished_at    = NOW(),
-           quality_report = ${JSON.stringify(report)}::jsonb
+           quality_report = ${sql.json(jsonParam(report))}
      WHERE id = ${id} AND publish_state = 'DRAFT'
   `;
 }
 
+/**
+ * jsonb robust lesen: Zeilen, die vor der Umstellung auf `sql.json`
+ * geschrieben wurden, enthalten einen JSON-String statt eines Objekts.
+ */
+function jsonObject<T>(v: unknown, fallback: T): T {
+  if (v && typeof v === "object") return v as T;
+  if (typeof v === "string" && v.length > 0) {
+    try {
+      const parsed = JSON.parse(v) as unknown;
+      if (parsed && typeof parsed === "object") return parsed as T;
+    } catch {
+      /* ungültig — Fallback */
+    }
+  }
+  return fallback;
+}
+
 function mapRun(row: Record<string, unknown>): CatalogRun {
-  const checkpoint = (row.checkpoint as Record<string, unknown> | null) ?? {};
+  const checkpoint = jsonObject<Record<string, unknown>>(row.checkpoint, {});
   return {
     id: row.id as string,
     correlationId: row.correlation_id as string,
@@ -183,13 +200,13 @@ function mapRun(row: Record<string, unknown>): CatalogRun {
     label: row.city as string,
     country: (row.country as string) ?? "DE",
     region: (row.region as string | null) ?? null,
-    bbox: (row.bbox as CatalogRun["bbox"]) ?? null,
+    bbox: jsonObject<CatalogRun["bbox"]>(row.bbox, null),
     publishState: ((row.publish_state as string) ?? "DRAFT") as PublishState,
     status: (row.status as string) ?? "running",
     totalSegments: Number(row.total_tiles ?? 0),
     discoveredCount: Number(row.discovered_count ?? 0),
     targetCount: Number(row.target_count ?? 0),
-    qualityReport: (row.quality_report as Record<string, unknown>) ?? {},
+    qualityReport: jsonObject<Record<string, unknown>>(row.quality_report, {}),
     checkpoint,
     firstError: (row.first_error as string | null) ?? null,
     startedAt: new Date(row.started_at as string).toISOString(),

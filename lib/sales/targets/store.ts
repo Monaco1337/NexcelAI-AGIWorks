@@ -11,7 +11,7 @@
  * Persistenz + Mapping.
  */
 
-import { db } from "@/lib/pg";
+import { db, jsonParam } from "@/lib/pg";
 import { SalesError } from "../model";
 import type {
   EnrichmentJob,
@@ -1192,9 +1192,9 @@ export async function createSearchJob(input: CreateSearchJobInput): Promise<Sear
       ${input.country ?? "DE"}, ${input.centerLat ?? null}, ${input.centerLng ?? null},
       ${input.radiusKm ?? 25},
       ${input.industries ?? []}, ${input.categories ?? []},
-      ${JSON.stringify(input.filters ?? {})}::jsonb,
+      ${sql.json(jsonParam(input.filters ?? {}))},
       ${input.depth ?? "STANDARD"}, ${input.limitCount ?? 100},
-      ${JSON.stringify(input.providerPreferences ?? {})}::jsonb,
+      ${sql.json(jsonParam(input.providerPreferences ?? {}))},
       'queued', ${input.createdBy ?? null}, ${input.areaScanId ?? null}
     )
     RETURNING *
@@ -1329,6 +1329,27 @@ export async function failSearchJob(id: string, error: string): Promise<void> {
   `;
 }
 
+/**
+ * Stellt gescheiterte Segmente eines Runs wieder in die Queue und setzt
+ * ihren Versuchszähler zurück. Wird beim Resume aufgerufen.
+ */
+export async function resetFailedSearchJobs(areaScanId: string): Promise<number> {
+  const sql = await db();
+  if (!sql) return 0;
+  const rows = await sql<{ id: string }[]>`
+    UPDATE sales_target_search_jobs
+       SET status = 'queued',
+           attempts = 0,
+           next_attempt_at = NOW(),
+           lease_expires_at = NULL,
+           finished_at = NULL
+     WHERE area_scan_id = ${areaScanId}
+       AND status = 'failed'
+    RETURNING id
+  `;
+  return rows.length;
+}
+
 /** Fortschritt eines Katalog-Runs aus den zugehörigen Jobs. */
 export async function searchJobProgress(areaScanId: string): Promise<{
   total: number;
@@ -1383,10 +1404,10 @@ function mapSearchJob(row: Record<string, unknown>): SearchJob {
     radiusKm: Number(row.radius_km),
     industries: (row.industries as string[]) ?? [],
     categories: (row.categories as string[]) ?? [],
-    filters: (row.filters as SearchJob["filters"]) ?? {},
+    filters: asJsonObject<SearchJob["filters"]>(row.filters),
     depth: (row.depth as SearchJob["depth"]) ?? "STANDARD",
     limitCount: Number(row.limit_count),
-    providerPreferences: (row.provider_preferences as Record<string, unknown>) ?? {},
+    providerPreferences: asJsonObject<Record<string, unknown>>(row.provider_preferences),
     status: (row.status as SearchJob["status"]) ?? "queued",
     estimatedCostCents: Number(row.estimated_cost_cents ?? 0),
     actualCostCents: Number(row.actual_cost_cents ?? 0),
@@ -1721,4 +1742,25 @@ function asIso(v: unknown): string | null {
 
 function asIsoRequired(v: unknown): string {
   return asIso(v) ?? new Date(0).toISOString();
+}
+
+/**
+ * Liest eine jsonb-Spalte robust als Objekt.
+ *
+ * Ältere Zeilen wurden mit `${JSON.stringify(x)}::jsonb` geschrieben und
+ * enthalten dadurch einen JSON-String statt eines JSON-Objekts. Ohne
+ * diese Entpackung kämen solche Werte als Zeichenkette zurück und jeder
+ * Feldzugriff liefe ins Leere.
+ */
+function asJsonObject<T>(v: unknown): T {
+  if (v && typeof v === "object") return v as T;
+  if (typeof v === "string" && v.length > 0) {
+    try {
+      const parsed = JSON.parse(v) as unknown;
+      if (parsed && typeof parsed === "object") return parsed as T;
+    } catch {
+      /* keine gültige JSON-Zeichenkette — als leer behandeln */
+    }
+  }
+  return {} as T;
 }

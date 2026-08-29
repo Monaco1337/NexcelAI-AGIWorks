@@ -18,6 +18,25 @@ import postgres from "postgres";
 import { runMigrations, type MigrationStatus } from "./db/migrationRunner";
 import { MIGRATIONS } from "./db/migrations";
 
+/**
+ * Payload für `sql.json(...)`.
+ *
+ * jsonb-Spalten müssen über `sql.json()` geschrieben werden. Die ältere
+ * Schreibweise `${JSON.stringify(x)}::jsonb` kodiert doppelt: der Wert
+ * landet als JSON-*String* in der Spalte statt als Objekt und kommt beim
+ * Lesen als Zeichenkette zurück.
+ *
+ * `sql.json` ist enger typisiert, als unsere Payloads es abbilden
+ * (`Record<string, unknown>` gilt dort nicht als JSONValue), obwohl der
+ * Inhalt gültiges JSON ist. Diese Hilfsfunktion kapselt die Umtypung an
+ * einer Stelle statt sie über die Aufrufstellen zu verteilen.
+ */
+export type JsonParam = Parameters<postgres.Sql["json"]>[0];
+
+export function jsonParam(value: unknown): JsonParam {
+  return value as JsonParam;
+}
+
 /** Erste verfügbare Postgres-URL aus den üblichen Vercel/Neon-Variablen. */
 function resolveConnectionString(): string | null {
   const candidates = [

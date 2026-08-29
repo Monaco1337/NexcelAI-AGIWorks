@@ -18,6 +18,7 @@ import {
   completeSearchJob,
   failSearchJob,
   reclaimExpiredSearchJobs,
+  resetFailedSearchJobs,
   searchJobProgress,
 } from "../store";
 import type { SearchJob } from "../model";
@@ -78,7 +79,12 @@ export async function ensureCatalogRun(
 
   const existing = await findActiveCatalogRun(scope.key);
   if (existing) {
-    return { run: existing, created: false, segmentsQueued: 0 };
+    // Resume heisst auch: endgültig gescheiterte Segmente bekommen eine
+    // neue Chance. Fehler kommen hier praktisch immer von einem
+    // überlasteten öffentlichen Endpoint, nicht von fehlerhaften Daten —
+    // ohne Reset bliebe eine Teilregion sonst dauerhaft leer.
+    const revived = await resetFailedSearchJobs(existing.id);
+    return { run: existing, created: false, segmentsQueued: revived };
   }
 
   const segments = buildSegments(scope);
