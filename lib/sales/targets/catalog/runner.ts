@@ -148,6 +148,8 @@ export interface SegmentOutcome {
   duplicates: number;
   durationMs: number;
   error?: string;
+  /** Welcher Mirror wie geantwortet hat — für Diagnose bei Leerläufen. */
+  providerLogs?: Array<{ endpoint: string; latencyMs: number; ok: boolean; error?: string }>;
 }
 
 /**
@@ -244,6 +246,12 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
         duplicates: 0,
         durationMs: Date.now() - started,
         error: providerError,
+        providerLogs: logs.map((l) => ({
+          endpoint: l.endpoint,
+          latencyMs: l.latencyMs,
+          ok: l.ok,
+          error: l.error,
+        })),
       };
     }
 

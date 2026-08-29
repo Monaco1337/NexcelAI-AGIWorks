@@ -93,7 +93,9 @@ async function handle(request: NextRequest) {
       processed: outcomes.length,
       inserted: outcomes.reduce((n, o) => n + o.inserted, 0),
       duplicates: outcomes.reduce((n, o) => n + o.duplicates, 0),
-      failures: outcomes.filter((o) => !o.ok).map((o) => ({ segment: o.segment, error: o.error })),
+      failures: outcomes
+        .filter((o) => !o.ok)
+        .map((o) => ({ segment: o.segment, error: o.error, providerLogs: o.providerLogs })),
       progress: after.progress,
       publish: { attempted: publish.attempted, published: publish.published, reason: publish.reason },
       elapsedMs: Date.now() - startedAt,
