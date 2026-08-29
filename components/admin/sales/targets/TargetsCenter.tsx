@@ -110,24 +110,40 @@ interface ProviderStatusDTO {
   note?: string;
 }
 
-interface AreaState {
-  correlationId: string;
-  city: string;
-  center: GeoPoint;
-  radiusKm: number;
-  jobIds: string[];
-  remainingJobIds: string[];
-  totalTiles: number;
-  discovered: number;
-  costCents: number;
-  running: number;
-  completed: number;
-  failed: number;
-  hint: string | null;
-  startedAt: number;
+/**
+ * Zustand des serverseitigen Katalogaufbaus. Reine Anzeige: der Browser
+ * startet keine Discovery und arbeitet keine Jobs ab. Der Aufbau läuft
+ * im Cron-getriebenen Worker, auch wenn niemand das Panel geöffnet hat.
+ */
+interface CatalogStatusDTO {
+  scope: { key: string; label: string; bbox: BBox } | null;
+  publishState: "NONE" | "DRAFT" | "PUBLISHED" | "FAILED";
+  publishedAt: string | null;
+  targetCount: number;
+  discoveredCount: number;
+  qualityReport: QualityReportDTO | null;
   firstError: string | null;
-  providers: ProviderStatusDTO[];
-  skipped: string | null;
+  progress: {
+    total: number;
+    done: number;
+    queued: number;
+    running: number;
+    failed: number;
+    pct: number;
+  } | null;
+}
+
+interface BBox {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
+
+interface QualityReportDTO {
+  passed?: boolean;
+  totalCompanies?: number;
+  checks?: Array<{ key: string; label: string; passed: boolean; actual: number; required: number; unit: string }>;
 }
 
 interface LiveCountersDTO {
@@ -137,8 +153,6 @@ interface LiveCountersDTO {
   withDm: number;
   enrichmentQueued: number;
 }
-
-const AREA_PARALLELISM = 3;
 
 function readStoredFilters(): Filters {
   if (typeof window === "undefined") return DEFAULT_FILTERS;
@@ -160,10 +174,10 @@ export default function TargetsCenter({ accent }: { accent: string }) {
   const [openTargetId, setOpenTargetId] = useState<string | null>(null);
   const [center, setCenter] = useState<GeoPoint | null>(null);
   const [centerError, setCenterError] = useState<string | null>(null);
-  const [area, setArea] = useState<AreaState | null>(null);
+  const [catalog, setCatalog] = useState<CatalogStatusDTO | null>(null);
+  const [catalogHidden, setCatalogHidden] = useState(false);
   const [liveCounters, setLiveCounters] = useState<LiveCountersDTO | null>(null);
   const filtersReadyRef = useRef(false);
-  const lastAmbientKeyRef = useRef<string | null>(null);
   const listOffsetRef = useRef(0);
   const PAGE_SIZE = 250;
   const [hasMore, setHasMore] = useState(false);
@@ -292,243 +306,56 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     void load();
   }, [load]);
 
-  // Auto-Poll während Discovery läuft
-  useEffect(() => {
-    if (!area || (area.running === 0 && area.remainingJobIds.length === 0 && area.completed >= area.jobIds.length)) {
-      return;
-    }
-    const iv = setInterval(() => void load(), 5000);
-    return () => clearInterval(iv);
-  }, [area, load]);
-
-  // Enrichment-Worker im Hintergrund pumpen — solange eine Area-Session
-  // aktiv ist ODER wir noch queued Enrichment-Jobs sehen. Ohne Worker
-  // bleiben neu entdeckte Firmen ohne Score/Brief liegen.
-  useEffect(() => {
-    if (!area) return;
-    let cancelled = false;
-    let idleTicks = 0;
-    async function pump() {
-      while (!cancelled) {
-        try {
-          const res = await fetch(
-            "/api/admin/sales/targets/enrichment-worker?batch=5&maxMs=15000",
-            { method: "POST" }
-          );
-          if (res.ok) {
-            const data = (await res.json()) as { processed: number };
-            if (data.processed === 0) {
-              idleTicks++;
-              // Wenn Discovery abgeschlossen ist UND wir seit 3 Ticks keine
-              // Jobs mehr sehen: aufhören zu pumpen.
-              const finished =
-                area &&
-                area.remainingJobIds.length === 0 &&
-                area.running === 0 &&
-                area.completed >= area.jobIds.length;
-              if (finished && idleTicks >= 3) break;
-            } else {
-              idleTicks = 0;
-              void load();
-            }
-          } else {
-            idleTicks++;
-          }
-        } catch {
-          idleTicks++;
-        }
-        await new Promise((r) => setTimeout(r, 4000));
-      }
-    }
-    void pump();
-    return () => {
-      cancelled = true;
-    };
-    // Wir binden bewusst nur an correlationId — der Loop läuft sich
-    // selbst zu Ende, sobald keine Jobs mehr da sind.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [area?.correlationId]);
-
-  const triggerAreaScan = useCallback(
-    async (opts?: { auto?: boolean; force?: boolean; maxTiles?: number }) => {
-      if (!filters.city.trim()) return;
-      try {
-        const res = await fetch("/api/admin/sales/targets/discover-area", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            city: filters.city.trim(),
-            radiusKm: filters.radiusKm,
-            industries: filters.industries,
-            depth: "STANDARD",
-            // Ambient-Modus verwendet einen konservativen Tile-Budget;
-            // Force-Runs (explizit gefordert) dürfen die volle Fläche
-            // scannen bis zur Hard-Cap.
-            maxTiles: opts?.maxTiles ?? (opts?.auto ? 30 : 60),
-            limitPerTile: 50,
-            force: Boolean(opts?.force),
-          }),
-        });
-        const data = (await res.json()) as {
-          correlationId?: string;
-          skipped?: string;
-          reason?: string;
-          city?: string;
-          center?: GeoPoint;
-          radiusKm?: number;
-          jobIds?: string[];
-          remainingJobIds?: string[];
-          totalTiles?: number;
-          hint?: string | null;
-          firstResult?: { discoveredCount?: number } | null;
-          firstProviderError?: string | null;
-          providers?: ProviderStatusDTO[];
-          error?: string;
-          message?: string;
-          detail?: string;
-        };
-        if (!res.ok) {
-          setError(data.message ?? data.detail ?? data.error ?? `HTTP ${res.status}`);
-          return;
-        }
-        const jobIds = data.jobIds ?? [];
-        const initState: AreaState = {
-          correlationId: data.correlationId ?? "",
-          city: data.city ?? filters.city,
-          center: data.center ?? center ?? { lat: 0, lng: 0, city: filters.city, country: "DE", source: "static" },
-          radiusKm: data.radiusKm ?? filters.radiusKm,
-          jobIds,
-          remainingJobIds: data.remainingJobIds ?? jobIds.slice(1),
-          totalTiles: data.totalTiles ?? jobIds.length,
-          discovered: data.firstResult?.discoveredCount ?? 0,
-          costCents: 0,
-          running: 0,
-          completed: data.firstResult ? 1 : 0,
-          failed: 0,
-          hint: data.hint ?? null,
-          startedAt: Date.now(),
-          firstError: data.firstProviderError ?? null,
-          providers: data.providers ?? [],
-          skipped: data.skipped ?? null,
-        };
-        setArea(initState);
-        void load();
-      } catch (err) {
-        setError((err as Error).message);
-      }
-    },
-    [filters, center, load]
+  // ── Katalog-Status ───────────────────────────────────────────────
+  // Reine Statusabfrage gegen PostgreSQL: wie weit ist der serverseitige
+  // Aufbau, ist der Katalog veröffentlicht. Der Browser stösst nichts an
+  // und arbeitet nichts ab — er zeigt nur an, was der Worker tut.
+  const catalogBuilding = Boolean(
+    catalog && catalog.publishState !== "PUBLISHED" && catalog.progress && catalog.progress.done < catalog.progress.total
   );
 
-  // Client-Runner: verbleibende Jobs mit begrenzter Parallelität abarbeiten
   useEffect(() => {
-    if (!area || area.remainingJobIds.length === 0) return;
     let cancelled = false;
-    const queue = [...area.remainingJobIds];
-    const inflight = new Set<string>();
+    let stop = false;
 
-    async function runOne(id: string) {
-      inflight.add(id);
+    async function poll() {
       try {
-        await fetch(`/api/admin/sales/targets/search-jobs/${id}/run`, { method: "POST" });
-      } catch {
-        /* Fehler landen im area-status */
-      }
-      inflight.delete(id);
-    }
-
-    async function pump() {
-      while (!cancelled && (queue.length > 0 || inflight.size > 0)) {
-        while (queue.length > 0 && inflight.size < AREA_PARALLELISM) {
-          const id = queue.shift();
-          if (id) void runOne(id);
-        }
-        await new Promise((r) => setTimeout(r, 300));
-      }
-    }
-    void pump();
-    return () => {
-      cancelled = true;
-    };
-    // Nur beim ersten Setzen von `area` starten — nicht bei jedem State-Update.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [area?.correlationId]);
-
-  // Poll status der Area-Jobs
-  useEffect(() => {
-    if (!area) return;
-    let cancelled = false;
-    const iv = setInterval(async () => {
-      if (area.jobIds.length === 0) return;
-      try {
-        const res = await fetch(
-          `/api/admin/sales/targets/area-status?ids=${area.jobIds.join(",")}`,
-          { cache: "no-store" }
-        );
+        const res = await fetch("/api/admin/sales/targets/catalog", { cache: "no-store" });
         if (!res.ok) return;
-        const data = (await res.json()) as {
-          jobs: AreaJob[];
-          totals: { queued: number; running: number; completed: number; failed: number; discovered: number; costCents: number };
-          providers?: ProviderStatusDTO[];
-          firstError?: string | null;
-        };
+        const data = (await res.json()) as CatalogStatusDTO;
         if (cancelled) return;
-        setArea((prev) =>
-          prev
-            ? {
-                ...prev,
-                running: data.totals.running,
-                completed: data.totals.completed,
-                failed: data.totals.failed,
-                discovered: data.totals.discovered,
-                costCents: data.totals.costCents ?? prev.costCents,
-                remainingJobIds: data.jobs.filter((j) => j.status === "queued").map((j) => j.id),
-                firstError: data.firstError ?? prev.firstError,
-                providers: data.providers ?? prev.providers,
-              }
-            : prev
-        );
+        setCatalog(data);
+        // Fertig und veröffentlicht: kein weiteres Polling nötig.
+        if (data.publishState === "PUBLISHED" && (!data.progress || data.progress.done >= data.progress.total)) {
+          stop = true;
+        }
       } catch {
         /* silent */
       }
-    }, 3000);
+    }
+
+    void poll();
+    const iv = setInterval(() => {
+      if (stop) return;
+      void poll();
+    }, 8000);
     return () => {
       cancelled = true;
       clearInterval(iv);
     };
-    // Wir rebooten das Polling ausschließlich bei einer neuen Area-Session
-    // (neue correlationId oder veränderte Job-Anzahl); `area` selbst
-    // sollen wir NICHT als Dependency ergänzen — das würde bei jedem
-    // Poll-Update das Intervall neu aufsetzen und Requests verdoppeln.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [area?.correlationId, area?.jobIds.length]);
+  }, []);
 
-  // ── Ambient-Discovery-Trigger ────────────────────────────────────
-  // Startet automatisch für jede (Stadt × Radius)-Kombination genau
-  // einmal in dieser Session eine Hintergrund-Discovery. Der Server
-  // entscheidet dann per Freshness-Check, ob wirklich neu gescannt
-  // werden muss oder ob die vorhandenen Daten reichen — kein Button
-  // notwendig. Bei erhöhtem Radius wird die Region neu ausgewertet.
+  // Während der Katalog wächst, die Liste periodisch nachladen.
   useEffect(() => {
-    if (!filtersReadyRef.current) return;
-    if (!center || !filters.city.trim()) return;
-    const key = `${center.city.toLowerCase()}::${filters.radiusKm}::${filters.industries.slice().sort().join(",")}`;
-    if (lastAmbientKeyRef.current === key) return;
-    lastAmbientKeyRef.current = key;
-    // kleiner Delay, damit der DB-Load zuerst fertig ist und wir bei
-    // frischen Daten den Trigger sofort vom Server als „skipped: fresh"
-    // zurückbekommen können — kein sichtbares Nachladen.
-    const t = setTimeout(() => {
-      void triggerAreaScan({ auto: true });
-    }, 250);
-    return () => clearTimeout(t);
-  }, [center, filters.city, filters.radiusKm, filters.industries, triggerAreaScan]);
+    if (!catalogBuilding) return;
+    const iv = setInterval(() => void load(), 10000);
+    return () => clearInterval(iv);
+  }, [catalogBuilding, load]);
 
   // ── Live-Counter ────────────────────────────────────────────────
-  // Sehr günstiger Poll: nur COUNTs, keine Rows. Läuft während einer
-  // Area-Session alle 2 s, sonst alle 15 s als leichte Aktualisierung.
+  // Sehr günstiger Poll: nur COUNTs, keine Rows. Während der Katalog
+  // aufgebaut wird häufiger, danach als leichte Aktualisierung.
   useEffect(() => {
-    if (!center) return;
     let cancelled = false;
     async function fetchCount() {
       const p = new URLSearchParams();
@@ -548,64 +375,12 @@ export default function TargetsCenter({ accent }: { accent: string }) {
       }
     }
     void fetchCount();
-    const iv = setInterval(fetchCount, area ? 2000 : 15000);
+    const iv = setInterval(fetchCount, catalogBuilding ? 5000 : 20000);
     return () => {
       cancelled = true;
       clearInterval(iv);
     };
-    // area.correlationId reicht als Trigger — die 2-vs-15-s-Frequenz
-    // hängt nur an "gibt es aktuell eine Session?" und muss nicht bei
-    // jedem area-Feld-Update das Intervall zurücksetzen.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center, filters.radiusKm, filters.industries, area?.correlationId]);
-
-  // ── Auto-Resume beim Mount ────────────────────────────────────────
-  // Nach Server-Restart oder Reconnect: welche Discovery-Jobs sind
-  // noch queued/running? Wir adoptieren sie in eine neue AreaState,
-  // damit unser Client-Runner sie abarbeitet.
-  useEffect(() => {
-    let cancelled = false;
-    async function resume() {
-      try {
-        const res = await fetch("/api/admin/sales/targets/pending-jobs", { cache: "no-store" });
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          search: Array<{ id: string; city: string | null; radiusKm: number; industries: string[]; status: string; discoveredCount: number }>;
-        };
-        if (cancelled || data.search.length === 0) return;
-        // Bereits laufende Session? Dann nicht doppelt aufnehmen.
-        setArea((prev) => {
-          if (prev) return prev;
-          const jobIds = data.search.map((j) => j.id);
-          return {
-            correlationId: `resume-${Date.now()}`,
-            city: data.search[0].city ?? "",
-            center: { lat: 0, lng: 0, city: data.search[0].city ?? "", country: "DE", source: "static" },
-            radiusKm: Math.max(...data.search.map((j) => j.radiusKm)),
-            jobIds,
-            remainingJobIds: data.search.filter((j) => j.status === "queued").map((j) => j.id),
-            totalTiles: jobIds.length,
-            discovered: data.search.reduce((n, j) => n + j.discoveredCount, 0),
-            costCents: 0,
-            running: data.search.filter((j) => j.status === "running").length,
-            completed: 0,
-            failed: 0,
-            hint: `${data.search.length} offene Discovery-Jobs vom Server aufgenommen.`,
-            startedAt: Date.now(),
-            firstError: null,
-            providers: [],
-            skipped: null,
-          };
-        });
-      } catch {
-        /* silent */
-      }
-    }
-    void resume();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  }, [center, filters.radiusKm, filters.industries, catalogBuilding]);
 
   const listTotals = useMemo(() => {
     // Fallback für Client-seitige Auswertung (falls der Live-Counter
@@ -628,7 +403,6 @@ export default function TargetsCenter({ accent }: { accent: string }) {
       }
     : listTotals;
 
-  const runningDiscovery = Boolean(area && (area.remainingJobIds.length > 0 || area.running > 0));
   const runningEnrichment = (liveCounters?.enrichmentQueued ?? 0) > 0;
 
   return (
@@ -644,7 +418,8 @@ export default function TargetsCenter({ accent }: { accent: string }) {
             accent={accent}
             city={center?.city ?? filters.city}
             radius={filters.radiusKm}
-            discovering={runningDiscovery}
+            discovering={catalogBuilding}
+            catalogLabel={catalog?.scope?.label ?? null}
             enriching={runningEnrichment}
             enrichmentQueued={liveCounters?.enrichmentQueued ?? 0}
           />
@@ -671,10 +446,10 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         <Kpi label="Entscheider bekannt" value={totals.withDm} />
       </div>
 
-      {/* Area-Discovery-Progress — nur wenn wirklich ein Scan läuft
-          und nicht per Freshness-Cache übersprungen wurde. */}
-      {area && !area.skipped && (area.jobIds.length > 0 || area.discovered > 0) && (
-        <AreaProgress area={area} accent={accent} onClose={() => setArea(null)} />
+      {/* Katalog-Fortschritt — nur solange der Server noch aufbaut.
+          Reine Anzeige; der Aufbau läuft unabhängig vom Browser. */}
+      {catalog && !catalogHidden && catalogBuilding && (
+        <CatalogProgress catalog={catalog} accent={accent} onClose={() => setCatalogHidden(true)} />
       )}
 
       {/* Intelligence-Quality-Strip */}
@@ -690,17 +465,17 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         </div>
       )}
       {!loading && items.length === 0 && !error && (
-        <Section title="Automatische Discovery läuft">
+        <Section title={catalogBuilding ? "Katalog wird aufgebaut" : "Keine Treffer für diese Auswahl"}>
           <EmptyState
             title={
-              runningDiscovery
-                ? `Analysiere ${center?.city ?? filters.city} — ${area?.discovered ?? 0} Firmen erfasst`
-                : "Region wird im Hintergrund aufgebaut"
+              catalogBuilding
+                ? `${catalog?.scope?.label ?? "Region"} wird erfasst — ${catalog?.discoveredCount ?? 0} Firmen gespeichert`
+                : "Keine Firmen im gewählten Ausschnitt"
             }
             hint={
-              center
-                ? `Wir durchsuchen ${center.city} und Umkreis ${filters.radiusKm} km live auf öffentliche Firmendaten. Neue Ergebnisse erscheinen automatisch — kein manueller Start notwendig.`
-                : "Wähle oben eine Stadt und einen Radius. Die Ergebnisse erscheinen automatisch."
+              catalogBuilding
+                ? "Der Aufbau läuft serverseitig weiter, auch wenn du diese Seite schließt. Neue Firmen erscheinen automatisch."
+                : `Der Katalog enthält ${totals.total} Firmen. Erweitere den Radius oder entferne Filter, um mehr zu sehen.`
             }
           />
         </Section>
@@ -747,6 +522,7 @@ function LivePulse({
   city,
   radius,
   discovering,
+  catalogLabel,
   enriching,
   enrichmentQueued,
 }: {
@@ -754,12 +530,13 @@ function LivePulse({
   city: string;
   radius: number;
   discovering: boolean;
+  catalogLabel: string | null;
   enriching: boolean;
   enrichmentQueued: number;
 }) {
   const active = discovering || enriching;
   const label = discovering
-    ? `Discovery aktiv · ${city} · ${radius} km`
+    ? `Katalog wird aufgebaut · ${catalogLabel ?? "Region"}`
     : enriching
       ? `Analyse läuft · ${enrichmentQueued} Firmen in der Queue`
       : `Bereit · ${city} · ${radius} km`;
@@ -893,12 +670,19 @@ function LocationBar({
 /*  Area Progress (Live-Fortschritt der Tile-Discovery)                       */
 /* -------------------------------------------------------------------------- */
 
-function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: string; onClose: () => void }) {
-  const done = area.completed + area.failed;
-  const pct = area.jobIds.length > 0 ? Math.round((done / area.jobIds.length) * 100) : 0;
-  const elapsed = Math.max(1, Math.round((Date.now() - area.startedAt) / 1000));
-  const finished = area.remainingJobIds.length === 0 && area.running === 0;
-  const problem = finished && area.discovered === 0;
+function CatalogProgress({
+  catalog,
+  accent,
+  onClose,
+}: {
+  catalog: CatalogStatusDTO;
+  accent: string;
+  onClose: () => void;
+}) {
+  const p = catalog.progress;
+  const pct = p?.pct ?? 0;
+  const problem = Boolean(catalog.firstError) || (p != null && p.failed > 0 && p.failed === p.total);
+  const failedChecks = (catalog.qualityReport?.checks ?? []).filter((c) => !c.passed);
   return (
     <div
       className={`rounded-2xl border p-4 ${
@@ -908,20 +692,24 @@ function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: stri
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-[0.16em] text-white/45">
-            {problem ? "Discovery ohne Ergebnisse" : finished ? "Discovery abgeschlossen" : "Discovery läuft"}
+            {problem ? "Katalogaufbau mit Problemen" : "Katalog wird aufgebaut"}
           </div>
           <div className="mt-1 text-sm font-medium text-white">
-            {area.city} · {area.radiusKm} km · {area.jobIds.length} Tiles
+            {catalog.scope?.label ?? "Region"}
+            {p ? ` · ${p.total} Segmente` : ""}
           </div>
         </div>
         <div className="flex items-center gap-3 text-right">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.16em] text-white/45">Firmen erfasst</div>
+            <div className="text-[10px] uppercase tracking-[0.16em] text-white/45">Firmen gespeichert</div>
             <div className="text-2xl font-semibold" style={{ color: problem ? "#fbbf24" : accent }}>
-              {area.discovered}
+              {catalog.discoveredCount}
             </div>
           </div>
-          <button onClick={onClose} className="rounded-full border border-white/10 px-2 py-1 text-[11px] text-white/60 hover:text-white">
+          <button
+            onClick={onClose}
+            className="rounded-full border border-white/10 px-2 py-1 text-[11px] text-white/60 hover:text-white"
+          >
             ausblenden
           </button>
         </div>
@@ -933,34 +721,38 @@ function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: stri
         />
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/60">
-        <span>Fortschritt: {pct}% ({done}/{area.jobIds.length})</span>
-        <span>Aktiv: {area.running}</span>
-        <span>Wartend: {area.remainingJobIds.length}</span>
-        {area.failed > 0 && <span className="text-red-300">Fehler: {area.failed}</span>}
-        <span>Dauer: {elapsed}s</span>
-        {area.costCents > 0 && <span>Ausgabe: {(area.costCents / 100).toFixed(2)} €</span>}
-        {area.hint && <span className="text-amber-300/80">{area.hint}</span>}
+        {p && (
+          <>
+            <span>
+              Fortschritt: {pct}% ({p.done}/{p.total})
+            </span>
+            <span>Aktiv: {p.running}</span>
+            <span>Wartend: {p.queued}</span>
+            {p.failed > 0 && <span className="text-red-300">Fehler: {p.failed}</span>}
+          </>
+        )}
+        <span>Status: {catalog.publishState === "PUBLISHED" ? "veröffentlicht" : "Entwurf"}</span>
+        <span className="text-white/45">Läuft serverseitig weiter — Fenster kann geschlossen werden.</span>
       </div>
-      {area.providers && area.providers.length > 0 && (
+      {failedChecks.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-[0.16em] text-white/40">Datenquellen aktiv:</span>
-          {area.providers
-            .filter((p) => p.configured)
-            .map((p) => (
-              <span
-                key={p.key}
-                className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200"
-              >
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                {p.label}
-              </span>
-            ))}
+          <span className="text-[10px] uppercase tracking-[0.16em] text-white/40">Freigabe offen:</span>
+          {failedChecks.map((c) => (
+            <span
+              key={c.key}
+              className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-200"
+            >
+              {c.label}: {c.actual}
+              {c.unit === "percent" ? "%" : ""} / {c.required}
+              {c.unit === "percent" ? "%" : ""}
+            </span>
+          ))}
         </div>
       )}
-      {area.firstError && (
+      {catalog.firstError && (
         <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/[0.08] p-3 text-xs text-red-100">
           <div className="mb-1 text-[10px] uppercase tracking-[0.16em] text-red-200/80">Fehlermeldung des Providers</div>
-          <div className="font-mono text-[12px] leading-relaxed">{area.firstError}</div>
+          <div className="font-mono text-[12px] leading-relaxed">{catalog.firstError}</div>
         </div>
       )}
     </div>

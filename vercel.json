@@ -12,8 +12,22 @@
     "app/api/admin/stats/route.ts": {
       "maxDuration": 10,
       "memory": 512
+    },
+    "app/api/cron/sales-targets/tick/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
+    },
+    "app/api/admin/sales/targets/discovery-worker/route.ts": {
+      "maxDuration": 120,
+      "memory": 1024
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/sales-targets/tick",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "env": {
     "VERCEL": "1"
   }

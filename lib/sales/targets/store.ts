@@ -1174,6 +1174,8 @@ export interface CreateSearchJobInput {
   limitCount?: number;
   providerPreferences?: Record<string, unknown>;
   createdBy?: string | null;
+  /** Verknüpft den Job mit einem Katalog-/Area-Run. */
+  areaScanId?: string | null;
 }
 
 export async function createSearchJob(input: CreateSearchJobInput): Promise<SearchJob> {
@@ -1184,7 +1186,7 @@ export async function createSearchJob(input: CreateSearchJobInput): Promise<Sear
     INSERT INTO sales_target_search_jobs (
       id, label, city, region, country, center_lat, center_lng, radius_km,
       industries, categories, filters, depth, limit_count, provider_preferences,
-      status, created_by
+      status, created_by, area_scan_id
     ) VALUES (
       ${id}, ${input.label ?? null}, ${input.city ?? null}, ${input.region ?? null},
       ${input.country ?? "DE"}, ${input.centerLat ?? null}, ${input.centerLng ?? null},
@@ -1193,7 +1195,7 @@ export async function createSearchJob(input: CreateSearchJobInput): Promise<Sear
       ${JSON.stringify(input.filters ?? {})}::jsonb,
       ${input.depth ?? "STANDARD"}, ${input.limitCount ?? 100},
       ${JSON.stringify(input.providerPreferences ?? {})}::jsonb,
-      'queued', ${input.createdBy ?? null}
+      'queued', ${input.createdBy ?? null}, ${input.areaScanId ?? null}
     )
     RETURNING *
   `;
@@ -1227,6 +1229,137 @@ export async function listSearchJobs(limit = 30): Promise<SearchJob[]> {
     SELECT * FROM sales_target_search_jobs ORDER BY created_at DESC LIMIT ${limit}
   `;
   return rows.map(mapSearchJob);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Search-Job-Queue (Lease-Semantik, identisch zu takeNextEnrichmentJob)      */
+/* -------------------------------------------------------------------------- */
+
+/** Wie lange ein geleaster Job als „in Arbeit" gilt, bevor er zurückfällt. */
+const SEARCH_LEASE_MS = 5 * 60_000;
+
+/**
+ * Gibt Jobs frei, deren Lease abgelaufen ist. Notwendig, weil eine
+ * Serverless-Funktion jederzeit hart beendet werden kann — ohne das
+ * hier bleiben solche Jobs für immer in `running` hängen (genau das
+ * Symptom, das die Discovery zuvor blockiert hat).
+ */
+export async function reclaimExpiredSearchJobs(): Promise<number> {
+  const sql = await db();
+  if (!sql) return 0;
+  const rows = await sql<{ id: string }[]>`
+    UPDATE sales_target_search_jobs
+       SET status = CASE WHEN attempts >= max_attempts THEN 'failed' ELSE 'queued' END,
+           error = COALESCE(error, 'Lease abgelaufen — Job wurde erneut eingereiht'),
+           lease_expires_at = NULL,
+           next_attempt_at = NOW()
+     WHERE status = 'running'
+       AND lease_expires_at IS NOT NULL
+       AND lease_expires_at < NOW()
+    RETURNING id
+  `;
+  return rows.length;
+}
+
+/**
+ * Leased den nächsten fälligen Search-Job. `FOR UPDATE SKIP LOCKED`
+ * erlaubt mehrere parallele Worker ohne Doppelverarbeitung — dasselbe
+ * Muster wie `takeNextEnrichmentJob`.
+ */
+export async function takeNextSearchJob(opts?: { areaScanId?: string | null }): Promise<SearchJob | null> {
+  const sql = await db();
+  if (!sql) return null;
+  const areaScanId = opts?.areaScanId ?? null;
+  const leaseUntil = new Date(Date.now() + SEARCH_LEASE_MS).toISOString();
+  const rows = await sql<Record<string, unknown>[]>`
+    UPDATE sales_target_search_jobs
+       SET status = 'running',
+           started_at = COALESCE(started_at, NOW()),
+           attempts = attempts + 1,
+           lease_expires_at = ${leaseUntil}
+     WHERE id = (
+       SELECT id FROM sales_target_search_jobs
+        WHERE status = 'queued'
+          AND next_attempt_at <= NOW()
+          AND (${areaScanId}::text IS NULL OR area_scan_id = ${areaScanId})
+        ORDER BY created_at ASC
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+     )
+    RETURNING *
+  `;
+  return rows[0] ? mapSearchJob(rows[0]) : null;
+}
+
+/** Erfolgreicher Abschluss — Lease freigeben. */
+export async function completeSearchJob(
+  id: string,
+  patch: { discoveredCount?: number; actualCostCents?: number; error?: string | null }
+): Promise<void> {
+  const sql = await db();
+  if (!sql) return;
+  await sql`
+    UPDATE sales_target_search_jobs
+       SET status = 'completed',
+           finished_at = NOW(),
+           lease_expires_at = NULL,
+           discovered_count = COALESCE(${patch.discoveredCount ?? null}, discovered_count),
+           actual_cost_cents = COALESCE(${patch.actualCostCents ?? null}::bigint, actual_cost_cents),
+           error = ${patch.error ?? null}
+     WHERE id = ${id}
+  `;
+}
+
+/**
+ * Fehlschlag mit Backoff. Unterhalb von `max_attempts` wandert der Job
+ * mit exponentiell wachsender Wartezeit zurück in die Queue, danach
+ * endgültig auf `failed`.
+ */
+export async function failSearchJob(id: string, error: string): Promise<void> {
+  const sql = await db();
+  if (!sql) return;
+  await sql`
+    UPDATE sales_target_search_jobs
+       SET status = CASE WHEN attempts >= max_attempts THEN 'failed' ELSE 'queued' END,
+           error = ${error.slice(0, 1000)},
+           lease_expires_at = NULL,
+           finished_at = CASE WHEN attempts >= max_attempts THEN NOW() ELSE finished_at END,
+           next_attempt_at = NOW() + (INTERVAL '30 seconds' * POWER(2, LEAST(attempts, 5)))
+     WHERE id = ${id}
+  `;
+}
+
+/** Fortschritt eines Katalog-Runs aus den zugehörigen Jobs. */
+export async function searchJobProgress(areaScanId: string): Promise<{
+  total: number;
+  queued: number;
+  running: number;
+  completed: number;
+  failed: number;
+  discovered: number;
+}> {
+  const sql = await db();
+  if (!sql) return { total: 0, queued: 0, running: 0, completed: 0, failed: 0, discovered: 0 };
+  const rows = await sql<Record<string, unknown>[]>`
+    SELECT
+      COUNT(*)::int                                              AS total,
+      COUNT(*) FILTER (WHERE status = 'queued')::int             AS queued,
+      COUNT(*) FILTER (WHERE status = 'running')::int            AS running,
+      COUNT(*) FILTER (WHERE status = 'completed')::int          AS completed,
+      COUNT(*) FILTER (WHERE status = 'failed')::int             AS failed,
+      COALESCE(SUM(discovered_count), 0)::int                    AS discovered
+    FROM sales_target_search_jobs
+    WHERE area_scan_id = ${areaScanId}
+  `;
+  const r = rows[0] ?? {};
+  return {
+    total: Number(r.total ?? 0),
+    queued: Number(r.queued ?? 0),
+    running: Number(r.running ?? 0),
+    completed: Number(r.completed ?? 0),
+    failed: Number(r.failed ?? 0),
+    discovered: Number(r.discovered ?? 0),
+  };
 }
 
 export async function getSearchJob(id: string): Promise<SearchJob | null> {
@@ -1264,6 +1397,11 @@ function mapSearchJob(row: Record<string, unknown>): SearchJob {
     createdAt: asIsoRequired(row.created_at),
     startedAt: asIso(row.started_at),
     finishedAt: asIso(row.finished_at),
+    attempts: Number(row.attempts ?? 0),
+    maxAttempts: Number(row.max_attempts ?? 3),
+    nextAttemptAt: asIso(row.next_attempt_at),
+    leaseExpiresAt: asIso(row.lease_expires_at),
+    areaScanId: (row.area_scan_id as string | null) ?? null,
   };
 }
 

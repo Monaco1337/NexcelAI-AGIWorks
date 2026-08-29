@@ -19,8 +19,15 @@
  *    Kontakt- oder Standort-Information.
  */
 
-import type { DiscoveredCompanyStub, DiscoveryProvider, DiscoveryRequest, DiscoveryResponse } from "./types";
+import type {
+  DiscoveredCompanyStub,
+  DiscoveryBBox,
+  DiscoveryProvider,
+  DiscoveryRequest,
+  DiscoveryResponse,
+} from "./types";
 import { normalizeCategoryFromTags } from "../categoryMap";
+import { getProviderHealthSnapshot, markProviderFailure, markProviderSuccess } from "./health";
 
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
@@ -34,6 +41,57 @@ const MAX_RADIUS_M = 50_000;
 const OVERPASS_TIMEOUT_S = 12;
 /** Client-seitiger HTTP-Cutoff — muss > OVERPASS_TIMEOUT_S sein. */
 const HTTP_TIMEOUT_MS = 18_000;
+
+/**
+ * bbox-Läufe dürfen länger rechnen als die interaktive Umkreissuche:
+ * eine bbox-Query liefert Tausende Treffer und wird von einem
+ * Hintergrund-Worker aufgerufen, nicht aus einem UI-Request. Gemessen
+ * liegt eine Kachel je Achse bei wenigen Sekunden; die Grenze fängt nur
+ * überlastete Mirrors ab.
+ */
+const BBOX_OVERPASS_TIMEOUT_S = 50;
+const BBOX_HTTP_TIMEOUT_MS = 55_000;
+/**
+ * Harte Obergrenze über ALLE Mirror-Versuche hinweg. Ohne sie könnte
+ * ein Segment bei drei toten Mirrors das Dreifache des Einzeltimeouts
+ * verbrauchen und die Serverless-Laufzeitgrenze reißen.
+ */
+const BBOX_TOTAL_BUDGET_MS = 75_000;
+
+/**
+ * Die OSM-Tag-Achsen, entlang derer ein Katalog segmentiert wird.
+ * Eine Achse pro Search-Job hält jede einzelne Overpass-Query klein
+ * genug, um innerhalb des Worker-Zeitbudgets zurückzukommen.
+ */
+export const OVERPASS_TAG_AXES = [
+  "shop",
+  "craft",
+  "office",
+  "amenity",
+  "healthcare",
+  "tourism",
+  "leisure",
+  "industrial",
+] as const;
+
+export type OverpassTagAxis = (typeof OVERPASS_TAG_AXES)[number];
+
+/**
+ * Nicht jeder Wert einer Achse ist ein Unternehmen. Für die breiten
+ * Achsen filtern wir auf die geschäftlich relevanten Werte, damit keine
+ * Parkbänke, Mülleimer oder Bushaltestellen im Vertriebskatalog landen.
+ */
+const AXIS_FILTER: Record<string, string> = {
+  shop: '["shop"]',
+  craft: '["craft"]',
+  office: '["office"]',
+  amenity:
+    '["amenity"~"^(restaurant|cafe|bar|pub|fast_food|biergarten|food_court|ice_cream|pharmacy|doctors|dentist|clinic|veterinary|bank|bureau_de_change|car_rental|car_wash|car_repair|fuel|charging_station|driving_school|language_school|music_school|kindergarten|childcare|nightclub|cinema|theatre|coworking_space|internet_cafe|marketplace|funeral_directors)$"]',
+  healthcare: '["healthcare"]',
+  tourism: '["tourism"~"^(hotel|guest_house|hostel|motel|apartment|chalet|resort|camp_site|caravan_site)$"]',
+  leisure: '["leisure"~"^(fitness_centre|sports_centre|dance|golf_course|swimming_pool|bowling_alley|escape_game|adult_gaming_centre)$"]',
+  industrial: '["industrial"]',
+};
 
 /**
  * Branche → Overpass-Tag-Filter. Deutlich breiter als vorher, alle
@@ -103,6 +161,63 @@ export class OverpassProvider implements DiscoveryProvider {
   }
 
   async discover(request: DiscoveryRequest): Promise<DiscoveryResponse> {
+    // bbox hat Vorrang: ein Segment-Lauf des Katalog-Workers.
+    if (request.bbox) return this.discoverByBBox(request, request.bbox);
+    return this.discoverByRadius(request);
+  }
+
+  /**
+   * Bulk-Pfad. Eine Query pro Tag-Achse über eine Bounding-Box.
+   * Liefert um Größenordnungen mehr Treffer pro Request als die
+   * Umkreissuche und ist damit der einzige praktikable Weg, einen
+   * Regionalkatalog in vertretbarer Zeit aufzubauen.
+   */
+  private async discoverByBBox(request: DiscoveryRequest, bbox: DiscoveryBBox): Promise<DiscoveryResponse> {
+    const logs: DiscoveryResponse["providerLogs"] = [];
+    const axes = request.tagAxis ? [request.tagAxis] : [...OVERPASS_TAG_AXES];
+    const seen = new Map<string, DiscoveredCompanyStub>();
+    let anyOk = false;
+
+    for (const axis of axes) {
+      const filter = AXIS_FILTER[axis];
+      if (!filter) continue;
+      const query = buildOverpassQL({
+        bbox,
+        filter,
+        limit: request.limit,
+        timeoutS: BBOX_OVERPASS_TIMEOUT_S,
+      });
+      const { ok, elements, log } = await runQueryWithFallback(
+        query,
+        this.key,
+        BBOX_HTTP_TIMEOUT_MS,
+        BBOX_TOTAL_BUDGET_MS
+      );
+      logs.push(log);
+      if (!ok) continue;
+      anyOk = true;
+      for (const el of elements) {
+        const stub = mapElement(el, request, this.key);
+        if (!stub) continue;
+        const key = `${el.type}/${el.id}`;
+        if (!seen.has(key)) seen.set(key, stub);
+      }
+      if (seen.size >= request.limit) break;
+    }
+
+    if (!anyOk) {
+      return { companies: [], estimatedCostCents: 0, actualCostCents: 0, providerLogs: logs };
+    }
+    return {
+      companies: Array.from(seen.values()).slice(0, request.limit),
+      estimatedCostCents: 0,
+      actualCostCents: 0,
+      providerLogs: logs,
+    };
+  }
+
+  /** Interaktiver Pfad: Umkreissuche um einen Punkt. Unverändert. */
+  private async discoverByRadius(request: DiscoveryRequest): Promise<DiscoveryResponse> {
     const logs: DiscoveryResponse["providerLogs"] = [];
     if (request.centerLat === null || request.centerLng === null) {
       logs.push({
@@ -110,7 +225,7 @@ export class OverpassProvider implements DiscoveryProvider {
         endpoint: "overpass",
         latencyMs: 0,
         ok: false,
-        error: "Overpass benötigt centerLat/centerLng",
+        error: "Overpass benötigt centerLat/centerLng oder eine bbox",
       });
       return { companies: [], estimatedCostCents: 0, actualCostCents: 0, providerLogs: logs };
     }
@@ -164,9 +279,56 @@ interface OverpassElement {
   tags?: Record<string, string>;
 }
 
+/**
+ * Reiht die Mirrors nach Gesundheit: Endpoints im Cooldown wandern ans
+ * Ende statt komplett auszufallen. Nutzt die vorhandene Provider-Health-
+ * Registry mit einem Sub-Key pro Endpoint, damit ein defekter Mirror
+ * (aktuell liefert kumi.systems HTTP 500) den Provider als Ganzes nicht
+ * als kaputt markiert.
+ */
+function orderedEndpoints(providerKey: string): string[] {
+  const now = Date.now();
+  return [...OVERPASS_ENDPOINTS].sort((a, b) => rank(a) - rank(b));
+
+  function rank(endpoint: string): number {
+    const snap = getProviderHealthSnapshot(mirrorKey(providerKey, endpoint));
+    const cooling = snap.cooldownUntil && new Date(snap.cooldownUntil).getTime() > now ? 100 : 0;
+    const penalty =
+      snap.state === "HEALTHY" ? 0 : snap.state === "DEGRADED" ? 10 : snap.state === "RATE_LIMITED" ? 20 : 30;
+    return cooling + penalty;
+  }
+}
+
+/**
+ * Overpass vergibt pro IP nur wenige gleichzeitige Slots. Werden
+ * Segmente ohne Pause hintereinander abgefeuert, antwortet der Server
+ * irgendwann mit HTTP 200 und leerem Ergebnis statt mit einem Fehler —
+ * beobachtet als „0 Firmen nach 59 s" bei einer Query, die einzeln in
+ * 6 s 1.649 Firmen liefert. Eine Mindestpause zwischen Anfragen hält
+ * uns innerhalb der Nutzungsregeln.
+ */
+const MIN_REQUEST_GAP_MS = 1_200;
+let lastRequestAt = 0;
+
+async function pace(): Promise<void> {
+  const wait = lastRequestAt + MIN_REQUEST_GAP_MS - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastRequestAt = Date.now();
+}
+
+function mirrorKey(providerKey: string, endpoint: string): string {
+  try {
+    return `${providerKey}:${new URL(endpoint).hostname}`;
+  } catch {
+    return `${providerKey}:${endpoint}`;
+  }
+}
+
 async function runQueryWithFallback(
   query: string,
-  providerKey: string
+  providerKey: string,
+  httpTimeoutMs: number = HTTP_TIMEOUT_MS,
+  totalBudgetMs?: number
 ): Promise<{
   ok: boolean;
   elements: OverpassElement[];
@@ -174,11 +336,25 @@ async function runQueryWithFallback(
 }> {
   let lastError = "no endpoint responded";
   let lastLatency = 0;
-  let lastEndpoint = OVERPASS_ENDPOINTS[0];
-  for (const endpoint of OVERPASS_ENDPOINTS) {
+  const endpoints = orderedEndpoints(providerKey);
+  let lastEndpoint = endpoints[0];
+  const deadline = totalBudgetMs ? Date.now() + totalBudgetMs : null;
+  for (const endpoint of endpoints) {
     const started = Date.now();
     lastEndpoint = endpoint;
+    // Verbleibendes Budget bestimmt den Timeout dieses Versuchs; ist
+    // nichts mehr übrig, brechen wir ab statt die Laufzeit zu sprengen.
+    let attemptTimeout = httpTimeoutMs;
+    if (deadline) {
+      const remaining = deadline - Date.now();
+      if (remaining < 2_000) {
+        lastError = `${lastError} (Zeitbudget erschöpft)`;
+        break;
+      }
+      attemptTimeout = Math.min(httpTimeoutMs, remaining);
+    }
     try {
+      await pace();
       const resp = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -186,15 +362,27 @@ async function runQueryWithFallback(
           "User-Agent": "NEXCEL-SalesIntel/1.0 (+https://nexcel.ai/bot)",
         },
         body: `data=${encodeURIComponent(query)}`,
-        signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+        signal: AbortSignal.timeout(attemptTimeout),
       });
       const latency = Date.now() - started;
       lastLatency = latency;
       if (!resp.ok) {
         lastError = `HTTP ${resp.status}`;
+        markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
         continue;
       }
-      const json = (await resp.json()) as { elements?: OverpassElement[] };
+      const json = (await resp.json()) as { elements?: OverpassElement[]; remark?: string };
+      // Overpass meldet serverseitige Timeouts und Speicherabbrüche NICHT
+      // per HTTP-Status, sondern als `remark` bei HTTP 200 mit leerer
+      // Ergebnisliste. Ohne diese Prüfung würde ein abgebrochenes Segment
+      // als „erfolgreich mit 0 Firmen" gelten und eine ganze Teilregion
+      // dauerhaft aus dem Katalog fallen.
+      if (json.remark && (json.elements?.length ?? 0) === 0) {
+        lastError = `Overpass-Abbruch: ${json.remark.slice(0, 200)}`;
+        markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
+        continue;
+      }
+      markProviderSuccess(mirrorKey(providerKey, endpoint));
       return {
         ok: true,
         elements: json.elements ?? [],
@@ -203,6 +391,7 @@ async function runQueryWithFallback(
     } catch (err) {
       lastLatency = Date.now() - started;
       lastError = (err as Error).message || "network error";
+      markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
     }
   }
   return {
@@ -235,17 +424,26 @@ function buildFilters(industries: string[]): string[] {
 }
 
 function buildOverpassQL(opts: {
-  lat: number;
-  lng: number;
-  radiusM: number;
+  lat?: number;
+  lng?: number;
+  radiusM?: number;
+  bbox?: DiscoveryBBox;
   filter: string;
   limit: number;
+  timeoutS?: number;
 }): string {
-  const around = `(around:${opts.radiusM},${opts.lat},${opts.lng})`;
+  const timeout = opts.timeoutS ?? OVERPASS_TIMEOUT_S;
   // Nodes + Ways reichen für Geschäfte praktisch immer aus. Relationen
   // sind für POIs selten und verlangsamen die Query stark.
-  const body = `node${opts.filter}${around};way${opts.filter}${around};`;
-  return `[out:json][timeout:${OVERPASS_TIMEOUT_S}];(${body});out tags center ${opts.limit};`;
+  const scope = opts.bbox
+    ? `(${round6(opts.bbox.south)},${round6(opts.bbox.west)},${round6(opts.bbox.north)},${round6(opts.bbox.east)})`
+    : `(around:${opts.radiusM},${opts.lat},${opts.lng})`;
+  const body = `node${opts.filter}${scope};way${opts.filter}${scope};`;
+  return `[out:json][timeout:${timeout}];(${body});out tags center ${opts.limit};`;
+}
+
+function round6(n: number): number {
+  return Math.round(n * 1e6) / 1e6;
 }
 
 function mapElement(

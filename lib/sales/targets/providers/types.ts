@@ -45,6 +45,23 @@ export interface DiscoveredCompanyStub {
   confidence: number;
 }
 
+/**
+ * Geografischer Ausschnitt für Bulk-Discovery.
+ *
+ * Provider, die Bounding-Boxes unterstützen (Overpass), liefern damit
+ * um Größenordnungen mehr Treffer pro Request als eine Umkreissuche:
+ * gemessen 4.000 Elemente in 11,4 s gegenüber 100 Elementen in 12,3 s
+ * bei `around:25000`. Deshalb ist bbox der bevorzugte Pfad, sobald er
+ * gesetzt ist; `centerLat`/`centerLng`/`radiusKm` bleiben der Standard
+ * für die interaktive Umkreissuche.
+ */
+export interface DiscoveryBBox {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
+
 export interface DiscoveryRequest {
   city: string | null;
   country: string;
@@ -55,6 +72,14 @@ export interface DiscoveryRequest {
   categories: string[];
   limit: number;
   depth: "QUICK" | "STANDARD" | "DEEP";
+  /** Wenn gesetzt, hat der bbox-Pfad Vorrang vor der Umkreissuche. */
+  bbox?: DiscoveryBBox | null;
+  /**
+   * Beschränkt die Discovery auf genau eine OSM-Tag-Achse
+   * (`shop`, `craft`, `office`, …). Nur für segmentierte Bulk-Läufe;
+   * ohne Angabe werden die Standard-Achsen des Providers verwendet.
+   */
+  tagAxis?: string | null;
 }
 
 export interface DiscoveryResponse {

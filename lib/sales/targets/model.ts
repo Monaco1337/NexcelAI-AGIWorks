@@ -92,6 +92,13 @@ export interface SearchFilters {
   maxDistanceKm?: number;
   minBudgetCents?: number;
   minLeadScore?: number;
+  /* ── Katalog-Segmente ──────────────────────────────────────────────
+   * Bei Bulk-Katalogläufen trägt der Search-Job sein Arbeitspaket hier:
+   * eine Bounding-Box plus eine OSM-Tag-Achse. Damit bleibt die
+   * bestehende Job-Tabelle ohne zusätzliche Spalten nutzbar. */
+  catalogSegment?: string;
+  bbox?: { south: number; west: number; north: number; east: number };
+  tagAxis?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -777,6 +784,13 @@ export interface SearchJob {
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
+  /* ── Queue-Semantik (Migration 0013) ─────────────────────────────── */
+  attempts: number;
+  maxAttempts: number;
+  nextAttemptAt: string | null;
+  leaseExpiresAt: string | null;
+  /** Zugehöriger Katalog-/Area-Run, falls der Job Teil eines Batches ist. */
+  areaScanId: string | null;
 }
 
 export interface EnrichmentJob {
