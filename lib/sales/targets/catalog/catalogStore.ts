@@ -78,9 +78,12 @@ export interface CreateCatalogRunInput {
 
 /**
  * Legt einen Katalog-Run an. Der partielle Unique-Index auf
- * `(scope_key) WHERE publish_state='DRAFT'` macht das idempotent: bei
- * einem parallelen zweiten Aufruf gewinnt der erste, der zweite bekommt
- * den bestehenden Run zurück.
+ * `(scope_key) WHERE scope_key IS NOT NULL AND publish_state='DRAFT'`
+ * macht das idempotent: bei einem parallelen zweiten Aufruf gewinnt der
+ * erste, der zweite bekommt den bestehenden Run zurück.
+ *
+ * Die WHERE-Klausel muss dem Index-Prädikat exakt entsprechen —
+ * Postgres leitet den Zielindex daraus ab und findet ihn sonst nicht.
  */
 export async function createCatalogRun(input: CreateCatalogRunInput): Promise<CatalogRun> {
   const sql = await db();
@@ -98,7 +101,7 @@ export async function createCatalogRun(input: CreateCatalogRunInput): Promise<Ca
       'running', 'DRAFT', ${input.scopeKey},
       ${JSON.stringify(input.bbox)}::jsonb, ${input.createdBy}
     )
-    ON CONFLICT (scope_key) WHERE publish_state = 'DRAFT' DO NOTHING
+    ON CONFLICT (scope_key) WHERE scope_key IS NOT NULL AND publish_state = 'DRAFT' DO NOTHING
     RETURNING *
   `;
   if (rows[0]) return mapRun(rows[0]);
