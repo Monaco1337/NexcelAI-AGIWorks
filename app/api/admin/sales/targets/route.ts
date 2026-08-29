@@ -49,9 +49,12 @@ export async function GET(request: NextRequest) {
     onlyWebsiteWeak: optBool(params, "weakWebsite"),
     onlyWithSoftwareOpportunity: optBool(params, "softwareOpp"),
     search: params.get("q") ?? undefined,
-    limit: Number.parseInt(params.get("limit") ?? "100", 10) || 100,
+    limit: Math.max(1, Math.min(1000, Number.parseInt(params.get("limit") ?? "100", 10) || 100)),
     offset: Number.parseInt(params.get("offset") ?? "0", 10) || 0,
     sortBy: (params.get("sort") as TargetListFilters["sortBy"]) ?? "score",
+    centerLat: optNum(params, "centerLat"),
+    centerLng: optNum(params, "centerLng"),
+    centerRadiusKm: optNum(params, "centerRadiusKm"),
   };
 
   try {

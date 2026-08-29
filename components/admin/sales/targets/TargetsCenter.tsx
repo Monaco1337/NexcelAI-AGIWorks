@@ -1,16 +1,16 @@
 "use client";
 
 /**
- * Zielkunden-Intelligence-Dashboard.
+ * Zielkunden-Intelligence-Cockpit.
  *
- * Design-Grundsatz: gleiche Optik wie das restliche Sales-Modul
- * (glass cards, dark theme, brand-accent). Neu ist die Fokussierung
- * auf ranked Opportunities statt einer CRM-Tabelle. Der User bekommt
- * innerhalb von wenigen Sekunden die Antwort auf:
- *   „Wen soll ich JETZT kontaktieren und warum?"
+ * Neuer Grundsatz (Phase 2): keine Modal-Ceremony. Die Ansicht öffnet
+ * SOFORT eine relevante Liste, der User setzt Stadt + Radius im Header
+ * und die Karten laden inline. Für Regionen bis 250 km wird bei
+ * Bedarf eine Tile-basierte Discovery im Hintergrund gestartet, deren
+ * Fortschritt oben in Echtzeit sichtbar bleibt.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Section,
   EmptyState,
@@ -27,7 +27,6 @@ import type {
   SalesBrief,
 } from "@/lib/sales/targets/model";
 import { PRIORITY_CLASS_COLOR, PRIORITY_CLASS_LABEL } from "@/lib/sales/targets/model";
-import TargetSearchModal from "./TargetSearchModal";
 import TargetDetail from "./TargetDetail";
 
 export interface TargetListItemDTO {
@@ -48,10 +47,10 @@ export interface TargetListItemDTO {
 interface Filters {
   q: string;
   city: string;
-  industry: string;
+  radiusKm: number;
+  industries: string[];
   priority: PriorityClass | "";
   minScore: number | null;
-  maxDistanceKm: number | null;
   hasWebsite: boolean;
   hasPhone: boolean;
   hasEmail: boolean;
@@ -61,13 +60,30 @@ interface Filters {
   sort: "score" | "distance" | "recent" | "name";
 }
 
+const INDUSTRY_OPTIONS = [
+  "Handwerk",
+  "Sanitär / Heizung",
+  "Elektro",
+  "Ärzte / Praxen",
+  "Kanzleien",
+  "Steuerberatung",
+  "Gastronomie",
+  "Immobilien",
+  "Fitness / Beauty",
+  "Automotive",
+  "Einzelhandel",
+  "Industrie",
+];
+
+const STORAGE_KEY = "nx.targets.cockpit.v2";
+
 const DEFAULT_FILTERS: Filters = {
   q: "",
-  city: "",
-  industry: "",
+  city: "Unna",
+  radiusKm: 25,
+  industries: [],
   priority: "",
   minScore: null,
-  maxDistanceKm: null,
   hasWebsite: false,
   hasPhone: false,
   hasEmail: false,
@@ -77,24 +93,128 @@ const DEFAULT_FILTERS: Filters = {
   sort: "score",
 };
 
+interface GeoPoint {
+  lat: number;
+  lng: number;
+  city: string;
+  country: string;
+  source: "static" | "google_places";
+}
+
+interface AreaJob {
+  id: string;
+  status: "queued" | "running" | "completed" | "failed";
+  discoveredCount: number;
+  city: string | null;
+  industries: string[];
+  startedAt: string | null;
+  finishedAt: string | null;
+  error: string | null;
+  actualCostCents: number;
+}
+
+interface AreaState {
+  correlationId: string;
+  city: string;
+  center: GeoPoint;
+  radiusKm: number;
+  jobIds: string[];
+  remainingJobIds: string[];
+  totalTiles: number;
+  discovered: number;
+  costCents: number;
+  running: number;
+  completed: number;
+  failed: number;
+  hint: string | null;
+  startedAt: number;
+}
+
+const AREA_PARALLELISM = 3;
+
+function readStoredFilters(): Filters {
+  if (typeof window === "undefined") return DEFAULT_FILTERS;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_FILTERS;
+    const parsed = JSON.parse(raw) as Partial<Filters>;
+    return { ...DEFAULT_FILTERS, ...parsed };
+  } catch {
+    return DEFAULT_FILTERS;
+  }
+}
+
 export default function TargetsCenter({ accent }: { accent: string }) {
   const [items, setItems] = useState<TargetListItemDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const [showSearch, setShowSearch] = useState(false);
   const [openTargetId, setOpenTargetId] = useState<string | null>(null);
+  const [center, setCenter] = useState<GeoPoint | null>(null);
+  const [centerError, setCenterError] = useState<string | null>(null);
+  const [area, setArea] = useState<AreaState | null>(null);
+  const [areaLaunching, setAreaLaunching] = useState(false);
+  const [autoScanned, setAutoScanned] = useState(false);
+  const filtersReadyRef = useRef(false);
+
+  // Persistenz — Filter über Reloads hinweg
+  useEffect(() => {
+    setFilters(readStoredFilters());
+    filtersReadyRef.current = true;
+  }, []);
+  useEffect(() => {
+    if (!filtersReadyRef.current) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+    } catch {
+      /* noop */
+    }
+  }, [filters]);
+
+  // Stadt → Koordinaten (debounced)
+  useEffect(() => {
+    const city = filters.city.trim();
+    if (!city) {
+      setCenter(null);
+      setCenterError(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/sales/targets/geocode?city=${encodeURIComponent(city)}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { point: GeoPoint };
+          if (!cancelled) {
+            setCenter(data.point);
+            setCenterError(null);
+          }
+        } else {
+          if (!cancelled) {
+            setCenter(null);
+            setCenterError("Stadt nicht auflösbar");
+          }
+        }
+      } catch {
+        if (!cancelled) setCenterError("Geocoding fehlgeschlagen");
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [filters.city]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
     if (filters.q) params.set("q", filters.q);
-    if (filters.city) params.set("city", filters.city);
-    if (filters.industry) params.set("industry", filters.industry);
+    if (filters.industries.length > 0) params.set("industry", filters.industries.join(","));
     if (filters.priority) params.set("priority", filters.priority);
     if (filters.minScore !== null) params.set("minScore", String(filters.minScore));
-    if (filters.maxDistanceKm !== null) params.set("maxDistanceKm", String(filters.maxDistanceKm));
     if (filters.hasWebsite) params.set("hasWebsite", "1");
     if (filters.hasPhone) params.set("hasPhone", "1");
     if (filters.hasEmail) params.set("hasEmail", "1");
@@ -102,7 +222,12 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     if (filters.weakWebsite) params.set("weakWebsite", "1");
     if (filters.softwareOpp) params.set("softwareOpp", "1");
     if (filters.sort) params.set("sort", filters.sort);
-    params.set("limit", "150");
+    if (center) {
+      params.set("centerLat", String(center.lat));
+      params.set("centerLng", String(center.lng));
+      params.set("centerRadiusKm", String(filters.radiusKm));
+    }
+    params.set("limit", "500");
 
     try {
       const res = await fetch(`/api/admin/sales/targets?${params.toString()}`, { cache: "no-store" });
@@ -115,11 +240,178 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, center]);
 
+  // Auto-Load, sobald Filter/Center wechseln
   useEffect(() => {
+    if (!filtersReadyRef.current) return;
     void load();
   }, [load]);
+
+  // Auto-Poll während Discovery läuft
+  useEffect(() => {
+    if (!area || (area.running === 0 && area.remainingJobIds.length === 0 && area.completed >= area.jobIds.length)) {
+      return;
+    }
+    const iv = setInterval(() => void load(), 5000);
+    return () => clearInterval(iv);
+  }, [area, load]);
+
+  const startAreaScan = useCallback(
+    async (opts?: { auto?: boolean }) => {
+      if (!filters.city.trim()) return;
+      setAreaLaunching(true);
+      try {
+        const res = await fetch("/api/admin/sales/targets/discover-area", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            city: filters.city.trim(),
+            radiusKm: filters.radiusKm,
+            industries: filters.industries,
+            depth: "STANDARD",
+            maxTiles: opts?.auto ? 20 : 60,
+            limitPerTile: 50,
+          }),
+        });
+        const data = (await res.json()) as {
+          correlationId?: string;
+          city?: string;
+          center?: GeoPoint;
+          radiusKm?: number;
+          jobIds?: string[];
+          remainingJobIds?: string[];
+          totalTiles?: number;
+          hint?: string | null;
+          firstResult?: { discoveredCount?: number } | null;
+          error?: string;
+          message?: string;
+          detail?: string;
+        };
+        if (!res.ok) {
+          setError(data.message ?? data.detail ?? data.error ?? `HTTP ${res.status}`);
+          return;
+        }
+        const jobIds = data.jobIds ?? [];
+        const initState: AreaState = {
+          correlationId: data.correlationId ?? "",
+          city: data.city ?? filters.city,
+          center: data.center ?? center ?? { lat: 0, lng: 0, city: filters.city, country: "DE", source: "static" },
+          radiusKm: data.radiusKm ?? filters.radiusKm,
+          jobIds,
+          remainingJobIds: data.remainingJobIds ?? jobIds.slice(1),
+          totalTiles: data.totalTiles ?? jobIds.length,
+          discovered: data.firstResult?.discoveredCount ?? 0,
+          costCents: 0,
+          running: 0,
+          completed: data.firstResult ? 1 : 0,
+          failed: 0,
+          hint: data.hint ?? null,
+          startedAt: Date.now(),
+        };
+        setArea(initState);
+        void load();
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setAreaLaunching(false);
+      }
+    },
+    [filters, center, load]
+  );
+
+  // Client-Runner: verbleibende Jobs mit begrenzter Parallelität abarbeiten
+  useEffect(() => {
+    if (!area || area.remainingJobIds.length === 0) return;
+    let cancelled = false;
+    const queue = [...area.remainingJobIds];
+    const inflight = new Set<string>();
+
+    async function runOne(id: string) {
+      inflight.add(id);
+      try {
+        await fetch(`/api/admin/sales/targets/search-jobs/${id}/run`, { method: "POST" });
+      } catch {
+        /* Fehler landen im area-status */
+      }
+      inflight.delete(id);
+    }
+
+    async function pump() {
+      while (!cancelled && (queue.length > 0 || inflight.size > 0)) {
+        while (queue.length > 0 && inflight.size < AREA_PARALLELISM) {
+          const id = queue.shift();
+          if (id) void runOne(id);
+        }
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    }
+    void pump();
+    return () => {
+      cancelled = true;
+    };
+    // Nur beim ersten Setzen von `area` starten — nicht bei jedem State-Update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [area?.correlationId]);
+
+  // Poll status der Area-Jobs
+  useEffect(() => {
+    if (!area) return;
+    let cancelled = false;
+    const iv = setInterval(async () => {
+      if (area.jobIds.length === 0) return;
+      try {
+        const res = await fetch(
+          `/api/admin/sales/targets/area-status?ids=${area.jobIds.join(",")}`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          jobs: AreaJob[];
+          totals: { queued: number; running: number; completed: number; failed: number; discovered: number; costCents: number };
+        };
+        if (cancelled) return;
+        setArea((prev) =>
+          prev
+            ? {
+                ...prev,
+                running: data.totals.running,
+                completed: data.totals.completed,
+                failed: data.totals.failed,
+                discovered: data.totals.discovered,
+                costCents: data.totals.costCents ?? prev.costCents,
+                remainingJobIds: data.jobs.filter((j) => j.status === "queued").map((j) => j.id),
+              }
+            : prev
+        );
+      } catch {
+        /* silent */
+      }
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+    // Wir rebooten das Polling ausschließlich bei einer neuen Area-Session
+    // (neue correlationId oder veränderte Job-Anzahl); `area` selbst
+    // sollen wir NICHT als Dependency ergänzen — das würde bei jedem
+    // Poll-Update das Intervall neu aufsetzen und Requests verdoppeln.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [area?.correlationId, area?.jobIds.length]);
+
+  // Auto-Scan-Trigger: einmalig, wenn Ansicht geladen ist und noch nichts angezeigt wird
+  useEffect(() => {
+    if (autoScanned) return;
+    if (!filtersReadyRef.current) return;
+    if (loading) return;
+    if (!center || !filters.city.trim()) return;
+    if (items.length > 0) {
+      setAutoScanned(true);
+      return;
+    }
+    setAutoScanned(true);
+    void startAreaScan({ auto: true });
+  }, [autoScanned, loading, center, filters.city, items.length, startAreaScan]);
 
   const totals = useMemo(() => {
     const total = items.length;
@@ -135,35 +427,44 @@ export default function TargetsCenter({ accent }: { accent: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-[11px] uppercase tracking-[0.16em] text-white/45">Vertrieb / Intelligence</div>
-          <h2 className="text-lg font-semibold text-white">Zielkunden</h2>
+          <h2 className="text-lg font-semibold text-white">Zielkunden-Cockpit</h2>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => void load()}
-            className={buttonSecondary}
-            disabled={loading}
-          >
+          <button onClick={() => void load()} className={buttonSecondary} disabled={loading}>
             {loading ? "Lädt…" : "Aktualisieren"}
           </button>
           <button
-            onClick={() => setShowSearch(true)}
+            onClick={() => void startAreaScan()}
             className={buttonPrimary}
             style={{ backgroundColor: accent, color: "#000" }}
+            disabled={areaLaunching || !center}
           >
-            Automatisch suchen
+            {areaLaunching ? "Startet…" : "Bereich analysieren"}
           </button>
         </div>
       </div>
 
+      {/* Persistente Location-Bar (Stadt · Radius · Branchen) */}
+      <LocationBar
+        filters={filters}
+        onChange={setFilters}
+        center={center}
+        centerError={centerError}
+        accent={accent}
+      />
+
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi label="Gesamt" value={totals.total} />
+        <Kpi label="Angezeigt" value={totals.total} />
         <Kpi label="Priorität A+/A" value={totals.hot} accent={accent} />
         <Kpi label="Mit Sales Brief" value={totals.withBrief} />
         <Kpi label="Entscheider bekannt" value={totals.withDm} />
       </div>
 
-      {/* Intelligence-Quality-Strip (Phase 17) */}
+      {/* Area-Discovery-Progress */}
+      {area && <AreaProgress area={area} accent={accent} onClose={() => setArea(null)} />}
+
+      {/* Intelligence-Quality-Strip */}
       <IntelligenceQualityStrip accent={accent} />
 
       {/* Filter */}
@@ -176,18 +477,29 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         </div>
       )}
       {!loading && items.length === 0 && !error && (
-        <Section title="Noch keine Zielkunden">
+        <Section title="Noch keine Zielkunden für diese Region">
           <EmptyState
-            title="Automatisch Zielkunden entdecken"
-            hint="Starte deine erste automatische Suche für eine Region, Branche oder ein Radius. Sobald Firmen entdeckt sind, wird jede automatisch angereichert, bewertet und mit einem Sales Brief versehen."
+            title={
+              area
+                ? `Discovery läuft — ${area.discovered} entdeckt, ${area.completed}/${area.jobIds.length} Tiles`
+                : "Bereich noch nicht analysiert"
+            }
+            hint={
+              center
+                ? `Für ${center.city} (${filters.radiusKm} km Radius) sind noch keine Zielkunden hinterlegt. Klicke oben rechts auf „Bereich analysieren", um die automatische Suche zu starten.`
+                : "Wähle oben eine Stadt und einen Radius. Die Ergebnisse laden sich anschließend automatisch."
+            }
             action={
-              <button
-                onClick={() => setShowSearch(true)}
-                className={buttonPrimary}
-                style={{ backgroundColor: accent, color: "#000" }}
-              >
-                Erste Suche starten
-              </button>
+              center ? (
+                <button
+                  onClick={() => void startAreaScan()}
+                  className={buttonPrimary}
+                  style={{ backgroundColor: accent, color: "#000" }}
+                  disabled={areaLaunching}
+                >
+                  {areaLaunching ? "Startet…" : "Bereich jetzt analysieren"}
+                </button>
+              ) : undefined
             }
           />
         </Section>
@@ -200,16 +512,6 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         </div>
       )}
 
-      {showSearch && (
-        <TargetSearchModal
-          accent={accent}
-          onClose={() => setShowSearch(false)}
-          onCompleted={() => {
-            setShowSearch(false);
-            void load();
-          }}
-        />
-      )}
       {openTargetId && (
         <TargetDetail
           targetId={openTargetId}
@@ -218,6 +520,163 @@ export default function TargetsCenter({ accent }: { accent: string }) {
           onChanged={() => void load()}
         />
       )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Location Bar (Stadt · Radius · Branchen)                                  */
+/* -------------------------------------------------------------------------- */
+
+function LocationBar({
+  filters,
+  onChange,
+  center,
+  centerError,
+  accent,
+}: {
+  filters: Filters;
+  onChange: (f: Filters) => void;
+  center: GeoPoint | null;
+  centerError: string | null;
+  accent: string;
+}) {
+  const set = <K extends keyof Filters>(key: K, value: Filters[K]) => onChange({ ...filters, [key]: value });
+  const toggleIndustry = (i: string) => {
+    const has = filters.industries.includes(i);
+    onChange({ ...filters, industries: has ? filters.industries.filter((x) => x !== i) : [...filters.industries, i] });
+  };
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-[11px] uppercase tracking-[0.16em] text-white/45">Suchregion</div>
+        <div className="text-[11px] text-white/50">
+          {center ? (
+            <>
+              <span className="text-white/70">{center.city}</span>
+              <span className="mx-1">·</span>
+              <span>
+                {center.lat.toFixed(3)}, {center.lng.toFixed(3)}
+              </span>
+              <span className="mx-1">·</span>
+              <span className="text-white/40">
+                {center.source === "static" ? "cache" : center.source}
+              </span>
+            </>
+          ) : centerError ? (
+            <span className="text-red-300">{centerError}</span>
+          ) : (
+            <span className="text-white/40">geokodiere…</span>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-12 gap-3">
+        <div className="col-span-12 md:col-span-4">
+          <Field label="Stadt">
+            <input
+              value={filters.city}
+              onChange={(e) => set("city", e.target.value)}
+              className={inputClasses}
+              placeholder="z. B. Unna, Dortmund, Berlin"
+            />
+          </Field>
+        </div>
+        <div className="col-span-12 md:col-span-4">
+          <Field label={`Radius: ${filters.radiusKm} km`}>
+            <input
+              type="range"
+              min={1}
+              max={250}
+              step={1}
+              value={filters.radiusKm}
+              onChange={(e) => set("radiusKm", Number(e.target.value))}
+              className="w-full accent-white"
+              style={{ accentColor: accent }}
+            />
+            <div className="mt-1 flex justify-between text-[10px] text-white/40">
+              <span>1</span>
+              <span>25</span>
+              <span>50</span>
+              <span>100</span>
+              <span>250 km</span>
+            </div>
+          </Field>
+        </div>
+        <div className="col-span-12 md:col-span-4">
+          <Field label="Branchen (Discovery)">
+            <div className="flex flex-wrap gap-1.5">
+              {INDUSTRY_OPTIONS.map((i) => {
+                const active = filters.industries.includes(i);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleIndustry(i)}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                      active
+                        ? "border-white/40 bg-white/10 text-white"
+                        : "border-white/[0.06] bg-white/[0.03] text-white/60 hover:text-white/90"
+                    }`}
+                  >
+                    {i}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Area Progress (Live-Fortschritt der Tile-Discovery)                       */
+/* -------------------------------------------------------------------------- */
+
+function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: string; onClose: () => void }) {
+  const done = area.completed + area.failed;
+  const pct = area.jobIds.length > 0 ? Math.round((done / area.jobIds.length) * 100) : 0;
+  const elapsed = Math.max(1, Math.round((Date.now() - area.startedAt) / 1000));
+  const finished = area.remainingJobIds.length === 0 && area.running === 0;
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.16em] text-white/45">
+            {finished ? "Discovery abgeschlossen" : "Discovery läuft"}
+          </div>
+          <div className="mt-1 text-sm font-medium text-white">
+            {area.city} · {area.radiusKm} km · {area.jobIds.length} Tiles
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-right">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.16em] text-white/45">Firmen erfasst</div>
+            <div className="text-2xl font-semibold" style={{ color: accent }}>
+              {area.discovered}
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-full border border-white/10 px-2 py-1 text-[11px] text-white/60 hover:text-white">
+            ausblenden
+          </button>
+        </div>
+      </div>
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/[0.05]">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${Math.max(3, pct)}%`, backgroundColor: accent }}
+        />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/60">
+        <span>Fortschritt: {pct}% ({done}/{area.jobIds.length})</span>
+        <span>Aktiv: {area.running}</span>
+        <span>Wartend: {area.remainingJobIds.length}</span>
+        {area.failed > 0 && <span className="text-red-300">Fehler: {area.failed}</span>}
+        <span>Dauer: {elapsed}s</span>
+        {area.costCents > 0 && <span>Ausgabe: {(area.costCents / 100).toFixed(2)} €</span>}
+        {area.hint && <span className="text-amber-300/80">{area.hint}</span>}
+      </div>
     </div>
   );
 }
@@ -259,9 +718,9 @@ function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filt
   );
   return (
     <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
         <div className="md:col-span-2">
-          <Field label="Suche">
+          <Field label="Suche in Liste">
             <input
               value={filters.q}
               onChange={(e) => set("q", e.target.value)}
@@ -270,22 +729,6 @@ function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filt
             />
           </Field>
         </div>
-        <Field label="Stadt">
-          <input
-            value={filters.city}
-            onChange={(e) => set("city", e.target.value)}
-            className={inputClasses}
-            placeholder="alle"
-          />
-        </Field>
-        <Field label="Branche">
-          <input
-            value={filters.industry}
-            onChange={(e) => set("industry", e.target.value)}
-            className={inputClasses}
-            placeholder="alle"
-          />
-        </Field>
         <Field label="Priorität">
           <select
             value={filters.priority}
@@ -300,6 +743,17 @@ function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filt
             <option value="D">D</option>
           </select>
         </Field>
+        <Field label="Min. Lead-Score">
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={filters.minScore ?? ""}
+            onChange={(e) => set("minScore", e.target.value === "" ? null : Number(e.target.value))}
+            placeholder="z. B. 70"
+            className={inputClasses}
+          />
+        </Field>
         <Field label="Sortierung">
           <select
             value={filters.sort}
@@ -313,43 +767,15 @@ function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filt
           </select>
         </Field>
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <div>
-          <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-white/45">Score / Distanz</div>
-          <div className="grid grid-cols-2 gap-2">
-            <Field label="Min. Lead-Score">
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={filters.minScore ?? ""}
-                onChange={(e) => set("minScore", e.target.value === "" ? null : Number(e.target.value))}
-                placeholder="z. B. 70"
-                className={inputClasses}
-              />
-            </Field>
-            <Field label="Max. Distanz (km)">
-              <input
-                type="number"
-                min={0}
-                value={filters.maxDistanceKm ?? ""}
-                onChange={(e) => set("maxDistanceKm", e.target.value === "" ? null : Number(e.target.value))}
-                placeholder="z. B. 25"
-                className={inputClasses}
-              />
-            </Field>
-          </div>
-        </div>
-        <div>
-          <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-white/45">Schnellfilter</div>
-          <div className="flex flex-wrap gap-2">
-            {chip("hasPhone", "Telefon vorhanden")}
-            {chip("hasEmail", "E-Mail vorhanden")}
-            {chip("hasDm", "Entscheider gefunden")}
-            {chip("hasWebsite", "Website vorhanden")}
-            {chip("weakWebsite", "Website schwach")}
-            {chip("softwareOpp", "Software-Opportunity")}
-          </div>
+      <div>
+        <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-white/45">Schnellfilter</div>
+        <div className="flex flex-wrap gap-2">
+          {chip("hasPhone", "Telefon vorhanden")}
+          {chip("hasEmail", "E-Mail vorhanden")}
+          {chip("hasDm", "Entscheider gefunden")}
+          {chip("hasWebsite", "Website vorhanden")}
+          {chip("weakWebsite", "Website schwach")}
+          {chip("softwareOpp", "Software-Opportunity")}
         </div>
       </div>
     </div>
@@ -366,10 +792,11 @@ function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent:
   const priorityColor = PRIORITY_CLASS_COLOR[priority];
   const distance = target.distanceKm !== null ? `${target.distanceKm.toFixed(1)} km` : null;
   const opportunity = salesBrief?.mainOpportunity ?? "—";
-  const projectValue =
-    salesBrief?.projectValueMinCents && salesBrief.projectValueMaxCents
-      ? `${eur(salesBrief.projectValueMinCents)} – ${eur(salesBrief.projectValueMaxCents)}`
-      : null;
+  const budgetMin = salesBrief?.projectValueMinCents ?? leadScore?.estimatedBudgetMinCents ?? null;
+  const budgetMax = salesBrief?.projectValueMaxCents ?? leadScore?.estimatedBudgetMaxCents ?? null;
+  const projectValue = budgetMin && budgetMax ? `${eur(budgetMin)} – ${eur(budgetMax)}` : null;
+  const capacityClass = leadScore?.capacityClass ?? salesBrief?.capacityClass ?? null;
+  const capacityConfidence = leadScore?.capacityConfidence ?? salesBrief?.capacityConfidence ?? null;
 
   return (
     <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4 transition hover:border-white/20">
@@ -423,21 +850,25 @@ function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent:
         <MiniStat label="Entscheider" ok={decisionMakerCount > 0} sub={decisionMakerCount > 0 ? `${decisionMakerCount}` : undefined} />
       </div>
 
-      {projectValue && (
-        <div className="mt-3 flex items-center justify-between text-xs">
-          <span className="text-white/50">Projektpotenzial</span>
-          <span className="font-medium text-white">{projectValue}</span>
-        </div>
-      )}
-      {leadScore?.capacityClass && (
-        <div className="mt-1 flex items-center justify-between text-xs">
-          <span className="text-white/50">Commercial Capacity</span>
-          <span className="font-medium text-white">
-            {leadScore.capacityClass}
-            {leadScore.capacityConfidence != null && (
-              <span className="ml-2 text-white/50">Conf {(leadScore.capacityConfidence * 100).toFixed(0)} %</span>
+      {(projectValue || capacityClass) && (
+        <div
+          className="mt-3 rounded-xl border border-white/[0.08] p-3"
+          style={{ background: `linear-gradient(135deg, ${accent}10, transparent 60%)` }}
+        >
+          <div className="flex items-baseline justify-between">
+            <span className="text-[10px] uppercase tracking-[0.16em] text-white/45">Erwarteter Projektwert</span>
+            {capacityClass && (
+              <span className="text-[10px] text-white/50">
+                {capacityClass}
+                {capacityConfidence != null && (
+                  <span className="ml-1 text-white/40">· Conf {(capacityConfidence * 100).toFixed(0)}%</span>
+                )}
+              </span>
             )}
-          </span>
+          </div>
+          <div className="mt-1 text-lg font-semibold text-white">
+            {projectValue ?? <span className="text-white/40">—</span>}
+          </div>
         </div>
       )}
 

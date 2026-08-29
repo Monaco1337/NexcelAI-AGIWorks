@@ -55,6 +55,10 @@ export interface TargetListFilters {
   limit?: number;
   offset?: number;
   sortBy?: "score" | "distance" | "recent" | "name";
+  /** Geodesischer Radius-Filter (Haversine über t.latitude/t.longitude). */
+  centerLat?: number;
+  centerLng?: number;
+  centerRadiusKm?: number;
 }
 
 export interface TargetListItem {
@@ -335,7 +339,25 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
     hasDecisionMaker,
     onlyWebsiteWeak,
     onlyWithSoftwareOpportunity,
+    centerLat,
+    centerLng,
+    centerRadiusKm,
   } = filters;
+
+  // Bounding-Box-Vorfilter für den Radius, um Full-Table-Scans zu vermeiden.
+  const useCenter =
+    centerLat !== undefined &&
+    centerLng !== undefined &&
+    centerRadiusKm !== undefined &&
+    Number.isFinite(centerLat) &&
+    Number.isFinite(centerLng) &&
+    Number.isFinite(centerRadiusKm) &&
+    centerRadiusKm > 0;
+  const latDelta = useCenter ? centerRadiusKm! / 111 : null;
+  const lngDelta =
+    useCenter && centerLat !== undefined
+      ? centerRadiusKm! / (111 * Math.max(0.1, Math.cos((centerLat! * Math.PI) / 180)))
+      : null;
 
   const rows = await sql<Record<string, unknown>[]>`
     WITH latest_score AS (
@@ -447,6 +469,17 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
       AND (${search ?? null}::text IS NULL OR
            t.search_vector @@ plainto_tsquery('german', ${search ?? null}) OR
            t.name ILIKE ${"%" + (search ?? "") + "%"})
+      /* Radius-Filter: erst Bounding-Box (Index-freundlich), dann exakte Haversine */
+      AND (${useCenter ? 1 : 0}::int = 0 OR (
+        t.latitude IS NOT NULL AND t.longitude IS NOT NULL
+        AND t.latitude BETWEEN ${(centerLat ?? 0) - (latDelta ?? 0)} AND ${(centerLat ?? 0) + (latDelta ?? 0)}
+        AND t.longitude BETWEEN ${(centerLng ?? 0) - (lngDelta ?? 0)} AND ${(centerLng ?? 0) + (lngDelta ?? 0)}
+        AND (2 * 6371 * asin(sqrt(
+          power(sin(radians((t.latitude - ${centerLat ?? 0}) / 2)), 2) +
+          cos(radians(${centerLat ?? 0})) * cos(radians(t.latitude)) *
+          power(sin(radians((t.longitude - ${centerLng ?? 0}) / 2)), 2)
+        ))) <= ${centerRadiusKm ?? 0}
+      ))
     ORDER BY
       CASE WHEN ${sortBy} = 'name' THEN t.name ELSE NULL END ASC NULLS LAST,
       CASE WHEN ${sortBy} = 'recent' THEN t.updated_at ELSE NULL END DESC NULLS LAST,
