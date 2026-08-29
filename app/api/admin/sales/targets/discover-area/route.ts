@@ -26,6 +26,12 @@ import { runSearchJob } from "@/lib/sales/targets/pipeline";
 import { geocodeCity, tileArea } from "@/lib/sales/targets/geocode";
 import { newCorrelationId, toTargetError, TargetError } from "@/lib/sales/targets/errors";
 import { providerStatus } from "@/lib/sales/targets/providers/registry";
+import {
+  createAreaScan,
+  updateAreaScan,
+  getLatestAreaScanForRegion,
+} from "@/lib/sales/targets/geocacheStore";
+import { newTargetId } from "@/lib/sales/targets/model";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +48,15 @@ interface Body {
   depth?: "QUICK" | "STANDARD" | "DEEP";
   maxTiles?: number;
   limitPerTile?: number;
+  /**
+   * Ambient-Mode (Default): wenn für diese Region in den letzten
+   * `freshMinutes` Minuten bereits ein erfolgreicher Scan lief, dann
+   * KEIN neuer Scan gestartet — die vorhandenen Daten reichen.
+   * Set `force: true` um trotzdem neu zu scannen.
+   */
+  force?: boolean;
+  /** Time-To-Live des letzten Scans in Minuten (Default 24 h). */
+  freshMinutes?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -58,6 +73,40 @@ export async function POST(request: NextRequest) {
     const center = await geocodeCity(city);
     if (!center) {
       throw new TargetError("VALIDATION_FAILED", `Stadt „${city}“ konnte nicht geocodiert werden`);
+    }
+
+    // ── Freshness-Check ─────────────────────────────────────────────
+    // Ambient-Modus: wenn für diese Region bereits ein Scan im
+    // TTL-Fenster gelaufen ist, KEIN neuer Scan. Der Client bekommt
+    // eine reproduzierbare Antwort mit `skipped: "fresh"` und der
+    // ursprünglichen `correlationId` — nichts wird doppelt gemacht.
+    const freshMinutes = Math.max(1, Math.min(24 * 60 * 30, Number(body.freshMinutes ?? 24 * 60)));
+    const force = Boolean(body.force);
+    if (!force) {
+      const latest = await getLatestAreaScanForRegion(city, radiusKm);
+      if (latest) {
+        const ageMin = (Date.now() - new Date(latest.startedAt).getTime()) / 60_000;
+        if (ageMin < freshMinutes && latest.discoveredCount > 0) {
+          return NextResponse.json({
+            correlationId: latest.correlationId,
+            skipped: "fresh",
+            reason: `Zuletzt vor ${ageMin.toFixed(0)} min gescannt (${latest.discoveredCount} Firmen).`,
+            city: center.city,
+            center: { lat: center.lat, lng: center.lng, source: center.source },
+            radiusKm,
+            tileRadiusKm: TILE_RADIUS_KM,
+            totalTiles: latest.totalTiles,
+            jobIds: latest.jobIds,
+            remainingJobIds: [],
+            firstResult: null,
+            providers: providerStatus(),
+            firstProviderError: latest.firstError,
+            industryCount: 0,
+            estimatedCostCents: 0,
+            hint: null,
+          });
+        }
+      }
     }
 
     const tiles = tileArea({ lat: center.lat, lng: center.lng }, radiusKm, TILE_RADIUS_KM);
@@ -88,6 +137,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // AreaScan-Run persistieren, bevor der erste Tile läuft — nach
+    // einem Serverneustart können wir daran erkennen, was schon
+    // begonnen wurde.
+    const areaScanId = newTargetId("area");
+    await createAreaScan({
+      id: areaScanId,
+      correlationId,
+      city: center.city,
+      country: center.country,
+      centerLat: center.lat,
+      centerLng: center.lng,
+      radiusKm,
+      tileRadiusKm: TILE_RADIUS_KM,
+      industries: industriesInput.filter(Boolean),
+      depth,
+      limitPerTile,
+      maxTiles,
+      totalTiles: limited.length,
+      jobIds,
+      createdBy: gate.auth.userId,
+    });
+
     // Ersten Job direkt hier abarbeiten, damit die UI sofort etwas sieht.
     let firstResult: Awaited<ReturnType<typeof runSearchJob>> | null = null;
     if (jobIds.length > 0) {
@@ -103,8 +174,19 @@ export async function POST(request: NextRequest) {
     }
 
     const providers = providerStatus();
+    // AreaScan aktualisieren — beim ersten Tile ist mindestens der
+    // initiale Provider-Status und der DiscoveredCount klar.
+    await updateAreaScan(areaScanId, {
+      discoveredCount: firstResult?.discoveredCount ?? 0,
+      providerSummary: {
+        providers,
+        firstResult: firstResult?.providerLogs ?? [],
+      },
+      firstError: firstResult?.providerLogs?.find((l) => !l.ok)?.error ?? null,
+    });
     return NextResponse.json({
       correlationId,
+      areaScanId,
       city: center.city,
       center: { lat: center.lat, lng: center.lng, source: center.source },
       radiusKm,
@@ -117,10 +199,10 @@ export async function POST(request: NextRequest) {
       firstProviderError:
         firstResult?.providerLogs?.find((l) => !l.ok)?.error ?? null,
       industryCount: industriesInput.filter((x) => x).length || 1,
-      estimatedCostCents: limited.length * industriesInput.length * limitPerTile * 3,
+      estimatedCostCents: 0,
       hint:
         tiles.length > limited.length
-          ? `Region deckt ${tiles.length} Tiles ab — auf ${maxTiles} begrenzt (Budget). Radius verkleinern oder Budget anheben.`
+          ? `Region deckt ${tiles.length} Tiles ab — auf ${maxTiles} begrenzt. Radius verkleinern oder erneut ausführen.`
           : null,
     });
   } catch (error) {

@@ -20,6 +20,7 @@
  */
 
 import type { DiscoveredCompanyStub, DiscoveryProvider, DiscoveryRequest, DiscoveryResponse } from "./types";
+import { normalizeCategoryFromTags } from "../categoryMap";
 
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
@@ -274,8 +275,10 @@ function mapElement(
   const country = (tags["addr:country"] ?? request.country ?? "DE").toUpperCase();
   const addressLine =
     street || houseNo ? `${street}${street && houseNo ? " " : ""}${houseNo}`.trim() : null;
-  const industry = pickIndustry(tags);
-  const subIndustry = pickSubIndustry(tags);
+  // Konsistente, deutsche Kategorien statt roher OSM-Tag-Werte.
+  const cat = normalizeCategoryFromTags(tags);
+  const industry = cat.category;
+  const subIndustry = tags["brand"] ?? cat.subCategory ?? pickSubIndustry(tags);
   const distanceKm =
     request.centerLat !== null && request.centerLng !== null && lat != null && lng != null
       ? haversineKm(request.centerLat, request.centerLng, lat, lng)

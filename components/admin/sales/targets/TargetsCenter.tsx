@@ -27,6 +27,7 @@ import type {
   SalesBrief,
 } from "@/lib/sales/targets/model";
 import { PRIORITY_CLASS_COLOR, PRIORITY_CLASS_LABEL } from "@/lib/sales/targets/model";
+import { normalizeCategoryFromRawIndustry, ALL_CATEGORIES } from "@/lib/sales/targets/categoryMap";
 import TargetDetail from "./TargetDetail";
 
 export interface TargetListItemDTO {
@@ -60,20 +61,9 @@ interface Filters {
   sort: "score" | "distance" | "recent" | "name";
 }
 
-const INDUSTRY_OPTIONS = [
-  "Handwerk",
-  "Sanitär / Heizung",
-  "Elektro",
-  "Ärzte / Praxen",
-  "Kanzleien",
-  "Steuerberatung",
-  "Gastronomie",
-  "Immobilien",
-  "Fitness / Beauty",
-  "Automotive",
-  "Einzelhandel",
-  "Industrie",
-];
+// Für die Discovery-Filter zeigen wir die kanonische Kategorie-Liste,
+// die auch das Backend beim Katalogisieren verwendet.
+const INDUSTRY_OPTIONS = ALL_CATEGORIES.filter((c) => c !== "Sonstige");
 
 const STORAGE_KEY = "nx.targets.cockpit.v2";
 
@@ -137,6 +127,15 @@ interface AreaState {
   startedAt: number;
   firstError: string | null;
   providers: ProviderStatusDTO[];
+  skipped: string | null;
+}
+
+interface LiveCountersDTO {
+  total: number;
+  hot: number;
+  withBrief: number;
+  withDm: number;
+  enrichmentQueued: number;
 }
 
 const AREA_PARALLELISM = 3;
@@ -162,9 +161,13 @@ export default function TargetsCenter({ accent }: { accent: string }) {
   const [center, setCenter] = useState<GeoPoint | null>(null);
   const [centerError, setCenterError] = useState<string | null>(null);
   const [area, setArea] = useState<AreaState | null>(null);
-  const [areaLaunching, setAreaLaunching] = useState(false);
-  const [autoScanned, setAutoScanned] = useState(false);
+  const [liveCounters, setLiveCounters] = useState<LiveCountersDTO | null>(null);
   const filtersReadyRef = useRef(false);
+  const lastAmbientKeyRef = useRef<string | null>(null);
+  const listOffsetRef = useRef(0);
+  const PAGE_SIZE = 250;
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Persistenz — Filter über Reloads hinweg
   useEffect(() => {
@@ -216,40 +219,72 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     };
   }, [filters.city]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const params = new URLSearchParams();
-    if (filters.q) params.set("q", filters.q);
-    if (filters.industries.length > 0) params.set("industry", filters.industries.join(","));
-    if (filters.priority) params.set("priority", filters.priority);
-    if (filters.minScore !== null) params.set("minScore", String(filters.minScore));
-    if (filters.hasWebsite) params.set("hasWebsite", "1");
-    if (filters.hasPhone) params.set("hasPhone", "1");
-    if (filters.hasEmail) params.set("hasEmail", "1");
-    if (filters.hasDm) params.set("hasDm", "1");
-    if (filters.weakWebsite) params.set("weakWebsite", "1");
-    if (filters.softwareOpp) params.set("softwareOpp", "1");
-    if (filters.sort) params.set("sort", filters.sort);
-    if (center) {
-      params.set("centerLat", String(center.lat));
-      params.set("centerLng", String(center.lng));
-      params.set("centerRadiusKm", String(filters.radiusKm));
-    }
-    params.set("limit", "500");
+  const buildListParams = useCallback(
+    (offset: number, limit: number): URLSearchParams => {
+      const p = new URLSearchParams();
+      if (filters.q) p.set("q", filters.q);
+      if (filters.industries.length > 0) p.set("industry", filters.industries.join(","));
+      if (filters.priority) p.set("priority", filters.priority);
+      if (filters.minScore !== null) p.set("minScore", String(filters.minScore));
+      if (filters.hasWebsite) p.set("hasWebsite", "1");
+      if (filters.hasPhone) p.set("hasPhone", "1");
+      if (filters.hasEmail) p.set("hasEmail", "1");
+      if (filters.hasDm) p.set("hasDm", "1");
+      if (filters.weakWebsite) p.set("weakWebsite", "1");
+      if (filters.softwareOpp) p.set("softwareOpp", "1");
+      if (filters.sort) p.set("sort", filters.sort);
+      if (center) {
+        p.set("centerLat", String(center.lat));
+        p.set("centerLng", String(center.lng));
+        p.set("centerRadiusKm", String(filters.radiusKm));
+      }
+      p.set("limit", String(limit));
+      p.set("offset", String(offset));
+      return p;
+    },
+    [filters, center]
+  );
 
+  const load = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    listOffsetRef.current = 0;
     try {
+      const params = buildListParams(0, PAGE_SIZE);
       const res = await fetch(`/api/admin/sales/targets?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { items: TargetListItemDTO[] };
-      setItems(data.items ?? []);
+      const arr = data.items ?? [];
+      setItems(arr);
+      setHasMore(arr.length === PAGE_SIZE);
     } catch (err) {
       setError((err as Error).message);
       setItems([]);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
-  }, [filters, center]);
+  }, [buildListParams]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextOffset = listOffsetRef.current + PAGE_SIZE;
+      const params = buildListParams(nextOffset, PAGE_SIZE);
+      const res = await fetch(`/api/admin/sales/targets?${params.toString()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { items: TargetListItemDTO[] };
+      const arr = data.items ?? [];
+      setItems((prev) => [...prev, ...arr]);
+      listOffsetRef.current = nextOffset;
+      setHasMore(arr.length === PAGE_SIZE);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [buildListParams, hasMore, loadingMore]);
 
   // Auto-Load, sobald Filter/Center wechseln
   useEffect(() => {
@@ -314,10 +349,9 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [area?.correlationId]);
 
-  const startAreaScan = useCallback(
-    async (opts?: { auto?: boolean }) => {
+  const triggerAreaScan = useCallback(
+    async (opts?: { auto?: boolean; force?: boolean; maxTiles?: number }) => {
       if (!filters.city.trim()) return;
-      setAreaLaunching(true);
       try {
         const res = await fetch("/api/admin/sales/targets/discover-area", {
           method: "POST",
@@ -327,12 +361,18 @@ export default function TargetsCenter({ accent }: { accent: string }) {
             radiusKm: filters.radiusKm,
             industries: filters.industries,
             depth: "STANDARD",
-            maxTiles: opts?.auto ? 20 : 60,
+            // Ambient-Modus verwendet einen konservativen Tile-Budget;
+            // Force-Runs (explizit gefordert) dürfen die volle Fläche
+            // scannen bis zur Hard-Cap.
+            maxTiles: opts?.maxTiles ?? (opts?.auto ? 30 : 60),
             limitPerTile: 50,
+            force: Boolean(opts?.force),
           }),
         });
         const data = (await res.json()) as {
           correlationId?: string;
+          skipped?: string;
+          reason?: string;
           city?: string;
           center?: GeoPoint;
           radiusKm?: number;
@@ -369,13 +409,12 @@ export default function TargetsCenter({ accent }: { accent: string }) {
           startedAt: Date.now(),
           firstError: data.firstProviderError ?? null,
           providers: data.providers ?? [],
+          skipped: data.skipped ?? null,
         };
         setArea(initState);
         void load();
       } catch (err) {
         setError((err as Error).message);
-      } finally {
-        setAreaLaunching(false);
       }
     },
     [filters, center, load]
@@ -464,27 +503,133 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [area?.correlationId, area?.jobIds.length]);
 
-  // Auto-Scan-Trigger: einmalig, wenn Ansicht geladen ist und noch nichts angezeigt wird
+  // ── Ambient-Discovery-Trigger ────────────────────────────────────
+  // Startet automatisch für jede (Stadt × Radius)-Kombination genau
+  // einmal in dieser Session eine Hintergrund-Discovery. Der Server
+  // entscheidet dann per Freshness-Check, ob wirklich neu gescannt
+  // werden muss oder ob die vorhandenen Daten reichen — kein Button
+  // notwendig. Bei erhöhtem Radius wird die Region neu ausgewertet.
   useEffect(() => {
-    if (autoScanned) return;
     if (!filtersReadyRef.current) return;
-    if (loading) return;
     if (!center || !filters.city.trim()) return;
-    if (items.length > 0) {
-      setAutoScanned(true);
-      return;
-    }
-    setAutoScanned(true);
-    void startAreaScan({ auto: true });
-  }, [autoScanned, loading, center, filters.city, items.length, startAreaScan]);
+    const key = `${center.city.toLowerCase()}::${filters.radiusKm}::${filters.industries.slice().sort().join(",")}`;
+    if (lastAmbientKeyRef.current === key) return;
+    lastAmbientKeyRef.current = key;
+    // kleiner Delay, damit der DB-Load zuerst fertig ist und wir bei
+    // frischen Daten den Trigger sofort vom Server als „skipped: fresh"
+    // zurückbekommen können — kein sichtbares Nachladen.
+    const t = setTimeout(() => {
+      void triggerAreaScan({ auto: true });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [center, filters.city, filters.radiusKm, filters.industries, triggerAreaScan]);
 
-  const totals = useMemo(() => {
+  // ── Live-Counter ────────────────────────────────────────────────
+  // Sehr günstiger Poll: nur COUNTs, keine Rows. Läuft während einer
+  // Area-Session alle 2 s, sonst alle 15 s als leichte Aktualisierung.
+  useEffect(() => {
+    if (!center) return;
+    let cancelled = false;
+    async function fetchCount() {
+      const p = new URLSearchParams();
+      if (filters.industries.length > 0) p.set("industry", filters.industries.join(","));
+      if (center) {
+        p.set("centerLat", String(center.lat));
+        p.set("centerLng", String(center.lng));
+        p.set("centerRadiusKm", String(filters.radiusKm));
+      }
+      try {
+        const res = await fetch(`/api/admin/sales/targets/count?${p.toString()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as LiveCountersDTO;
+        if (!cancelled) setLiveCounters(data);
+      } catch {
+        /* silent */
+      }
+    }
+    void fetchCount();
+    const iv = setInterval(fetchCount, area ? 2000 : 15000);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+    // area.correlationId reicht als Trigger — die 2-vs-15-s-Frequenz
+    // hängt nur an "gibt es aktuell eine Session?" und muss nicht bei
+    // jedem area-Feld-Update das Intervall zurücksetzen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center, filters.radiusKm, filters.industries, area?.correlationId]);
+
+  // ── Auto-Resume beim Mount ────────────────────────────────────────
+  // Nach Server-Restart oder Reconnect: welche Discovery-Jobs sind
+  // noch queued/running? Wir adoptieren sie in eine neue AreaState,
+  // damit unser Client-Runner sie abarbeitet.
+  useEffect(() => {
+    let cancelled = false;
+    async function resume() {
+      try {
+        const res = await fetch("/api/admin/sales/targets/pending-jobs", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          search: Array<{ id: string; city: string | null; radiusKm: number; industries: string[]; status: string; discoveredCount: number }>;
+        };
+        if (cancelled || data.search.length === 0) return;
+        // Bereits laufende Session? Dann nicht doppelt aufnehmen.
+        setArea((prev) => {
+          if (prev) return prev;
+          const jobIds = data.search.map((j) => j.id);
+          return {
+            correlationId: `resume-${Date.now()}`,
+            city: data.search[0].city ?? "",
+            center: { lat: 0, lng: 0, city: data.search[0].city ?? "", country: "DE", source: "static" },
+            radiusKm: Math.max(...data.search.map((j) => j.radiusKm)),
+            jobIds,
+            remainingJobIds: data.search.filter((j) => j.status === "queued").map((j) => j.id),
+            totalTiles: jobIds.length,
+            discovered: data.search.reduce((n, j) => n + j.discoveredCount, 0),
+            costCents: 0,
+            running: data.search.filter((j) => j.status === "running").length,
+            completed: 0,
+            failed: 0,
+            hint: `${data.search.length} offene Discovery-Jobs vom Server aufgenommen.`,
+            startedAt: Date.now(),
+            firstError: null,
+            providers: [],
+            skipped: null,
+          };
+        });
+      } catch {
+        /* silent */
+      }
+    }
+    void resume();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const listTotals = useMemo(() => {
+    // Fallback für Client-seitige Auswertung (falls der Live-Counter
+    // temporär nicht verfügbar ist).
     const total = items.length;
     const hot = items.filter((i) => i.leadScore && (i.leadScore.priorityClass === "A+" || i.leadScore.priorityClass === "A")).length;
     const withBrief = items.filter((i) => Boolean(i.salesBrief)).length;
     const withDm = items.filter((i) => i.decisionMakerCount > 0).length;
     return { total, hot, withBrief, withDm };
   }, [items]);
+
+  // Server-Live-Counter bevorzugen — spiegelt den echten Postgres-Stand,
+  // nicht nur die aktuell gerenderte Page.
+  const totals = liveCounters
+    ? {
+        total: liveCounters.total,
+        hot: liveCounters.hot,
+        withBrief: liveCounters.withBrief,
+        withDm: liveCounters.withDm,
+      }
+    : listTotals;
+
+  const runningDiscovery = Boolean(area && (area.remainingJobIds.length > 0 || area.running > 0));
+  const runningEnrichment = (liveCounters?.enrichmentQueued ?? 0) > 0;
 
   return (
     <div className="space-y-4">
@@ -494,17 +639,17 @@ export default function TargetsCenter({ accent }: { accent: string }) {
           <div className="text-[11px] uppercase tracking-[0.16em] text-white/45">Vertrieb / Intelligence</div>
           <h2 className="text-lg font-semibold text-white">Zielkunden-Cockpit</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <LivePulse
+            accent={accent}
+            city={center?.city ?? filters.city}
+            radius={filters.radiusKm}
+            discovering={runningDiscovery}
+            enriching={runningEnrichment}
+            enrichmentQueued={liveCounters?.enrichmentQueued ?? 0}
+          />
           <button onClick={() => void load()} className={buttonSecondary} disabled={loading}>
             {loading ? "Lädt…" : "Aktualisieren"}
-          </button>
-          <button
-            onClick={() => void startAreaScan()}
-            className={buttonPrimary}
-            style={{ backgroundColor: accent, color: "#000" }}
-            disabled={areaLaunching || !center}
-          >
-            {areaLaunching ? "Startet…" : "Bereich analysieren"}
           </button>
         </div>
       </div>
@@ -518,16 +663,19 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         accent={accent}
       />
 
-      {/* KPIs */}
+      {/* KPIs — echte Postgres-Zähler, nicht die aktuell gerenderte Page */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi label="Angezeigt" value={totals.total} />
+        <Kpi label="Zielkunden gesamt" value={totals.total} />
         <Kpi label="Priorität A+/A" value={totals.hot} accent={accent} />
         <Kpi label="Mit Sales Brief" value={totals.withBrief} />
         <Kpi label="Entscheider bekannt" value={totals.withDm} />
       </div>
 
-      {/* Area-Discovery-Progress */}
-      {area && <AreaProgress area={area} accent={accent} onClose={() => setArea(null)} />}
+      {/* Area-Discovery-Progress — nur wenn wirklich ein Scan läuft
+          und nicht per Freshness-Cache übersprungen wurde. */}
+      {area && !area.skipped && (area.jobIds.length > 0 || area.discovered > 0) && (
+        <AreaProgress area={area} accent={accent} onClose={() => setArea(null)} />
+      )}
 
       {/* Intelligence-Quality-Strip */}
       <IntelligenceQualityStrip accent={accent} />
@@ -542,39 +690,40 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         </div>
       )}
       {!loading && items.length === 0 && !error && (
-        <Section title="Noch keine Zielkunden für diese Region">
+        <Section title="Automatische Discovery läuft">
           <EmptyState
             title={
-              area
-                ? `Discovery läuft — ${area.discovered} entdeckt, ${area.completed}/${area.jobIds.length} Tiles`
-                : "Bereich noch nicht analysiert"
+              runningDiscovery
+                ? `Analysiere ${center?.city ?? filters.city} — ${area?.discovered ?? 0} Firmen erfasst`
+                : "Region wird im Hintergrund aufgebaut"
             }
             hint={
               center
-                ? `Für ${center.city} (${filters.radiusKm} km Radius) sind noch keine Zielkunden hinterlegt. Klicke oben rechts auf „Bereich analysieren", um die automatische Suche zu starten.`
-                : "Wähle oben eine Stadt und einen Radius. Die Ergebnisse laden sich anschließend automatisch."
-            }
-            action={
-              center ? (
-                <button
-                  onClick={() => void startAreaScan()}
-                  className={buttonPrimary}
-                  style={{ backgroundColor: accent, color: "#000" }}
-                  disabled={areaLaunching}
-                >
-                  {areaLaunching ? "Startet…" : "Bereich jetzt analysieren"}
-                </button>
-              ) : undefined
+                ? `Wir durchsuchen ${center.city} und Umkreis ${filters.radiusKm} km live auf öffentliche Firmendaten. Neue Ergebnisse erscheinen automatisch — kein manueller Start notwendig.`
+                : "Wähle oben eine Stadt und einen Radius. Die Ergebnisse erscheinen automatisch."
             }
           />
         </Section>
       )}
       {items.length > 0 && (
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          {items.map((it) => (
-            <TargetCard key={it.target.id} item={it} accent={accent} onOpen={() => setOpenTargetId(it.target.id)} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            {items.map((it) => (
+              <TargetCard key={it.target.id} item={it} accent={accent} onOpen={() => setOpenTargetId(it.target.id)} />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={() => void loadMore()}
+                className={buttonSecondary}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Lädt weitere…" : `Weitere ${PAGE_SIZE} Firmen laden`}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {openTargetId && (
@@ -585,6 +734,51 @@ export default function TargetsCenter({ accent }: { accent: string }) {
           onChanged={() => void load()}
         />
       )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Live-Pulse (ambient status im Header)                                     */
+/* -------------------------------------------------------------------------- */
+
+function LivePulse({
+  accent,
+  city,
+  radius,
+  discovering,
+  enriching,
+  enrichmentQueued,
+}: {
+  accent: string;
+  city: string;
+  radius: number;
+  discovering: boolean;
+  enriching: boolean;
+  enrichmentQueued: number;
+}) {
+  const active = discovering || enriching;
+  const label = discovering
+    ? `Discovery aktiv · ${city} · ${radius} km`
+    : enriching
+      ? `Analyse läuft · ${enrichmentQueued} Firmen in der Queue`
+      : `Bereit · ${city} · ${radius} km`;
+  return (
+    <div className="hidden items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1.5 md:inline-flex">
+      <span
+        className={`relative inline-flex h-2 w-2 rounded-full ${
+          active ? "" : "bg-white/40"
+        }`}
+        style={active ? { backgroundColor: accent } : undefined}
+      >
+        {active && (
+          <span
+            className="absolute inset-0 animate-ping rounded-full"
+            style={{ backgroundColor: accent, opacity: 0.5 }}
+          />
+        )}
+      </span>
+      <span className="text-[11px] text-white/70">{label}</span>
     </div>
   );
 }
@@ -909,7 +1103,13 @@ function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent:
             <div className="truncate text-base font-semibold text-white">{target.name}</div>
           </div>
           <div className="mt-1 truncate text-xs text-white/60">
-            {[target.industry, target.city, distance].filter(Boolean).join(" · ")}
+            {(() => {
+              const cat = normalizeCategoryFromRawIndustry(target.industry);
+              const category = cat.category !== "Sonstige" ? cat.category : target.industry;
+              const sub = target.subIndustry ?? cat.subCategory;
+              const catLine = [category, sub].filter(Boolean).join(" · ");
+              return [catLine, target.city, distance].filter(Boolean).join(" · ");
+            })()}
           </div>
         </div>
         <div className="text-right">
