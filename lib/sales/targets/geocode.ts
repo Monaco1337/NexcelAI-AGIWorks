@@ -254,15 +254,113 @@ export async function geocodeViaGooglePlaces(city: string): Promise<GeoPoint | n
 }
 
 /**
- * Combines the static lookup with the Google-Places fallback. Never
- * throws — returns `null` when the city cannot be resolved.
+ * OSM Nominatim (öffentlicher Endpoint, keine Registrierung,
+ * Nutzungsbedingungen erwartet identifizierenden User-Agent).
+ * Fallback für Städte, die nicht in der statischen Tabelle stehen —
+ * insbesondere Kleinstädte, Landkreise, Ortsteile.
+ */
+export async function geocodeViaNominatim(query: string): Promise<GeoPoint | null> {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&countrycodes=de,at,ch&q=${encodeURIComponent(query)}`;
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent": "NEXCEL-SalesIntel/1.0 (+https://nexcel.ai/bot)",
+        "Accept-Language": "de,en;q=0.7",
+      },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!resp.ok) return null;
+    const json = (await resp.json()) as Array<{
+      lat?: string;
+      lon?: string;
+      display_name?: string;
+      address?: { country_code?: string; city?: string; town?: string; village?: string };
+    }>;
+    const first = json[0];
+    if (!first?.lat || !first?.lon) return null;
+    const lat = Number(first.lat);
+    const lng = Number(first.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    const country = (first.address?.country_code ?? "de").toUpperCase();
+    const cityName = first.address?.city ?? first.address?.town ?? first.address?.village ?? query;
+    return { lat, lng, city: cityName, country, source: "static" };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Combines the static lookup with the Nominatim fallback. Google Places
+ * is only used when explicitly konfiguriert. Ergebnisse werden in der
+ * Postgres-Tabelle `sales_target_geocode_cache` persistiert.
+ * Never throws — returns `null` when the city cannot be resolved.
  */
 export async function geocodeCity(city: string): Promise<GeoPoint | null> {
   const trimmed = (city ?? "").trim();
   if (!trimmed) return null;
-  const staticHit = geocodeStatic(trimmed);
-  if (staticHit) return staticHit;
-  return geocodeViaGooglePlaces(trimmed);
+
+  // 1) Postgres-Cache — vermeidet jede externe Anfrage.
+  try {
+    const { getGeocodeFromCache, putGeocodeToCache } = await import("./geocacheStore");
+    const cached = await getGeocodeFromCache(trimmed);
+    if (cached) {
+      return {
+        lat: cached.lat,
+        lng: cached.lng,
+        city: cached.displayName,
+        country: cached.country ?? "DE",
+        source: cached.source === "google_places" ? "google_places" : "static",
+      };
+    }
+
+    // 2) Statische DACH-Tabelle — sub-millisecond, offline.
+    const staticHit = geocodeStatic(trimmed);
+    if (staticHit) {
+      await putGeocodeToCache({
+        query: trimmed,
+        lat: staticHit.lat,
+        lng: staticHit.lng,
+        displayName: staticHit.city,
+        country: staticHit.country,
+        source: "static",
+      });
+      return staticHit;
+    }
+
+    // 3) OSM Nominatim — freier Fallback für Klein-/Landgemeinden.
+    const nominatim = await geocodeViaNominatim(trimmed);
+    if (nominatim) {
+      await putGeocodeToCache({
+        query: trimmed,
+        lat: nominatim.lat,
+        lng: nominatim.lng,
+        displayName: nominatim.city,
+        country: nominatim.country,
+        source: "nominatim",
+      });
+      return nominatim;
+    }
+
+    // 4) Google Places — nur wenn explizit konfiguriert (opt-in).
+    const gp = await geocodeViaGooglePlaces(trimmed);
+    if (gp) {
+      await putGeocodeToCache({
+        query: trimmed,
+        lat: gp.lat,
+        lng: gp.lng,
+        displayName: gp.city,
+        country: gp.country,
+        source: "google_places",
+      });
+    }
+    return gp;
+  } catch {
+    // Cache-Layer ist optional — bei DB-Ausfall lieber ohne Persistenz
+    // weiterarbeiten als komplett zu blockieren.
+    return (
+      geocodeStatic(trimmed) ?? (await geocodeViaNominatim(trimmed)) ?? (await geocodeViaGooglePlaces(trimmed))
+    );
+  }
 }
 
 /**

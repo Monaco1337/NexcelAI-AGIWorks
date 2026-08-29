@@ -266,6 +266,54 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     return () => clearInterval(iv);
   }, [area, load]);
 
+  // Enrichment-Worker im Hintergrund pumpen — solange eine Area-Session
+  // aktiv ist ODER wir noch queued Enrichment-Jobs sehen. Ohne Worker
+  // bleiben neu entdeckte Firmen ohne Score/Brief liegen.
+  useEffect(() => {
+    if (!area) return;
+    let cancelled = false;
+    let idleTicks = 0;
+    async function pump() {
+      while (!cancelled) {
+        try {
+          const res = await fetch(
+            "/api/admin/sales/targets/enrichment-worker?batch=5&maxMs=15000",
+            { method: "POST" }
+          );
+          if (res.ok) {
+            const data = (await res.json()) as { processed: number };
+            if (data.processed === 0) {
+              idleTicks++;
+              // Wenn Discovery abgeschlossen ist UND wir seit 3 Ticks keine
+              // Jobs mehr sehen: aufhören zu pumpen.
+              const finished =
+                area &&
+                area.remainingJobIds.length === 0 &&
+                area.running === 0 &&
+                area.completed >= area.jobIds.length;
+              if (finished && idleTicks >= 3) break;
+            } else {
+              idleTicks = 0;
+              void load();
+            }
+          } else {
+            idleTicks++;
+          }
+        } catch {
+          idleTicks++;
+        }
+        await new Promise((r) => setTimeout(r, 4000));
+      }
+    }
+    void pump();
+    return () => {
+      cancelled = true;
+    };
+    // Wir binden bewusst nur an correlationId — der Loop läuft sich
+    // selbst zu Ende, sobald keine Jobs mehr da sind.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [area?.correlationId]);
+
   const startAreaScan = useCallback(
     async (opts?: { auto?: boolean }) => {
       if (!filters.city.trim()) return;
@@ -701,21 +749,18 @@ function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: stri
       </div>
       {area.providers && area.providers.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-[0.16em] text-white/40">Provider:</span>
-          {area.providers.map((p) => (
-            <span
-              key={p.key}
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
-                p.configured
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-                  : "border-white/10 bg-white/[0.03] text-white/50"
-              }`}
-              title={p.note}
-            >
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${p.configured ? "bg-emerald-400" : "bg-white/30"}`} />
-              {p.label}
-            </span>
-          ))}
+          <span className="text-[10px] uppercase tracking-[0.16em] text-white/40">Datenquellen aktiv:</span>
+          {area.providers
+            .filter((p) => p.configured)
+            .map((p) => (
+              <span
+                key={p.key}
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200"
+              >
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                {p.label}
+              </span>
+            ))}
         </div>
       )}
       {area.firstError && (

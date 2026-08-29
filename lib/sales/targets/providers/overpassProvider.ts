@@ -35,24 +35,60 @@ const OVERPASS_TIMEOUT_S = 12;
 const HTTP_TIMEOUT_MS = 18_000;
 
 /**
- * Branche → Overpass-Tag-Filter. Wenn nichts passt, laden wir generisch
- * alle Objekte mit `name` + `phone|contact:phone|website|contact:website`.
+ * Branche → Overpass-Tag-Filter. Deutlich breiter als vorher, alle
+ * wichtigen DACH-Business-Kategorien abgedeckt. Reihenfolge ist so,
+ * dass die konkretesten Filter zuerst greifen.
  */
 const INDUSTRY_TAG_MAP: Record<string, string[]> = {
-  "handwerk": ['["craft"]', '["shop"~"^(hardware|paint|doityourself|electrical)$"]'],
-  "sanitär": ['["craft"="plumber"]', '["craft"="hvac"]', '["craft"="heating_engineer"]'],
-  "sanitär / heizung": ['["craft"~"^(plumber|hvac|heating_engineer)$"]'],
-  "elektro": ['["craft"="electrician"]', '["shop"="electrical"]', '["shop"="appliance"]'],
-  "ärzte": ['["healthcare"~"^(doctor|clinic|centre|dentist)$"]', '["amenity"="doctors"]'],
-  "ärzte / praxen": ['["healthcare"~"^(doctor|clinic|centre|dentist|psychotherapist)$"]', '["amenity"="doctors"]'],
-  "kanzleien": ['["office"~"^(lawyer|notary)$"]'],
-  "steuerberatung": ['["office"~"^(tax_advisor|accountant|financial)$"]'],
-  "gastronomie": ['["amenity"~"^(restaurant|cafe|bar|pub|fast_food|biergarten)$"]'],
-  "immobilien": ['["office"="estate_agent"]', '["office"="property_management"]'],
-  "fitness / beauty": ['["leisure"~"^(fitness_centre|sports_centre)$"]', '["shop"~"^(beauty|hairdresser|cosmetics)$"]'],
-  "automotive": ['["shop"~"^(car|car_repair|motorcycle|tyres)$"]', '["amenity"="car_rental"]'],
+  "handwerk": [
+    '["craft"]',
+    '["shop"~"^(hardware|paint|doityourself|electrical|trade|building_materials|tiles|flooring|carpet)$"]',
+  ],
+  "sanitär": ['["craft"~"^(plumber|hvac|heating_engineer|sanitary)$"]'],
+  "sanitär / heizung": ['["craft"~"^(plumber|hvac|heating_engineer|sanitary)$"]'],
+  "elektro": [
+    '["craft"~"^(electrician|electronics_repair)$"]',
+    '["shop"~"^(electrical|appliance|electronics|hifi|computer)$"]',
+  ],
+  "ärzte": [
+    '["healthcare"~"^(doctor|clinic|centre|dentist|psychotherapist|physiotherapist|alternative)$"]',
+    '["amenity"~"^(doctors|dentist|clinic)$"]',
+  ],
+  "ärzte / praxen": [
+    '["healthcare"~"^(doctor|clinic|centre|dentist|psychotherapist|physiotherapist|alternative)$"]',
+    '["amenity"~"^(doctors|dentist|clinic)$"]',
+  ],
+  "kanzleien": ['["office"~"^(lawyer|notary|advocate)$"]'],
+  "steuerberatung": ['["office"~"^(tax_advisor|accountant|financial|financial_advisor)$"]'],
+  "gastronomie": ['["amenity"~"^(restaurant|cafe|bar|pub|fast_food|biergarten|food_court|ice_cream)$"]'],
+  "immobilien": ['["office"~"^(estate_agent|property_management|real_estate)$"]'],
+  "fitness / beauty": [
+    '["leisure"~"^(fitness_centre|sports_centre|dance)$"]',
+    '["shop"~"^(beauty|hairdresser|cosmetics|massage|tattoo|piercing|nails|perfumery)$"]',
+  ],
+  "automotive": [
+    '["shop"~"^(car|car_repair|car_parts|motorcycle|motorcycle_repair|tyres|bicycle|caravan)$"]',
+    '["amenity"~"^(car_rental|car_wash|fuel|charging_station|driving_school)$"]',
+  ],
   "einzelhandel": ['["shop"]'],
-  "industrie": ['["industrial"]', '["landuse"="industrial"]', '["office"~"^(company|it|engineering)$"]'],
+  "industrie": [
+    '["industrial"]',
+    '["landuse"="industrial"]',
+    '["office"~"^(company|it|engineering|logistics|research|coworking|architect|consulting|advertising_agency|association|foundation|forestry|newspaper|educational_institution|employment_agency|guide|government|graphic_design|insurance|logistics|marketing|marketing_agency|ngo|political_party|publisher|surveyor|telecommunication|travel_agent|water_utility)$"]',
+  ],
+  "hotellerie": ['["tourism"~"^(hotel|guest_house|hostel|motel|apartment|chalet|resort)$"]'],
+  "bildung": [
+    '["amenity"~"^(school|kindergarten|college|university|language_school|driving_school|music_school)$"]',
+    '["office"~"^(educational_institution|research)$"]',
+  ],
+  "finanzen": [
+    '["amenity"~"^(bank|bureau_de_change|atm)$"]',
+    '["office"~"^(financial|insurance|financial_advisor|bank|tax_advisor)$"]',
+  ],
+  "logistik": ['["office"~"^(logistics|forwarding)$"]', '["shop"~"^(logistics)$"]'],
+  "agentur": [
+    '["office"~"^(advertising_agency|marketing|marketing_agency|it|coworking|consulting|graphic_design|publisher|newspaper|architect)$"]',
+  ],
 };
 
 export class OverpassProvider implements DiscoveryProvider {
@@ -224,13 +260,13 @@ function mapElement(
   provider: string
 ): DiscoveredCompanyStub | null {
   const tags = el.tags ?? {};
-  const name = (tags.name ?? tags["operator"] ?? "").trim();
+  const name = (tags.name ?? tags["name:de"] ?? tags["official_name"] ?? tags["operator"] ?? "").trim();
   if (!name) return null;
   const lat = el.type === "node" ? el.lat : el.center?.lat;
   const lng = el.type === "node" ? el.lon : el.center?.lon;
   const phone = pickPhone(tags);
   const website = pickWebsite(tags);
-  const email = tags.email ?? tags["contact:email"] ?? null;
+  const email = tags["contact:email"] ?? tags.email ?? null;
   const street = tags["addr:street"] ?? "";
   const houseNo = tags["addr:housenumber"] ?? "";
   const postalCode = tags["addr:postcode"] ?? null;
@@ -239,15 +275,25 @@ function mapElement(
   const addressLine =
     street || houseNo ? `${street}${street && houseNo ? " " : ""}${houseNo}`.trim() : null;
   const industry = pickIndustry(tags);
+  const subIndustry = pickSubIndustry(tags);
   const distanceKm =
     request.centerLat !== null && request.centerLng !== null && lat != null && lng != null
       ? haversineKm(request.centerLat, request.centerLng, lat, lng)
       : null;
-
-  // Wir behalten alles mit Name + Geokoordinate. Ohne mindestens diese
-  // beiden Basisdaten kann die Pipeline später nichts sinnvoll
-  // enrichen. Kontaktinformationen sind Bonus, aber nicht Pflicht.
   if (lat == null || lng == null) return null;
+
+  const employeesTag = tags["employees"] ?? tags["employees:count"];
+  const employees = employeesTag ? parseInt(employeesTag, 10) : null;
+  const foundedTag = tags["start_date"] ?? tags["opening_date"];
+  const foundedYear = foundedTag ? parseFoundedYear(foundedTag) : null;
+
+  // OSM speichert häufig Bonusinformationen, die für Scoring nützlich sind:
+  // opening_hours (Signal für aktives Geschäft), brand (Franchise),
+  // description, wheelchair (Trust), cuisine (Segmentierung), delivery,
+  // takeaway, wifi, payment:*. Wir bündeln diese als kompakte Confidence-
+  // Signale in einem strukturierten `note`, aus dem Scoring später
+  // Propensity-Signale ableitet.
+  const signals = pickSignals(tags);
 
   return {
     name,
@@ -258,15 +304,63 @@ function mapElement(
     postalCode,
     city,
     country,
-    latitude: lat ?? null,
-    longitude: lng ?? null,
+    latitude: lat,
+    longitude: lng,
     distanceKm,
     industry,
+    subIndustry,
+    employeeEstimateMin: Number.isFinite(employees) ? employees : null,
+    employeeEstimateMax: Number.isFinite(employees) ? employees : null,
+    foundedYear,
     provider,
     providerSourceUrl: `https://www.openstreetmap.org/${el.type}/${el.id}`,
     providerRawId: `${el.type}/${el.id}`,
-    confidence: 0.6,
+    // Confidence-Boost, wenn OSM bereits reichhaltige Business-Signale
+    // liefert (Website + Telefon + Adresse = 0.85, Basis 0.55).
+    confidence: computeConfidence({ website, phone, addressLine, signals }),
   };
+}
+
+function pickSignals(tags: Record<string, string>): string[] {
+  const s: string[] = [];
+  if (tags["opening_hours"]) s.push("has_opening_hours");
+  if (tags["brand"]) s.push(`brand:${tags["brand"].toLowerCase().slice(0, 40)}`);
+  if (tags["cuisine"]) s.push(`cuisine:${tags["cuisine"]}`);
+  if (tags["wheelchair"] === "yes") s.push("wheelchair_accessible");
+  if (tags["delivery"] === "yes") s.push("delivery");
+  if (tags["takeaway"] === "yes") s.push("takeaway");
+  if (tags["internet_access"] || tags["wifi"]) s.push("wifi");
+  if (tags["outdoor_seating"] === "yes") s.push("outdoor_seating");
+  if (tags["reservation"] || tags["booking"]) s.push("takes_reservation");
+  if (tags["contact:facebook"] || tags["contact:instagram"] || tags["contact:linkedin"]) {
+    s.push("has_social_media");
+  }
+  return s;
+}
+
+function computeConfidence(opts: {
+  website: string | null;
+  phone: string | null;
+  addressLine: string | null;
+  signals: string[];
+}): number {
+  let c = 0.55;
+  if (opts.website) c += 0.15;
+  if (opts.phone) c += 0.1;
+  if (opts.addressLine) c += 0.05;
+  if (opts.signals.length >= 3) c += 0.05;
+  return Math.min(0.92, c);
+}
+
+function parseFoundedYear(input: string): number | null {
+  const m = input.match(/^(\d{4})/);
+  if (!m) return null;
+  const y = parseInt(m[1], 10);
+  return y >= 1800 && y <= new Date().getFullYear() ? y : null;
+}
+
+function pickSubIndustry(tags: Record<string, string>): string | null {
+  return tags["cuisine"] ?? tags["brand"] ?? tags["operator:type"] ?? null;
 }
 
 function pickPhone(tags: Record<string, string>): string | null {
