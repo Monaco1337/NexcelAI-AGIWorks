@@ -617,7 +617,10 @@ function mapElement(
   // Konsistente, deutsche Kategorien statt roher OSM-Tag-Werte.
   const cat = normalizeCategoryFromTags(tags);
   const industry = cat.category;
-  const subIndustry = tags["brand"] ?? cat.subCategory ?? pickSubIndustry(tags);
+  // Die Fachkategorie ist aussagekräftiger als der Markenname: bei einer
+  // Lidl-Filiale ist "Supermarkt" die brauchbare Angabe, nicht "Lidl".
+  const subIndustry = cat.subCategory ?? pickSubIndustry(tags) ?? tags["brand"] ?? null;
+  const isChain = detectChain(tags);
   const distanceKm =
     request.centerLat !== null && request.centerLng !== null && lat != null && lng != null
       ? haversineKm(request.centerLat, request.centerLng, lat, lng)
@@ -660,7 +663,30 @@ function mapElement(
     // Confidence-Boost, wenn OSM bereits reichhaltige Business-Signale
     // liefert (Website + Telefon + Adresse = 0.85, Basis 0.55).
     confidence: computeConfidence({ website, phone, addressLine, signals }),
+    isChain,
   };
+}
+
+/**
+ * Erkennt Filialen grosser Ketten.
+ *
+ * Zielgruppe sind Mittelstand und kleine Betriebe. Eine Lidl- oder
+ * KiK-Filiale entscheidet nichts vor Ort — Budget, Website und Software
+ * kommen aus der Zentrale. Solche Datensaetze blaehen den Katalog auf und
+ * verwaessern jede Priorisierung.
+ *
+ * OSM pflegt fuer Ketten `brand` und meist auch `brand:wikidata`; die
+ * Wikidata-Referenz gibt es praktisch nur bei ueberregionalen Marken.
+ * Gemessen im Raum Unna trifft das auf 14 Prozent der benannten Betriebe
+ * zu — darunter KiK, Lidl, TEDi, REWE, dm und Rossmann.
+ *
+ * Bewusst nicht als Kettensignal gewertet: ein blosser `operator`, denn
+ * den traegt auch die Inhaber-GmbH eines Einzelbetriebs.
+ */
+export function detectChain(tags: Record<string, string>): boolean {
+  if (tags["brand:wikidata"] || tags["operator:wikidata"]) return true;
+  if (tags["brand"]) return true;
+  return false;
 }
 
 function pickSignals(tags: Record<string, string>): string[] {

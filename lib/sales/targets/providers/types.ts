@@ -43,6 +43,8 @@ export interface DiscoveredCompanyStub {
   providerSourceUrl?: string | null;
   providerRawId?: string | null;
   confidence: number;
+  /** Filiale einer ueberregionalen Kette (siehe detectChain). */
+  isChain?: boolean;
 }
 
 /**

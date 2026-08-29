@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     centerLat: optNum(params, "centerLat"),
     centerLng: optNum(params, "centerLng"),
     centerRadiusKm: optNum(params, "centerRadiusKm"),
+    includeChains: optBool(params, "includeChains"),
   };
 
   try {

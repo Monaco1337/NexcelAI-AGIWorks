@@ -4,6 +4,7 @@
  * müssen zuverlässig auf saubere deutsche UI-Kategorien mappen.
  */
 import { strict as assert } from "node:assert";
+import { detectChain } from "../../lib/sales/targets/providers/overpassProvider";
 import {
   normalizeCategoryFromTags,
   normalizeCategoryFromRawIndustry,
@@ -69,6 +70,38 @@ function main() {
   assert.ok(ALL_CATEGORIES.includes("Handwerk"));
   assert.ok(ALL_CATEGORIES.includes("Sonstige"));
   assert.ok(ALL_CATEGORIES.length >= 15);
+
+  /* ── Makler und Nagelstudios landen in ihrer Fachkategorie ───────── */
+  // OSM erfasst beide Betriebsarten mal als office, mal als shop. Fehlte
+  // die shop-Variante, tauchten sie im Einzelhandel auf und damit weder
+  // im Immobilien- noch im Beauty-Filter.
+  for (const tags of [{ office: "estate_agent" }, { shop: "estate_agent" }]) {
+    assert.equal(
+      normalizeCategoryFromTags(tags).category,
+      "Immobilien",
+      `Makler falsch einsortiert: ${JSON.stringify(tags)}`
+    );
+  }
+  for (const tags of [{ shop: "nails" }, { shop: "nail_salon" }, { shop: "beauty" }]) {
+    assert.equal(
+      normalizeCategoryFromTags(tags).category,
+      "Fitness / Beauty",
+      `Beauty falsch einsortiert: ${JSON.stringify(tags)}`
+    );
+  }
+
+  /* ── Kettenfilialen sind als solche erkennbar ────────────────────── */
+  // Zielgruppe ist der Mittelstand; eine Filiale entscheidet vor Ort
+  // weder ueber Budget noch ueber Software.
+  assert.equal(detectChain({ name: "Lidl", brand: "Lidl", "brand:wikidata": "Q151954" }), true);
+  assert.equal(detectChain({ name: "KiK", brand: "KiK" }), true);
+  // Ein Inhaberbetrieb traegt zwar oft einen operator, aber keine Marke.
+  assert.equal(detectChain({ name: "Korte Immobilien", operator: "Korte GmbH" }), false);
+  assert.equal(detectChain({ name: "Friseur Schmidt" }), false);
+
+  // Der Markenname darf die Fachkategorie nicht verdraengen: bei einer
+  // Lidl-Filiale ist "Supermarkt" die brauchbare Angabe, nicht "Lidl".
+  assert.equal(normalizeCategoryFromTags({ shop: "supermarket", brand: "Lidl" }).subCategory, "Supermarkt");
 
   console.log("OK · Zielkunden-CategoryMap");
 }

@@ -53,6 +53,11 @@ const SHOP_MAP: Record<string, [string, string?]> = {
   tattoo: ["Fitness / Beauty", "Tattoo"],
   piercing: ["Fitness / Beauty", "Piercing"],
   nails: ["Fitness / Beauty", "Nagelstudio"],
+  // OSM kennt beide Schreibweisen; ohne die zweite landen Nagelstudios
+  // im Einzelhandel und fehlen im Beauty-Filter.
+  nail_salon: ["Fitness / Beauty", "Nagelstudio"],
+  hairdresser_supply: ["Fitness / Beauty", "Friseurbedarf"],
+  herbalist: ["Fitness / Beauty", "Naturheilmittel"],
   perfumery: ["Fitness / Beauty", "Parfümerie"],
   // Alltag
   supermarket: ["Einzelhandel", "Supermarkt"],
@@ -72,6 +77,9 @@ const SHOP_MAP: Record<string, [string, string?]> = {
   florist: ["Einzelhandel", "Blumen"],
   jewelry: ["Einzelhandel", "Schmuck"],
   optician: ["Einzelhandel", "Optiker"],
+  // Makler werden in OSM mal als office, mal als shop erfasst. Fehlte die
+  // shop-Variante, tauchten sie nicht im Immobilien-Filter auf.
+  estate_agent: ["Immobilien", "Makler"],
   copyshop: ["Dienstleistungen", "Copyshop"],
   travel_agency: ["Dienstleistungen", "Reisebüro"],
   laundry: ["Dienstleistungen", "Wäscherei"],

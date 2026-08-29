@@ -59,6 +59,12 @@ export interface TargetListFilters {
   centerLat?: number;
   centerLng?: number;
   centerRadiusKm?: number;
+  /**
+   * Filialen ueberregionaler Ketten einbeziehen. Standard ist false: der
+   * Katalog zielt auf Mittelstand und kleine Betriebe, und eine Filiale
+   * entscheidet vor Ort weder ueber Budget noch ueber Software.
+   */
+  includeChains?: boolean;
 }
 
 export interface TargetListItem {
@@ -452,6 +458,7 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
     LEFT JOIN dm_count dm ON dm.target_id = t.id
     LEFT JOIN latest_audit la ON la.target_id = t.id
     WHERE t.deleted_at IS NULL
+      AND (${filters.includeChains ?? false} OR t.is_chain = FALSE)
       AND (${cities.length === 0} OR t.city = ANY(${cities}::text[]))
       AND (${industries.length === 0} OR t.industry = ANY(${industries}::text[]))
       AND (${status.length === 0} OR t.enrichment_status = ANY(${status}::text[]))

@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
   const centerLng = optNum(params, "centerLng");
   const centerRadiusKm = optNum(params, "centerRadiusKm");
   const industries = multi(params, "industry");
+  const includeChains = params.get("includeChains") === "1";
 
   // Bounding-Box-Vorfilter wie in listTargets — Index-freundlich.
   const useCenter =
@@ -67,6 +68,9 @@ export async function GET(request: NextRequest) {
       LEFT JOIN latest_brief sb ON sb.target_id = t.id
       LEFT JOIN dm_count dm ON dm.target_id = t.id
       WHERE t.deleted_at IS NULL
+        /* Muss zur Liste passen, sonst weicht die Gesamtzahl von den
+           angezeigten Karten ab. */
+        AND (${includeChains} OR t.is_chain = FALSE)
         AND (${(industries ?? []).length === 0} OR t.industry = ANY(${industries ?? []}::text[]))
         AND (${useCenter ? 1 : 0}::int = 0 OR (
           t.latitude IS NOT NULL AND t.longitude IS NOT NULL
