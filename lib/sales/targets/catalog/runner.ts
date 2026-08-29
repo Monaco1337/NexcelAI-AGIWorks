@@ -180,6 +180,15 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
   const tagAxis = (filters.tagAxis as string | undefined) ?? null;
 
   try {
+    // Ein Segment ohne Geometrie kann nicht sinnvoll laufen. Der Fehler
+    // nennt den tatsächlichen Payload, damit ein falsch angelegter Job
+    // sofort erkennbar ist statt als Provider-Problem zu erscheinen.
+    if (!bbox && job.centerLat === null) {
+      throw new Error(
+        `Segment ohne Geometrie (filters-Schlüssel: ${Object.keys(filters).join(",") || "keine"})`
+      );
+    }
+
     const providers = getConfiguredDiscoveryProviders();
     if (providers.length === 0) {
       throw new Error("Kein Discovery-Provider verfügbar");
