@@ -121,11 +121,15 @@ export async function runSearchJob(job: SearchJob): Promise<{
     await enqueueEnrichment(created.target.id, "website_contact", { priority: 100 });
   }
 
+  // Wenn nichts entdeckt wurde, den ersten Provider-Fehler persistieren,
+  // damit die UI sofort sehen kann WARUM (fehlender API-Key, HTTP-Fehler …)
+  const firstError = providerLogs.find((l) => !l.ok)?.error ?? null;
   await updateSearchJob(job.id, {
     status: "completed",
     finishedAt: new Date().toISOString(),
     discoveredCount: deduped.length,
     actualCostCents: totalCost,
+    error: deduped.length === 0 ? firstError : null,
   });
 
   return { discoveredCount: deduped.length, createdCount, updatedCount, providerLogs };

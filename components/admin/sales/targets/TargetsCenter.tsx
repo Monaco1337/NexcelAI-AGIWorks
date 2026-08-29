@@ -113,6 +113,13 @@ interface AreaJob {
   actualCostCents: number;
 }
 
+interface ProviderStatusDTO {
+  key: string;
+  label: string;
+  configured: boolean;
+  note?: string;
+}
+
 interface AreaState {
   correlationId: string;
   city: string;
@@ -128,6 +135,8 @@ interface AreaState {
   failed: number;
   hint: string | null;
   startedAt: number;
+  firstError: string | null;
+  providers: ProviderStatusDTO[];
 }
 
 const AREA_PARALLELISM = 3;
@@ -284,6 +293,8 @@ export default function TargetsCenter({ accent }: { accent: string }) {
           totalTiles?: number;
           hint?: string | null;
           firstResult?: { discoveredCount?: number } | null;
+          firstProviderError?: string | null;
+          providers?: ProviderStatusDTO[];
           error?: string;
           message?: string;
           detail?: string;
@@ -308,6 +319,8 @@ export default function TargetsCenter({ accent }: { accent: string }) {
           failed: 0,
           hint: data.hint ?? null,
           startedAt: Date.now(),
+          firstError: data.firstProviderError ?? null,
+          providers: data.providers ?? [],
         };
         setArea(initState);
         void load();
@@ -369,6 +382,8 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         const data = (await res.json()) as {
           jobs: AreaJob[];
           totals: { queued: number; running: number; completed: number; failed: number; discovered: number; costCents: number };
+          providers?: ProviderStatusDTO[];
+          firstError?: string | null;
         };
         if (cancelled) return;
         setArea((prev) =>
@@ -381,6 +396,8 @@ export default function TargetsCenter({ accent }: { accent: string }) {
                 discovered: data.totals.discovered,
                 costCents: data.totals.costCents ?? prev.costCents,
                 remainingJobIds: data.jobs.filter((j) => j.status === "queued").map((j) => j.id),
+                firstError: data.firstError ?? prev.firstError,
+                providers: data.providers ?? prev.providers,
               }
             : prev
         );
@@ -639,12 +656,17 @@ function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: stri
   const pct = area.jobIds.length > 0 ? Math.round((done / area.jobIds.length) * 100) : 0;
   const elapsed = Math.max(1, Math.round((Date.now() - area.startedAt) / 1000));
   const finished = area.remainingJobIds.length === 0 && area.running === 0;
+  const problem = finished && area.discovered === 0;
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-4">
+    <div
+      className={`rounded-2xl border p-4 ${
+        problem ? "border-amber-500/30 bg-amber-500/[0.06]" : "border-white/[0.08] bg-black/40"
+      }`}
+    >
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-[0.16em] text-white/45">
-            {finished ? "Discovery abgeschlossen" : "Discovery läuft"}
+            {problem ? "Discovery ohne Ergebnisse" : finished ? "Discovery abgeschlossen" : "Discovery läuft"}
           </div>
           <div className="mt-1 text-sm font-medium text-white">
             {area.city} · {area.radiusKm} km · {area.jobIds.length} Tiles
@@ -653,7 +675,7 @@ function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: stri
         <div className="flex items-center gap-3 text-right">
           <div>
             <div className="text-[10px] uppercase tracking-[0.16em] text-white/45">Firmen erfasst</div>
-            <div className="text-2xl font-semibold" style={{ color: accent }}>
+            <div className="text-2xl font-semibold" style={{ color: problem ? "#fbbf24" : accent }}>
               {area.discovered}
             </div>
           </div>
@@ -665,7 +687,7 @@ function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: stri
       <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/[0.05]">
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${Math.max(3, pct)}%`, backgroundColor: accent }}
+          style={{ width: `${Math.max(3, pct)}%`, backgroundColor: problem ? "#fbbf24" : accent }}
         />
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/60">
@@ -677,6 +699,31 @@ function AreaProgress({ area, accent, onClose }: { area: AreaState; accent: stri
         {area.costCents > 0 && <span>Ausgabe: {(area.costCents / 100).toFixed(2)} €</span>}
         {area.hint && <span className="text-amber-300/80">{area.hint}</span>}
       </div>
+      {area.providers && area.providers.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-[0.16em] text-white/40">Provider:</span>
+          {area.providers.map((p) => (
+            <span
+              key={p.key}
+              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+                p.configured
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                  : "border-white/10 bg-white/[0.03] text-white/50"
+              }`}
+              title={p.note}
+            >
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${p.configured ? "bg-emerald-400" : "bg-white/30"}`} />
+              {p.label}
+            </span>
+          ))}
+        </div>
+      )}
+      {area.firstError && (
+        <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/[0.08] p-3 text-xs text-red-100">
+          <div className="mb-1 text-[10px] uppercase tracking-[0.16em] text-red-200/80">Fehlermeldung des Providers</div>
+          <div className="font-mono text-[12px] leading-relaxed">{area.firstError}</div>
+        </div>
+      )}
     </div>
   );
 }

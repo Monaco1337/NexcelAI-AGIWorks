@@ -11,6 +11,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/pg";
 import { authorize } from "@/lib/auth/authorize";
+import { providerStatus } from "@/lib/sales/targets/providers/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,9 +24,23 @@ export async function GET(request: NextRequest) {
     .split(",")
     .map((v) => v.trim())
     .filter(Boolean);
-  if (ids.length === 0) return NextResponse.json({ jobs: [], totals: { queued: 0, running: 0, completed: 0, failed: 0, discovered: 0 } });
+  if (ids.length === 0) {
+    return NextResponse.json({
+      jobs: [],
+      totals: { queued: 0, running: 0, completed: 0, failed: 0, discovered: 0, costCents: 0 },
+      providers: providerStatus(),
+      firstError: null,
+    });
+  }
   const sql = await db();
-  if (!sql) return NextResponse.json({ jobs: [], totals: { queued: 0, running: 0, completed: 0, failed: 0, discovered: 0 } });
+  if (!sql) {
+    return NextResponse.json({
+      jobs: [],
+      totals: { queued: 0, running: 0, completed: 0, failed: 0, discovered: 0, costCents: 0 },
+      providers: providerStatus(),
+      firstError: "Datenbank nicht verfügbar",
+    });
+  }
 
   const rows = await sql<Record<string, unknown>[]>`
     SELECT id, status, discovered_count, radius_km, city, industries, started_at, finished_at, error, actual_cost_cents
@@ -57,5 +72,6 @@ export async function GET(request: NextRequest) {
     },
     { queued: 0, running: 0, completed: 0, failed: 0, discovered: 0, costCents: 0 }
   );
-  return NextResponse.json({ jobs, totals });
+  const firstError = jobs.find((j) => j.error)?.error ?? null;
+  return NextResponse.json({ jobs, totals, providers: providerStatus(), firstError });
 }

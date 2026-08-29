@@ -9,12 +9,17 @@
 
 import type { DiscoveryProvider } from "./types";
 import { GooglePlacesProvider } from "./googlePlacesProvider";
+import { OverpassProvider } from "./overpassProvider";
 
 let cachedProviders: DiscoveryProvider[] | null = null;
 
 export function getDiscoveryProviders(): DiscoveryProvider[] {
   if (cachedProviders) return cachedProviders;
-  cachedProviders = [new GooglePlacesProvider()];
+  // Reihenfolge = Priorität. Google Places liefert die reichhaltigsten
+  // Business-Signale (Rating, Reviews, business_status), Overpass ist
+  // der kostenlose Fallback für DACH und läuft parallel — beide
+  // Ergebnisse werden anschließend fingerprint-basiert dedupliziert.
+  cachedProviders = [new GooglePlacesProvider(), new OverpassProvider()];
   return cachedProviders;
 }
 
@@ -27,15 +32,17 @@ export function providerStatus(): Array<{ key: string; label: string; configured
     key: p.key,
     label: p.label,
     configured: p.isConfigured(),
-    note: p.isConfigured() ? undefined : `Setze Umgebungsvariable ${envVarForProvider(p.key)}`,
+    note: p.isConfigured() ? undefined : noteForProvider(p.key),
   }));
 }
 
-function envVarForProvider(key: string): string {
+function noteForProvider(key: string): string {
   switch (key) {
     case "google_places":
-      return "GOOGLE_PLACES_API_KEY";
+      return "Optional: GOOGLE_PLACES_API_KEY setzen für Ratings, Reviews und höhere Trefferqualität";
+    case "overpass_osm":
+      return "Deaktiviert via DISABLE_OVERPASS_DISCOVERY=1";
     default:
-      return key.toUpperCase() + "_API_KEY";
+      return `Setze Umgebungsvariable ${key.toUpperCase()}_API_KEY`;
   }
 }

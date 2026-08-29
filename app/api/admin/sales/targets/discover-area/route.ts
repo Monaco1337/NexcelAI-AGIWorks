@@ -25,6 +25,7 @@ import { createSearchJob, getSearchJob } from "@/lib/sales/targets/store";
 import { runSearchJob } from "@/lib/sales/targets/pipeline";
 import { geocodeCity, tileArea } from "@/lib/sales/targets/geocode";
 import { newCorrelationId, toTargetError, TargetError } from "@/lib/sales/targets/errors";
+import { providerStatus } from "@/lib/sales/targets/providers/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const providers = providerStatus();
     return NextResponse.json({
       correlationId,
       city: center.city,
@@ -111,8 +113,11 @@ export async function POST(request: NextRequest) {
       jobIds,
       remainingJobIds: jobIds.slice(1),
       firstResult,
+      providers,
+      firstProviderError:
+        firstResult?.providerLogs?.find((l) => !l.ok)?.error ?? null,
       industryCount: industriesInput.filter((x) => x).length || 1,
-      estimatedCostCents: limited.length * industriesInput.length * limitPerTile * 3, // ~ Google Places
+      estimatedCostCents: limited.length * industriesInput.length * limitPerTile * 3,
       hint:
         tiles.length > limited.length
           ? `Region deckt ${tiles.length} Tiles ab — auf ${maxTiles} begrenzt (Budget). Radius verkleinern oder Budget anheben.`
