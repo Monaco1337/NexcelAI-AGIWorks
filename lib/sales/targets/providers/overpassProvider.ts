@@ -88,6 +88,12 @@ const BBOX_TOTAL_BUDGET_MS = 75_000;
  * genug, um innerhalb des Worker-Zeitbudgets zurückzukommen.
  */
 export const OVERPASS_TAG_AXES = [
+  // Schwerpunktbranchen zuerst: sie sollen im Katalog stehen, bevor die
+  // breiten Massenachsen das Zeitbudget verbrauchen.
+  "immobilien",
+  "beauty",
+  "fitness",
+  "bildung",
   "shop",
   "craft",
   "office",
@@ -105,7 +111,51 @@ export type OverpassTagAxis = (typeof OVERPASS_TAG_AXES)[number];
  * Achsen filtern wir auf die geschäftlich relevanten Werte, damit keine
  * Parkbänke, Mülleimer oder Bushaltestellen im Vertriebskatalog landen.
  */
-const AXIS_FILTER: Record<string, string> = {
+const AXIS_FILTER: Record<string, string | string[]> = {
+  /* ── Fokusachsen ──────────────────────────────────────────────────
+   * Immobilien, Beauty, Fitness und Bildung sind Schwerpunktbranchen,
+   * liegen aber verstreut in den breiten Achsen `shop`, `office`,
+   * `leisure` und `amenity`. Das ist ein Problem: eine breite Achse
+   * stösst in dicht besiedelten Kacheln an das Ergebnislimit, und
+   * Overpass liefert dann eine beliebige Teilmenge. Seltene Kategorien
+   * verlieren dabei ueberproportional — in der Stichprobe Unna machen
+   * Immobilien nur 0,8 % und Bildung 0,5 % aller Objekte aus. Genau so
+   * sind die fehlenden Immobilienbetriebe in Unna entstanden.
+   *
+   * Eigene Achsen loesen das: die Abfrage ist so klein, dass sie das
+   * Limit nie erreicht, und die Branche damit vollstaendig erfasst wird.
+   * Die Ueberschneidung mit den breiten Achsen ist gewollt und
+   * unschaedlich — die Fingerprint-Deduplizierung faengt sie ab.
+   */
+  immobilien: [
+    '["office"~"^(estate_agent|property_management)$"]',
+    '["shop"="estate_agent"]',
+  ],
+  beauty: [
+    '["shop"~"^(hairdresser|beauty|nail_salon|nails|cosmetics|massage|tattoo|perfumery|herbalist)$"]',
+    '["leisure"~"^(spa|sauna|tanning_salon)$"]',
+    '["amenity"~"^(spa|public_bath)$"]',
+    '["craft"~"^(beautician|cosmetics)$"]',
+  ],
+  /*
+   * Bewusst ohne `leisure=pitch` und `leisure=swimming_pool`. Beide
+   * klingen nach Fitness, sind es aber nicht: hinter `pitch` stecken in
+   * NRW 56.254 Bolz-, Tennis- und Sportplätze, fast durchweg kommunale
+   * Anlagen ohne Betreiber, hinter `swimming_pool` weitere 11.886
+   * überwiegend private Gartenpools. Sie würden den Katalog mit
+   * Objekten fluten, die niemand anrufen kann.
+   */
+  fitness: [
+    '["leisure"~"^(fitness_centre|sports_centre|sports_hall|dance|horse_riding|golf_course|climbing|bowling_alley|yoga)$"]',
+    '["shop"~"^(sports|fitness)$"]',
+    '["amenity"~"^(gym|dojo)$"]',
+  ],
+  bildung: [
+    '["amenity"~"^(school|college|university|driving_school|language_school|music_school|training|prep_school|research_institute|kindergarten)$"]',
+    '["office"~"^(educational_institution|tutoring|research)$"]',
+  ],
+
+  /* ── Breite Achsen ────────────────────────────────────────────── */
   shop: '["shop"]',
   craft: '["craft"]',
   office: '["office"]',
@@ -569,7 +619,8 @@ function buildOverpassQL(opts: {
   lng?: number;
   radiusM?: number;
   bbox?: DiscoveryBBox;
-  filter: string;
+  /** Ein Selektor oder mehrere, die als Vereinigung abgefragt werden. */
+  filter: string | string[];
   limit: number;
   timeoutS?: number;
 }): string {
@@ -579,7 +630,10 @@ function buildOverpassQL(opts: {
   const scope = opts.bbox
     ? `(${round6(opts.bbox.south)},${round6(opts.bbox.west)},${round6(opts.bbox.north)},${round6(opts.bbox.east)})`
     : `(around:${opts.radiusM},${opts.lat},${opts.lng})`;
-  const body = `node${opts.filter}${scope};way${opts.filter}${scope};`;
+  // Mehrere Selektoren sind noetig, wenn eine Branche ueber verschiedene
+  // OSM-Schluessel verteilt ist — Immobilien etwa ueber office und shop.
+  const selectors = Array.isArray(opts.filter) ? opts.filter : [opts.filter];
+  const body = selectors.map((f) => `node${f}${scope};way${f}${scope};`).join("");
   return `[out:json][timeout:${timeout}];(${body});out tags center ${opts.limit};`;
 }
 

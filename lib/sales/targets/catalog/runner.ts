@@ -52,13 +52,20 @@ function systemActor(actorId: string | null): AuditActor {
 }
 
 /**
- * Obergrenze je Segment-Query. Gemessen an der dichtesten Kachel
- * (Ruhrgebiet, Achse `shop`): 4.000 Elemente in 10,2 s gegenüber
- * 11.180 Elementen in 11,5 s — die Grenze kostet praktisch keine Zeit,
- * deckelt aber sonst dichte Ballungsräume und erzeugt dort eine
- * systematische Lücke.
+ * Obergrenze je Segment-Query.
+ *
+ * Die Grenze ist heikel, weil Overpass sie stillschweigend anwendet:
+ * kein Fehler, keine Warnung, nur eine beliebige Teilmenge. Betroffen
+ * sind zuerst die seltenen Kategorien — so sind die fehlenden
+ * Immobilienbetriebe entstanden.
+ *
+ * Am 8x8-Raster nachgemessen: die dichteste Kachel ist Köln mit 10.022
+ * Geschäften auf der Achse `shop`, das Ruhrgebiet folgt mit 7.978. Bei
+ * 12.000 lag Köln bei 84 % der Grenze — zu wenig Abstand, zumal der
+ * Datenbestand wächst. 20.000 verdoppeln den Spielraum; die Grenze
+ * kostet praktisch keine Zeit, da sie nur den Rückgabeumfang deckelt.
  */
-const SEGMENT_LIMIT = 12_000;
+const SEGMENT_LIMIT = 20_000;
 
 export interface EnsureResult {
   run: CatalogRun;

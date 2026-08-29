@@ -4,7 +4,10 @@
  * müssen zuverlässig auf saubere deutsche UI-Kategorien mappen.
  */
 import { strict as assert } from "node:assert";
-import { detectChain } from "../../lib/sales/targets/providers/overpassProvider";
+import {
+  detectChain,
+  OVERPASS_TAG_AXES,
+} from "../../lib/sales/targets/providers/overpassProvider";
 import {
   normalizeCategoryFromTags,
   normalizeCategoryFromRawIndustry,
@@ -102,6 +105,52 @@ function main() {
   // Der Markenname darf die Fachkategorie nicht verdraengen: bei einer
   // Lidl-Filiale ist "Supermarkt" die brauchbare Angabe, nicht "Lidl".
   assert.equal(normalizeCategoryFromTags({ shop: "supermarket", brand: "Lidl" }).subCategory, "Supermarkt");
+
+  /* ── Schwerpunktbranchen ─────────────────────────────────────────── */
+  // Immobilien, Beauty, Fitness und Bildung haben eigene Suchachsen,
+  // weil sie in den breiten Achsen am Ergebnislimit verloren gingen.
+  // Die Achsen laufen zuerst, damit diese Betriebe zuerst im Katalog
+  // stehen.
+  const fokus = ["immobilien", "beauty", "fitness", "bildung"];
+  assert.deepEqual(
+    OVERPASS_TAG_AXES.slice(0, 4),
+    fokus,
+    "Fokusachsen muessen vor den Massenachsen liegen"
+  );
+
+  // Jede Fokusachse muss auch in der passenden Anzeigekategorie landen —
+  // sonst findet der Branchenfilter die Betriebe trotz Discovery nicht.
+  const erwartet: Array<[Record<string, string>, string]> = [
+    [{ office: "estate_agent" }, "Immobilien"],
+    [{ office: "property_management" }, "Immobilien"],
+    [{ shop: "estate_agent" }, "Immobilien"],
+    [{ shop: "hairdresser" }, "Fitness / Beauty"],
+    [{ shop: "nail_salon" }, "Fitness / Beauty"],
+    [{ craft: "beautician" }, "Fitness / Beauty"],
+    [{ leisure: "spa" }, "Fitness / Beauty"],
+    [{ amenity: "gym" }, "Fitness / Beauty"],
+    [{ leisure: "fitness_centre" }, "Fitness / Beauty"],
+    [{ leisure: "horse_riding" }, "Fitness / Beauty"],
+    [{ amenity: "school" }, "Bildung"],
+    [{ amenity: "language_school" }, "Bildung"],
+    [{ amenity: "driving_school" }, "Bildung"],
+    [{ amenity: "training" }, "Bildung"],
+    [{ office: "tutoring" }, "Bildung"],
+    [{ office: "educational_institution" }, "Bildung"],
+  ];
+  for (const [tags, kategorie] of erwartet) {
+    const ist = normalizeCategoryFromTags(tags).category;
+    assert.equal(
+      ist,
+      kategorie,
+      `${JSON.stringify(tags)} -> erwartet ${kategorie}, ist ${ist}`
+    );
+    // Ohne lesbare Unterkategorie bleibt die Karte in der Liste nichtssagend.
+    assert.ok(
+      normalizeCategoryFromTags(tags).subCategory,
+      `${JSON.stringify(tags)} ohne Unterkategorie`
+    );
+  }
 
   console.log("OK · Zielkunden-CategoryMap");
 }

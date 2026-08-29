@@ -50,11 +50,19 @@ export const NRW_SCOPE: CatalogScope = {
   country: "DE",
   region: "Nordrhein-Westfalen",
   bbox: { south: 50.32, west: 5.87, north: 52.53, east: 9.46 },
-  // ~0.55° Breite x ~0.9° Länge ergibt ein 4x4-Gitter = 16 Kacheln.
-  // Gemessen: eine Kachel dieser Größe liefert pro Achse in wenigen
-  // Sekunden Ergebnisse und bleibt weit unter dem Overpass-Limit.
-  stepLat: 0.5525,
-  stepLng: 0.8975,
+  /*
+   * 8x8-Gitter = 64 Kacheln zu je rund 950 km².
+   *
+   * Vorher war das Gitter halb so fein. Eine Kachel deckte dann etwa
+   * 3.800 km² ab und enthielt im Ruhrgebiet — Dortmund, Bochum und Essen
+   * in einem Rechteck — deutlich mehr Geschäfte, als eine einzelne
+   * Abfrage zurückgeben darf. Overpass liefert in dem Fall stillschweigend
+   * eine beliebige Teilmenge: kein Fehler, keine Warnung, nur fehlende
+   * Betriebe. Die kleinere Kachel hält jede Abfrage unter dem Limit und
+   * macht die Abdeckung damit erst vollständig.
+   */
+  stepLat: 0.27625,
+  stepLng: 0.44875,
 };
 
 export const CATALOG_SCOPES: CatalogScope[] = [NRW_SCOPE];

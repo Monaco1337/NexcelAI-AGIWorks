@@ -119,6 +119,8 @@ const CRAFT_MAP: Record<string, [string, string?]> = {
   upholsterer: ["Handwerk", "Polsterer"],
   saddler: ["Handwerk", "Sattler"],
   shoemaker: ["Handwerk", "Schuster"],
+  beautician: ["Fitness / Beauty", "Kosmetik"],
+  cosmetics: ["Fitness / Beauty", "Kosmetik"],
   baker: ["Einzelhandel", "Bäcker"],
   confectionery: ["Einzelhandel", "Konditor"],
   brewery: ["Produktion", "Brauerei"],
@@ -156,6 +158,7 @@ const OFFICE_MAP: Record<string, [string, string?]> = {
   educational_institution: ["Bildung", "Bildungseinrichtung"],
   travel_agent: ["Dienstleistungen", "Reisebüro"],
   employment_agency: ["Dienstleistungen", "Personalvermittlung"],
+  tutoring: ["Bildung", "Nachhilfe"],
   government: ["Sonstige", "Öffentliche Verwaltung"],
   ngo: ["Sonstige", "NGO"],
   association: ["Sonstige", "Verband"],
@@ -163,6 +166,13 @@ const OFFICE_MAP: Record<string, [string, string?]> = {
 };
 
 const AMENITY_MAP: Record<string, [string, string?]> = {
+  gym: ["Fitness / Beauty", "Fitnessstudio"],
+  dojo: ["Fitness / Beauty", "Kampfsportschule"],
+  spa: ["Fitness / Beauty", "Spa"],
+  public_bath: ["Fitness / Beauty", "Badebetrieb"],
+  training: ["Bildung", "Weiterbildung"],
+  prep_school: ["Bildung", "Nachhilfe"],
+  research_institute: ["Bildung", "Forschungsinstitut"],
   restaurant: ["Gastronomie", "Restaurant"],
   cafe: ["Gastronomie", "Café"],
   bar: ["Gastronomie", "Bar"],
@@ -178,7 +188,7 @@ const AMENITY_MAP: Record<string, [string, string?]> = {
   car_wash: ["Automotive", "Waschanlage"],
   fuel: ["Automotive", "Tankstelle"],
   charging_station: ["Automotive", "Ladestation"],
-  driving_school: ["Automotive", "Fahrschule"],
+  driving_school: ["Bildung", "Fahrschule"],
   doctors: ["Ärzte / Praxen", "Arztpraxis"],
   dentist: ["Ärzte / Praxen", "Zahnarzt"],
   clinic: ["Ärzte / Praxen", "Klinik"],
@@ -215,7 +225,17 @@ const TOURISM_MAP: Record<string, [string, string?]> = {
 const LEISURE_MAP: Record<string, [string, string?]> = {
   fitness_centre: ["Fitness / Beauty", "Fitnessstudio"],
   sports_centre: ["Fitness / Beauty", "Sportzentrum"],
+  sports_hall: ["Fitness / Beauty", "Sporthalle"],
   dance: ["Fitness / Beauty", "Tanzstudio"],
+  yoga: ["Fitness / Beauty", "Yogastudio"],
+  climbing: ["Fitness / Beauty", "Kletterhalle"],
+  horse_riding: ["Fitness / Beauty", "Reitanlage"],
+  swimming_pool: ["Fitness / Beauty", "Schwimmbad"],
+  golf_course: ["Fitness / Beauty", "Golfanlage"],
+  bowling_alley: ["Fitness / Beauty", "Bowlingcenter"],
+  spa: ["Fitness / Beauty", "Spa"],
+  sauna: ["Fitness / Beauty", "Sauna"],
+  tanning_salon: ["Fitness / Beauty", "Sonnenstudio"],
 };
 
 const INDUSTRIAL_MAP: Record<string, [string, string?]> = {
