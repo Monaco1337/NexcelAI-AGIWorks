@@ -22,6 +22,8 @@ import { migration0006 } from "./0006_billing";
 import { migration0007 } from "./0007_billing_share_assets";
 import { migration0008 } from "./0008_billing_snapshot_hardening";
 import { migration0009 } from "./0009_sales";
+import { migration0010 } from "./0010_sales_targets";
+import { migration0011 } from "./0011_sales_targets_hardening";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
@@ -33,4 +35,6 @@ export const MIGRATIONS: Migration[] = [
   migration0007,
   migration0008,
   migration0009,
+  migration0010,
+  migration0011,
 ];

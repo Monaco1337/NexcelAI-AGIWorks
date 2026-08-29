@@ -23,15 +23,17 @@ import CompanyDetail from "./CompanyDetail";
 import PlaybookRegistry from "./PlaybookRegistry";
 import PromptRegistry from "./PromptRegistry";
 import NewCompanyModal from "./NewCompanyModal";
+import TargetsCenter from "./targets/TargetsCenter";
 import type { DashboardResponse } from "./shared";
 import { buttonPrimary, buttonSecondary } from "./HelperUI";
 
-type View = "dashboard" | "pipeline" | "companies" | "playbooks" | "prompts";
+type View = "dashboard" | "pipeline" | "targets" | "companies" | "playbooks" | "prompts";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "dashboard", label: "Übersicht" },
   { id: "pipeline", label: "Pipeline" },
-  { id: "companies", label: "Zielkunden" },
+  { id: "targets", label: "Zielkunden" },
+  { id: "companies", label: "Firmen (CRM)" },
   { id: "playbooks", label: "Playbooks" },
   { id: "prompts", label: "Prompts & Runs" },
 ];
@@ -149,6 +151,8 @@ export default function SalesCenter({ accent }: { accent: string }) {
           onOpenCompany={openCompany}
           refreshKey={refreshKey}
         />
+      ) : view === "targets" ? (
+        <TargetsCenter accent={accent} />
       ) : view === "companies" ? (
         <CompanyList accent={accent} onOpenCompany={openCompany} refreshKey={refreshKey} />
       ) : view === "playbooks" ? (
