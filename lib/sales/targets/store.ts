@@ -462,9 +462,12 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
       AND (${cities.length === 0} OR t.city = ANY(${cities}::text[]))
       AND (${industries.length === 0} OR t.industry = ANY(${industries}::text[]))
       AND (${status.length === 0} OR t.enrichment_status = ANY(${status}::text[]))
-      AND (${priorityClasses.length === 0} OR ls.priority_class = ANY(${priorityClasses}::text[]))
+      /* Solange kein angereicherter Score vorliegt, gilt die vorlaeufige
+         Einstufung aus dem Pre-Score — sonst liefert jeder Klassenfilter
+         auf einem frischen Katalog null Treffer. */
+      AND (${priorityClasses.length === 0} OR COALESCE(ls.priority_class, t.pre_score_class) = ANY(${priorityClasses}::text[]))
       AND (${maxDistanceKm ?? null}::numeric IS NULL OR t.distance_km IS NULL OR t.distance_km <= ${maxDistanceKm ?? null})
-      AND (${minLeadScore ?? null}::int IS NULL OR ls.total_score >= ${minLeadScore ?? null})
+      AND (${minLeadScore ?? null}::int IS NULL OR COALESCE(ls.total_score, t.pre_score) >= ${minLeadScore ?? null})
       AND (${hasWebsite ?? null}::boolean IS NULL OR (${hasWebsite ?? null} AND t.website IS NOT NULL) OR (NOT ${hasWebsite ?? null} AND t.website IS NULL))
       AND (${hasPhone ?? null}::boolean IS NULL OR (${hasPhone ?? null} AND cs.phone_count > 0))
       AND (${hasEmail ?? null}::boolean IS NULL OR (${hasEmail ?? null} AND cs.email_count > 0))
@@ -491,7 +494,11 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
       CASE WHEN ${sortBy} = 'name' THEN t.name ELSE NULL END ASC NULLS LAST,
       CASE WHEN ${sortBy} = 'recent' THEN t.updated_at ELSE NULL END DESC NULLS LAST,
       CASE WHEN ${sortBy} = 'distance' THEN t.distance_km ELSE NULL END ASC NULLS LAST,
-      ls.total_score DESC NULLS LAST,
+      /* Der belastbare Lead Score gewinnt immer. Fehlt er — was auf einen
+         frisch geladenen Katalog fast durchgaengig zutrifft — sortiert der
+         Pre-Score aus den Discovery-Daten. Ohne diesen Rueckfall waere die
+         Liste bis zum Abschluss der Anreicherung faktisch unsortiert. */
+      COALESCE(ls.total_score, t.pre_score) DESC NULLS LAST,
       t.updated_at DESC
     LIMIT ${limit} OFFSET ${offset}
   `;

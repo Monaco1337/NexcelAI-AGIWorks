@@ -45,6 +45,12 @@ export interface DiscoveredCompanyStub {
   confidence: number;
   /** Filiale einer ueberregionalen Kette (siehe detectChain). */
   isChain?: boolean;
+  /**
+   * Verdichtete Merkmale aus der Rohquelle (Oeffnungszeiten, Zahlungsarten,
+   * Fax, Datenfrische, Fachgebiet). Grundlage des Pre-Scores und Teil des
+   * Firmenprofils.
+   */
+  signals?: string[];
 }
 
 /**

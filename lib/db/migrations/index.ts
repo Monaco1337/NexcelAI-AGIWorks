@@ -27,6 +27,7 @@ import { migration0011 } from "./0011_sales_targets_hardening";
 import { migration0012 } from "./0012_sales_targets_geocache";
 import { migration0013 } from "./0013_sales_targets_bulk_catalog";
 import { migration0014 } from "./0014_sales_targets_chain_flag";
+import { migration0015 } from "./0015_sales_targets_prescore";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
@@ -43,4 +44,5 @@ export const MIGRATIONS: Migration[] = [
   migration0012,
   migration0013,
   migration0014,
+  migration0015,
 ];

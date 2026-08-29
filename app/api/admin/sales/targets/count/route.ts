@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
       GROUP BY target_id
     ),
     filtered AS (
-      SELECT t.id, ls.priority_class, sb.target_id AS has_brief, dm.dm_count
+      SELECT t.id, COALESCE(ls.priority_class, t.pre_score_class) AS priority_class,
+             sb.target_id AS has_brief, dm.dm_count
       FROM sales_target_companies t
       LEFT JOIN latest_score ls ON ls.target_id = t.id
       LEFT JOIN latest_brief sb ON sb.target_id = t.id
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
     )
     SELECT
       (SELECT COUNT(*)::int FROM filtered)                                         AS total,
-      (SELECT COUNT(*)::int FROM filtered WHERE priority_class IN ('A+','A'))      AS hot,
+      (SELECT COUNT(*)::int FROM filtered WHERE priority_class IN ('A++','A+','A')) AS hot,
       (SELECT COUNT(*)::int FROM filtered WHERE has_brief IS NOT NULL)             AS with_brief,
       (SELECT COUNT(*)::int FROM filtered WHERE dm_count > 0)                      AS with_dm,
       (SELECT COUNT(*)::int FROM sales_target_enrichment_jobs WHERE status='queued') AS enrichment_queued

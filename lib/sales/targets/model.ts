@@ -383,10 +383,19 @@ export const FINANCIAL_CAPACITY_COLOR: Record<FinancialCapacityClass, string> = 
 /*  Prioritätsklassen                                                          */
 /* -------------------------------------------------------------------------- */
 
-export const PRIORITY_CLASSES = ["A+", "A", "B", "C", "D"] as const;
+/**
+ * A++ steht ueber A+ und bleibt der Spitze vorbehalten: hoher Bedarf,
+ * belastbare Kapazitaet, direkt erreichbarer Entscheider und belegte
+ * Evidenz. Die Klasse ist nur nach Anreicherung erreichbar — aus reinen
+ * Discovery-Daten laesst sich eine solche Aussage nicht verantworten.
+ * C und D bleiben erhalten; sie werden nicht geloescht, sondern nur
+ * nachrangig behandelt.
+ */
+export const PRIORITY_CLASSES = ["A++", "A+", "A", "B", "C", "D"] as const;
 export type PriorityClass = (typeof PRIORITY_CLASSES)[number];
 
 export const PRIORITY_CLASS_LABEL: Record<PriorityClass, string> = {
+  "A++": "A++ — Top-Kandidat, sofort anrufen",
   "A+": "A+ — Sofort kontaktieren",
   A: "A — Priorität hoch",
   B: "B — Priorität mittel",
@@ -395,6 +404,7 @@ export const PRIORITY_CLASS_LABEL: Record<PriorityClass, string> = {
 };
 
 export const PRIORITY_CLASS_COLOR: Record<PriorityClass, string> = {
+  "A++": "#059669",
   "A+": "#10B981",
   A: "#22C55E",
   B: "#3B82F6",
@@ -908,13 +918,15 @@ function tierKeyForOpportunity(kind: OpportunityKind): string {
 
 export function priorityFromScore(
   total: number,
-  thresholds: { aPlus: number; a: number; b: number; c: number } = {
+  thresholds: { aPlusPlus?: number; aPlus: number; a: number; b: number; c: number } = {
+    aPlusPlus: 92,
     aPlus: 85,
     a: 70,
     b: 55,
     c: 40,
   }
 ): PriorityClass {
+  if (total >= (thresholds.aPlusPlus ?? 92)) return "A++";
   if (total >= thresholds.aPlus) return "A+";
   if (total >= thresholds.a) return "A";
   if (total >= thresholds.b) return "B";

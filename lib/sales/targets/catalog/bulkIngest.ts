@@ -30,6 +30,11 @@ import { createHash, randomUUID } from "node:crypto";
 import type { DiscoveredCompanyStub } from "../providers/types";
 import { buildFingerprint } from "../entityResolution";
 import { domainFromUrl } from "../websiteAudit";
+import {
+  preScoreFromStub,
+  preScoreClass,
+  enrichmentPriorityFromPreScore,
+} from "../preScore";
 
 export interface BulkIngestResult {
   received: number;
@@ -84,7 +89,13 @@ export async function bulkIngestCompanies(
 
   for (let i = 0; i < entries.length; i += CHUNK) {
     const chunk = entries.slice(i, i + CHUNK);
-    const rows: Array<Record<string, unknown>> = chunk.map(([fingerprint, { stub, domain }]) => ({
+    // Bewertung aus Discovery-Daten: kostenlos, sofort, und die einzige
+    // Grundlage, um die Anreicherung sinnvoll zu ordnen.
+    const preScores = new Map<string, number>();
+    const rows: Array<Record<string, unknown>> = chunk.map(([fingerprint, { stub, domain }]) => {
+      const pre = preScoreFromStub(stub);
+      preScores.set(fingerprint, pre.score);
+      return {
       id: `tg_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
       name: truncate(stub.name, 300),
       industry: stub.industry ?? null,
@@ -106,7 +117,13 @@ export async function bulkIngestCompanies(
       founded_year: intOrNull(stub.foundedYear),
       fingerprint,
       origin_search_job_id: opts.searchJobId,
-    }));
+      pre_score: pre.score,
+      pre_score_class: preScoreClass(pre.score),
+      // Die verdichteten Quellmerkmale gehoeren ins Profil, nicht in den
+      // Papierkorb: sie tragen Digitalisierungs- und Groessenhinweise.
+      tags: stub.signals ?? [],
+      };
+    });
 
     // 1. Firmen. ON CONFLICT auf dem UNIQUE-Fingerprint-Index aus 0013.
     //    DO NOTHING statt UPDATE: ein bereits bekannter Datensatz kann
@@ -134,7 +151,10 @@ export async function bulkIngestCompanies(
         "employee_estimate_max",
         "founded_year",
         "fingerprint",
-        "origin_search_job_id"
+        "origin_search_job_id",
+        "pre_score",
+        "pre_score_class",
+        "tags"
       )}
       ON CONFLICT (fingerprint) WHERE deleted_at IS NULL DO NOTHING
       RETURNING id, fingerprint
@@ -228,11 +248,16 @@ export async function bulkIngestCompanies(
 
     // 4. Enrichment anstoßen. Genau eine Startphase pro Firma; die
     //    Folgephasen kaskadiert der bestehende Enrichment-Worker.
+    // Reihenfolge nach Pre-Score: kleinere Zahl wird zuerst gezogen.
+    // Vorher bekam jede Firma pauschal 100, wodurch die Tiefenanalyse in
+    // Einfuegereihenfolge lief — bei sechsstelliger Katalogroesse heisst
+    // das, dass die aussichtsreichen Betriebe rechnerisch nie an die
+    // Reihe kommen.
     const jobRows: Array<Record<string, unknown>> = insertedRaw.map((r) => ({
       id: `ej_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
       target_id: r.id,
       phase: "website_contact",
-      priority: 100,
+      priority: enrichmentPriorityFromPreScore(preScores.get(r.fingerprint) ?? 0),
     }));
     for (let j = 0; j < jobRows.length; j += CHUNK) {
       const part = jobRows.slice(j, j + CHUNK);

@@ -664,6 +664,7 @@ function mapElement(
     // liefert (Website + Telefon + Adresse = 0.85, Basis 0.55).
     confidence: computeConfidence({ website, phone, addressLine, signals }),
     isChain,
+    signals,
   };
 }
 
@@ -689,6 +690,15 @@ export function detectChain(tags: Record<string, string>): boolean {
   return false;
 }
 
+/**
+ * Verdichtet die OSM-Tags eines Betriebs zu auswertbaren Signalen.
+ *
+ * Die Auswahl folgt dem, was für Vertrieb tatsächlich etwas aussagt —
+ * gemessen an der Tag-Häufigkeit im Raum Unna, nicht geraten. Besonders
+ * ergiebig sind die Zahlungsarten und `fax`: sie sind die einzigen
+ * Hinweise auf den Digitalisierungsstand, die schon vor dem
+ * Website-Audit vorliegen.
+ */
 function pickSignals(tags: Record<string, string>): string[] {
   const s: string[] = [];
   if (tags["opening_hours"]) s.push("has_opening_hours");
@@ -703,7 +713,40 @@ function pickSignals(tags: Record<string, string>): string[] {
   if (tags["contact:facebook"] || tags["contact:instagram"] || tags["contact:linkedin"]) {
     s.push("has_social_media");
   }
+
+  // Digitalisierungsstand. Fax ist das deutlichste Analogsignal, das OSM
+  // kennt; Kartenzahlung umgekehrt ein Hinweis auf vorhandene Technik.
+  if (tags["fax"] || tags["contact:fax"]) s.push("uses_fax");
+  const cardPayment = Object.entries(tags).some(
+    ([k, v]) => k.startsWith("payment:") && !/cash|coins|notes/.test(k) && v === "yes"
+  );
+  if (cardPayment) s.push("accepts_card_payment");
+  else if (tags["payment:cash"] === "yes") s.push("cash_only");
+  if (tags["website:menu"] || tags["opening_hours:url"]) s.push("has_online_booking");
+
+  // Datenfrische: OSM-Mapper bestätigen gepflegte Objekte mit check_date.
+  // Ein junger Zeitstempel erhöht das Vertrauen in Adresse und Telefon.
+  const checked = tags["check_date"] ?? tags["check_date:opening_hours"];
+  if (checked && isRecentIso(checked, 730)) s.push("data_recently_verified");
+
+  // Größenhinweis: eine mehrgeschossige Betriebsstätte spricht gegen den
+  // Ein-Raum-Betrieb. Schwaches, aber kostenloses Kapazitätssignal.
+  const levels = parseInt(tags["building:levels"] ?? "", 10);
+  if (Number.isFinite(levels) && levels >= 2) s.push("multi_storey_premises");
+
+  // Fachliche Verfeinerung für Anzeige und Segmentierung.
+  const speciality = tags["healthcare:speciality"] ?? tags["sport"];
+  if (speciality) s.push(`speciality:${speciality.split(";")[0].slice(0, 40)}`);
+  if (tags["wikidata"]) s.push(`wikidata:${tags["wikidata"]}`);
+
   return s;
+}
+
+/** Prüft, ob ein ISO-Datum jünger als `maxAgeDays` ist. */
+function isRecentIso(value: string, maxAgeDays: number): boolean {
+  const t = Date.parse(value);
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t <= maxAgeDays * 86_400_000;
 }
 
 function computeConfidence(opts: {
