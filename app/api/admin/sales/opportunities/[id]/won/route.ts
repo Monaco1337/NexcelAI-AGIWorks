@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { authorize } from "@/lib/auth/authorize";
 import { serviceMarkOpportunityWon } from "@/lib/sales/service";
 import { SalesError } from "@/lib/sales/model";
+import { recordAttributedOutcome } from "@/lib/sales/targets/feedback/service";
+import { newCorrelationId } from "@/lib/sales/targets/errors";
 
 export const runtime = "nodejs";
 
@@ -20,6 +22,11 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       body.version,
       body.learning
     );
+    await recordAttributedOutcome({
+      eventType: "OPPORTUNITY_WON",
+      salesOpportunityId: id,
+      correlationId: newCorrelationId("opportunity-won"),
+    });
     return NextResponse.json({ opportunity });
   } catch (error) {
     if (error instanceof SalesError) {

@@ -18,6 +18,7 @@ import {
   runAnalysisAsync,
 } from "@/lib/diagnostics/services/analysisOrchestrator";
 import { analysisRepo, uploadRepo } from "@/lib/diagnostics/db";
+import { guardPublicApi } from "@/lib/security/publicApiGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +44,11 @@ function hashIp(req: NextRequest): string | null {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = await guardPublicApi(req, "diagnostics-analyze", {
+    windowMs: 60 * 60_000,
+    max: 5,
+  });
+  if (blocked) return blocked;
   let body: CreateBody;
   try {
     body = (await req.json()) as CreateBody;

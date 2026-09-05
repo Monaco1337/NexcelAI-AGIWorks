@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ollamaGenerate, ollamaInfo, parseJsonLoose } from "@/lib/ollama";
+import { safeFetch } from "@/lib/sales/targets/security/safeFetch";
+import { rateLimitDistributed, rateLimitKey } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -68,17 +70,13 @@ function safeUrl(input?: string): URL | null {
 async function fetchSite(url: URL): Promise<SiteFetchResult> {
   const t0 = Date.now();
   try {
-    const res = await fetch(url.toString(), {
-      headers: { "User-Agent": UA, Accept: "text/html,*/*" },
-      redirect: "follow",
-      cache: "no-store",
-      signal: AbortSignal.timeout(12000),
+    const result = await safeFetch(url.toString(), {
+      userAgent: UA,
+      timeoutMs: 12_000,
+      maxBytes: 1_000_000,
     });
-    const html = await res.text();
-    const headers: Record<string, string> = {};
-    res.headers.forEach((v, k) => {
-      headers[k.toLowerCase()] = v;
-    });
+    if (!result.ok) throw new Error(result.error ?? `HTTP ${result.status}`);
+    const html = result.bodyText;
 
     const title = (html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] || "")
       .trim()
@@ -181,17 +179,17 @@ async function fetchSite(url: URL): Promise<SiteFetchResult> {
       .slice(0, 4500);
 
     return {
-      ok: res.ok,
-      status: res.status,
-      finalUrl: res.url || url.toString(),
+      ok: result.ok,
+      status: result.status,
+      finalUrl: result.finalUrl,
       htmlSnippet: html.slice(0, 6000),
       textSnippet: text,
       title,
       metaDescription,
       detected,
-      headers,
+      headers: result.headers,
       fetchedInMs: Date.now() - t0,
-      bytes: html.length,
+      bytes: result.bytesRead,
     };
   } catch (err) {
     return {
@@ -292,6 +290,19 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === "production" && process.env.ENABLE_HERO_ANALYZE !== "1") {
+    return NextResponse.json({ error: "Nicht verfügbar." }, { status: 404 });
+  }
+  const limit = await rateLimitDistributed(rateLimitKey("hero-analyze", req.headers), {
+    windowMs: 60 * 60_000,
+    max: 3,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Zu viele Analyse-Anfragen." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
   let body: AnalyzeRequest;
   try {
     body = (await req.json()) as AnalyzeRequest;

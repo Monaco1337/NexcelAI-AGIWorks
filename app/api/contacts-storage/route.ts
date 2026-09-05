@@ -8,6 +8,12 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import fsPromises from "fs/promises";
 import path from "path";
+import { authorize } from "@/lib/auth/authorize";
+import {
+  legacyContactStorageInputSchema,
+  targetErrorResponse,
+  validateJsonRequest,
+} from "@/lib/sales/targets/contracts";
 
 const IS_SERVERLESS = process.env.VERCEL === "1" || !!process.env.VERCEL_ENV || process.env.NODE_ENV === "production";
 const STORAGE_FILE = IS_SERVERLESS
@@ -16,6 +22,9 @@ const STORAGE_FILE = IS_SERVERLESS
 
 // GET - Lade alle Kontakte
 export async function GET() {
+  const gate = await authorize("crm.contacts.read");
+  if (!gate.ok) return gate.response;
+
   try {
     let contacts: any[] = [];
     
@@ -55,8 +64,14 @@ export async function GET() {
 
 // POST - Speichere neuen Kontakt
 export async function POST(request: NextRequest) {
+  const gate = await authorize("crm.contacts.manage");
+  if (!gate.ok) return gate.response;
+
+  const parsed = await validateJsonRequest(request, legacyContactStorageInputSchema);
+  if (!parsed.ok) return targetErrorResponse(parsed.error);
+
   try {
-    const contact = await request.json();
+    const contact = parsed.data;
     
     // Stelle sicher, dass Verzeichnis existiert
     const dir = path.dirname(STORAGE_FILE);

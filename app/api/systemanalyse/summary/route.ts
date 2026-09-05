@@ -3,6 +3,7 @@ import { buildHeuristicSummary } from "@/lib/systemanalyse/summary-heuristic";
 import { normalizeAnalysisSummary, parseJsonFromModelContent } from "@/lib/systemanalyse/summary-normalize";
 import type { AnalysisSummary } from "@/lib/systemanalyse/summary-types";
 import type { SystemanalyseState } from "@/lib/systemanalyse/types";
+import { rateLimitDistributed, rateLimitKey } from "@/lib/security/rateLimit";
 
 type Body = {
   brandId?: string;
@@ -119,6 +120,16 @@ Rohdaten (JSON, gekürzt auf 14k Zeichen): ${JSON.stringify(payload).slice(0, 14
 
 export async function POST(req: NextRequest) {
   try {
+    const limit = await rateLimitDistributed(rateLimitKey("systemanalyse-summary", req.headers), {
+      windowMs: 60 * 60_000,
+      max: 5,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Zu viele Auswertungen." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+      );
+    }
     const body = (await req.json()) as Body;
     if (!body.payload || typeof body.payload !== "object") {
       return NextResponse.json({ error: "Ungültige Nutzdaten." }, { status: 400 });

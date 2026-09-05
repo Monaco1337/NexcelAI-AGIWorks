@@ -26,13 +26,9 @@ import type {
   DiscoveryRequest,
   DiscoveryResponse,
 } from "./types";
+import type { ProviderMetadata } from "../contracts/provider";
 import { normalizeCategoryFromTags } from "../categoryMap";
-import {
-  getProviderHealthSnapshot,
-  markProviderFailure,
-  markProviderRateLimited,
-  markProviderSuccess,
-} from "./health";
+import { safeFetch } from "../security/safeFetch";
 
 /**
  * Overpass-Endpoints, absteigend nach Vertrauenswürdigkeit.
@@ -227,11 +223,37 @@ const INDUSTRY_TAG_MAP: Record<string, string[]> = {
 export class OverpassProvider implements DiscoveryProvider {
   key = "overpass_osm";
   label = "OpenStreetMap (Overpass)";
+  metadata: ProviderMetadata = {
+    id: "overpass_osm",
+    contractVersion: 1,
+    displayName: "OpenStreetMap (Overpass)",
+    capabilities: ["DISCOVERY", "COMPANY_BASICS", "CONTACTS"],
+    countries: ["DE", "AT", "CH"],
+    secretNames: [],
+    policy: {
+      license: "Open Database License 1.0",
+      attribution: "© OpenStreetMap contributors",
+      retentionClass: "PERMITTED",
+      maxRetentionDays: null,
+      permittedFields: [
+        "name", "website", "phone", "email", "address", "location",
+        "opening_hours", "category", "external_id",
+      ],
+      storesRawPayload: true,
+    },
+  };
 
   isConfigured(): boolean {
     // Overpass benötigt keinen Key — als Fallback IMMER aktiv, außer
     // ein Deployment deaktiviert ihn explizit über eine Env-Flag.
     return process.env.DISABLE_OVERPASS_DISCOVERY !== "1";
+  }
+
+  supports(request: DiscoveryRequest): boolean {
+    return Boolean(
+      request.bbox ||
+        (request.centerLat !== null && request.centerLng !== null),
+    );
   }
 
   async discover(request: DiscoveryRequest): Promise<DiscoveryResponse> {
@@ -247,46 +269,49 @@ export class OverpassProvider implements DiscoveryProvider {
    * Regionalkatalog in vertretbarer Zeit aufzubauen.
    */
   private async discoverByBBox(request: DiscoveryRequest, bbox: DiscoveryBBox): Promise<DiscoveryResponse> {
-    const logs: DiscoveryResponse["providerLogs"] = [];
-    const axes = request.tagAxis ? [request.tagAxis] : [...OVERPASS_TAG_AXES];
-    const seen = new Map<string, DiscoveredCompanyStub>();
-    let anyOk = false;
-
-    for (const axis of axes) {
-      const filter = AXIS_FILTER[axis];
-      if (!filter) continue;
-      const query = buildOverpassQL({
-        bbox,
-        filter,
-        limit: request.limit,
-        timeoutS: BBOX_OVERPASS_TIMEOUT_S,
-      });
-      const { ok, elements, attempts } = await runQueryWithFallback(
-        query,
-        this.key,
-        BBOX_HTTP_TIMEOUT_MS,
-        BBOX_TOTAL_BUDGET_MS
-      );
-      logs.push(...attempts);
-      if (!ok) continue;
-      anyOk = true;
-      for (const el of elements) {
-        const stub = mapElement(el, request, this.key);
-        if (!stub) continue;
-        const key = `${el.type}/${el.id}`;
-        if (!seen.has(key)) seen.set(key, stub);
-      }
-      if (seen.size >= request.limit) break;
+    const axisFilter = request.tagAxis ? AXIS_FILTER[request.tagAxis] : null;
+    const filters = axisFilter ?? buildFilters(request.industries);
+    if (!filters || (Array.isArray(filters) && filters.length === 0)) {
+      return {
+        companies: [],
+        estimatedCostCents: 0,
+        actualCostCents: 0,
+        providerLogs: [{
+          provider: this.key,
+          endpoint: "overpass",
+          latencyMs: 0,
+          ok: false,
+          error: `Unbekannte Overpass-Achse: ${request.tagAxis ?? "none"}`,
+        }],
+      };
     }
-
-    if (!anyOk) {
-      return { companies: [], estimatedCostCents: 0, actualCostCents: 0, providerLogs: logs };
+    const query = buildOverpassQL({
+      bbox,
+      filter: filters,
+      limit: request.limit,
+      timeoutS: BBOX_OVERPASS_TIMEOUT_S,
+    });
+    const { ok, elements, attempts } = await runQueryWithFallback(
+      query,
+      this.key,
+      BBOX_HTTP_TIMEOUT_MS,
+      BBOX_TOTAL_BUDGET_MS,
+    );
+    const seen = new Map<string, DiscoveredCompanyStub>();
+    for (const el of elements) {
+      const stub = mapElement(el, request, this.key);
+      if (!stub) continue;
+      const key = `${el.type}/${el.id}`;
+      if (!seen.has(key)) seen.set(key, stub);
+    }
+    if (!ok) {
+      return { companies: [], estimatedCostCents: 0, actualCostCents: 0, providerLogs: attempts };
     }
     return {
       companies: Array.from(seen.values()).slice(0, request.limit),
       estimatedCostCents: 0,
       actualCostCents: 0,
-      providerLogs: logs,
+      providerLogs: attempts,
     };
   }
 
@@ -306,37 +331,28 @@ export class OverpassProvider implements DiscoveryProvider {
 
     const radiusM = Math.min(MAX_RADIUS_M, Math.max(500, Math.round(request.radiusKm * 1000)));
     const filters = buildFilters(request.industries);
-    const perFilterLimit = Math.max(20, Math.min(120, Math.ceil((request.limit * 2) / Math.max(1, filters.length))));
-
-    // Kombinierte Sammlung über alle Filter — dedup per (type/id) am Ende.
+    const resultLimit = Math.max(20, Math.min(500, request.limit * 2));
     const seen = new Map<string, DiscoveredCompanyStub>();
-    let anyOk = false;
-
-    for (const filter of filters) {
-      const query = buildOverpassQL({
-        lat: request.centerLat,
-        lng: request.centerLng,
-        radiusM,
-        filter,
-        limit: perFilterLimit,
-      });
-      const { ok, elements, log } = await runQueryWithFallback(query, this.key);
-      logs.push(log);
-      if (!ok) continue;
-      anyOk = true;
-      for (const el of elements) {
-        const stub = mapElement(el, request, this.key);
-        if (!stub) continue;
-        const key = `${el.type}/${el.id}`;
-        if (!seen.has(key)) seen.set(key, stub);
-        if (seen.size >= request.limit) break;
-      }
+    const query = buildOverpassQL({
+      lat: request.centerLat,
+      lng: request.centerLng,
+      radiusM,
+      filter: filters,
+      limit: resultLimit,
+    });
+    const { ok, elements, log } = await runQueryWithFallback(query, this.key);
+    logs.push(log);
+    for (const el of elements) {
+      const stub = mapElement(el, request, this.key);
+      if (!stub) continue;
+      const key = `${el.type}/${el.id}`;
+      if (!seen.has(key)) seen.set(key, stub);
       if (seen.size >= request.limit) break;
     }
 
     // Wenn ALLE Filter-Requests fehlgeschlagen sind, aber wir eine
     // Fehlermeldung liefern konnten — trotzdem `[]` mit Log zurückgeben.
-    if (!anyOk) {
+    if (!ok) {
       return { companies: [], estimatedCostCents: 0, actualCostCents: 0, providerLogs: logs };
     }
     const stubs = Array.from(seen.values()).slice(0, request.limit);
@@ -353,45 +369,9 @@ interface OverpassElement {
   tags?: Record<string, string>;
 }
 
-/**
- * Reiht die Mirrors nach Gesundheit: Endpoints im Cooldown wandern ans
- * Ende statt komplett auszufallen. Nutzt die vorhandene Provider-Health-
- * Registry mit einem Sub-Key pro Endpoint, damit ein defekter Mirror
- * (aktuell liefert kumi.systems HTTP 500) den Provider als Ganzes nicht
- * als kaputt markiert.
- */
-function orderedEndpoints(providerKey: string): string[] {
-  const now = Date.now();
-  return [...OVERPASS_ENDPOINTS].sort((a, b) => rank(a) - rank(b));
-
-  function rank(endpoint: string): number {
-    const snap = getProviderHealthSnapshot(mirrorKey(providerKey, endpoint));
-    const cooling = snap.cooldownUntil && new Date(snap.cooldownUntil).getTime() > now ? 100 : 0;
-    const penalty =
-      snap.state === "HEALTHY" ? 0 : snap.state === "DEGRADED" ? 10 : snap.state === "RATE_LIMITED" ? 20 : 30;
-    return cooling + penalty;
-  }
-}
-
-/**
- * Overpass vergibt pro IP nur wenige gleichzeitige Slots. Werden
- * Segmente ohne Pause hintereinander abgefeuert, antwortet der Server
- * irgendwann mit HTTP 200 und leerem Ergebnis statt mit einem Fehler —
- * beobachtet als „0 Firmen nach 59 s" bei einer Query, die einzeln in
- * 6 s 1.649 Firmen liefert. Eine Mindestpause zwischen Anfragen hält
- * uns innerhalb der Nutzungsregeln.
- */
+/** Eine Mindestpause hält öffentliche Overpass-Instanzen innerhalb ihrer Fair-Use-Grenzen. */
 const MIN_REQUEST_GAP_MS = 1_200;
 let lastRequestAt = 0;
-
-/**
- * So lange warten wir höchstens auf einen freien Overpass-Slot.
- *
- * Gemessen: nach etwa drei umfangreichen bbox-Abfragen sperrt Overpass die
- * IP für rund 60 s. Ein kürzeres Limit würde die Wartezeit nie aussitzen
- * und stattdessen jedes Segment sofort zurückweisen.
- */
-const SLOT_MAX_WAIT_MS = 90_000;
 
 /**
  * Kennzeichnet Fehler, die auf eine Slot-Sperre zurückgehen. Der Aufrufer
@@ -414,75 +394,6 @@ async function pace(): Promise<void> {
   lastRequestAt = Date.now();
 }
 
-/**
- * Slot-Verfügbarkeit vor der eigentlichen Abfrage prüfen.
- *
- * Overpass vergibt pro Client-IP eine feste Zahl gleichzeitiger Slots
- * (aktuell 2) und veröffentlicht den Stand unter `/api/status`. Ist
- * kein Slot frei, nimmt der Server die Verbindung entweder gar nicht
- * an oder lässt sie auflaufen — beobachtet als „fetch failed" nach rund
- * 10,5 s. In einer geteilten Cloud-Umgebung teilen sich viele Clients
- * dieselbe ausgehende IP, weshalb dieser Fall dort die Regel ist.
- *
- * Die Statusabfrage kostet rund 100 ms und ersetzt einen 10-Sekunden-
- * Fehlversuch durch eine sofortige, benannte Absage. Das Segment wandert
- * dann mit Backoff zurück in die Queue, statt Zeitbudget zu verbrennen.
- */
-interface SlotStatus {
-  available: number;
-  waitSeconds: number | null;
-  raw: string;
-}
-
-async function readSlotStatus(endpoint: string): Promise<SlotStatus | null> {
-  try {
-    const statusUrl = endpoint.replace(/\/interpreter\/?$/, "/status");
-    const resp = await fetch(statusUrl, {
-      headers: { "User-Agent": USER_AGENT },
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!resp.ok) return null;
-    const raw = await resp.text();
-
-    const availableMatch = /(\d+)\s+slots?\s+available\s+now/i.exec(raw);
-    if (availableMatch) {
-      return { available: Number(availableMatch[1]), waitSeconds: null, raw };
-    }
-    // "Slot available after: 2026-08-29T12:40:00Z, in 42 seconds."
-    const waitMatches = [...raw.matchAll(/in\s+(-?\d+)\s+seconds?/gi)].map((m) => Number(m[1]));
-    if (waitMatches.length > 0) {
-      return { available: 0, waitSeconds: Math.max(0, Math.min(...waitMatches)), raw };
-    }
-    return { available: 0, waitSeconds: null, raw };
-  } catch {
-    // Status nicht abrufbar: nicht blockieren, normal weiterversuchen.
-    return null;
-  }
-}
-
-function mirrorKey(providerKey: string, endpoint: string): string {
-  try {
-    return `${providerKey}:${new URL(endpoint).hostname}`;
-  } catch {
-    return `${providerKey}:${endpoint}`;
-  }
-}
-
-/**
- * `fetch` meldet Netzwerkprobleme pauschal als „fetch failed"; die
- * eigentliche Ursache steckt in `cause`. Ohne sie ist nicht zu
- * unterscheiden, ob ein Endpoint die Verbindung zurücksetzt, DNS
- * scheitert oder ein Timeout greift.
- */
-function describeFetchError(err: unknown): string {
-  const e = err as { message?: string; cause?: { code?: string; message?: string } };
-  const base = e?.message || "network error";
-  const cause = e?.cause;
-  if (!cause) return base;
-  const detail = [cause.code, cause.message].filter(Boolean).join(" ");
-  return detail ? `${base} (${detail})` : base;
-}
-
 async function runQueryWithFallback(
   query: string,
   providerKey: string,
@@ -494,102 +405,50 @@ async function runQueryWithFallback(
   log: { provider: string; endpoint: string; latencyMs: number; ok: boolean; error?: string };
   attempts: Array<{ provider: string; endpoint: string; latencyMs: number; ok: boolean; error?: string }>;
 }> {
-  let lastError = "no endpoint responded";
-  let lastLatency = 0;
-  const endpoints = orderedEndpoints(providerKey);
-  let lastEndpoint = endpoints[0];
-  // Jeder Versuch wird protokolliert, nicht nur der letzte: sonst bleibt
-  // unsichtbar, dass ein Mirror lange blockiert hat, bevor ein anderer
-  // geantwortet hat.
+  const endpoint = OVERPASS_ENDPOINTS[0];
   const attempts: Array<{ provider: string; endpoint: string; latencyMs: number; ok: boolean; error?: string }> = [];
-  const deadline = totalBudgetMs ? Date.now() + totalBudgetMs : null;
-  for (const endpoint of endpoints) {
-    const started = Date.now();
-    lastEndpoint = endpoint;
-    // Verbleibendes Budget bestimmt den Timeout dieses Versuchs; ist
-    // nichts mehr übrig, brechen wir ab statt die Laufzeit zu sprengen.
-    let attemptTimeout = httpTimeoutMs;
-    if (deadline) {
-      const remaining = deadline - Date.now();
-      if (remaining < 2_000) {
-        lastError = `${lastError} (Zeitbudget erschöpft)`;
-        break;
-      }
-      attemptTimeout = Math.min(httpTimeoutMs, remaining);
-    }
-    try {
-      await pace();
-
-      // Auf einen freien Slot warten, solange das im Budget liegt.
-      const slots = await readSlotStatus(endpoint);
-      if (slots && slots.available === 0) {
-        const waitMs = (slots.waitSeconds ?? 0) * 1000 + 500;
-        const affordable = deadline ? deadline - Date.now() - 3_000 : SLOT_MAX_WAIT_MS;
-        if (waitMs > 0 && waitMs <= Math.min(SLOT_MAX_WAIT_MS, affordable)) {
-          await new Promise((r) => setTimeout(r, waitMs));
-        } else {
-          lastLatency = Date.now() - started;
-          const retryAfter = slots.waitSeconds ?? 60;
-          lastError =
-            `${SLOT_BUSY_MARKER} retry_after=${retryAfter} — Overpass vergibt derzeit keinen Slot` +
-            (slots.waitSeconds === null ? " (geteilte Ausgangs-IP ausgelastet)" : `, naechster in ${retryAfter}s`);
-          attempts.push({ provider: providerKey, endpoint, latencyMs: lastLatency, ok: false, error: lastError });
-          markProviderRateLimited(mirrorKey(providerKey, endpoint), lastError);
-          continue;
-        }
-      }
-
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent": USER_AGENT,
-        },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: AbortSignal.timeout(attemptTimeout),
-      });
-      const latency = Date.now() - started;
-      lastLatency = latency;
-      if (!resp.ok) {
-        lastError = `HTTP ${resp.status}`;
-        attempts.push({ provider: providerKey, endpoint, latencyMs: latency, ok: false, error: lastError });
-        markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
-        continue;
-      }
-      const json = (await resp.json()) as { elements?: OverpassElement[]; remark?: string };
-      // Overpass meldet serverseitige Timeouts und Speicherabbrüche NICHT
-      // per HTTP-Status, sondern als `remark` bei HTTP 200 mit leerer
-      // Ergebnisliste. Ohne diese Prüfung würde ein abgebrochenes Segment
-      // als „erfolgreich mit 0 Firmen" gelten und eine ganze Teilregion
-      // dauerhaft aus dem Katalog fallen.
-      if (json.remark && (json.elements?.length ?? 0) === 0) {
-        lastError = `Overpass-Abbruch: ${json.remark.slice(0, 200)}`;
-        attempts.push({ provider: providerKey, endpoint, latencyMs: latency, ok: false, error: lastError });
-        markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
-        continue;
-      }
-      const elements = json.elements ?? [];
-      attempts.push({ provider: providerKey, endpoint, latencyMs: latency, ok: true });
-      markProviderSuccess(mirrorKey(providerKey, endpoint));
-      return {
-        ok: true,
-        elements,
-        log: { provider: providerKey, endpoint, latencyMs: latency, ok: true },
-        attempts,
-      };
-    } catch (err) {
-      lastLatency = Date.now() - started;
-      lastError = describeFetchError(err);
-      attempts.push({ provider: providerKey, endpoint, latencyMs: lastLatency, ok: false, error: lastError });
-      markProviderFailure(mirrorKey(providerKey, endpoint), lastError);
-    }
+  if (!endpoint) {
+    const error = "Overpass: no endpoint configured";
+    const log = { provider: providerKey, endpoint: "overpass", latencyMs: 0, ok: false, error };
+    return { ok: false, elements: [], log, attempts: [log] };
   }
-  return {
-    ok: false,
-    elements: [],
-    log: { provider: providerKey, endpoint: lastEndpoint, latencyMs: lastLatency, ok: false, error: `Overpass: ${lastError}` },
-    attempts,
-  };
+  await pace();
+  const result = await safeFetch(endpoint, {
+    method: "POST",
+    body: `data=${encodeURIComponent(query)}`,
+    contentType: "application/x-www-form-urlencoded",
+    accept: "application/json",
+    userAgent: USER_AGENT,
+    timeoutMs: Math.min(httpTimeoutMs, totalBudgetMs ?? httpTimeoutMs),
+    maxBytes: 12_000_000,
+    maxRedirects: 0,
+    allowedContentTypes: ["application/json"],
+  });
+  if (!result.ok || result.status < 200 || result.status >= 300) {
+    const rateLimited = result.status === 429;
+    const error = rateLimited
+      ? `${SLOT_BUSY_MARKER} retry_after=60 — Overpass rate limited`
+      : `Overpass: ${result.error ?? `HTTP ${result.status}`}`;
+    const log = { provider: providerKey, endpoint, latencyMs: result.latencyMs, ok: false, error };
+    return { ok: false, elements: [], log, attempts: [log] };
+  }
+  let json: { elements?: OverpassElement[]; remark?: string };
+  try {
+    json = JSON.parse(result.bodyText) as { elements?: OverpassElement[]; remark?: string };
+  } catch {
+    const error = "Overpass: malformed JSON response";
+    const log = { provider: providerKey, endpoint, latencyMs: result.latencyMs, ok: false, error };
+    return { ok: false, elements: [], log, attempts: [log] };
+  }
+  if (json.remark && (json.elements?.length ?? 0) === 0) {
+    const error = `Overpass-Abbruch: ${json.remark.slice(0, 200)}`;
+    const log = { provider: providerKey, endpoint, latencyMs: result.latencyMs, ok: false, error };
+    return { ok: false, elements: [], log, attempts: [log] };
+  }
+  const elements = json.elements ?? [];
+  const log = { provider: providerKey, endpoint, latencyMs: result.latencyMs, ok: true };
+  attempts.push(log);
+  return { ok: true, elements, log, attempts };
 }
 
 function buildFilters(industries: string[]): string[] {

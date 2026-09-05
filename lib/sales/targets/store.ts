@@ -65,6 +65,8 @@ export interface TargetListFilters {
    * entscheidet vor Ort weder ueber Budget noch ueber Software.
    */
   includeChains?: boolean;
+  /** Stable score-order keyset. Only valid with sortBy="score". */
+  cursor?: { score: number; updatedAt: string; id: string };
 }
 
 export interface TargetListItem {
@@ -89,7 +91,9 @@ const TARGET_COLUMNS = `
   founded_year, locations_estimate, google_place_id, google_rating, review_count,
   opening_hours, social, registry_info, tags, fingerprint, origin_search_job_id,
   linked_sales_company_id, enrichment_status, last_enrichment_at, last_enrichment_error,
-  do_not_contact, do_not_contact_reason, version, created_at, updated_at
+  do_not_contact, do_not_contact_reason, version, is_chain, pre_score, pre_score_class,
+  is_golden_dataset, possible_duplicate_of, possible_duplicate_confidence, review_flags,
+  created_at, updated_at
 `;
 
 function mapTargetRow(row: Record<string, unknown>): TargetCompany {
@@ -132,6 +136,14 @@ function mapTargetRow(row: Record<string, unknown>): TargetCompany {
     lastEnrichmentError: (row.last_enrichment_error as string | null) ?? null,
     doNotContact: Boolean(row.do_not_contact),
     doNotContactReason: (row.do_not_contact_reason as string | null) ?? null,
+    version: Number(row.version ?? 1),
+    isChain: Boolean(row.is_chain),
+    preScore: numOrNull(row.pre_score),
+    preScoreClass: (row.pre_score_class as TargetCompany["preScoreClass"]) ?? null,
+    isGoldenDataset: Boolean(row.is_golden_dataset),
+    possibleDuplicateOf: (row.possible_duplicate_of as string | null) ?? null,
+    possibleDuplicateConfidence: numOrNull(row.possible_duplicate_confidence),
+    reviewFlags: asJsonObject<Record<string, unknown>>(row.review_flags),
     createdAt: asIsoRequired(row.created_at),
     updatedAt: asIsoRequired(row.updated_at),
   };
@@ -192,6 +204,9 @@ export interface CreateTargetInput {
   social?: Record<string, unknown>;
   registryInfo?: Record<string, unknown>;
   tags?: string[];
+  isChain?: boolean;
+  preScore?: number | null;
+  preScoreClass?: TargetCompany["preScoreClass"];
   originSearchJobId?: string | null;
   createdBy?: string | null;
 }
@@ -207,6 +222,7 @@ export async function createTarget(input: CreateTargetInput): Promise<TargetComp
       latitude, longitude, distance_km, employee_estimate_min, employee_estimate_max,
       founded_year, locations_estimate, google_place_id, google_rating, review_count,
       opening_hours, social, registry_info, tags, fingerprint, origin_search_job_id,
+      is_chain, pre_score, pre_score_class,
       enrichment_status, created_by, updated_by
     ) VALUES (
       ${id}, ${input.name}, ${input.legalName ?? null}, ${input.legalForm ?? null},
@@ -218,11 +234,12 @@ export async function createTarget(input: CreateTargetInput): Promise<TargetComp
       ${input.employeeEstimateMin ?? null}, ${input.employeeEstimateMax ?? null},
       ${input.foundedYear ?? null}, ${input.locationsEstimate ?? null},
       ${input.googlePlaceId ?? null}, ${input.googleRating ?? null}, ${input.reviewCount ?? null},
-      ${JSON.stringify(input.openingHours ?? {})}::jsonb,
-      ${JSON.stringify(input.social ?? {})}::jsonb,
-      ${JSON.stringify(input.registryInfo ?? {})}::jsonb,
+      ${sql.json(jsonParam(input.openingHours ?? {}))},
+      ${sql.json(jsonParam(input.social ?? {}))},
+      ${sql.json(jsonParam(input.registryInfo ?? {}))},
       ${input.tags ?? []},
       ${input.fingerprint}, ${input.originSearchJobId ?? null},
+      ${input.isChain ?? false}, ${input.preScore ?? null}, ${input.preScoreClass ?? null},
       'DISCOVERED',
       ${input.createdBy ?? null}, ${input.createdBy ?? null}
     )
@@ -260,6 +277,13 @@ export interface UpdateTargetPatch {
   social?: Record<string, unknown>;
   registryInfo?: Record<string, unknown>;
   tags?: string[];
+  isChain?: boolean;
+  preScore?: number | null;
+  preScoreClass?: TargetCompany["preScoreClass"];
+  isGoldenDataset?: boolean;
+  possibleDuplicateOf?: string | null;
+  possibleDuplicateConfidence?: number | null;
+  reviewFlags?: Record<string, unknown>;
   enrichmentStatus?: EnrichmentStatus;
   lastEnrichmentAt?: string | null;
   lastEnrichmentError?: string | null;
@@ -299,10 +323,17 @@ export async function updateTarget(id: string, patch: UpdateTargetPatch): Promis
       locations_estimate = ${patch.locationsEstimate === undefined ? sql`locations_estimate` : patch.locationsEstimate},
       google_rating = ${patch.googleRating === undefined ? sql`google_rating` : patch.googleRating},
       review_count = ${patch.reviewCount === undefined ? sql`review_count` : patch.reviewCount},
-      opening_hours = COALESCE(${patch.openingHours ? JSON.stringify(patch.openingHours) : null}::jsonb, opening_hours),
-      social = COALESCE(${patch.social ? JSON.stringify(patch.social) : null}::jsonb, social),
-      registry_info = COALESCE(${patch.registryInfo ? JSON.stringify(patch.registryInfo) : null}::jsonb, registry_info),
+      opening_hours = ${patch.openingHours === undefined ? sql`opening_hours` : sql.json(jsonParam(patch.openingHours))},
+      social = ${patch.social === undefined ? sql`social` : sql.json(jsonParam(patch.social))},
+      registry_info = ${patch.registryInfo === undefined ? sql`registry_info` : sql.json(jsonParam(patch.registryInfo))},
       tags = COALESCE(${patch.tags ?? null}::text[], tags),
+      is_chain = COALESCE(${patch.isChain ?? null}, is_chain),
+      pre_score = ${patch.preScore === undefined ? sql`pre_score` : patch.preScore},
+      pre_score_class = ${patch.preScoreClass === undefined ? sql`pre_score_class` : patch.preScoreClass},
+      is_golden_dataset = COALESCE(${patch.isGoldenDataset ?? null}, is_golden_dataset),
+      possible_duplicate_of = ${patch.possibleDuplicateOf === undefined ? sql`possible_duplicate_of` : patch.possibleDuplicateOf},
+      possible_duplicate_confidence = ${patch.possibleDuplicateConfidence === undefined ? sql`possible_duplicate_confidence` : patch.possibleDuplicateConfidence},
+      review_flags = ${patch.reviewFlags === undefined ? sql`review_flags` : sql.json(jsonParam(patch.reviewFlags))},
       enrichment_status = COALESCE(${patch.enrichmentStatus ?? null}, enrichment_status),
       last_enrichment_at = ${patch.lastEnrichmentAt === undefined ? sql`last_enrichment_at` : patch.lastEnrichmentAt},
       last_enrichment_error = ${patch.lastEnrichmentError === undefined ? sql`last_enrichment_error` : patch.lastEnrichmentError},
@@ -348,6 +379,7 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
     centerLat,
     centerLng,
     centerRadiusKm,
+    cursor,
   } = filters;
 
   // Bounding-Box-Vorfilter für den Radius, um Full-Table-Scans zu vermeiden.
@@ -366,39 +398,79 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
       : null;
 
   const rows = await sql<Record<string, unknown>[]>`
-    WITH latest_score AS (
-      /* Bevorzuge V2, sonst V1 */
-      SELECT DISTINCT ON (target_id) *
-      FROM sales_target_lead_scores
-      WHERE is_current = TRUE
-      ORDER BY target_id, (score_version = 'v2') DESC, calculated_at DESC
-    ),
-    latest_brief AS (
-      SELECT DISTINCT ON (target_id) *
-      FROM sales_target_sales_briefs
-      WHERE is_current = TRUE
-    ),
-    contact_summary AS (
-      SELECT target_id,
-        COUNT(*) FILTER (WHERE kind='phone') AS phone_count,
-        COUNT(*) FILTER (WHERE kind='mobile') AS mobile_count,
-        COUNT(*) FILTER (WHERE kind='email') AS email_count,
-        COUNT(*) FILTER (WHERE kind='email' AND classification='DIRECT_DECISION_MAKER') AS direct_email_count,
-        BOOL_OR(kind='contact_form') AS has_form
-      FROM sales_target_contacts
-      WHERE deleted_at IS NULL
-      GROUP BY target_id
-    ),
-    dm_count AS (
-      SELECT target_id, COUNT(*)::int AS dm_count
-      FROM sales_target_decision_makers
-      WHERE deleted_at IS NULL
-      GROUP BY target_id
-    ),
-    latest_audit AS (
-      SELECT DISTINCT ON (target_id) target_id, website_score, technology_score
-      FROM sales_target_website_audits
-      ORDER BY target_id, audited_at DESC
+    WITH ranked_targets AS MATERIALIZED (
+      SELECT
+      t.*,
+      summary.current_lead_score_id,
+      summary.current_sales_brief_id,
+      summary.current_website_audit_id,
+      summary.total_score AS summary_total_score,
+      summary.priority_class AS summary_priority_class
+      FROM sales_target_companies t
+      LEFT JOIN sales_target_company_summaries summary ON summary.target_id = t.id
+      WHERE t.deleted_at IS NULL
+        AND (${filters.includeChains ?? false} OR t.is_chain = FALSE)
+        AND (${cities.length === 0} OR t.city = ANY(${cities}::text[]))
+        AND (${industries.length === 0} OR t.industry = ANY(${industries}::text[]))
+        AND (${status.length === 0} OR t.enrichment_status = ANY(${status}::text[]))
+        AND (${priorityClasses.length === 0} OR COALESCE(summary.priority_class, t.pre_score_class) = ANY(${priorityClasses}::text[]))
+        AND (${maxDistanceKm ?? null}::numeric IS NULL OR t.distance_km IS NULL OR t.distance_km <= ${maxDistanceKm ?? null})
+        AND (${minLeadScore ?? null}::int IS NULL OR COALESCE(summary.total_score, t.pre_score) >= ${minLeadScore ?? null})
+        AND (${hasWebsite ?? null}::boolean IS NULL OR (${hasWebsite ?? null} AND t.website IS NOT NULL) OR (NOT ${hasWebsite ?? null} AND t.website IS NULL))
+        AND (${hasPhone ?? null}::boolean IS NULL OR (${hasPhone ?? null} AND EXISTS (
+          SELECT 1 FROM sales_target_contacts c
+          WHERE c.target_id = t.id AND c.deleted_at IS NULL AND c.kind = 'phone'
+        )))
+        AND (${hasEmail ?? null}::boolean IS NULL OR (${hasEmail ?? null} AND EXISTS (
+          SELECT 1 FROM sales_target_contacts c
+          WHERE c.target_id = t.id AND c.deleted_at IS NULL AND c.kind = 'email'
+        )))
+        AND (${hasDecisionMaker ?? null}::boolean IS NULL OR (${hasDecisionMaker ?? null} AND EXISTS (
+          SELECT 1 FROM sales_target_decision_makers d
+          WHERE d.target_id = t.id AND d.deleted_at IS NULL
+        )))
+        AND (${onlyWebsiteWeak ?? null}::boolean IS NULL OR (${onlyWebsiteWeak ?? null} AND (
+          SELECT a.website_score < 55
+          FROM sales_target_website_audits a
+          WHERE a.target_id = t.id
+          ORDER BY a.audited_at DESC
+          LIMIT 1
+        ) IS TRUE))
+        AND (${onlyWithSoftwareOpportunity ?? null}::boolean IS NULL OR (${onlyWithSoftwareOpportunity ?? null} AND EXISTS (
+          SELECT 1 FROM sales_target_opportunities o WHERE o.target_id = t.id AND o.source = 'software' AND o.deleted_at IS NULL
+        )))
+        AND (${search ?? null}::text IS NULL OR
+             t.search_vector @@ plainto_tsquery('german', ${search ?? null}) OR
+             t.name ILIKE ${"%" + (search ?? "") + "%"})
+        AND (${cursor?.id ?? null}::text IS NULL OR ${sortBy} <> 'score' OR
+          (
+            COALESCE(summary.total_score, t.pre_score, -1),
+            t.updated_at,
+            t.id
+          ) < (
+            ${cursor?.score ?? -1},
+            ${cursor?.updatedAt ?? new Date(0).toISOString()}::timestamptz,
+            ${cursor?.id ?? ""}
+          )
+        )
+        AND (${useCenter ? 1 : 0}::int = 0 OR (
+          t.latitude IS NOT NULL AND t.longitude IS NOT NULL
+          AND t.latitude BETWEEN ${(centerLat ?? 0) - (latDelta ?? 0)} AND ${(centerLat ?? 0) + (latDelta ?? 0)}
+          AND t.longitude BETWEEN ${(centerLng ?? 0) - (lngDelta ?? 0)} AND ${(centerLng ?? 0) + (lngDelta ?? 0)}
+          AND (2 * 6371 * asin(sqrt(
+            power(sin(radians((t.latitude - ${centerLat ?? 0}) / 2)), 2) +
+            cos(radians(${centerLat ?? 0})) * cos(radians(t.latitude)) *
+            power(sin(radians((t.longitude - ${centerLng ?? 0}) / 2)), 2)
+          ))) <= ${centerRadiusKm ?? 0}
+        ))
+      ORDER BY
+        CASE WHEN ${sortBy} = 'name' THEN t.name ELSE NULL END ASC NULLS LAST,
+        CASE WHEN ${sortBy} = 'recent' THEN t.updated_at ELSE NULL END DESC NULLS LAST,
+        CASE WHEN ${sortBy} = 'distance' THEN t.distance_km ELSE NULL END ASC NULLS LAST,
+        COALESCE(summary.total_score, t.pre_score) DESC NULLS LAST,
+        t.updated_at DESC,
+        t.id DESC
+      LIMIT ${limit} OFFSET ${cursor && sortBy === "score" ? 0 : offset}
     )
     SELECT
       t.*,
@@ -451,56 +523,32 @@ export async function listTargets(filters: TargetListFilters = {}): Promise<Targ
       cs.phone_count, cs.mobile_count, cs.email_count, cs.direct_email_count, cs.has_form,
       dm.dm_count,
       la.website_score AS la_website_score
-    FROM sales_target_companies t
-    LEFT JOIN latest_score ls ON ls.target_id = t.id
-    LEFT JOIN latest_brief sb ON sb.target_id = t.id
-    LEFT JOIN contact_summary cs ON cs.target_id = t.id
-    LEFT JOIN dm_count dm ON dm.target_id = t.id
-    LEFT JOIN latest_audit la ON la.target_id = t.id
-    WHERE t.deleted_at IS NULL
-      AND (${filters.includeChains ?? false} OR t.is_chain = FALSE)
-      AND (${cities.length === 0} OR t.city = ANY(${cities}::text[]))
-      AND (${industries.length === 0} OR t.industry = ANY(${industries}::text[]))
-      AND (${status.length === 0} OR t.enrichment_status = ANY(${status}::text[]))
-      /* Solange kein angereicherter Score vorliegt, gilt die vorlaeufige
-         Einstufung aus dem Pre-Score — sonst liefert jeder Klassenfilter
-         auf einem frischen Katalog null Treffer. */
-      AND (${priorityClasses.length === 0} OR COALESCE(ls.priority_class, t.pre_score_class) = ANY(${priorityClasses}::text[]))
-      AND (${maxDistanceKm ?? null}::numeric IS NULL OR t.distance_km IS NULL OR t.distance_km <= ${maxDistanceKm ?? null})
-      AND (${minLeadScore ?? null}::int IS NULL OR COALESCE(ls.total_score, t.pre_score) >= ${minLeadScore ?? null})
-      AND (${hasWebsite ?? null}::boolean IS NULL OR (${hasWebsite ?? null} AND t.website IS NOT NULL) OR (NOT ${hasWebsite ?? null} AND t.website IS NULL))
-      AND (${hasPhone ?? null}::boolean IS NULL OR (${hasPhone ?? null} AND cs.phone_count > 0))
-      AND (${hasEmail ?? null}::boolean IS NULL OR (${hasEmail ?? null} AND cs.email_count > 0))
-      AND (${hasDecisionMaker ?? null}::boolean IS NULL OR (${hasDecisionMaker ?? null} AND dm.dm_count > 0))
-      AND (${onlyWebsiteWeak ?? null}::boolean IS NULL OR (${onlyWebsiteWeak ?? null} AND la.website_score IS NOT NULL AND la.website_score < 55))
-      AND (${onlyWithSoftwareOpportunity ?? null}::boolean IS NULL OR (${onlyWithSoftwareOpportunity ?? null} AND EXISTS (
-        SELECT 1 FROM sales_target_opportunities o WHERE o.target_id = t.id AND o.source = 'software' AND o.deleted_at IS NULL
-      )))
-      AND (${search ?? null}::text IS NULL OR
-           t.search_vector @@ plainto_tsquery('german', ${search ?? null}) OR
-           t.name ILIKE ${"%" + (search ?? "") + "%"})
-      /* Radius-Filter: erst Bounding-Box (Index-freundlich), dann exakte Haversine */
-      AND (${useCenter ? 1 : 0}::int = 0 OR (
-        t.latitude IS NOT NULL AND t.longitude IS NOT NULL
-        AND t.latitude BETWEEN ${(centerLat ?? 0) - (latDelta ?? 0)} AND ${(centerLat ?? 0) + (latDelta ?? 0)}
-        AND t.longitude BETWEEN ${(centerLng ?? 0) - (lngDelta ?? 0)} AND ${(centerLng ?? 0) + (lngDelta ?? 0)}
-        AND (2 * 6371 * asin(sqrt(
-          power(sin(radians((t.latitude - ${centerLat ?? 0}) / 2)), 2) +
-          cos(radians(${centerLat ?? 0})) * cos(radians(t.latitude)) *
-          power(sin(radians((t.longitude - ${centerLng ?? 0}) / 2)), 2)
-        ))) <= ${centerRadiusKm ?? 0}
-      ))
+    FROM ranked_targets t
+    LEFT JOIN sales_target_lead_scores ls ON ls.id = t.current_lead_score_id
+    LEFT JOIN sales_target_sales_briefs sb ON sb.id = t.current_sales_brief_id
+    LEFT JOIN LATERAL (
+      SELECT
+        COUNT(*) FILTER (WHERE kind='phone') AS phone_count,
+        COUNT(*) FILTER (WHERE kind='mobile') AS mobile_count,
+        COUNT(*) FILTER (WHERE kind='email') AS email_count,
+        COUNT(*) FILTER (WHERE kind='email' AND classification='DIRECT_DECISION_MAKER') AS direct_email_count,
+        BOOL_OR(kind='contact_form') AS has_form
+      FROM sales_target_contacts
+      WHERE target_id = t.id AND deleted_at IS NULL
+    ) cs ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT COUNT(*)::int AS dm_count
+      FROM sales_target_decision_makers
+      WHERE target_id = t.id AND deleted_at IS NULL
+    ) dm ON TRUE
+    LEFT JOIN sales_target_website_audits la ON la.id = t.current_website_audit_id
     ORDER BY
       CASE WHEN ${sortBy} = 'name' THEN t.name ELSE NULL END ASC NULLS LAST,
       CASE WHEN ${sortBy} = 'recent' THEN t.updated_at ELSE NULL END DESC NULLS LAST,
       CASE WHEN ${sortBy} = 'distance' THEN t.distance_km ELSE NULL END ASC NULLS LAST,
-      /* Der belastbare Lead Score gewinnt immer. Fehlt er — was auf einen
-         frisch geladenen Katalog fast durchgaengig zutrifft — sortiert der
-         Pre-Score aus den Discovery-Daten. Ohne diesen Rueckfall waere die
-         Liste bis zum Abschluss der Anreicherung faktisch unsortiert. */
-      COALESCE(ls.total_score, t.pre_score) DESC NULLS LAST,
-      t.updated_at DESC
-    LIMIT ${limit} OFFSET ${offset}
+      COALESCE(t.summary_total_score, t.pre_score) DESC NULLS LAST,
+      t.updated_at DESC,
+      t.id DESC
   `;
 
   return rows.map((row) => {
@@ -820,12 +868,12 @@ export async function saveWebsiteAudit(audit: WebsiteAudit): Promise<WebsiteAudi
     ) VALUES (
       ${audit.id}, ${audit.targetId}, ${audit.url}, ${audit.finalUrl}, ${audit.auditedAt},
       ${audit.httpStatus}, ${audit.ttfbMs}, ${audit.transferBytes},
-      ${JSON.stringify(audit.redirectChain)}::jsonb,
+      ${sql.json(jsonParam(audit.redirectChain))},
       ${audit.websiteScore}, ${audit.designScore}, ${audit.performanceScore}, ${audit.seoScore},
       ${audit.conversionScore}, ${audit.mobileScore}, ${audit.trustScore}, ${audit.technologyScore},
-      ${JSON.stringify(audit.subscores)}::jsonb,
-      ${JSON.stringify(audit.findings)}::jsonb,
-      ${JSON.stringify(audit.techStack)}::jsonb,
+      ${sql.json(jsonParam(audit.subscores))},
+      ${sql.json(jsonParam(audit.findings))},
+      ${sql.json(jsonParam(audit.techStack))},
       ${audit.snapshotHash}, ${audit.error}
     )
     RETURNING *
@@ -892,6 +940,9 @@ export interface CreateOpportunityInput {
   estimatedRecommendedCents?: number | null;
   estimatedMaxCents?: number | null;
   currency?: string;
+  ruleConfigVersionId?: string | null;
+  ruleVersion?: string;
+  evidenceConfidence?: number | null;
 }
 
 export async function replaceOpportunities(
@@ -911,15 +962,18 @@ export async function replaceOpportunities(
       INSERT INTO sales_target_opportunities (
         id, target_id, source, kind, title, problem, proposed_solution, business_impact,
         reason, evidence, confidence, opportunity_score,
-        estimated_min_cents, estimated_recommended_cents, estimated_max_cents, currency
+        estimated_min_cents, estimated_recommended_cents, estimated_max_cents, currency,
+        rule_config_version_id, rule_version, evidence_confidence
       ) VALUES (
         ${newTargetId("opp")}, ${targetId}, ${input.source}, ${input.kind}, ${input.title},
         ${input.problem ?? null}, ${input.proposedSolution ?? null}, ${input.businessImpact ?? null},
         ${input.reason ?? null},
-        ${JSON.stringify(input.evidence ?? [])}::jsonb,
+        ${sql.json(jsonParam(input.evidence ?? []))},
         ${input.confidence ?? 0.5}, ${input.opportunityScore ?? null},
         ${input.estimatedMinCents ?? null}, ${input.estimatedRecommendedCents ?? null},
-        ${input.estimatedMaxCents ?? null}, ${input.currency ?? "EUR"}
+        ${input.estimatedMaxCents ?? null}, ${input.currency ?? "EUR"},
+        ${input.ruleConfigVersionId ?? null}, ${input.ruleVersion ?? "opportunity-v1"},
+        ${input.evidenceConfidence ?? input.confidence ?? 0.5}
       )
     `;
   }
@@ -954,6 +1008,9 @@ function mapOpportunity(row: Record<string, unknown>): TargetOpportunity {
     estimatedMaxCents: bigOrNull(row.estimated_max_cents),
     currency: (row.currency as string) ?? "EUR",
     detectedAt: asIsoRequired(row.detected_at),
+    ruleConfigVersionId: (row.rule_config_version_id as string | null) ?? null,
+    ruleVersion: (row.rule_version as string) ?? "legacy-v1",
+    evidenceConfidence: numOrNull(row.evidence_confidence),
   };
 }
 
@@ -1028,11 +1085,12 @@ export async function saveLeadScore(score: LeadScore): Promise<LeadScore> {
       data_confidence_score, capacity_class, capacity_confidence,
       estimated_budget_min_cents, estimated_budget_max_cents, currency, is_current,
       score_version, propensity_score, contactability_score, dm_relevance_score,
-      evidence_confidence, matrix_priority, explainability
+      evidence_confidence, matrix_priority, explainability,
+      rule_config_version_id, scoring_config_version_id, feature_snapshot
     ) VALUES (
       ${score.id}, ${score.targetId}, ${score.calculatedAt}, ${score.configKey},
-      ${JSON.stringify(score.weights)}::jsonb,
-      ${JSON.stringify(score.breakdown)}::jsonb,
+      ${sql.json(jsonParam(score.weights))},
+      ${sql.json(jsonParam(score.breakdown))},
       ${score.totalScore}, ${score.priorityClass},
       ${score.needScore}, ${score.opportunityScore}, ${score.websiteScore},
       ${score.softwareOpportunityScore}, ${score.commercialCapacityScore},
@@ -1046,7 +1104,10 @@ export async function saveLeadScore(score: LeadScore): Promise<LeadScore> {
       ${score.dmRelevanceScore ?? null},
       ${score.evidenceConfidence ?? null},
       ${score.matrixPriority ?? null},
-      ${JSON.stringify(score.explainability ?? [])}::jsonb
+      ${sql.json(jsonParam(score.explainability ?? []))},
+      ${score.ruleConfigVersionId ?? null},
+      ${score.scoringConfigVersionId ?? null},
+      ${sql.json(jsonParam(score.featureSnapshot ?? {}))}
     )
     RETURNING *
   `;
@@ -1067,7 +1128,8 @@ export async function saveSalesBrief(brief: SalesBrief): Promise<SalesBrief> {
       main_opportunity, opportunity_reason, recommended_entry, sales_angle, why_now,
       recommended_action, recommended_time, decision_maker_id,
       project_value_min_cents, project_value_max_cents,
-      capacity_class, capacity_confidence, confidence, structured, is_current
+      capacity_class, capacity_confidence, confidence, structured, is_current,
+      rule_config_version_id, scoring_config_version_id
     ) VALUES (
       ${brief.id}, ${brief.targetId}, ${brief.generatedAt}, ${brief.generatedBy},
       ${brief.headline}, ${brief.businessSummary}, ${brief.mainOpportunity},
@@ -1076,7 +1138,8 @@ export async function saveSalesBrief(brief: SalesBrief): Promise<SalesBrief> {
       ${brief.recommendedAction}, ${brief.recommendedTime}, ${brief.decisionMakerId},
       ${brief.projectValueMinCents}, ${brief.projectValueMaxCents},
       ${brief.capacityClass}, ${brief.capacityConfidence}, ${brief.confidence},
-      ${JSON.stringify(brief.structured)}::jsonb, TRUE
+      ${sql.json(jsonParam(brief.structured))}, TRUE,
+      ${brief.ruleConfigVersionId ?? null}, ${brief.scoringConfigVersionId ?? null}
     )
     RETURNING *
   `;
@@ -1133,6 +1196,9 @@ function mapLeadScoreRow(row: Record<string, unknown>): LeadScore {
     evidenceConfidence: numOrNull(row.evidence_confidence),
     matrixPriority: (row.matrix_priority as string | null) ?? null,
     explainability: (row.explainability as LeadScore["explainability"]) ?? [],
+    ruleConfigVersionId: (row.rule_config_version_id as string | null) ?? null,
+    scoringConfigVersionId: (row.scoring_config_version_id as string | null) ?? null,
+    featureSnapshot: (row.feature_snapshot as Record<string, unknown>) ?? {},
   };
 }
 
@@ -1266,7 +1332,13 @@ export async function reclaimExpiredSearchJobs(): Promise<number> {
        SET status = CASE WHEN attempts >= max_attempts THEN 'failed' ELSE 'queued' END,
            error = COALESCE(error, 'Lease abgelaufen — Job wurde erneut eingereiht'),
            lease_expires_at = NULL,
-           next_attempt_at = NOW()
+           lease_owner = NULL,
+           lease_token = NULL,
+           heartbeat_at = NULL,
+           dead_lettered_at = CASE WHEN attempts >= max_attempts THEN NOW() ELSE dead_lettered_at END,
+           last_error_code = 'LEASE_EXPIRED',
+           next_attempt_at = NOW(),
+           updated_at = NOW()
      WHERE status = 'running'
        AND lease_expires_at IS NOT NULL
        AND lease_expires_at < NOW()
@@ -1280,17 +1352,26 @@ export async function reclaimExpiredSearchJobs(): Promise<number> {
  * erlaubt mehrere parallele Worker ohne Doppelverarbeitung — dasselbe
  * Muster wie `takeNextEnrichmentJob`.
  */
-export async function takeNextSearchJob(opts?: { areaScanId?: string | null }): Promise<SearchJob | null> {
+export async function takeNextSearchJob(opts?: {
+  areaScanId?: string | null;
+  workerId?: string;
+}): Promise<SearchJob | null> {
   const sql = await db();
   if (!sql) return null;
   const areaScanId = opts?.areaScanId ?? null;
   const leaseUntil = new Date(Date.now() + SEARCH_LEASE_MS).toISOString();
+  const leaseToken = crypto.randomUUID();
   const rows = await sql<Record<string, unknown>[]>`
     UPDATE sales_target_search_jobs
        SET status = 'running',
            started_at = COALESCE(started_at, NOW()),
            attempts = attempts + 1,
-           lease_expires_at = ${leaseUntil}
+           lease_expires_at = ${leaseUntil},
+           lease_owner = ${opts?.workerId ?? "anonymous-worker"},
+           lease_token = ${leaseToken},
+           leased_at = NOW(),
+           heartbeat_at = NOW(),
+           updated_at = NOW()
      WHERE id = (
        SELECT id FROM sales_target_search_jobs
         WHERE status = 'queued'
@@ -1308,20 +1389,27 @@ export async function takeNextSearchJob(opts?: { areaScanId?: string | null }): 
 /** Erfolgreicher Abschluss — Lease freigeben. */
 export async function completeSearchJob(
   id: string,
-  patch: { discoveredCount?: number; actualCostCents?: number; error?: string | null }
-): Promise<void> {
+  patch: { discoveredCount?: number; actualCostCents?: number; error?: string | null },
+  leaseToken?: string | null,
+): Promise<boolean> {
   const sql = await db();
-  if (!sql) return;
-  await sql`
+  if (!sql) return false;
+  const rows = await sql<{ id: string }[]>`
     UPDATE sales_target_search_jobs
        SET status = 'completed',
            finished_at = NOW(),
            lease_expires_at = NULL,
+           lease_owner = NULL,
+           lease_token = NULL,
+           heartbeat_at = NULL,
            discovered_count = COALESCE(${patch.discoveredCount ?? null}, discovered_count),
            actual_cost_cents = COALESCE(${patch.actualCostCents ?? null}::bigint, actual_cost_cents),
            error = ${patch.error ?? null}
-     WHERE id = ${id}
+     WHERE id = ${id} AND status = 'running'
+       AND (${leaseToken ?? null}::text IS NULL OR lease_token = ${leaseToken ?? null})
+    RETURNING id
   `;
+  return rows.length === 1;
 }
 
 /**
@@ -1329,18 +1417,25 @@ export async function completeSearchJob(
  * mit exponentiell wachsender Wartezeit zurück in die Queue, danach
  * endgültig auf `failed`.
  */
-export async function failSearchJob(id: string, error: string): Promise<void> {
+export async function failSearchJob(id: string, error: string, leaseToken?: string | null): Promise<boolean> {
   const sql = await db();
-  if (!sql) return;
-  await sql`
+  if (!sql) return false;
+  const rows = await sql<{ id: string }[]>`
     UPDATE sales_target_search_jobs
        SET status = CASE WHEN attempts >= max_attempts THEN 'failed' ELSE 'queued' END,
            error = ${error.slice(0, 1000)},
            lease_expires_at = NULL,
+           lease_owner = NULL,
+           lease_token = NULL,
+           heartbeat_at = NULL,
+           dead_lettered_at = CASE WHEN attempts >= max_attempts THEN NOW() ELSE dead_lettered_at END,
            finished_at = CASE WHEN attempts >= max_attempts THEN NOW() ELSE finished_at END,
            next_attempt_at = NOW() + (INTERVAL '30 seconds' * POWER(2, LEAST(attempts, 5)))
-     WHERE id = ${id}
+     WHERE id = ${id} AND status = 'running'
+       AND (${leaseToken ?? null}::text IS NULL OR lease_token = ${leaseToken ?? null})
+    RETURNING id
   `;
+  return rows.length === 1;
 }
 
 /**
@@ -1358,20 +1453,27 @@ export async function failSearchJob(id: string, error: string): Promise<void> {
 export async function requeueSearchJob(
   id: string,
   reason: string,
-  retryAfterSeconds: number
-): Promise<void> {
+  retryAfterSeconds: number,
+  leaseToken?: string | null,
+): Promise<boolean> {
   const sql = await db();
-  if (!sql) return;
+  if (!sql) return false;
   const delay = Math.max(5, Math.min(900, Math.round(retryAfterSeconds)));
-  await sql`
+  const rows = await sql<{ id: string }[]>`
     UPDATE sales_target_search_jobs
        SET status = 'queued',
            attempts = GREATEST(0, attempts - 1),
            error = ${reason.slice(0, 1000)},
            lease_expires_at = NULL,
+           lease_owner = NULL,
+           lease_token = NULL,
+           heartbeat_at = NULL,
            next_attempt_at = NOW() + (${delay}::int * INTERVAL '1 second')
-     WHERE id = ${id}
+     WHERE id = ${id} AND status = 'running'
+       AND (${leaseToken ?? null}::text IS NULL OR lease_token = ${leaseToken ?? null})
+    RETURNING id
   `;
+  return rows.length === 1;
 }
 
 /**
@@ -1467,6 +1569,9 @@ function mapSearchJob(row: Record<string, unknown>): SearchJob {
     maxAttempts: Number(row.max_attempts ?? 3),
     nextAttemptAt: asIso(row.next_attempt_at),
     leaseExpiresAt: asIso(row.lease_expires_at),
+    workerToken: (row.lease_token as string | null) ?? null,
+    heartbeatAt: asIso(row.heartbeat_at),
+    idempotencyKey: (row.idempotency_key as string | null) ?? null,
     areaScanId: (row.area_scan_id as string | null) ?? null,
   };
 }
@@ -1478,44 +1583,81 @@ function mapSearchJob(row: Record<string, unknown>): SearchJob {
 export async function enqueueEnrichment(
   targetId: string,
   phase: EnrichmentPhase,
-  options: { priority?: number; payload?: Record<string, unknown>; delaySeconds?: number } = {}
+  options: {
+    priority?: number;
+    payload?: Record<string, unknown>;
+    delaySeconds?: number;
+    idempotencyKey?: string;
+  } = {}
 ): Promise<EnrichmentJob> {
   const sql = await db();
   if (!sql) throw new SalesError("Datenbank nicht verfügbar", "db_unavailable", 503);
-  const existing = await sql<Record<string, unknown>[]>`
-    SELECT id FROM sales_target_enrichment_jobs
-    WHERE target_id = ${targetId} AND phase = ${phase} AND status IN ('queued','running')
-    LIMIT 1
-  `;
-  if (existing[0]) {
-    const rows = await sql<Record<string, unknown>[]>`
-      SELECT * FROM sales_target_enrichment_jobs WHERE id = ${existing[0].id as string}
-    `;
-    return mapEnrichmentJob(rows[0]);
-  }
   const nextAttempt = options.delaySeconds
     ? new Date(Date.now() + options.delaySeconds * 1000).toISOString()
     : new Date().toISOString();
   const rows = await sql<Record<string, unknown>[]>`
     INSERT INTO sales_target_enrichment_jobs (
       id, target_id, phase, status, priority, attempts, max_attempts,
-      next_attempt_at, payload
+      next_attempt_at, payload, idempotency_key
     ) VALUES (
       ${newTargetId("ej")}, ${targetId}, ${phase}, 'queued',
       ${options.priority ?? 100}, 0, 3, ${nextAttempt},
-      ${JSON.stringify(options.payload ?? {})}::jsonb
+      ${sql.json(jsonParam(options.payload ?? {}))}, ${options.idempotencyKey ?? null}
     )
+    ON CONFLICT (target_id, phase) WHERE status IN ('queued','running')
+    DO UPDATE SET
+      priority = LEAST(sales_target_enrichment_jobs.priority, EXCLUDED.priority),
+      next_attempt_at = LEAST(sales_target_enrichment_jobs.next_attempt_at, EXCLUDED.next_attempt_at),
+      updated_at = NOW()
     RETURNING *
   `;
   return mapEnrichmentJob(rows[0]);
 }
 
-export async function takeNextEnrichmentJob(): Promise<EnrichmentJob | null> {
+const ENRICHMENT_LEASE_MS = 2 * 60_000;
+
+export async function reclaimExpiredEnrichmentJobs(): Promise<number> {
+  const sql = await db();
+  if (!sql) return 0;
+  const rows = await sql<{ id: string }[]>`
+    UPDATE sales_target_enrichment_jobs
+    SET status = CASE WHEN attempts >= max_attempts THEN 'failed' ELSE 'queued' END,
+        dead_lettered_at = CASE WHEN attempts >= max_attempts THEN NOW() ELSE dead_lettered_at END,
+        lease_owner = NULL,
+        lease_token = NULL,
+        lease_expires_at = NULL,
+        heartbeat_at = NULL,
+        next_attempt_at = CASE
+          WHEN attempts >= max_attempts THEN next_attempt_at
+          ELSE NOW() + (INTERVAL '15 seconds' * POWER(2, LEAST(attempts, 8)))
+        END,
+        last_error_code = 'LEASE_EXPIRED',
+        error = 'Worker lease expired',
+        updated_at = NOW()
+    WHERE status = 'running' AND lease_expires_at < NOW()
+    RETURNING id
+  `;
+  return rows.length;
+}
+
+export async function takeNextEnrichmentJob(
+  options: { workerId?: string; leaseMs?: number } = {},
+): Promise<EnrichmentJob | null> {
   const sql = await db();
   if (!sql) return null;
+  const leaseToken = crypto.randomUUID();
+  const leaseExpiresAt = new Date(Date.now() + (options.leaseMs ?? ENRICHMENT_LEASE_MS)).toISOString();
   const rows = await sql<Record<string, unknown>[]>`
     UPDATE sales_target_enrichment_jobs
-    SET status = 'running', started_at = NOW(), attempts = attempts + 1, updated_at = NOW()
+    SET status = 'running',
+        started_at = COALESCE(started_at, NOW()),
+        attempts = attempts + 1,
+        lease_owner = ${options.workerId ?? "anonymous-worker"},
+        lease_token = ${leaseToken},
+        leased_at = NOW(),
+        heartbeat_at = NOW(),
+        lease_expires_at = ${leaseExpiresAt},
+        updated_at = NOW()
     WHERE id = (
       SELECT id FROM sales_target_enrichment_jobs
       WHERE status = 'queued' AND next_attempt_at <= NOW()
@@ -1528,20 +1670,29 @@ export async function takeNextEnrichmentJob(): Promise<EnrichmentJob | null> {
   return rows[0] ? mapEnrichmentJob(rows[0]) : null;
 }
 
-export async function completeEnrichmentJob(id: string): Promise<void> {
+export async function completeEnrichmentJob(id: string, leaseToken?: string | null): Promise<boolean> {
   const sql = await db();
-  if (!sql) return;
-  await sql`
+  if (!sql) return false;
+  const rows = await sql<{ id: string }[]>`
     UPDATE sales_target_enrichment_jobs
-    SET status = 'done', finished_at = NOW(), updated_at = NOW()
+    SET status = 'done', finished_at = NOW(), lease_owner = NULL,
+        lease_token = NULL, lease_expires_at = NULL, heartbeat_at = NULL, updated_at = NOW()
     WHERE id = ${id}
+      AND status = 'running'
+      AND (${leaseToken ?? null}::text IS NULL OR lease_token = ${leaseToken ?? null})
+    RETURNING id
   `;
+  return rows.length === 1;
 }
 
-export async function failEnrichmentJob(id: string, error: string): Promise<void> {
+export async function failEnrichmentJob(
+  id: string,
+  error: string,
+  leaseToken?: string | null,
+): Promise<boolean> {
   const sql = await db();
-  if (!sql) return;
-  await sql`
+  if (!sql) return false;
+  const rows = await sql<{ id: string }[]>`
     UPDATE sales_target_enrichment_jobs
     SET status = CASE
           WHEN attempts >= max_attempts THEN 'failed'
@@ -1552,9 +1703,68 @@ export async function failEnrichmentJob(id: string, error: string): Promise<void
           ELSE NOW() + (INTERVAL '30 seconds' * POWER(2, attempts))
         END,
         error = ${error},
+        dead_lettered_at = CASE WHEN attempts >= max_attempts THEN NOW() ELSE dead_lettered_at END,
+        lease_owner = NULL,
+        lease_token = NULL,
+        lease_expires_at = NULL,
+        heartbeat_at = NULL,
         updated_at = NOW()
     WHERE id = ${id}
+      AND status = 'running'
+      AND (${leaseToken ?? null}::text IS NULL OR lease_token = ${leaseToken ?? null})
+    RETURNING id
   `;
+  return rows.length === 1;
+}
+
+export async function replayDeadLetterEnrichmentJob(
+  id: string,
+  actorId?: string | null,
+): Promise<boolean> {
+  const sql = await db();
+  if (!sql) return false;
+  const rows = await sql<{ id: string }[]>`
+    UPDATE sales_target_enrichment_jobs
+    SET status = 'queued',
+        attempts = 0,
+        next_attempt_at = NOW(),
+        started_at = NULL,
+        finished_at = NULL,
+        error = NULL,
+        dead_lettered_at = NULL,
+        last_error_code = NULL,
+        lease_owner = NULL,
+        lease_token = NULL,
+        lease_expires_at = NULL,
+        heartbeat_at = NULL,
+        replay_count = replay_count + 1,
+        last_replayed_at = NOW(),
+        last_replayed_by = ${actorId ?? null},
+        updated_at = NOW()
+    WHERE id = ${id}
+      AND status = 'failed'
+      AND dead_lettered_at IS NOT NULL
+    RETURNING id
+  `;
+  return rows.length === 1;
+}
+
+export async function heartbeatEnrichmentJob(
+  id: string,
+  leaseToken: string,
+  extendMs = ENRICHMENT_LEASE_MS,
+): Promise<boolean> {
+  const sql = await db();
+  if (!sql) return false;
+  const rows = await sql<{ id: string }[]>`
+    UPDATE sales_target_enrichment_jobs
+    SET heartbeat_at = NOW(),
+        lease_expires_at = ${new Date(Date.now() + extendMs).toISOString()},
+        updated_at = NOW()
+    WHERE id = ${id} AND status = 'running' AND lease_token = ${leaseToken}
+    RETURNING id
+  `;
+  return rows.length === 1;
 }
 
 function mapEnrichmentJob(row: Record<string, unknown>): EnrichmentJob {
@@ -1572,6 +1782,10 @@ function mapEnrichmentJob(row: Record<string, unknown>): EnrichmentJob {
     error: (row.error as string | null) ?? null,
     payload: (row.payload as Record<string, unknown>) ?? {},
     actualCostCents: Number(row.actual_cost_cents ?? 0),
+    leaseExpiresAt: asIso(row.lease_expires_at),
+    workerToken: (row.lease_token as string | null) ?? null,
+    heartbeatAt: asIso(row.heartbeat_at),
+    idempotencyKey: (row.idempotency_key as string | null) ?? null,
     createdAt: asIsoRequired(row.created_at),
     updatedAt: asIsoRequired(row.updated_at),
   };
@@ -1596,7 +1810,7 @@ export async function recordActivity(input: {
       id, target_id, kind, summary, payload, actor_id, actor_email
     ) VALUES (
       ${newTargetId("ta")}, ${input.targetId}, ${input.kind}, ${input.summary},
-      ${JSON.stringify(input.payload ?? {})}::jsonb,
+      ${sql.json(jsonParam(input.payload ?? {}))},
       ${input.actorId ?? null}, ${input.actorEmail ?? null}
     )
     RETURNING *
@@ -1649,7 +1863,7 @@ export async function addWatchlist(input: {
       id, target_id, user_id, criteria, note
     ) VALUES (
       ${newTargetId("wl")}, ${input.targetId}, ${input.userId},
-      ${JSON.stringify(input.criteria ?? {})}::jsonb, ${input.note ?? ""}
+      ${sql.json(jsonParam(input.criteria ?? {}))}, ${input.note ?? ""}
     )
     ON CONFLICT (target_id, user_id) DO UPDATE
       SET criteria = EXCLUDED.criteria, note = EXCLUDED.note
@@ -1706,6 +1920,7 @@ export async function upsertScoringConfig(config: {
   key: string;
   label: string;
   weights: ScoringConfig["weights"];
+  thresholdAPlusPlus?: number;
   thresholdAPlus?: number;
   thresholdA?: number;
   thresholdB?: number;
@@ -1718,20 +1933,22 @@ export async function upsertScoringConfig(config: {
   if (!sql) throw new SalesError("Datenbank nicht verfügbar", "db_unavailable", 503);
   const rows = await sql<Record<string, unknown>[]>`
     INSERT INTO sales_target_scoring_config (
-      key, label, weights, threshold_a_plus, threshold_a, threshold_b, threshold_c,
+      key, label, weights, threshold_a_plus_plus, threshold_a_plus, threshold_a, threshold_b, threshold_c,
       project_value_tiers, is_active, updated_by
     ) VALUES (
       ${config.key}, ${config.label},
-      ${JSON.stringify(config.weights)}::jsonb,
+      ${sql.json(jsonParam(config.weights))},
+      ${config.thresholdAPlusPlus ?? 92},
       ${config.thresholdAPlus ?? 85}, ${config.thresholdA ?? 70},
       ${config.thresholdB ?? 55}, ${config.thresholdC ?? 40},
-      ${JSON.stringify(config.projectValueTiers ?? {})}::jsonb,
+      ${sql.json(jsonParam(config.projectValueTiers ?? {}))},
       ${config.isActive ?? true},
       ${config.updatedBy ?? null}
     )
     ON CONFLICT (key) DO UPDATE SET
       label = EXCLUDED.label,
       weights = EXCLUDED.weights,
+      threshold_a_plus_plus = EXCLUDED.threshold_a_plus_plus,
       threshold_a_plus = EXCLUDED.threshold_a_plus,
       threshold_a = EXCLUDED.threshold_a,
       threshold_b = EXCLUDED.threshold_b,
@@ -1749,12 +1966,13 @@ function mapScoringConfig(row: Record<string, unknown>): ScoringConfig {
   return {
     key: row.key as string,
     label: row.label as string,
-    weights: (row.weights as ScoringConfig["weights"]) ?? ({} as ScoringConfig["weights"]),
+    weights: asJsonObject<ScoringConfig["weights"]>(row.weights),
+    thresholdAPlusPlus: Number(row.threshold_a_plus_plus ?? 92),
     thresholdAPlus: Number(row.threshold_a_plus),
     thresholdA: Number(row.threshold_a),
     thresholdB: Number(row.threshold_b),
     thresholdC: Number(row.threshold_c),
-    projectValueTiers: (row.project_value_tiers as ScoringConfig["projectValueTiers"]) ?? {},
+    projectValueTiers: asJsonObject<ScoringConfig["projectValueTiers"]>(row.project_value_tiers),
     isActive: Boolean(row.is_active),
     updatedAt: asIsoRequired(row.updated_at),
   };

@@ -11,6 +11,7 @@
  */
 
 import type { DiscoveredCompanyStub, DiscoveryProvider, DiscoveryRequest, DiscoveryResponse } from "./types";
+import type { ProviderMetadata } from "../contracts/provider";
 
 const BASE_URL = "https://places.googleapis.com/v1/places:searchText";
 const DETAILS_URL = "https://places.googleapis.com/v1/places";
@@ -34,6 +35,25 @@ const REQUIRED_FIELDS = [
 export class GooglePlacesProvider implements DiscoveryProvider {
   key = "google_places";
   label = "Google Places";
+  metadata: ProviderMetadata = {
+    id: "google_places",
+    contractVersion: 1,
+    displayName: "Google Places",
+    capabilities: ["DISCOVERY", "COMPANY_BASICS", "CONTACTS"],
+    countries: ["DE"],
+    secretNames: ["GOOGLE_PLACES_API_KEY"],
+    policy: {
+      license: "Google Maps Platform Terms",
+      attribution: "Google",
+      retentionClass: "BOUNDED" as const,
+      maxRetentionDays: 30,
+      permittedFields: [
+        "name", "website", "phone", "address", "location", "rating",
+        "review_count", "opening_hours", "business_status", "category",
+      ],
+      storesRawPayload: true,
+    },
+  };
   private apiKey: string | null;
 
   constructor() {
@@ -42,6 +62,13 @@ export class GooglePlacesProvider implements DiscoveryProvider {
 
   isConfigured(): boolean {
     return Boolean(this.apiKey);
+  }
+
+  supports(request: DiscoveryRequest): boolean {
+    return Boolean(
+      request.city?.trim() ||
+        (request.centerLat !== null && request.centerLng !== null),
+    );
   }
 
   async discover(request: DiscoveryRequest): Promise<DiscoveryResponse> {
@@ -82,6 +109,7 @@ export class GooglePlacesProvider implements DiscoveryProvider {
           "X-Goog-FieldMask": REQUIRED_FIELDS.join(","),
         },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15_000),
       });
     } catch (err) {
       providerLogs.push({
@@ -166,7 +194,9 @@ export class GooglePlacesProvider implements DiscoveryProvider {
     return {
       companies,
       estimatedCostCents: companies.length * 3,
-      actualCostCents: companies.length * 3,
+      // Google billing is reconciled externally; a per-result estimate is not
+      // evidence of an actually billed amount.
+      actualCostCents: 0,
       providerLogs,
     };
   }

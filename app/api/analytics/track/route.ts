@@ -8,6 +8,7 @@ import {
   type AnalyticsEvent,
   type AnalyticsEventType,
 } from "@/lib/analytics-store";
+import { guardPublicApi } from "@/lib/security/publicApiGuard";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -101,7 +102,15 @@ async function ingestOne(
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await guardPublicApi(req, "analytics-track", {
+      windowMs: 60_000,
+      max: 120,
+    });
+    if (blocked) return blocked;
     const text = await req.text();
+    if (Buffer.byteLength(text) > 64 * 1024) {
+      return NextResponse.json({ ok: false, error: "payload too large" }, { status: 413 });
+    }
     const body = parseBody(text);
     if (!body) {
       return NextResponse.json({ ok: false, error: "invalid payload" }, { status: 400 });
@@ -123,7 +132,7 @@ export async function POST(req: NextRequest) {
     let count = 0;
     if (Array.isArray(body.events)) {
       const writes: Promise<unknown>[] = [];
-      for (const item of body.events) {
+      for (const item of body.events.slice(0, 50)) {
         if (item && typeof item === "object") {
           writes.push(ingestOne(item, ctx));
           count++;

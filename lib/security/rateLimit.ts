@@ -1,13 +1,11 @@
 /**
- * Lightweight, dependency-free rate limiter.
+ * Fixed-window rate limiting with an atomic, distributed-compatible backend.
  *
- * Fixed-window counter kept in-process (Map). This is PER SERVER INSTANCE — on a
- * multi-instance / serverless deployment each instance has its own window, so
- * treat it as a first line of defense, not a hard global quota. A distributed
- * limiter (Upstash Redis / Vercel KV — both already available as deps) can be
- * swapped in behind this same interface later.
- *
- * Server-only.
+ * `rateLimitDistributed()` uses Upstash/Vercel KV REST credentials when
+ * configured and fails closed in production if the shared backend is absent or
+ * unavailable. The synchronous `rateLimit()` export remains as a compatibility
+ * shim for existing local-only callers; new security boundaries must use the
+ * async function.
  */
 
 export interface RateLimitConfig {
@@ -25,6 +23,8 @@ export interface RateLimitResult {
   resetAt: number;
   /** Seconds until reset (for Retry-After). */
   retryAfter: number;
+  backend: "memory" | "redis" | "unavailable";
+  reason?: "backend_unavailable";
 }
 
 interface Bucket {
@@ -34,6 +34,30 @@ interface Bucket {
 
 const store = new Map<string, Bucket>();
 
+export interface RateLimitBackend {
+  increment(key: string, windowMs: number): Promise<{ count: number; resetAt: number }>;
+}
+
+export interface DistributedRateLimitOptions {
+  backend?: RateLimitBackend;
+  /**
+   * Defaults to `deny` in production and `memory` in development.
+   * Production callers should not override this without a documented exception.
+   */
+  failureMode?: "deny" | "memory";
+}
+
+let redisBackendPromise: Promise<RateLimitBackend | null> | null = null;
+
+function assertConfig(config: RateLimitConfig): void {
+  if (!Number.isInteger(config.max) || config.max < 1) {
+    throw new Error("Rate limit max must be a positive integer");
+  }
+  if (!Number.isFinite(config.windowMs) || config.windowMs < 1) {
+    throw new Error("Rate limit windowMs must be positive");
+  }
+}
+
 /** Occasionally purge expired buckets so the Map cannot grow unbounded. */
 function sweep(now: number): void {
   if (store.size < 5000) return;
@@ -42,7 +66,8 @@ function sweep(now: number): void {
   }
 }
 
-export function rateLimit(key: string, config: RateLimitConfig): RateLimitResult {
+function memoryRateLimit(key: string, config: RateLimitConfig): RateLimitResult {
+  assertConfig(config);
   const now = Date.now();
   sweep(now);
 
@@ -55,6 +80,7 @@ export function rateLimit(key: string, config: RateLimitConfig): RateLimitResult
       remaining: Math.max(0, config.max - 1),
       resetAt,
       retryAfter: Math.ceil(config.windowMs / 1000),
+      backend: "memory",
     };
   }
 
@@ -64,6 +90,7 @@ export function rateLimit(key: string, config: RateLimitConfig): RateLimitResult
       remaining: 0,
       resetAt: bucket.resetAt,
       retryAfter: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
+      backend: "memory",
     };
   }
 
@@ -73,6 +100,97 @@ export function rateLimit(key: string, config: RateLimitConfig): RateLimitResult
     remaining: Math.max(0, config.max - bucket.count),
     resetAt: bucket.resetAt,
     retryAfter: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
+    backend: "memory",
+  };
+}
+
+/**
+ * Backward-compatible process-local limiter.
+ * @deprecated Use `await rateLimitDistributed(...)` for production boundaries.
+ */
+export function rateLimit(key: string, config: RateLimitConfig): RateLimitResult {
+  return memoryRateLimit(key, config);
+}
+
+async function createRedisBackend(): Promise<RateLimitBackend | null> {
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+
+  const { Redis } = await import("@upstash/redis");
+  const redis = new Redis({ url, token });
+  const script = `
+    local count = redis.call("INCR", KEYS[1])
+    if count == 1 then
+      redis.call("PEXPIRE", KEYS[1], ARGV[1])
+    end
+    local ttl = redis.call("PTTL", KEYS[1])
+    return { count, ttl }
+  `;
+
+  return {
+    async increment(key, windowMs) {
+      const redisKey = `nx:ratelimit:${key.slice(0, 500)}`;
+      const result = (await redis.eval(script, [redisKey], [String(Math.ceil(windowMs))])) as [
+        number,
+        number,
+      ];
+      const count = Number(result[0]);
+      const ttl = Number(result[1]);
+      if (!Number.isFinite(count) || !Number.isFinite(ttl) || ttl < 0) {
+        throw new Error("Rate-limit backend returned an invalid counter");
+      }
+      return { count, resetAt: Date.now() + ttl };
+    },
+  };
+}
+
+async function getRedisBackend(): Promise<RateLimitBackend | null> {
+  if (!redisBackendPromise) {
+    redisBackendPromise = createRedisBackend().catch((error) => {
+      console.error("[RATE_LIMIT] Shared backend initialization failed:", error);
+      return null;
+    });
+  }
+  return redisBackendPromise;
+}
+
+export async function rateLimitDistributed(
+  key: string,
+  config: RateLimitConfig,
+  options: DistributedRateLimitOptions = {}
+): Promise<RateLimitResult> {
+  assertConfig(config);
+  const failureMode =
+    options.failureMode ?? (process.env.NODE_ENV === "production" ? "deny" : "memory");
+  const backend = options.backend ?? (await getRedisBackend());
+
+  if (backend) {
+    try {
+      const { count, resetAt } = await backend.increment(key, config.windowMs);
+      const now = Date.now();
+      return {
+        allowed: count <= config.max,
+        remaining: Math.max(0, config.max - count),
+        resetAt,
+        retryAfter: Math.max(1, Math.ceil((resetAt - now) / 1000)),
+        backend: "redis",
+      };
+    } catch (error) {
+      console.error("[RATE_LIMIT] Shared backend request failed:", error);
+    }
+  }
+
+  if (failureMode === "memory") return memoryRateLimit(key, config);
+
+  const resetAt = Date.now() + config.windowMs;
+  return {
+    allowed: false,
+    remaining: 0,
+    resetAt,
+    retryAfter: Math.max(1, Math.ceil(config.windowMs / 1000)),
+    backend: "unavailable",
+    reason: "backend_unavailable",
   };
 }
 
@@ -94,4 +212,5 @@ export function rateLimitKey(scope: string, headers: Headers): string {
 /** Test/maintenance helper. */
 export function __resetRateLimitStore(): void {
   store.clear();
+  redisBackendPromise = null;
 }

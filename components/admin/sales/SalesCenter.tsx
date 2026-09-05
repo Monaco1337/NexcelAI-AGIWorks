@@ -38,13 +38,59 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "prompts", label: "Prompts & Runs" },
 ];
 
+const VIEW_IDS = VIEWS.map((view) => view.id);
+const SALES_VIEW_PARAM = "salesView";
+
+function salesViewFromUrl(url: URL): View | null {
+  const candidate = url.searchParams.get(SALES_VIEW_PARAM);
+  return candidate && VIEW_IDS.includes(candidate as View) ? (candidate as View) : null;
+}
+
 export default function SalesCenter({ accent }: { accent: string }) {
-  const [view, setView] = useState<View>("dashboard");
+  const [view, setView] = useState<View>(() => {
+    if (typeof window === "undefined") return "dashboard";
+    return salesViewFromUrl(new URL(window.location.href)) ?? "dashboard";
+  });
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [showNewCompany, setShowNewCompany] = useState(false);
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const syncViewFromUrl = () => {
+      const url = new URL(window.location.href);
+      const next = salesViewFromUrl(url);
+      setView(next ?? "dashboard");
+      setSelectedCompanyId(null);
+      setSelectedOpportunityId(null);
+
+      // Ungültige Query-Werte werden entfernt, statt eine nicht existente
+      // Ansicht im Link dauerhaft weiterzutragen.
+      if (url.searchParams.has(SALES_VIEW_PARAM) && !next) {
+        url.searchParams.delete(SALES_VIEW_PARAM);
+        window.history.replaceState(window.history.state, "", url);
+      }
+    };
+
+    syncViewFromUrl();
+    window.addEventListener("popstate", syncViewFromUrl);
+    window.addEventListener("hashchange", syncViewFromUrl);
+    return () => {
+      window.removeEventListener("popstate", syncViewFromUrl);
+      window.removeEventListener("hashchange", syncViewFromUrl);
+    };
+  }, []);
+
+  const selectView = useCallback((next: View) => {
+    setView(next);
+    setSelectedCompanyId(null);
+    setSelectedOpportunityId(null);
+
+    const url = new URL(window.location.href);
+    url.searchParams.set(SALES_VIEW_PARAM, next);
+    window.history.pushState(window.history.state, "", url);
+  }, []);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -107,11 +153,7 @@ export default function SalesCenter({ accent }: { accent: string }) {
             <button
               key={v.id}
               type="button"
-              onClick={() => {
-                setView(v.id);
-                setSelectedCompanyId(null);
-                setSelectedOpportunityId(null);
-              }}
+              onClick={() => selectView(v.id)}
               className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-medium transition ${
                 view === v.id && !selectedCompanyId
                   ? "bg-white/[0.08] text-white"
@@ -143,7 +185,7 @@ export default function SalesCenter({ accent }: { accent: string }) {
           dashboard={dashboard}
           accent={accent}
           onOpenCompany={(id) => openCompany(id)}
-          onViewPipeline={() => setView("pipeline")}
+          onViewPipeline={() => selectView("pipeline")}
         />
       ) : view === "pipeline" ? (
         <SalesPipeline

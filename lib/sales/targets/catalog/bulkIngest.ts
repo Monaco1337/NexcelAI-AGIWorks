@@ -35,6 +35,8 @@ import {
   preScoreClass,
   enrichmentPriorityFromPreScore,
 } from "../preScore";
+import { getDiscoveryProviders } from "../providers/registry";
+import { normalizePhone } from "../phone";
 
 export interface BulkIngestResult {
   received: number;
@@ -85,7 +87,24 @@ export async function bulkIngestCompanies(
   }
 
   const entries = Array.from(byFingerprint.entries());
-  const result: BulkIngestResult = { ...EMPTY, received: stubs.length };
+  const result: BulkIngestResult = {
+    ...EMPTY,
+    received: stubs.length,
+    duplicates: stubs.length - entries.length,
+  };
+  const providerPolicies = new Map(
+    getDiscoveryProviders().map((provider) => [provider.key, provider.metadata.policy] as const),
+  );
+  const coverageRunRows = opts.searchJobId
+    ? await sql<{ id: string }[]>`
+        SELECT id
+        FROM sales_target_coverage_runs
+        WHERE search_job_id = ${opts.searchJobId}
+        ORDER BY created_at DESC
+        LIMIT 1
+      `
+    : [];
+  const coverageRunId = coverageRunRows[0]?.id ?? null;
 
   for (let i = 0; i < entries.length; i += CHUNK) {
     const chunk = entries.slice(i, i + CHUNK);
@@ -161,13 +180,287 @@ export async function bulkIngestCompanies(
     `) as unknown as Array<{ id: string; fingerprint: string }>;
     result.inserted += insertedRaw.length;
     result.duplicates += chunk.length - insertedRaw.length;
-    if (insertedRaw.length === 0) continue;
-
-    const idByFingerprint = new Map<string, string>(
-      insertedRaw.map((r) => [r.fingerprint, r.id] as [string, string])
+    const allTargets = await sql<{ id: string; fingerprint: string }[]>`
+      SELECT id, fingerprint
+      FROM sales_target_companies
+      WHERE deleted_at IS NULL
+        AND fingerprint = ANY(${chunk.map(([fingerprint]) => fingerprint)})
+    `;
+    const idByFingerprint = new Map(
+      allTargets.map((row) => [row.fingerprint, row.id] as const),
     );
 
-    // 2. Provenance. Jedes belegte Feld bekommt eine Source-Zeile, damit
+    // 2. Immutable raw observations and normalized candidates for both new
+    // and already-known companies. Canonical deduplication must never erase
+    // evidence or provider-yield accounting.
+    const observationByFingerprint = new Map<string, string>();
+    const observationKeyByFingerprint = new Map<string, string>();
+    const candidateByFingerprint = new Map<string, string>();
+    const observationRows: Array<Record<string, unknown>> = chunk.flatMap(([fingerprint, { stub }]) => {
+      const targetId = idByFingerprint.get(fingerprint);
+      if (!targetId) return [];
+      const id = `obs_${randomUUID().replace(/-/g, "").slice(0, 20)}`;
+      const payloadHash = sha256(stableStringify(stub));
+      const idempotencyKey = sha256(stableStringify({
+        provider: stub.provider,
+        sourceKind: "company_discovery",
+        externalRecordId: stub.providerRawId ?? null,
+        payloadHash,
+      }));
+      observationKeyByFingerprint.set(fingerprint, idempotencyKey);
+      const policy = providerPolicies.get(stub.provider);
+      return [{
+        id,
+        target_id: targetId,
+        search_job_id: opts.searchJobId,
+        provider: stub.provider,
+        source_kind: "company_discovery",
+        source_locator: stub.providerSourceUrl ?? null,
+        external_record_id: stub.providerRawId ?? null,
+        content_type: "application/json",
+        payload: JSON.parse(JSON.stringify(stub)) as Record<string, unknown>,
+        payload_hash: payloadHash,
+        idempotency_key: idempotencyKey,
+        schema_version: "v1",
+        observed_at: new Date().toISOString(),
+        provenance: { provider: stub.provider, confidence: stub.confidence },
+        retention_class: policy?.retentionClass.toLowerCase() ?? "operational",
+        retain_until: policy?.maxRetentionDays
+          ? new Date(Date.now() + policy.maxRetentionDays * 86_400_000).toISOString()
+          : null,
+      }];
+    });
+    if (observationRows.length > 0) {
+      await sql`
+        INSERT INTO sales_target_raw_observations ${sql(
+          observationRows,
+          "id", "target_id", "search_job_id", "provider", "source_kind",
+          "source_locator", "external_record_id", "content_type", "payload",
+          "payload_hash", "idempotency_key", "schema_version", "observed_at", "provenance",
+          "retention_class", "retain_until"
+        )}
+        ON CONFLICT (idempotency_key) DO NOTHING
+      `;
+      const observationKeys = [...observationKeyByFingerprint.values()];
+      const persisted = await sql<{ id: string; idempotency_key: string }[]>`
+        SELECT id, idempotency_key
+        FROM sales_target_raw_observations
+        WHERE idempotency_key = ANY(${observationKeys})
+      `;
+      const idByKey = new Map(persisted.map((row) => [row.idempotency_key, row.id]));
+      for (const [fingerprint, key] of observationKeyByFingerprint) {
+        const persistedId = idByKey.get(key);
+        if (persistedId) observationByFingerprint.set(fingerprint, persistedId);
+      }
+    }
+    const candidateRows: Array<Record<string, unknown>> = chunk.flatMap(([fingerprint, { stub, domain }]) => {
+      const targetId = idByFingerprint.get(fingerprint);
+      const observationId = observationByFingerprint.get(fingerprint);
+      if (!targetId || !observationId) return [];
+      const id = `cand_${randomUUID().replace(/-/g, "").slice(0, 20)}`;
+      candidateByFingerprint.set(fingerprint, id);
+      return [{
+        id,
+        observation_id: observationId,
+        target_id: targetId,
+        entity_kind: "company",
+        field_path: "company",
+        raw_value: JSON.parse(JSON.stringify(stub)) as Record<string, unknown>,
+        normalized_value: JSON.parse(JSON.stringify({ ...stub, domain })) as Record<string, unknown>,
+        normalized_text: stub.name.toLowerCase(),
+        normalization_key: fingerprint,
+        normalizer_name: "company-discovery",
+        normalizer_version: "v1",
+        confidence: clamp01(stub.confidence),
+        provenance: { provider: stub.provider },
+      }];
+    });
+    if (candidateRows.length > 0) {
+      await sql`
+        INSERT INTO sales_target_normalized_candidates ${sql(
+          candidateRows,
+          "id", "observation_id", "target_id", "entity_kind", "field_path",
+          "raw_value", "normalized_value", "normalized_text", "normalization_key",
+          "normalizer_name", "normalizer_version", "confidence", "provenance"
+        )}
+        ON CONFLICT (
+          observation_id, field_path, normalizer_name, normalizer_version
+        ) DO NOTHING
+      `;
+      const observationIds = [...observationByFingerprint.values()];
+      const persisted = await sql<{ id: string; observation_id: string }[]>`
+        SELECT id, observation_id
+        FROM sales_target_normalized_candidates
+        WHERE observation_id = ANY(${observationIds})
+          AND field_path = 'company'
+          AND normalizer_name = 'company-discovery'
+          AND normalizer_version = 'v1'
+      `;
+      const candidateByObservation = new Map(
+        persisted.map((row) => [row.observation_id, row.id]),
+      );
+      for (const [fingerprint, observationId] of observationByFingerprint) {
+        const candidateId = candidateByObservation.get(observationId);
+        if (candidateId) candidateByFingerprint.set(fingerprint, candidateId);
+      }
+    }
+    const insertedIds = new Set(insertedRaw.map((row) => row.id));
+    const claimByFingerprint = new Map<string, string>();
+    const claimRows = chunk.flatMap(([fingerprint, { stub }]) => {
+      const targetId = idByFingerprint.get(fingerprint);
+      const observationId = observationByFingerprint.get(fingerprint);
+      const candidateId = candidateByFingerprint.get(fingerprint);
+      if (!targetId || !observationId || !candidateId) return [];
+      const id = `claim_${randomUUID().replace(/-/g, "").slice(0, 20)}`;
+      claimByFingerprint.set(fingerprint, id);
+      return [{
+        id,
+        target_id: targetId,
+        candidate_id: candidateId,
+        observation_id: observationId,
+        subject_kind: "company",
+        claim_kind: "composite_fingerprint",
+        namespace: "fingerprint",
+        claimed_value: fingerprint,
+        normalized_value: fingerprint,
+        identity_key_hash: sha256(`fingerprint:${fingerprint}`),
+        asserted_by: stub.provider,
+        confidence: clamp01(stub.confidence),
+        provenance: { provider: stub.provider },
+      }];
+    });
+    if (claimRows.length > 0) {
+      await sql`
+        INSERT INTO sales_target_identity_claims ${sql(
+          claimRows,
+          "id", "target_id", "candidate_id", "observation_id", "subject_kind",
+          "claim_kind", "namespace", "claimed_value", "normalized_value",
+          "identity_key_hash", "asserted_by", "confidence", "provenance"
+        )}
+        ON CONFLICT (candidate_id, namespace, identity_key_hash)
+          WHERE candidate_id IS NOT NULL
+        DO NOTHING
+      `;
+      const candidateIds = [...candidateByFingerprint.values()];
+      const persisted = await sql<{ id: string; candidate_id: string }[]>`
+        SELECT id, candidate_id
+        FROM sales_target_identity_claims
+        WHERE candidate_id = ANY(${candidateIds})
+          AND namespace = 'fingerprint'
+      `;
+      const claimByCandidate = new Map(
+        persisted.map((row) => [row.candidate_id, row.id]),
+      );
+      for (const [fingerprint, candidateId] of candidateByFingerprint) {
+        const claimId = claimByCandidate.get(candidateId);
+        if (claimId) claimByFingerprint.set(fingerprint, claimId);
+      }
+    }
+    const resolutionRows = chunk.flatMap(([fingerprint, { stub }]) => {
+      const targetId = idByFingerprint.get(fingerprint);
+      const observationId = observationByFingerprint.get(fingerprint);
+      const candidateId = candidateByFingerprint.get(fingerprint);
+      const claimId = claimByFingerprint.get(fingerprint);
+      if (!targetId || !observationId || !candidateId || !claimId) return [];
+      return [{
+        id: `res_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
+        claim_id: claimId,
+        candidate_id: candidateId,
+        observation_id: observationId,
+        resolved_target_id: targetId,
+        decision_kind: insertedIds.has(targetId) ? "CREATE" : "LINK",
+        resolver: "bulk-fingerprint-resolver",
+        resolver_version: "v1",
+        confidence: clamp01(stub.confidence),
+        rationale: { fingerprint },
+        evidence: [{ claimId }],
+        config_snapshot: { strategy: "exact-fingerprint" },
+        provenance: { provider: stub.provider },
+      }];
+    });
+    if (resolutionRows.length > 0) {
+      await sql`
+        INSERT INTO sales_target_resolution_decisions ${sql(
+          resolutionRows,
+          "id", "claim_id", "candidate_id", "observation_id", "resolved_target_id",
+          "decision_kind", "resolver", "resolver_version", "confidence", "rationale",
+          "evidence", "config_snapshot", "provenance"
+        )}
+        ON CONFLICT (candidate_id, resolver, resolver_version)
+          WHERE candidate_id IS NOT NULL
+        DO NOTHING
+      `;
+    }
+    const now = new Date().toISOString();
+    const metricRows: Array<Record<string, unknown>> = [];
+    for (const [fingerprint, { stub }] of chunk) {
+      const targetId = idByFingerprint.get(fingerprint);
+      const observationId = observationByFingerprint.get(fingerprint);
+      const candidateId = candidateByFingerprint.get(fingerprint);
+      if (!targetId || !observationId || !candidateId) continue;
+      metricRows.push(
+        {
+          id: `met_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
+          metric_key: "RAW_OBSERVED",
+          event_kind: "increment",
+          target_id: targetId,
+          coverage_run_id: coverageRunId,
+          value: 1,
+          unit: "count",
+          dimensions: { provider: stub.provider },
+          source_system: "revenue_intelligence",
+          deduplication_key: `observation:${observationId}:raw`,
+          occurred_at: now,
+          provenance: { definitionVersion: "revenue-intelligence-v1" },
+        },
+        {
+          id: `met_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
+          metric_key: "CANDIDATE_VALID",
+          event_kind: "increment",
+          target_id: targetId,
+          coverage_run_id: coverageRunId,
+          value: 1,
+          unit: "count",
+          dimensions: { provider: stub.provider },
+          source_system: "revenue_intelligence",
+          deduplication_key: `candidate:${candidateId}:valid`,
+          occurred_at: now,
+          provenance: { definitionVersion: "revenue-intelligence-v1" },
+        },
+      );
+      if (insertedIds.has(targetId)) {
+        metricRows.push({
+          id: `met_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
+          metric_key: "CANONICAL_CREATED",
+          event_kind: "increment",
+          target_id: targetId,
+          coverage_run_id: coverageRunId,
+          value: 1,
+          unit: "count",
+          dimensions: { provider: stub.provider },
+          source_system: "revenue_intelligence",
+          deduplication_key: `target:${targetId}:canonical-created`,
+          occurred_at: now,
+          provenance: { definitionVersion: "revenue-intelligence-v1" },
+        });
+      }
+    }
+    if (metricRows.length > 0) {
+      for (let m = 0; m < metricRows.length; m += CHUNK) {
+        const part = metricRows.slice(m, m + CHUNK);
+        await sql`
+          INSERT INTO sales_target_metric_events ${sql(
+            part,
+            "id", "metric_key", "event_kind", "target_id", "coverage_run_id", "value", "unit",
+            "dimensions", "source_system", "deduplication_key", "occurred_at",
+            "provenance"
+          )}
+          ON CONFLICT DO NOTHING
+        `;
+      }
+    }
+
+    // 3. Provenance. Jedes belegte Feld bekommt eine Source-Zeile, damit
     //    das Quality Gate „jede Firma hat mindestens eine Quelle" hält.
     const sourceRows: Array<Record<string, unknown>> = [];
     for (const [fingerprint, { stub }] of chunk) {
@@ -193,6 +486,10 @@ export async function bulkIngestCompanies(
           confidence: clamp01(stub.confidence),
           verification_status: "unverified",
           is_preferred: false,
+          raw_observation_id: observationByFingerprint.get(fingerprint) ?? null,
+          normalized_candidate_id: candidateByFingerprint.get(fingerprint) ?? null,
+          observed_at: new Date().toISOString(),
+          provenance: { provider: stub.provider },
         });
       }
     }
@@ -211,7 +508,11 @@ export async function bulkIngestCompanies(
             "source_url",
             "confidence",
             "verification_status",
-            "is_preferred"
+            "is_preferred",
+            "raw_observation_id",
+            "normalized_candidate_id",
+            "observed_at",
+            "provenance"
           )}
           ON CONFLICT (target_id, field, provider, value_hash) DO NOTHING
         `;
@@ -219,7 +520,87 @@ export async function bulkIngestCompanies(
       }
     }
 
-    // 3. External-IDs (OSM-Element-Referenz) für spätere Dedup-Läufe.
+    // Promote provider-supplied reachable contacts into the same canonical
+    // contact table used by interactive ingestion. The source row remains the
+    // provenance anchor; confidence determines whether qualification may treat
+    // the contact as verified/high or only medium.
+    const targetIds = [...new Set(
+      chunk.map(([fingerprint]) => idByFingerprint.get(fingerprint)).filter(
+        (id): id is string => Boolean(id),
+      ),
+    )];
+    const persistedSources = targetIds.length > 0
+      ? await sql<{ id: string; target_id: string; field: string; provider: string; value_hash: string }[]>`
+          SELECT id, target_id, field, provider, value_hash
+          FROM sales_target_sources
+          WHERE target_id = ANY(${targetIds}) AND field IN ('phone', 'email')
+        `
+      : [];
+    const sourceByKey = new Map(persistedSources.map((source) => [
+      `${source.target_id}:${source.field}:${source.provider}:${source.value_hash}`,
+      source.id,
+    ]));
+    const contactRows: Array<Record<string, unknown>> = [];
+    for (const [fingerprint, { stub }] of chunk) {
+      const targetId = idByFingerprint.get(fingerprint);
+      if (!targetId) continue;
+      const verificationStatus = stub.confidence >= 0.8 ? "high" : "medium";
+      if (stub.phone) {
+        const normalized = normalizePhone(stub.phone, stub.country ?? "DE");
+        const valueHash = md5(`phone|${stub.phone}|${stub.provider}`);
+        contactRows.push({
+          id: `contact_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
+          target_id: targetId,
+          kind: normalized?.classification === "BUSINESS_MOBILE" ? "mobile" : "phone",
+          value: normalized?.display ?? stub.phone,
+          normalized_value: normalized?.normalized ?? stub.phone.replace(/[^\d+]/g, ""),
+          classification: normalized?.classification ?? null,
+          confidence: clamp01(stub.confidence),
+          verification_status: verificationStatus,
+          is_preferred: true,
+          source_id: sourceByKey.get(`${targetId}:phone:${stub.provider}:${valueHash}`) ?? null,
+        });
+      }
+      if (stub.email) {
+        const valueHash = md5(`email|${stub.email}|${stub.provider}`);
+        contactRows.push({
+          id: `contact_${randomUUID().replace(/-/g, "").slice(0, 20)}`,
+          target_id: targetId,
+          kind: "email",
+          value: stub.email,
+          normalized_value: stub.email.toLowerCase(),
+          classification: "GENERAL",
+          confidence: clamp01(stub.confidence),
+          verification_status: verificationStatus,
+          is_preferred: true,
+          source_id: sourceByKey.get(`${targetId}:email:${stub.provider}:${valueHash}`) ?? null,
+        });
+      }
+    }
+    if (contactRows.length > 0) {
+      await sql`
+        INSERT INTO sales_target_contacts ${sql(
+          contactRows,
+          "id", "target_id", "kind", "value", "normalized_value",
+          "classification", "confidence", "verification_status",
+          "is_preferred", "source_id"
+        )}
+        ON CONFLICT (target_id, kind, normalized_value)
+          WHERE deleted_at IS NULL AND normalized_value IS NOT NULL
+        DO UPDATE SET
+          value = EXCLUDED.value,
+          confidence = GREATEST(sales_target_contacts.confidence, EXCLUDED.confidence),
+          verification_status = CASE
+            WHEN sales_target_contacts.verification_status IN ('verified', 'high')
+              THEN sales_target_contacts.verification_status
+            ELSE EXCLUDED.verification_status
+          END,
+          source_id = COALESCE(EXCLUDED.source_id, sales_target_contacts.source_id),
+          last_seen_at = NOW()
+      `;
+    }
+
+    // 4. External-IDs (OSM-Element-Referenz) für spätere Dedup-Läufe.
     const extRows: Array<Record<string, unknown>> = [];
     for (const [fp, { stub }] of chunk) {
       const targetId = idByFingerprint.get(fp);
@@ -246,7 +627,7 @@ export async function bulkIngestCompanies(
       `;
     }
 
-    // 4. Enrichment anstoßen. Genau eine Startphase pro Firma; die
+    // 5. Enrichment anstoßen. Genau eine Startphase pro Firma; die
     //    Folgephasen kaskadiert der bestehende Enrichment-Worker.
     // Reihenfolge nach Pre-Score: kleinere Zahl wird zuerst gezogen.
     // Vorher bekam jede Firma pauschal 100, wodurch die Tiefenanalyse in
@@ -291,4 +672,19 @@ function clamp01(v: number): number {
 
 function md5(input: string): string {
   return createHash("md5").update(input).digest("hex");
+}
+
+function sha256(input: string): string {
+  return createHash("sha256").update(input).digest("hex");
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
 }

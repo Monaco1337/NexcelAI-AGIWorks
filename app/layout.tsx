@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import dynamic from "next/dynamic";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BrandProvider } from "@/contexts/BrandContext";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import NavigationGate from "@/components/NavigationGate";
-import ClientOnly from "@/components/ClientOnly";
+import { headers } from "next/headers";
+import {
+  LayoutClientAmbient,
+  LayoutClientRuntime,
+} from "@/components/LayoutClientEnhancements";
 
 // Headline Font - Future-Premium
 // Optimiert für Performance: preload, display swap, subset optimization
@@ -29,33 +32,6 @@ const inter = Inter({
   preload: true,
   adjustFontFallback: true,
   fallback: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'system-ui', 'sans-serif'],
-});
-
-// Lazy load heavy components
-const AppBackground = dynamic(() => import("@/components/background/AppBackground"), {
-  ssr: false,
-  loading: () => null,
-});
-
-const NeuralCursor = dynamic(() => import("@/components/NeuralCursor"), {
-  ssr: false,
-  loading: () => null,
-});
-
-const CookieBanner = dynamic(() => import("@/components/CookieBanner"), {
-  ssr: false,
-});
-
-const AnalyticsTracker = dynamic(() => import("@/components/AnalyticsTracker"), {
-  ssr: false,
-});
-
-const PerformanceMonitor = dynamic(() => import("@/components/PerformanceMonitor"), {
-  ssr: false,
-});
-
-const PerformanceAuditor = dynamic(() => import("@/components/PerformanceAuditor"), {
-  ssr: false,
 });
 
 export const metadata: Metadata = {
@@ -88,11 +64,12 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="de" className={`dark ${generalSans.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
@@ -109,6 +86,7 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#6B2DB8" />
         
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -130,6 +108,7 @@ export default function RootLayout({
                Läuft NACH den hardcoded <link>-Tags (siehe HTML-Reihenfolge), aber
                BEVOR der Browser die Icons fetcht → kein NEXCEL-N im AGI-Works-Tab. */}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -198,6 +177,7 @@ export default function RootLayout({
           }}
         />
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -269,10 +249,7 @@ export default function RootLayout({
         <ThemeProvider>
           <BrandProvider>
           {/* Nur-Client: vermeidet Hydration-Mismatch mit dynamic(..., { ssr: false }) */}
-          <ClientOnly>
-            <AppBackground />
-            <NeuralCursor />
-          </ClientOnly>
+          <LayoutClientAmbient />
 
           {/* Navigation: fix oben, z-[100], auf allen Seiten sichtbar
               außer auf der Diagnose-Plattform (`/`, `/diagnose/*`) — dort
@@ -291,12 +268,7 @@ export default function RootLayout({
             {children}
           </div>
           
-          <ClientOnly>
-            <CookieBanner />
-            <AnalyticsTracker />
-            <PerformanceMonitor />
-            <PerformanceAuditor />
-          </ClientOnly>
+          <LayoutClientRuntime />
           </BrandProvider>
         </ThemeProvider>
       </body>

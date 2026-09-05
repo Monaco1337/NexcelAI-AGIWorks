@@ -45,7 +45,7 @@ export function resolveBrandFromRequest(
  */
 export async function getBrandFromHeaders(path: string): Promise<BrandRequestResult> {
   const { headers } = await import("next/headers");
-  const h = headers();
+  const h = await headers();
   const host = h.get("host");
   return resolveBrandFromRequest(host, path);
 }

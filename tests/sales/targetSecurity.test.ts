@@ -70,6 +70,10 @@ async function main(): Promise<void> {
   // IPv4-mapped IPv6 (::ffff:127.0.0.1)
   assert(classifyIpString("::ffff:127.0.0.1").public === false, "::ffff:127.0.0.1 → Loopback");
   assert(classifyIpString("::ffff:169.254.169.254").public === false, "::ffff:169.254.169.254 → Link-Local");
+  assert(classifyIpString("::ffff:7f00:1").public === false, "::ffff:7f00:1 → Loopback");
+  assert(classifyIpString("0:0:0:0:0:ffff:7f00:1").public === false, "Expanded mapped IPv6 → Loopback");
+  assert(classifyIpString("::7f00:1").public === false, "IPv4-compatible IPv6 → Loopback");
+  assert(!inspectUrl("http://[0:0:0:0:0:ffff:7f00:1]/admin").ok, "Mapped IPv6 URL blockiert");
 
   // Dezimal-IP (127.0.0.1 → 2130706433) — whatwg URL parser normalisiert das.
   const decimalIp = inspectUrl("http://2130706433/admin");

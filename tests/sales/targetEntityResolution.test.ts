@@ -3,7 +3,8 @@
  *
  * Prüft die Kernaussage: „Ein Master-Datensatz pro reales Unternehmen".
  *  - Fingerprint normalisiert Rechtsformen weg (GmbH, GmbH & Co. KG).
- *  - Domain-Match ist ein starkes Signal (auch bei Namensunterschied).
+ *  - Domain allein erzeugt nur einen Review-Kandidaten; Composite-Evidenz
+ *    ist für Auto-Linking erforderlich.
  *  - Telefon-Match ist ein starkes Signal.
  *  - Adress-Match + Name-Kern reicht als Match.
  *  - Verschiedene Unternehmen matchen nicht.
@@ -30,11 +31,20 @@ async function main(): Promise<void> {
   assert(!kgCore.includes("gmbh"), "GmbH-Suffix entfernt");
   assert(normalizeCompanyName("Mueller Sanitär") === "mueller sanitar", "Umlaut folded");
 
-  // Domain-Match (verschiedene Namensvarianten)
+  // Eine gemeinsam genutzte Domain darf verschiedene Firmen/Filialen nicht
+  // automatisch zusammenführen.
   const a = buildFingerprint({ name: "Müller GmbH", website: "https://mueller.de" });
   const b = buildFingerprint({ name: "Mueller Sanitär", website: "https://www.mueller.de" });
   const domainMatch = matchEntities(a, b);
-  assert(domainMatch.isMatch, `Domain-Match sollte greifen: ${JSON.stringify(domainMatch)}`);
+  assert(
+    !domainMatch.isMatch && domainMatch.outcome === "POSSIBLE_MATCH",
+    `Domain allein sollte Review auslösen: ${JSON.stringify(domainMatch)}`,
+  );
+  const domainAndName = matchEntities(
+    buildFingerprint({ name: "Müller GmbH", website: "https://mueller.de" }),
+    buildFingerprint({ name: "Müller", website: "https://www.mueller.de" }),
+  );
+  assert(domainAndName.isMatch, `Domain+Name sollte greifen: ${JSON.stringify(domainAndName)}`);
 
   // Telefon-Match: allein reicht nicht (0.5), zusammen mit Name-Ähnlichkeit ja.
   const c = buildFingerprint({ name: "Kanzlei Meier", phone: "02303 111111" });

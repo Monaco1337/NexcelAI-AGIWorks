@@ -15,8 +15,8 @@ export const dynamic = "force-dynamic";
 
 const DISALLOWED = ["/admin", "/api", "/demo", "/login", "/verify-email", "/diagnose"];
 
-export default function robots(): MetadataRoute.Robots {
-  const host = headers().get("host");
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const host = (await headers()).get("host");
   const brand = hostToBrand(host);
 
   if (!brand) {

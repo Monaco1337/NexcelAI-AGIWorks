@@ -30,6 +30,7 @@
  */
 
 import { safeFetch, extractDomain, normalizeUrl } from "./security/safeFetch";
+import type { SafeFetchResult } from "./security/safeFetch";
 import { stripHtml } from "./security/htmlSanitizer";
 import type { FindingsBundle, TargetOpportunity, WebsiteOpportunityKind } from "./model";
 import { emptyFindings, newTargetId } from "./model";
@@ -77,12 +78,21 @@ const AUDIT_WEIGHTS = {
  * Pipeline den Ziel-Datensatz sauber als „Website nicht erreichbar"
  * annotieren, ohne dass alles kippt.
  */
-export async function performWebsiteAudit(rawUrl: string): Promise<WebsiteAuditResult> {
+export async function performWebsiteAudit(
+  rawUrl: string,
+  options: {
+    onFetch?: (result: SafeFetchResult) => void | Promise<void>;
+    fetcher?: (url: string) => Promise<SafeFetchResult>;
+  } = {},
+): Promise<WebsiteAuditResult> {
   const normalized = normalizeUrl(rawUrl);
   if (!normalized) {
     return emptyAuditResult(rawUrl, null, "Ungültige URL");
   }
-  const response = await safeFetch(normalized, { timeoutMs: 15_000, maxBytes: 2_000_000 });
+  const response = options.fetcher
+    ? await options.fetcher(normalized)
+    : await safeFetch(normalized, { timeoutMs: 15_000, maxBytes: 2_000_000 });
+  await options.onFetch?.(response);
   if (!response.ok || !response.bodyText) {
     return emptyAuditResult(normalized, response, response.error ?? `HTTP ${response.status}`);
   }

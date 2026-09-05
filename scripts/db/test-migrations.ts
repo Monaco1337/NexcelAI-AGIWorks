@@ -30,10 +30,12 @@ function connectionString(): string {
 
 async function main(): Promise<void> {
   const schema = `migtest_${Date.now()}`;
-  const sql = postgres(connectionString(), {
-    max: 1,
+  const url = connectionString();
+  const local = ["localhost", "127.0.0.1", "::1"].includes(new URL(url).hostname);
+  const sql = postgres(url, {
+    max: 4,
     prepare: false,
-    ssl: "require",
+    ssl: local ? false : "require",
     // Alle Anweisungen laufen ausschließlich in diesem Schema.
     connection: { search_path: schema },
   });
@@ -67,6 +69,8 @@ async function main(): Promise<void> {
       console.log("✅ Zweiter Lauf idempotent (keine ausstehenden Migrationen).");
     }
 
+    await verifyRevenueConcurrencyAndImmutability(sql);
+
     const tables = await sql<{ table_name: string }[]>`
       SELECT table_name FROM information_schema.tables
       WHERE table_schema = ${schema} ORDER BY table_name
@@ -97,6 +101,80 @@ async function main(): Promise<void> {
   }
 
   process.exit(failed ? 1 : 0);
+}
+
+async function verifyRevenueConcurrencyAndImmutability(
+  sql: ReturnType<typeof postgres>,
+): Promise<void> {
+  await sql`
+    INSERT INTO sales_target_companies (id, name, fingerprint)
+    VALUES ('test_target_lease', 'Lease Test GmbH', 'lease:test')
+  `;
+  await sql`
+    INSERT INTO sales_target_enrichment_jobs (id, target_id, phase, status, priority)
+    VALUES
+      ('test_job_1', 'test_target_lease', 'website_contact', 'queued', 100),
+      ('test_job_2', 'test_target_lease', 'lead_score', 'queued', 90)
+  `;
+  const claims = await Promise.all(
+    ["worker-a", "worker-b"].map((worker) =>
+      sql.begin(async (tx) => tx<{ id: string }[]>`
+        WITH candidate AS (
+          SELECT id FROM sales_target_enrichment_jobs
+          WHERE status = 'queued'
+          ORDER BY priority DESC, created_at
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1
+        )
+        UPDATE sales_target_enrichment_jobs j
+        SET status = 'running', lease_token = ${worker},
+            lease_expires_at = NOW() + INTERVAL '5 minutes'
+        FROM candidate
+        WHERE j.id = candidate.id
+        RETURNING j.id
+      `),
+    ),
+  );
+  const claimedIds = claims.flat().map((row) => row.id);
+  if (claimedIds.length !== 2 || new Set(claimedIds).size !== 2) {
+    throw new Error(`Concurrent SKIP LOCKED claim failed: ${claimedIds.join(",")}`);
+  }
+
+  await sql`
+    UPDATE sales_target_enrichment_jobs
+    SET lease_expires_at = NOW() - INTERVAL '1 minute'
+    WHERE id = 'test_job_1'
+  `;
+  const reclaimed = await sql<{ id: string }[]>`
+    UPDATE sales_target_enrichment_jobs
+    SET status = 'queued', lease_token = NULL, lease_expires_at = NULL
+    WHERE status = 'running' AND lease_expires_at < NOW()
+    RETURNING id
+  `;
+  if (!reclaimed.some((row) => row.id === "test_job_1")) {
+    throw new Error("Expired lease was not reclaimable");
+  }
+
+  await sql`
+    INSERT INTO sales_target_raw_observations (
+      id, target_id, provider, source_kind, payload, payload_hash, idempotency_key, observed_at
+    ) VALUES (
+      'test_observation_immutable', 'test_target_lease', 'test', 'contract-test',
+      '{"value":1}'::jsonb, 'hash-1', 'test-observation-immutable', NOW()
+    )
+  `;
+  let immutableBlocked = false;
+  try {
+    await sql`
+      UPDATE sales_target_raw_observations
+      SET payload = '{"value":2}'::jsonb
+      WHERE id = 'test_observation_immutable'
+    `;
+  } catch {
+    immutableBlocked = true;
+  }
+  if (!immutableBlocked) throw new Error("Immutable observation accepted an UPDATE");
+  console.log("✅ Lease concurrency, reclaim, and immutable evidence checks passed.");
 }
 
 main();

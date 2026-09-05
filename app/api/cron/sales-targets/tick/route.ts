@@ -20,8 +20,7 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
-import { timingSafeEqual } from "node:crypto";
-import { authorize } from "@/lib/auth/authorize";
+import { authorizeCronOrPermission } from "@/lib/auth/cron";
 import {
   catalogStatus,
   ensureCatalogRun,
@@ -30,6 +29,11 @@ import {
 } from "@/lib/sales/targets/catalog/runner";
 import { NRW_SCOPE } from "@/lib/sales/targets/catalog/scope";
 import { newCorrelationId, toTargetError } from "@/lib/sales/targets/errors";
+import { evaluateRuntimeAcquisition } from "@/lib/sales/targets/coverage/runtimeController";
+import {
+  ensureCoveragePartitions,
+  saveControllerSnapshot,
+} from "@/lib/sales/targets/coverage/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,9 +48,9 @@ export async function POST(request: NextRequest) {
 }
 
 async function handle(request: NextRequest) {
-  const auth = await gate(request);
+  const auth = await authorizeCronOrPermission(request, "sales.manage");
   if (!auth.ok) {
-    return NextResponse.json({ error: "forbidden", message: auth.reason }, { status: 401 });
+    return auth.response;
   }
 
   const params = request.nextUrl.searchParams;
@@ -55,7 +59,7 @@ async function handle(request: NextRequest) {
   // Das Zeitbudget bricht die Schleife ohnehin ab, bevor die Funktion
   // ihre Laufzeitgrenze erreicht — die Segmentzahl ist nur eine
   // Obergrenze für den Fall sehr schneller Antworten.
-  const maxSegments = clampInt(params.get("segments"), 24, 1, 60);
+  const requestedSegments = clampInt(params.get("segments"), 24, 1, 60);
   // 180 s Arbeitsbudget plus maximal 75 s für ein bereits gestartetes
   // Segment bleiben sicher unter der 300-s-Laufzeitgrenze der Funktion.
   const budgetMs = clampInt(params.get("budgetMs"), 180_000, 5_000, 200_000);
@@ -63,6 +67,29 @@ async function handle(request: NextRequest) {
   const startedAt = Date.now();
 
   try {
+    const control = await evaluateRuntimeAcquisition();
+    await ensureCoveragePartitions(NRW_SCOPE);
+    await saveControllerSnapshot({
+      controllerKey: "sales-targets-default",
+      controllerVersion: "v1",
+      sequenceNo: Math.floor(Date.now() / 1000),
+      observed: control.snapshot,
+      decision: control.decision,
+      correlationId,
+    });
+    if (control.decision.pauseDiscovery) {
+      return NextResponse.json({
+        correlationId,
+        noOp: true,
+        reason: control.decision.reasons,
+        control,
+        elapsedMs: Date.now() - startedAt,
+      });
+    }
+    const maxSegments = Math.min(
+      requestedSegments,
+      Math.max(1, control.decision.requestedConcurrency * 6),
+    );
     // Veröffentlicht und nichts mehr offen: nichts tun, keine externen
     // Aufrufe. Offene Segmente werden dagegen weiter abgearbeitet — die
     // Freigabe wartet nicht auf Vollständigkeit.
@@ -113,44 +140,6 @@ async function handle(request: NextRequest) {
       { status: te.httpStatus }
     );
   }
-}
-
-async function gate(
-  request: NextRequest
-): Promise<{ ok: true; actorId: string | null } | { ok: false; reason: string }> {
-  // 1. Geteiltes Secret. Ist CRON_SECRET gesetzt, legt Vercel es bei
-  //    eigenen Cron-Aufrufen selbst als Bearer-Token an — derselbe Pfad
-  //    deckt also Vercel-Cron und externe Scheduler ab.
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const provided =
-      request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-      request.nextUrl.searchParams.get("token") ??
-      "";
-    if (provided && safeEqual(provided, secret)) return { ok: true, actorId: null };
-  }
-
-  // 2. Nur wenn kein Secret konfiguriert ist, dient der Vercel-Header als
-  //    Notbehelf. Er ist ausdruecklich KEIN Nachweis: `x-vercel-*` wird
-  //    eingehenden Anfragen nicht entfernt, ein beliebiger Client kann ihn
-  //    also setzen. Mit gesetztem CRON_SECRET wuerde er sonst die
-  //    Absicherung vollstaendig aushebeln.
-  if (!secret && request.headers.get("x-vercel-cron")) {
-    return { ok: true, actorId: null };
-  }
-
-  // 3. Angemeldeter Admin — manuelles Auslösen aus dem Panel.
-  const authorized = await authorize("sales.manage");
-  if (authorized.ok) return { ok: true, actorId: authorized.auth.userId };
-
-  return { ok: false, reason: "Cron-Aufruf nicht autorisiert" };
-}
-
-function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
 }
 
 function clampInt(raw: string | null, fallback: number, min: number, max: number): number {

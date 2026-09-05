@@ -95,6 +95,29 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
         "UNKNOWN",
       ]) as "TOO_HIGH" | "CORRECT" | "TOO_LOW" | "UNKNOWN" | null,
       wouldContact: typeof body.wouldContact === "boolean" ? body.wouldContact : null,
+      reviewStatus: body.reviewStatus === "COMPLETED" ? "COMPLETED" : "DRAFT",
+      reviewVersion: typeof body.reviewVersion === "string"
+        ? body.reviewVersion.slice(0, 50)
+        : "v1",
+      comparisonTargetId: typeof body.comparisonTargetId === "string"
+        ? body.comparisonTargetId
+        : null,
+      identityVerdict: normalizeVerdict(body.identityVerdict, [
+        "SAME_ENTITY",
+        "DISTINCT_ENTITY",
+        "UNCERTAIN",
+        "NOT_APPLICABLE",
+      ]) as "SAME_ENTITY" | "DISTINCT_ENTITY" | "UNCERTAIN" | "NOT_APPLICABLE" | null,
+      validCompany: normalizeBoolean(body.validCompany),
+      canonicalNameCorrect: normalizeBoolean(body.canonicalNameCorrect),
+      geographyCorrect: normalizeBoolean(body.geographyCorrect),
+      targetFitVerdict: normalizeVerdict(body.targetFitVerdict, [
+        "YES",
+        "NO",
+        "UNKNOWN",
+      ]) as "YES" | "NO" | "UNKNOWN" | null,
+      qualificationCorrect: normalizeBoolean(body.qualificationCorrect),
+      provenanceComplete: normalizeBoolean(body.provenanceComplete),
       notes: typeof body.notes === "string" ? body.notes : null,
       systemPrediction,
     });
@@ -109,4 +132,8 @@ function normalizeVerdict(input: unknown, allowed: string[]): string | null {
   if (typeof input !== "string") return null;
   const v = input.toUpperCase();
   return allowed.includes(v) ? v : null;
+}
+
+function normalizeBoolean(input: unknown): boolean | null {
+  return typeof input === "boolean" ? input : null;
 }

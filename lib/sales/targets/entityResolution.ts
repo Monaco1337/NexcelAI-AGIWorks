@@ -39,26 +39,24 @@ export interface Fingerprint {
   };
 }
 
-const LEGAL_SUFFIXES = [
-  "gmbh & co. kg",
-  "gmbh und co kg",
-  "gmbh & co kg",
-  "gmbh",
-  "mbh",
-  "ug (haftungsbeschränkt)",
-  "ug",
-  "ohg",
-  "kg",
-  "e.k.",
-  "eG",
-  "ag",
-  "se",
-  "b.v.",
-  "s.a.",
-  "s.r.l.",
-  "ltd",
-  "llc",
-  "inc",
+const LEGAL_SUFFIX_PATTERNS = [
+  /\bgmbh\s+(?:und\s+)?co\s+kg\b/g,
+  /\bgmbh\b/g,
+  /\bmbh\b/g,
+  /\bug\s+haftungsbeschrankt\b/g,
+  /\bug\b/g,
+  /\bohg\b/g,
+  /\bkg\b/g,
+  /\be\s*k\b/g,
+  /\beg\b/g,
+  /\bag\b/g,
+  /\bse\b/g,
+  /\bb\s*v\b/g,
+  /\bs\s*a\b/g,
+  /\bs\s*r\s*l\b/g,
+  /\bltd\b/g,
+  /\bllc\b/g,
+  /\binc\b/g,
 ];
 
 const NAME_STOPWORDS = ["der", "die", "das", "und", "the", "for", "of"];
@@ -89,10 +87,8 @@ export function normalizeCompanyName(input: string): string {
   let n = (input || "").toLowerCase().normalize("NFKC");
   n = n.replace(/[äáàâãā]/g, "a").replace(/[öóòôõō]/g, "o").replace(/[üúùûū]/g, "u").replace(/[ß]/g, "ss");
   n = n.replace(/&/g, " und ");
-  for (const suffix of LEGAL_SUFFIXES) {
-    n = n.replace(new RegExp(`\\b${escapeRegex(suffix)}\\b`, "gi"), " ");
-  }
   n = n.replace(/[^a-z0-9]+/g, " ");
+  for (const suffix of LEGAL_SUFFIX_PATTERNS) n = n.replace(suffix, " ");
   n = n
     .split(/\s+/)
     .filter((w) => w && !NAME_STOPWORDS.includes(w))
@@ -101,10 +97,15 @@ export function normalizeCompanyName(input: string): string {
   return n;
 }
 
-function normalizeDomain(rawDomain?: string | null, rawWebsite?: string | null): string | null {
-  const fromDomain = rawDomain?.trim().toLowerCase() || null;
-  if (fromDomain) return fromDomain.replace(/^www\./, "");
-  return extractDomain(rawWebsite ?? null);
+export function normalizeDomain(rawDomain?: string | null, rawWebsite?: string | null): string | null {
+  const candidate = rawDomain?.trim() || extractDomain(rawWebsite ?? null);
+  if (!candidate) return null;
+  try {
+    const host = new URL(candidate.includes("://") ? candidate : `https://${candidate}`).hostname;
+    return host.toLowerCase().replace(/\.$/, "").replace(/^www\./, "") || null;
+  } catch {
+    return null;
+  }
 }
 
 function normalizePhoneForFingerprint(raw?: string | null): string | null {
@@ -137,6 +138,7 @@ export interface EntityMatch {
   isMatch: boolean;
   confidence: number;
   reasons: string[];
+  outcome: "EXACT" | "HIGH_CONFIDENCE" | "POSSIBLE_MATCH" | "DISTINCT" | "INSUFFICIENT_EVIDENCE";
 }
 
 export function matchEntities(a: Fingerprint, b: Fingerprint): EntityMatch {
@@ -144,7 +146,7 @@ export function matchEntities(a: Fingerprint, b: Fingerprint): EntityMatch {
   let score = 0;
 
   if (a.parts.googlePlaceId && a.parts.googlePlaceId === b.parts.googlePlaceId) {
-    return { isMatch: true, confidence: 0.99, reasons: ["Google Place ID identisch"] };
+    return { isMatch: true, confidence: 0.99, reasons: ["Google Place ID identisch"], outcome: "EXACT" };
   }
   if (a.parts.domain && a.parts.domain === b.parts.domain) {
     score += 0.6;
@@ -170,7 +172,18 @@ export function matchEntities(a: Fingerprint, b: Fingerprint): EntityMatch {
   }
 
   const confidence = Math.min(0.99, score);
-  return { isMatch: confidence >= 0.6, confidence, reasons };
+  const compositeEvidence =
+    reasons.length >= 2 &&
+    (reasons.includes("Firmenname (Kern) identisch") ||
+      reasons.includes("Adresse identisch") ||
+      reasons.some((reason) => reason.startsWith("Firmenname ähnlich")));
+  const isMatch = confidence >= 0.6 && compositeEvidence;
+  const outcome =
+    isMatch ? "HIGH_CONFIDENCE" :
+    confidence >= 0.5 ? "POSSIBLE_MATCH" :
+    reasons.length === 0 ? "INSUFFICIENT_EVIDENCE" :
+    "DISTINCT";
+  return { isMatch, confidence, reasons, outcome };
 }
 
 export function nameSimilarity(a: string, b: string): number {
@@ -179,16 +192,12 @@ export function nameSimilarity(a: string, b: string): number {
   const shorter = a.length < b.length ? a : b;
   const longer = a.length < b.length ? b : a;
   if (longer.includes(shorter)) return 0.9;
-  const setA = new Set(a.split(""));
-  const setB = new Set(b.split(""));
+  const setA = new Set(a.split(/\s+/).filter(Boolean));
+  const setB = new Set(b.split(/\s+/).filter(Boolean));
   let intersect = 0;
   setA.forEach((ch) => { if (setB.has(ch)) intersect++; });
   const jaccard = intersect / (setA.size + setB.size - intersect);
   return jaccard;
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /* -------------------------------------------------------------------------- */

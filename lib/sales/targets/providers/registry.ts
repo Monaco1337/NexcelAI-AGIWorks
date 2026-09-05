@@ -10,6 +10,7 @@
 import type { DiscoveryProvider } from "./types";
 import { GooglePlacesProvider } from "./googlePlacesProvider";
 import { OverpassProvider } from "./overpassProvider";
+import { WikidataProvider } from "./wikidataProvider";
 
 let cachedProviders: DiscoveryProvider[] | null = null;
 
@@ -19,7 +20,11 @@ export function getDiscoveryProviders(): DiscoveryProvider[] {
   // Business-Signale (Rating, Reviews, business_status), Overpass ist
   // der kostenlose Fallback für DACH und läuft parallel — beide
   // Ergebnisse werden anschließend fingerprint-basiert dedupliziert.
-  cachedProviders = [new GooglePlacesProvider(), new OverpassProvider()];
+  cachedProviders = [
+    new GooglePlacesProvider(),
+    new OverpassProvider(),
+    new WikidataProvider(),
+  ];
   return cachedProviders;
 }
 
@@ -27,11 +32,18 @@ export function getConfiguredDiscoveryProviders(): DiscoveryProvider[] {
   return getDiscoveryProviders().filter((p) => p.isConfigured());
 }
 
-export function providerStatus(): Array<{ key: string; label: string; configured: boolean; note?: string }> {
+export function providerStatus(): Array<{
+  key: string;
+  label: string;
+  configured: boolean;
+  metadata: DiscoveryProvider["metadata"];
+  note?: string;
+}> {
   return getDiscoveryProviders().map((p) => ({
     key: p.key,
     label: p.label,
     configured: p.isConfigured(),
+    metadata: p.metadata,
     note: p.isConfigured() ? undefined : noteForProvider(p.key),
   }));
 }
@@ -42,6 +54,8 @@ function noteForProvider(key: string): string {
       return "Optional: GOOGLE_PLACES_API_KEY setzen für Ratings, Reviews und höhere Trefferqualität";
     case "overpass_osm":
       return "Deaktiviert via DISABLE_OVERPASS_DISCOVERY=1";
+    case "wikidata":
+      return "Deaktiviert via WIKIDATA_DISCOVERY_ENABLED=false";
     default:
       return `Setze Umgebungsvariable ${key.toUpperCase()}_API_KEY`;
   }

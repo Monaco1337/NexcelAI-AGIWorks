@@ -28,6 +28,18 @@ import { migration0012 } from "./0012_sales_targets_geocache";
 import { migration0013 } from "./0013_sales_targets_bulk_catalog";
 import { migration0014 } from "./0014_sales_targets_chain_flag";
 import { migration0015 } from "./0015_sales_targets_prescore";
+import { migration0016 } from "./0016_revenue_raw_evidence";
+import { migration0017 } from "./0017_revenue_identity_resolution";
+import { migration0018 } from "./0018_revenue_orchestration_coverage";
+import { migration0019 } from "./0019_revenue_qualification_config";
+import { migration0020 } from "./0020_revenue_read_models_metrics";
+import { migration0021 } from "./0021_revenue_list_projection_backfill";
+import { migration0022 } from "./0022_revenue_provider_call_reservations";
+import { migration0023 } from "./0023_revenue_rollout_controls";
+import { migration0024 } from "./0024_revenue_merge_ledger";
+import { migration0025 } from "./0025_revenue_contact_idempotency";
+import { migration0026 } from "./0026_provider_acquisition_telemetry";
+import { migration0027 } from "./0027_golden_dataset_reviews";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
@@ -45,4 +57,16 @@ export const MIGRATIONS: Migration[] = [
   migration0013,
   migration0014,
   migration0015,
+  migration0016,
+  migration0017,
+  migration0018,
+  migration0019,
+  migration0020,
+  migration0021,
+  migration0022,
+  migration0023,
+  migration0024,
+  migration0025,
+  migration0026,
+  migration0027,
 ];

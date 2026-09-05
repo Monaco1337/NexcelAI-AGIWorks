@@ -1,16 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
+import { authorize } from "@/lib/auth/authorize";
+import {
+  targetErrorResponse,
+  testEmailQuerySchema,
+  validateContract,
+} from "@/lib/sales/targets/contracts";
 
 /**
  * Test endpoint to verify email functionality
- * GET /api/test-email?to=test@example.com
+ * POST /api/test-email?to=test@example.com
  */
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
+  const gate = await authorize("crm.content.manage");
+  if (!gate.ok) return gate.response;
+
+  const enabled =
+    process.env.NODE_ENV !== "production" ||
+    process.env.ALLOW_TEST_EMAIL_ENDPOINT === "true";
+  if (!enabled) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const parsed = validateContract(testEmailQuerySchema, {
+    to: request.nextUrl.searchParams.get("to") || gate.auth.email,
+  });
+  if (!parsed.ok) return targetErrorResponse(parsed.error);
+
   try {
-    const searchParams = request.nextUrl.searchParams;
-    // Resend allows onboarding@resend.dev only to send to the account owner's email
-    // For testing, use the registered account email or verify a domain
-    const testEmail = searchParams.get("to") || "55c8xz5mq9@privaterelay.appleid.com";
+    const testEmail = parsed.data.to;
 
     const testHTML = `
 <!DOCTYPE html>
@@ -44,23 +62,25 @@ export async function GET(request: NextRequest) {
       html: testHTML,
     });
 
-    return NextResponse.json({
+    const response: Record<string, unknown> = {
       success: result.success,
       message: result.success 
         ? "Test-E-Mail wurde versendet (oder im DEV-Mode geloggt)" 
         : "Fehler beim Versenden der Test-E-Mail",
-      error: result.error,
-      debugInfo: result.debugInfo,
       testEmail,
-      note: result.debugInfo?.mode === "development" 
-        ? "⚠️ DEV MODE: E-Mail wurde nur in der Console geloggt. Setze RESEND_API_KEY in .env.local für echte E-Mails."
-        : "✅ E-Mail wurde über Resend API versendet",
-    }, { status: result.success ? 200 : 500 });
+    };
+    if (process.env.NODE_ENV !== "production") {
+      response.error = result.error;
+      response.debugInfo = result.debugInfo;
+    }
+    return NextResponse.json(response, { status: result.success ? 200 : 500 });
   } catch (error) {
     console.error("Test email error:", error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : "Unbekannter Fehler",
+      error: process.env.NODE_ENV === "production"
+        ? "email_test_failed"
+        : error instanceof Error ? error.message : "Unbekannter Fehler",
     }, { status: 500 });
   }
 }

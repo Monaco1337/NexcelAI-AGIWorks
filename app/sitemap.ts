@@ -15,8 +15,8 @@ import { canonicalForPage } from "@/lib/seo/canonical";
  */
 export const dynamic = "force-dynamic";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const host = headers().get("host");
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const host = (await headers()).get("host");
   const brand = hostToBrand(host);
 
   if (!brand) return [];

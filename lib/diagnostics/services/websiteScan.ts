@@ -12,6 +12,7 @@
 
 import { analyzeWeb } from "@/lib/scanner/web";
 import type { FetchedHtml } from "@/lib/scanner/types";
+import { normalizeUrl, safeFetch } from "@/lib/sales/targets/security/safeFetch";
 
 export interface WebScanResult {
   ok: boolean;
@@ -57,96 +58,29 @@ export interface WebScanResult {
   error?: string;
 }
 
-const MAX_BYTES = 2_500_000;
-
-function isPrivateAddress(host: string): boolean {
-  return (
-    host === "localhost" ||
-    host.endsWith(".local") ||
-    /^10\./.test(host) ||
-    /^192\.168\./.test(host) ||
-    /^127\./.test(host) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(host)
-  );
-}
-
 export async function scanWebsite(rawUrl: string): Promise<WebScanResult> {
   const t0 = Date.now();
-  let urlStr = rawUrl.trim();
+  const urlStr = normalizeUrl(rawUrl);
   if (!urlStr) {
     return errorResult(rawUrl, "Leere URL");
   }
-  if (!/^https?:\/\//i.test(urlStr)) urlStr = "https://" + urlStr;
-
-  let parsed: URL;
-  try {
-    parsed = new URL(urlStr);
-  } catch {
-    return errorResult(rawUrl, "Ungültige URL");
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    return errorResult(rawUrl, "Nur HTTP/HTTPS erlaubt");
-  }
-  if (isPrivateAddress(parsed.hostname)) {
-    return errorResult(rawUrl, "Lokale Adressen sind blockiert");
-  }
 
   try {
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 12_000);
-    const res = await fetch(parsed.toString(), {
-      method: "GET",
-      redirect: "follow",
-      signal: ctrl.signal,
-      headers: {
-        "user-agent":
-          "Mozilla/5.0 (compatible; NexcelDiagnostics/1.0; +https://nexcel.ai)",
-        accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "accept-language": "de-DE,de;q=0.9,en;q=0.8",
-      },
+    const result = await safeFetch(urlStr, {
+      timeoutMs: 12_000,
+      maxBytes: 2_500_000,
+      userAgent: "Mozilla/5.0 (compatible; NexcelDiagnostics/1.0; +https://nexcel.ai)",
     });
-    clearTimeout(timeout);
-
-    // Body bytecount-cap
-    const reader = res.body?.getReader();
-    const chunks: Uint8Array[] = [];
-    let received = 0;
-    if (reader) {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (!value) continue;
-        received += value.byteLength;
-        if (received > MAX_BYTES) {
-          await reader.cancel();
-          break;
-        }
-        chunks.push(value);
-      }
-    }
-    const totalLen = chunks.reduce((s, c) => s + c.byteLength, 0);
-    const buf = new Uint8Array(totalLen);
-    let off = 0;
-    for (const c of chunks) {
-      buf.set(c, off);
-      off += c.byteLength;
-    }
-    const html = new TextDecoder("utf-8").decode(buf);
-
-    const headers: Record<string, string> = {};
-    res.headers.forEach((v, k) => {
-      headers[k.toLowerCase()] = v;
-    });
+    if (!result.ok) return errorResult(rawUrl, result.error ?? `HTTP ${result.status}`);
 
     const fetched: FetchedHtml = {
       url: urlStr,
-      finalUrl: res.url || urlStr,
-      status: res.status,
-      headers,
-      html,
+      finalUrl: result.finalUrl,
+      status: result.status,
+      headers: result.headers,
+      html: result.bodyText,
       fetchedAt: Date.now(),
-      bytes: totalLen,
+      bytes: result.bytesRead,
     };
 
     const scan = analyzeWeb(fetched);
@@ -154,13 +88,13 @@ export async function scanWebsite(rawUrl: string): Promise<WebScanResult> {
     const signals = (meta?.signals ?? {}) as any;
 
     return {
-      ok: res.ok,
+      ok: result.ok,
       inputUrl: rawUrl,
       finalUrl: fetched.finalUrl,
-      statusCode: res.status,
-      bytes: totalLen,
+      statusCode: result.status,
+      bytes: result.bytesRead,
       durationMs: Date.now() - t0,
-      headers,
+      headers: result.headers,
       title: meta?.title ?? null,
       description: meta?.description ?? null,
       detectedStack: scan.detected,

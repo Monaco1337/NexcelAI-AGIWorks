@@ -5,9 +5,8 @@
  *
  * Neuer Grundsatz (Phase 2): keine Modal-Ceremony. Die Ansicht öffnet
  * SOFORT eine relevante Liste, der User setzt Stadt + Radius im Header
- * und die Karten laden inline. Für Regionen bis 250 km wird bei
- * Bedarf eine Tile-basierte Discovery im Hintergrund gestartet, deren
- * Fortschritt oben in Echtzeit sichtbar bleibt.
+ * und die Karten laden inline. Ein laufender, serverseitig gestarteter
+ * Katalogaufbau wird nur beobachtet; der Browser startet keine Discovery.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +25,11 @@ import type {
   LeadScore,
   SalesBrief,
 } from "@/lib/sales/targets/model";
-import { PRIORITY_CLASS_COLOR, PRIORITY_CLASS_LABEL } from "@/lib/sales/targets/model";
+import {
+  PRIORITY_CLASSES,
+  PRIORITY_CLASS_COLOR,
+  PRIORITY_CLASS_LABEL,
+} from "@/lib/sales/targets/model";
 import { normalizeCategoryFromRawIndustry, ALL_CATEGORIES } from "@/lib/sales/targets/categoryMap";
 import TargetDetail from "./TargetDetail";
 
@@ -58,12 +61,14 @@ interface Filters {
   hasDm: boolean;
   weakWebsite: boolean;
   softwareOpp: boolean;
+  includeChains: boolean;
   sort: "score" | "distance" | "recent" | "name";
 }
 
 // Für die Discovery-Filter zeigen wir die kanonische Kategorie-Liste,
 // die auch das Backend beim Katalogisieren verwendet.
 const INDUSTRY_OPTIONS = ALL_CATEGORIES.filter((c) => c !== "Sonstige");
+const INDUSTRY_OPTION_SET = new Set<string>(INDUSTRY_OPTIONS);
 
 const STORAGE_KEY = "nx.targets.cockpit.v2";
 
@@ -80,6 +85,7 @@ const DEFAULT_FILTERS: Filters = {
   hasDm: false,
   weakWebsite: false,
   softwareOpp: false,
+  includeChains: false,
   sort: "score",
 };
 
@@ -160,7 +166,45 @@ function readStoredFilters(): Filters {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_FILTERS;
     const parsed = JSON.parse(raw) as Partial<Filters>;
-    return { ...DEFAULT_FILTERS, ...parsed };
+    const sort =
+      parsed.sort && ["score", "distance", "recent", "name"].includes(parsed.sort)
+        ? parsed.sort
+        : DEFAULT_FILTERS.sort;
+    const priority =
+      parsed.priority && PRIORITY_CLASSES.includes(parsed.priority)
+        ? parsed.priority
+        : "";
+    const radiusKm =
+      typeof parsed.radiusKm === "number" && Number.isFinite(parsed.radiusKm)
+        ? Math.min(250, Math.max(1, Math.round(parsed.radiusKm)))
+        : DEFAULT_FILTERS.radiusKm;
+    const minScore =
+      typeof parsed.minScore === "number" && Number.isFinite(parsed.minScore)
+        ? Math.min(100, Math.max(0, parsed.minScore))
+        : null;
+    const industries = Array.isArray(parsed.industries)
+      ? parsed.industries.filter(
+          (industry): industry is string =>
+            typeof industry === "string" && INDUSTRY_OPTION_SET.has(industry)
+        )
+      : [];
+
+    return {
+      q: typeof parsed.q === "string" ? parsed.q : DEFAULT_FILTERS.q,
+      city: typeof parsed.city === "string" ? parsed.city : DEFAULT_FILTERS.city,
+      radiusKm,
+      industries,
+      priority,
+      minScore,
+      hasWebsite: parsed.hasWebsite === true,
+      hasPhone: parsed.hasPhone === true,
+      hasEmail: parsed.hasEmail === true,
+      hasDm: parsed.hasDm === true,
+      weakWebsite: parsed.weakWebsite === true,
+      softwareOpp: parsed.softwareOpp === true,
+      includeChains: parsed.includeChains === true,
+      sort,
+    };
   } catch {
     return DEFAULT_FILTERS;
   }
@@ -179,6 +223,7 @@ export default function TargetsCenter({ accent }: { accent: string }) {
   const [liveCounters, setLiveCounters] = useState<LiveCountersDTO | null>(null);
   const filtersReadyRef = useRef(false);
   const listOffsetRef = useRef(0);
+  const nextCursorRef = useRef<string | null>(null);
   const PAGE_SIZE = 250;
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -234,7 +279,7 @@ export default function TargetsCenter({ accent }: { accent: string }) {
   }, [filters.city]);
 
   const buildListParams = useCallback(
-    (offset: number, limit: number): URLSearchParams => {
+    (offset: number, limit: number, cursor?: string | null): URLSearchParams => {
       const p = new URLSearchParams();
       if (filters.q) p.set("q", filters.q);
       if (filters.industries.length > 0) p.set("industry", filters.industries.join(","));
@@ -246,6 +291,7 @@ export default function TargetsCenter({ accent }: { accent: string }) {
       if (filters.hasDm) p.set("hasDm", "1");
       if (filters.weakWebsite) p.set("weakWebsite", "1");
       if (filters.softwareOpp) p.set("softwareOpp", "1");
+      if (filters.includeChains) p.set("includeChains", "1");
       if (filters.sort) p.set("sort", filters.sort);
       if (center) {
         p.set("centerLat", String(center.lat));
@@ -253,7 +299,8 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         p.set("centerRadiusKm", String(filters.radiusKm));
       }
       p.set("limit", String(limit));
-      p.set("offset", String(offset));
+      if (cursor && filters.sort === "score") p.set("cursor", cursor);
+      else p.set("offset", String(offset));
       return p;
     },
     [filters, center]
@@ -263,14 +310,16 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     setError(null);
     setLoading(true);
     listOffsetRef.current = 0;
+    nextCursorRef.current = null;
     try {
       const params = buildListParams(0, PAGE_SIZE);
       const res = await fetch(`/api/admin/sales/targets?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { items: TargetListItemDTO[] };
+      const data = (await res.json()) as { items: TargetListItemDTO[]; nextCursor?: string | null };
       const arr = data.items ?? [];
       setItems(arr);
-      setHasMore(arr.length === PAGE_SIZE);
+      nextCursorRef.current = data.nextCursor ?? null;
+      setHasMore(filters.sort === "score" ? Boolean(data.nextCursor) : arr.length === PAGE_SIZE);
     } catch (err) {
       setError((err as Error).message);
       setItems([]);
@@ -278,27 +327,28 @@ export default function TargetsCenter({ accent }: { accent: string }) {
     } finally {
       setLoading(false);
     }
-  }, [buildListParams]);
+  }, [buildListParams, filters.sort]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
       const nextOffset = listOffsetRef.current + PAGE_SIZE;
-      const params = buildListParams(nextOffset, PAGE_SIZE);
+      const params = buildListParams(nextOffset, PAGE_SIZE, nextCursorRef.current);
       const res = await fetch(`/api/admin/sales/targets?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { items: TargetListItemDTO[] };
+      const data = (await res.json()) as { items: TargetListItemDTO[]; nextCursor?: string | null };
       const arr = data.items ?? [];
       setItems((prev) => [...prev, ...arr]);
       listOffsetRef.current = nextOffset;
-      setHasMore(arr.length === PAGE_SIZE);
+      nextCursorRef.current = data.nextCursor ?? null;
+      setHasMore(filters.sort === "score" ? Boolean(data.nextCursor) : arr.length === PAGE_SIZE);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoadingMore(false);
     }
-  }, [buildListParams, hasMore, loadingMore]);
+  }, [buildListParams, filters.sort, hasMore, loadingMore]);
 
   // Auto-Load, sobald Filter/Center wechseln
   useEffect(() => {
@@ -357,9 +407,11 @@ export default function TargetsCenter({ accent }: { accent: string }) {
   // aufgebaut wird häufiger, danach als leichte Aktualisierung.
   useEffect(() => {
     let cancelled = false;
+    setLiveCounters(null);
     async function fetchCount() {
       const p = new URLSearchParams();
       if (filters.industries.length > 0) p.set("industry", filters.industries.join(","));
+      if (filters.includeChains) p.set("includeChains", "1");
       if (center) {
         p.set("centerLat", String(center.lat));
         p.set("centerLng", String(center.lng));
@@ -380,20 +432,23 @@ export default function TargetsCenter({ accent }: { accent: string }) {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [center, filters.radiusKm, filters.industries, catalogBuilding]);
+  }, [center, filters.radiusKm, filters.industries, filters.includeChains, catalogBuilding]);
 
   const listTotals = useMemo(() => {
     // Fallback für Client-seitige Auswertung (falls der Live-Counter
     // temporär nicht verfügbar ist).
     const total = items.length;
-    const hot = items.filter((i) => i.leadScore && (i.leadScore.priorityClass === "A+" || i.leadScore.priorityClass === "A")).length;
+    const hot = items.filter((i) => {
+      const priority = i.leadScore?.priorityClass ?? i.target.preScoreClass;
+      return priority === "A++" || priority === "A+" || priority === "A";
+    }).length;
     const withBrief = items.filter((i) => Boolean(i.salesBrief)).length;
     const withDm = items.filter((i) => i.decisionMakerCount > 0).length;
     return { total, hot, withBrief, withDm };
   }, [items]);
 
-  // Server-Live-Counter bevorzugen — spiegelt den echten Postgres-Stand,
-  // nicht nur die aktuell gerenderte Page.
+  // Server-Live-Counter bevorzugen. Wenn der optionale Endpoint fehlt,
+  // benennen wir die sichtbaren Page-Zahlen ausdrücklich als geladen.
   const totals = liveCounters
     ? {
         total: liveCounters.total,
@@ -422,6 +477,7 @@ export default function TargetsCenter({ accent }: { accent: string }) {
             catalogLabel={catalog?.scope?.label ?? null}
             enriching={runningEnrichment}
             enrichmentQueued={liveCounters?.enrichmentQueued ?? 0}
+            statusKnown={catalog !== null && liveCounters !== null}
           />
           <button onClick={() => void load()} className={buttonSecondary} disabled={loading}>
             {loading ? "Lädt…" : "Aktualisieren"}
@@ -438,12 +494,15 @@ export default function TargetsCenter({ accent }: { accent: string }) {
         accent={accent}
       />
 
-      {/* KPIs — echte Postgres-Zähler, nicht die aktuell gerenderte Page */}
+      {/* KPIs — bevorzugt Server-Zähler, sonst klar markierte geladene Werte */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi label="Zielkunden gesamt" value={totals.total} />
-        <Kpi label="Priorität A+/A" value={totals.hot} accent={accent} />
-        <Kpi label="Mit Sales Brief" value={totals.withBrief} />
-        <Kpi label="Entscheider bekannt" value={totals.withDm} />
+        <Kpi
+          label={liveCounters ? "Zielkunden gesamt" : "Zielkunden geladen"}
+          value={loading && !liveCounters ? "—" : totals.total}
+        />
+        <Kpi label="Priorität A++/A+/A" value={loading && !liveCounters ? "—" : totals.hot} accent={accent} />
+        <Kpi label="Mit Sales Brief" value={loading && !liveCounters ? "—" : totals.withBrief} />
+        <Kpi label="Entscheider bekannt" value={loading && !liveCounters ? "—" : totals.withDm} />
       </div>
 
       {/* Katalog-Fortschritt — nur solange der Server noch aufbaut.
@@ -475,7 +534,9 @@ export default function TargetsCenter({ accent }: { accent: string }) {
             hint={
               catalogBuilding
                 ? "Der Aufbau läuft serverseitig weiter, auch wenn du diese Seite schließt. Neue Firmen erscheinen automatisch."
-                : `Der Katalog enthält ${totals.total} Firmen. Erweitere den Radius oder entferne Filter, um mehr zu sehen.`
+                : liveCounters
+                  ? `Der Katalog enthält in dieser Region ${totals.total} Firmen. Erweitere den Radius oder entferne Filter, um mehr zu sehen.`
+                  : "Der Gesamtstand ist aktuell unbekannt. Erweitere den Radius oder entferne Filter, um erneut zu suchen."
             }
           />
         </Section>
@@ -525,6 +586,7 @@ function LivePulse({
   catalogLabel,
   enriching,
   enrichmentQueued,
+  statusKnown,
 }: {
   accent: string;
   city: string;
@@ -533,13 +595,16 @@ function LivePulse({
   catalogLabel: string | null;
   enriching: boolean;
   enrichmentQueued: number;
+  statusKnown: boolean;
 }) {
   const active = discovering || enriching;
   const label = discovering
     ? `Katalog wird aufgebaut · ${catalogLabel ?? "Region"}`
     : enriching
       ? `Analyse läuft · ${enrichmentQueued} Firmen in der Queue`
-      : `Bereit · ${city} · ${radius} km`;
+      : statusKnown
+        ? `Bereit · ${city} · ${radius} km`
+        : `Systemstatus unbekannt · ${city} · ${radius} km`;
   return (
     <div className="hidden items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1.5 md:inline-flex">
       <span
@@ -763,7 +828,7 @@ function CatalogProgress({
 /*  KPI                                                                        */
 /* -------------------------------------------------------------------------- */
 
-function Kpi({ label, value, accent }: { label: string; value: number; accent?: string }) {
+function Kpi({ label, value, accent }: { label: string; value: number | string; accent?: string }) {
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4">
       <div className="text-[11px] uppercase tracking-[0.16em] text-white/45">{label}</div>
@@ -781,10 +846,20 @@ function Kpi({ label, value, accent }: { label: string; value: number; accent?: 
 function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filters) => void }) {
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) =>
     onChange({ ...filters, [key]: value });
-  const chip = (key: keyof Pick<Filters, "hasWebsite" | "hasPhone" | "hasEmail" | "hasDm" | "weakWebsite" | "softwareOpp">, label: string) => (
+  const chip = (
+    key: keyof Pick<
+      Filters,
+      "hasWebsite" | "hasPhone" | "hasEmail" | "hasDm" | "weakWebsite" | "softwareOpp" | "includeChains"
+    >,
+    label: string,
+    title?: string
+  ) => (
     <button
       key={String(key)}
+      type="button"
       onClick={() => set(key, !filters[key])}
+      aria-pressed={filters[key]}
+      title={title}
       className={`rounded-full border px-3 py-1 text-xs transition ${
         filters[key]
           ? "border-white/40 bg-white/10 text-white"
@@ -814,6 +889,7 @@ function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filt
             className={selectClasses}
           >
             <option value="">alle</option>
+            <option value="A++">A++</option>
             <option value="A+">A+</option>
             <option value="A">A</option>
             <option value="B">B</option>
@@ -854,6 +930,11 @@ function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filt
           {chip("hasWebsite", "Website vorhanden")}
           {chip("weakWebsite", "Website schwach")}
           {chip("softwareOpp", "Software-Opportunity")}
+          {chip(
+            "includeChains",
+            "Filialen & Ketten einbeziehen",
+            "Standardmäßig werden Filialen überregionaler Ketten ausgeblendet."
+          )}
         </div>
       </div>
     </div>
@@ -866,8 +947,10 @@ function FilterBar({ filters, onChange }: { filters: Filters; onChange: (f: Filt
 
 function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent: string; onOpen: () => void }) {
   const { target, leadScore, salesBrief, contactSummary, decisionMakerCount } = item;
-  const priority = leadScore?.priorityClass ?? "D";
-  const priorityColor = PRIORITY_CLASS_COLOR[priority];
+  const priority = leadScore?.priorityClass ?? target.preScoreClass;
+  const priorityColor = priority ? PRIORITY_CLASS_COLOR[priority] : null;
+  const score = leadScore?.totalScore ?? target.preScore;
+  const isPreScore = !leadScore && target.preScore !== null;
   const distance = target.distanceKm !== null ? `${target.distanceKm.toFixed(1)} km` : null;
   const opportunity = salesBrief?.mainOpportunity ?? "—";
   const budgetMin = salesBrief?.projectValueMinCents ?? leadScore?.estimatedBudgetMinCents ?? null;
@@ -875,24 +958,37 @@ function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent:
   const projectValue = budgetMin && budgetMax ? `${eur(budgetMin)} – ${eur(budgetMax)}` : null;
   const capacityClass = leadScore?.capacityClass ?? salesBrief?.capacityClass ?? null;
   const capacityConfidence = leadScore?.capacityConfidence ?? salesBrief?.capacityConfidence ?? null;
+  const websiteHref = safeHttpUrl(target.website);
 
   return (
     <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4 transition hover:border-white/20">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span
-              className="inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 text-[11px] font-bold"
-              style={{
-                color: priorityColor,
-                borderColor: `${priorityColor}66`,
-                background: `${priorityColor}18`,
-              }}
-              title={PRIORITY_CLASS_LABEL[priority]}
-            >
-              {priority}
-            </span>
+            {priority && priorityColor ? (
+              <span
+                className="inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 text-[11px] font-bold"
+                style={{
+                  color: priorityColor,
+                  borderColor: `${priorityColor}66`,
+                  background: `${priorityColor}18`,
+                }}
+                title={`${PRIORITY_CLASS_LABEL[priority]}${isPreScore ? " · vorläufige Katalogbewertung" : ""}`}
+              >
+                {priority}
+                {isPreScore ? "*" : ""}
+              </span>
+            ) : (
+              <span className="inline-flex rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[11px] text-white/45">
+                unbekannt
+              </span>
+            )}
             <div className="truncate text-base font-semibold text-white">{target.name}</div>
+            {target.isChain && (
+              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-white/45">
+                Kette/Filiale
+              </span>
+            )}
           </div>
           <div className="mt-1 truncate text-xs text-white/60">
             {(() => {
@@ -905,10 +1001,13 @@ function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent:
           </div>
         </div>
         <div className="text-right">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-white/40">Lead-Score</div>
-          <div className="text-3xl font-semibold" style={{ color: accent }}>
-            {leadScore?.totalScore ?? "—"}
+          <div className="text-[11px] uppercase tracking-[0.16em] text-white/40">
+            {isPreScore ? "Vorbewertung" : "Lead-Score"}
           </div>
+          <div className="text-3xl font-semibold" style={{ color: accent }}>
+            {score ?? "—"}
+          </div>
+          {isPreScore && <div className="text-[10px] text-white/40">noch nicht angereichert</div>}
         </div>
       </div>
 
@@ -967,8 +1066,8 @@ function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent:
             E-Mail
           </a>
         )}
-        {target.website && (
-          <a href={target.website} target="_blank" rel="noreferrer" className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-white transition hover:bg-white/[0.08]">
+        {websiteHref && (
+          <a href={websiteHref} target="_blank" rel="noreferrer" className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-white transition hover:bg-white/[0.08]">
             Website
           </a>
         )}
@@ -978,6 +1077,16 @@ function TargetCard({ item, accent, onOpen }: { item: TargetListItemDTO; accent:
       </div>
     </div>
   );
+}
+
+function safeHttpUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 function MiniStat({ label, ok, sub }: { label: string; ok: boolean; sub?: string }) {
@@ -1028,10 +1137,27 @@ interface ProviderHealthDTO {
   cooldownUntil: string | null;
   note: string | null;
 }
+interface AcquisitionControlDTO {
+  snapshot: {
+    targetQualified: number;
+    rollingQualified: number;
+    capacitySource: "OBSERVED" | "PARTIALLY_OBSERVED" | "SYNTHETIC_FALLBACK";
+    capacityStatus: "MEASURED" | "INSUFFICIENT_EVIDENCE";
+    capacityEvidence: { sampleCount: number; observationWindowHours: number };
+  };
+  decision: {
+    state: "HEALTHY" | "AT_RISK" | "CRITICAL";
+    pauseDiscovery: boolean;
+    requestedConcurrency: number;
+    reasons: string[];
+  };
+}
 
 function IntelligenceQualityStrip({ accent }: { accent: string }) {
   const [metrics, setMetrics] = useState<DataQualityMetricsDTO | null>(null);
   const [providers, setProviders] = useState<ProviderHealthDTO[]>([]);
+  const [rolling24h, setRolling24h] = useState<Record<string, number>>({});
+  const [control, setControl] = useState<AcquisitionControlDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -1040,12 +1166,21 @@ function IntelligenceQualityStrip({ accent }: { accent: string }) {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch("/api/admin/sales/targets/metrics", { cache: "no-store" });
+        const [res, controlRes] = await Promise.all([
+          fetch("/api/admin/sales/targets/metrics", { cache: "no-store" }),
+          fetch("/api/admin/sales/targets/control", { cache: "no-store" }),
+        ]);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as { metrics: DataQualityMetricsDTO; providerHealth: ProviderHealthDTO[] };
+        const data = (await res.json()) as {
+          metrics: DataQualityMetricsDTO;
+          providerHealth: ProviderHealthDTO[];
+          funnel?: { values?: Record<string, number> };
+        };
         if (!alive) return;
         setMetrics(data.metrics ?? null);
         setProviders(data.providerHealth ?? []);
+        setRolling24h(data.funnel?.values ?? {});
+        if (controlRes.ok) setControl((await controlRes.json()) as AcquisitionControlDTO);
       } catch (err) {
         if (!alive) return;
         setError((err as Error).message);
@@ -1093,11 +1228,15 @@ function IntelligenceQualityStrip({ accent }: { accent: string }) {
         </button>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-6">
-        <QualityCell label="Companies" value={String(metrics.totalCompanies)} />
-        <QualityCell label="Phone Coverage" value={pct(metrics.phoneCoverage)} accent={accent} />
-        <QualityCell label="Email Coverage" value={pct(metrics.emailCoverage)} />
-        <QualityCell label="Decision Maker" value={pct(metrics.decisionMakerCoverage)} />
-        <QualityCell label="Opportunity" value={pct(metrics.opportunityCoverage)} />
+        <QualityCell label="Qualified · 24 h" value={String(rolling24h.FIRST_QUALIFIED ?? 0)} accent={accent} />
+        <QualityCell label="Sales-ready · 24 h" value={String(rolling24h.FIRST_SALES_READY ?? 0)} />
+        <QualityCell label="Raw · 24 h" value={String(rolling24h.RAW_OBSERVED ?? 0)} />
+        <QualityCell label="Canonical · 24 h" value={String(rolling24h.CANONICAL_CREATED ?? 0)} />
+        <QualityCell
+          label="Acquisition"
+          value={control?.decision.state ?? "—"}
+          tone={control?.decision.state === "CRITICAL" ? "warn" : undefined}
+        />
         <QualityCell
           label="Review-Queue"
           value={String(metrics.reviewQueueSize)}
@@ -1107,6 +1246,11 @@ function IntelligenceQualityStrip({ accent }: { accent: string }) {
       {expanded && (
         <div className="mt-4 space-y-4 border-t border-white/[0.06] pt-4">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-6">
+            <QualityCell label="Companies" value={String(metrics.totalCompanies)} />
+            <QualityCell label="Phone Coverage" value={pct(metrics.phoneCoverage)} accent={accent} />
+            <QualityCell label="Email Coverage" value={pct(metrics.emailCoverage)} />
+            <QualityCell label="Decision Maker" value={pct(metrics.decisionMakerCoverage)} />
+            <QualityCell label="Opportunity" value={pct(metrics.opportunityCoverage)} />
             <QualityCell label="Verified Phone" value={pct(metrics.verifiedPhoneRate)} />
             <QualityCell label="Verified Email" value={pct(metrics.verifiedEmailRate)} />
             <QualityCell
@@ -1125,6 +1269,13 @@ function IntelligenceQualityStrip({ accent }: { accent: string }) {
             />
             <QualityCell label="Provider Cost" value={eur0(metrics.totalProviderCostCents)} />
             <QualityCell label="Cost / Qualified Lead" value={eur0(metrics.perQualifiedLeadCostCents)} />
+            <QualityCell
+              label="Capacity Source"
+              value={control
+                ? `${control.snapshot.capacitySource} · n=${control.snapshot.capacityEvidence.sampleCount}`
+                : "—"}
+              tone={control?.snapshot.capacityStatus === "INSUFFICIENT_EVIDENCE" ? "warn" : undefined}
+            />
             <QualityCell label="Stand" value={new Date(metrics.updatedAt).toLocaleTimeString("de-DE")} />
           </div>
           {providers.length > 0 && (

@@ -12,7 +12,8 @@
  * unzuverlässig machen.
  */
 
-import { safeFetch } from "./security/safeFetch";
+import { executeControlledProviderCall } from "./providers/execution";
+import { newCorrelationId } from "./errors";
 
 export interface GeoPoint {
   lat: number;
@@ -214,16 +215,31 @@ export async function geocodeViaGooglePlaces(city: string): Promise<GeoPoint | n
   const key = process.env.GOOGLE_PLACES_API_KEY?.trim();
   if (!key) return null;
   const body = { textQuery: city, pageSize: 1 };
-  const started = Date.now();
+  const correlationId = newCorrelationId("geocode-google");
   try {
-    const resp = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask": "places.location,places.displayName,places.addressComponents",
-      },
-      body: JSON.stringify(body),
+    const endpoint = "https://places.googleapis.com/v1/places:searchText";
+    const resp = await executeControlledProviderCall({
+      provider: "google_places",
+      endpoint,
+      idempotencyKey: correlationId,
+      estimatedCostCents: 3,
+      correlationId,
+      operation: () => fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask": "places.location,places.displayName,places.addressComponents",
+        },
+        body: JSON.stringify(body),
+      }),
+      describe: (response, elapsedMs) => ({
+        success: response.ok,
+        latencyMs: elapsedMs,
+        responseStatus: response.status,
+        actualCostCents: 0,
+        error: response.ok ? null : `HTTP ${response.status}`,
+      }),
     });
     if (!resp.ok) return null;
     const json = (await resp.json()) as {
@@ -247,9 +263,6 @@ export async function geocodeViaGooglePlaces(city: string): Promise<GeoPoint | n
     };
   } catch {
     return null;
-  } finally {
-    // Zeitmessung ausschließlich für Telemetrie — hier nur no-op.
-    void started;
   }
 }
 
@@ -261,13 +274,28 @@ export async function geocodeViaGooglePlaces(city: string): Promise<GeoPoint | n
  */
 export async function geocodeViaNominatim(query: string): Promise<GeoPoint | null> {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&countrycodes=de,at,ch&q=${encodeURIComponent(query)}`;
+  const correlationId = newCorrelationId("geocode-nominatim");
   try {
-    const resp = await fetch(url, {
-      headers: {
-        "User-Agent": "NEXCEL-SalesIntel/1.0 (+https://nexcel.ai/bot)",
-        "Accept-Language": "de,en;q=0.7",
-      },
-      signal: AbortSignal.timeout(8_000),
+    const resp = await executeControlledProviderCall({
+      provider: "nominatim",
+      endpoint: "https://nominatim.openstreetmap.org/search",
+      idempotencyKey: correlationId,
+      estimatedCostCents: 0,
+      correlationId,
+      operation: () => fetch(url, {
+        headers: {
+          "User-Agent": "NEXCEL-SalesIntel/1.0 (+https://nexcel.ai/bot)",
+          "Accept-Language": "de,en;q=0.7",
+        },
+        signal: AbortSignal.timeout(8_000),
+      }),
+      describe: (response, elapsedMs) => ({
+        success: response.ok,
+        latencyMs: elapsedMs,
+        responseStatus: response.status,
+        actualCostCents: 0,
+        error: response.ok ? null : `HTTP ${response.status}`,
+      }),
     });
     if (!resp.ok) return null;
     const json = (await resp.json()) as Array<{
@@ -355,11 +383,8 @@ export async function geocodeCity(city: string): Promise<GeoPoint | null> {
     }
     return gp;
   } catch {
-    // Cache-Layer ist optional — bei DB-Ausfall lieber ohne Persistenz
-    // weiterarbeiten als komplett zu blockieren.
-    return (
-      geocodeStatic(trimmed) ?? (await geocodeViaNominatim(trimmed)) ?? (await geocodeViaGooglePlaces(trimmed))
-    );
+    // External calls fail closed when durable budget state is unavailable.
+    return geocodeStatic(trimmed);
   }
 }
 
@@ -423,7 +448,3 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
     Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
-
-// safeFetch nicht direkt benutzt — nur Import, weil der Google-Call
-// keinen SSRF-Schutz braucht (fester Host places.googleapis.com).
-void safeFetch;

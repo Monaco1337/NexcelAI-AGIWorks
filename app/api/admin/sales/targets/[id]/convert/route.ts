@@ -17,6 +17,8 @@ import { serviceCreateCompany } from "@/lib/sales/service";
 import { getCompany } from "@/lib/sales/companiesStore";
 import { toTargetError } from "@/lib/sales/targets/errors";
 import { domainFromUrl } from "@/lib/sales/targets/websiteAudit";
+import { recordAttributedOutcome } from "@/lib/sales/targets/feedback/service";
+import { newCorrelationId } from "@/lib/sales/targets/errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +77,12 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     // 1) Bereits verlinkt?
     if (target.linkedSalesCompanyId) {
       const existing = await getCompany(target.linkedSalesCompanyId);
+      await recordAttributedOutcome({
+        eventType: "CRM_CONVERTED",
+        targetId: id,
+        salesCompanyId: target.linkedSalesCompanyId,
+        correlationId: newCorrelationId("crm-conversion"),
+      });
       return NextResponse.json({ company: existing, alreadyLinked: true, reason: "linked" });
     }
 
@@ -95,6 +103,12 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
           payload: { salesCompanyId: existingId, dedupPath: "domain-or-name-city" },
           actorId: gate.auth.userId,
           actorEmail: gate.auth.user?.email ?? null,
+        });
+        await recordAttributedOutcome({
+          eventType: "CRM_CONVERTED",
+          targetId: id,
+          salesCompanyId: existingId,
+          correlationId: newCorrelationId("crm-conversion"),
         });
         return NextResponse.json({ company: existing, alreadyLinked: true, reason: "dedup-match" });
       }
@@ -120,6 +134,12 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       payload: { salesCompanyId: company.id },
       actorId: gate.auth.userId,
       actorEmail: gate.auth.user?.email ?? null,
+    });
+    await recordAttributedOutcome({
+      eventType: "CRM_CONVERTED",
+      targetId: id,
+      salesCompanyId: company.id,
+      correlationId: newCorrelationId("crm-conversion"),
     });
 
     return NextResponse.json({ company }, { status: 201 });

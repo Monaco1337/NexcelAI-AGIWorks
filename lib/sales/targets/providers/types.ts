@@ -1,3 +1,5 @@
+import type { ProviderMetadata } from "../contracts/provider";
+
 /**
  * Provider-Interfaces für Zielkunden-Discovery und -Enrichment.
  *
@@ -16,9 +18,17 @@
  */
 
 export interface DiscoveredCompanyStub {
+  provider: string;
+  providerVersion?: string | null;
+  providerRawId?: string | null;
+  observedAt?: string | null;
+  fetchedAt?: string | null;
   name: string;
+  normalizedName?: string | null;
   legalName?: string | null;
   legalForm?: string | null;
+  categoryRaw?: string | null;
+  categoryNormalized?: string | null;
   website?: string | null;
   domain?: string | null;
   phone?: string | null;
@@ -26,6 +36,7 @@ export interface DiscoveredCompanyStub {
   addressLine?: string | null;
   postalCode?: string | null;
   city?: string | null;
+  state?: string | null;
   region?: string | null;
   country?: string;
   latitude?: number | null;
@@ -39,9 +50,9 @@ export interface DiscoveredCompanyStub {
   googlePlaceId?: string | null;
   googleRating?: number | null;
   reviewCount?: number | null;
-  provider: string;
   providerSourceUrl?: string | null;
-  providerRawId?: string | null;
+  socialUrls?: string[];
+  rawPayloadReference?: string | null;
   confidence: number;
   /** Filiale einer ueberregionalen Kette (siehe detectChain). */
   isChain?: boolean;
@@ -92,6 +103,8 @@ export interface DiscoveryRequest {
 
 export interface DiscoveryResponse {
   companies: DiscoveredCompanyStub[];
+  providerObservedCount?: number;
+  contractRejectedCount?: number;
   estimatedCostCents: number;
   actualCostCents: number;
   providerLogs: Array<{ provider: string; endpoint: string; latencyMs: number; ok: boolean; error?: string }>;
@@ -100,6 +113,8 @@ export interface DiscoveryResponse {
 export interface DiscoveryProvider {
   key: string;
   label: string;
+  metadata: ProviderMetadata;
   isConfigured(): boolean;
+  supports?(request: DiscoveryRequest): boolean;
   discover(request: DiscoveryRequest): Promise<DiscoveryResponse>;
 }

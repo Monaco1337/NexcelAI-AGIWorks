@@ -205,6 +205,12 @@ function extractContactFormLinks(
         continue;
       }
     }
+    try {
+      const parsed = new URL(absolute);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") continue;
+    } catch {
+      continue;
+    }
     if (seen.has(absolute)) continue;
     seen.add(absolute);
     out.push(absolute);

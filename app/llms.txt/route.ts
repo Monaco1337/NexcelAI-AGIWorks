@@ -12,8 +12,8 @@ import { canonicalForPage } from "@/lib/seo/canonical";
  */
 export const dynamic = "force-dynamic";
 
-export function GET() {
-  const host = headers().get("host");
+export async function GET() {
+  const host = (await headers()).get("host");
   const brand = hostToBrand(host);
 
   if (!brand) {

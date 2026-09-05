@@ -24,10 +24,11 @@ import {
 } from "../store";
 import type { SearchJob } from "../model";
 import { getConfiguredDiscoveryProviders } from "../providers/registry";
-import { parseSlotBusy } from "../providers/overpassProvider";
+import { parseSlotBusy, SLOT_BUSY_MARKER } from "../providers/overpassProvider";
 import type { DiscoveryResponse } from "../providers/types";
+import { executeDiscoveryFailover } from "../providers/failover";
 import { bulkIngestCompanies } from "./bulkIngest";
-import { buildSegments, findScope, NRW_SCOPE, type CatalogScope } from "./scope";
+import { buildSegments, findScope, NRW_SCOPE, type CatalogScope, type CatalogSegment } from "./scope";
 import {
   createCatalogRun,
   findActiveCatalogRun,
@@ -40,6 +41,20 @@ import {
 } from "./catalogStore";
 import { evaluateQualityGate } from "./qualityGate";
 import { writeAudit, type AuditActor } from "@/lib/audit/auditLog";
+import {
+  claimCoveragePartitions,
+  completeCoverageRunForSearchJob,
+  createCoverageRunForSearchJob,
+  ensureCoveragePartitions,
+  failCoveragePartitionClaim,
+  listActiveCoveragePartitionIds,
+  listCoveragePartitions,
+  retireCoveragePartitions,
+  subdivideCoveragePartitionForSearchJob,
+} from "../coverage/store";
+import { allocatePartitions, shouldMarkExhausted } from "../coverage/planner";
+
+const SCHEDULER_QUEUE_TARGET = 24;
 
 /**
  * Der Katalog läuft überwiegend per Cron, also ohne angemeldeten Nutzer.
@@ -92,12 +107,19 @@ export async function ensureCatalogRun(
   // Duplikate einreihen.
   const published = await findPublishedCatalogRun(scope.key);
   if (published) {
+    const before = await searchJobProgress(published.id);
+    const revived = before.failed > 0 ? await resetFailedSearchJobs(published.id) : 0;
     const progress = await searchJobProgress(published.id);
-    if (progress.queued + progress.running + progress.failed > 0) {
-      const revived = await resetFailedSearchJobs(published.id);
-      return { run: published, created: false, segmentsQueued: revived };
-    }
-    return { run: published, created: false, segmentsQueued: 0 };
+    const queued = progress.queued + progress.running;
+    const scheduled = queued < SCHEDULER_QUEUE_TARGET
+      ? await scheduleCoverageWork(
+          published,
+          scope,
+          createdBy,
+          SCHEDULER_QUEUE_TARGET - queued,
+        )
+      : 0;
+    return { run: published, created: false, segmentsQueued: revived + scheduled };
   }
 
   const existing = await findActiveCatalogRun(scope.key);
@@ -107,10 +129,21 @@ export async function ensureCatalogRun(
     // überlasteten öffentlichen Endpoint, nicht von fehlerhaften Daten —
     // ohne Reset bliebe eine Teilregion sonst dauerhaft leer.
     const revived = await resetFailedSearchJobs(existing.id);
-    return { run: existing, created: false, segmentsQueued: revived };
+    const progress = await searchJobProgress(existing.id);
+    const queued = progress.queued + progress.running;
+    const scheduled = queued < SCHEDULER_QUEUE_TARGET
+      ? await scheduleCoverageWork(
+          existing,
+          scope,
+          createdBy,
+          SCHEDULER_QUEUE_TARGET - queued,
+        )
+      : 0;
+    return { run: existing, created: false, segmentsQueued: revived + scheduled };
   }
 
   const segments = buildSegments(scope);
+  await ensureCoveragePartitions(scope);
   const run = await createCatalogRun({
     correlationId: newCorrelationId("catalog"),
     scopeKey: scope.key,
@@ -128,38 +161,116 @@ export async function ensureCatalogRun(
     return { run, created: false, segmentsQueued: 0 };
   }
 
-  for (const segment of segments) {
-    await createSearchJob({
-      label: `${scope.label} · ${segment.tagAxis} · r${segment.row}c${segment.col}`,
-      city: null,
-      region: scope.region,
-      country: scope.country,
-      centerLat: null,
-      centerLng: null,
-      radiusKm: 0,
-      industries: [],
-      categories: [],
-      filters: {
-        catalogSegment: segment.key,
-        bbox: segment.bbox,
-        tagAxis: segment.tagAxis,
-      } as SearchJob["filters"],
-      depth: "STANDARD",
-      limitCount: SEGMENT_LIMIT,
-      createdBy,
-      areaScanId: run.id,
-    });
-  }
+  const scheduled = await scheduleCoverageWork(
+    run,
+    scope,
+    createdBy,
+    SCHEDULER_QUEUE_TARGET,
+  );
 
   await writeAudit({
     actor: systemActor(createdBy),
     action: "sales_target_catalog.started",
     entityType: "sales_target_catalog",
     entityId: run.id,
-    context: { scopeKey: scope.key, segments: segments.length },
+    context: { scopeKey: scope.key, segments: segments.length, initiallyScheduled: scheduled },
   });
 
-  return { run, created: true, segmentsQueued: segments.length };
+  return { run, created: true, segmentsQueued: scheduled };
+}
+
+async function scheduleCoverageWork(
+  run: CatalogRun,
+  scope: CatalogScope,
+  createdBy: string | null,
+  limit: number,
+): Promise<number> {
+  if (limit <= 0) return 0;
+  await ensureCoveragePartitions(scope);
+  const partitions = await listCoveragePartitions(scope.key);
+  const exhausted = partitions.filter(shouldMarkExhausted).map((partition) => partition.id);
+  await retireCoveragePartitions(exhausted);
+  const exhaustedSet = new Set(exhausted);
+  const active = await listActiveCoveragePartitionIds();
+  const eligible = partitions.filter(
+    (partition) => !exhaustedSet.has(partition.id) && !active.has(partition.id),
+  );
+  const allocations = allocatePartitions(eligible, {
+    limit,
+    explorationFraction: 0.15,
+  });
+  const claimed = await claimCoveragePartitions(
+    allocations.map((allocation) => allocation.partitionId),
+  );
+  const allocationById = new Map(
+    allocations.map((allocation) => [allocation.partitionId, allocation] as const),
+  );
+  const partitionById = new Map(partitions.map((partition) => [partition.id, partition] as const));
+  const segmentByKey = new Map(buildSegments(scope).map((segment) => [segment.key, segment] as const));
+  let scheduled = 0;
+  for (const partitionId of claimed) {
+    const partition = partitionById.get(partitionId);
+    const segment = partition
+      ? segmentByKey.get(partition.geographyKey) ?? segmentFromPartition(partition, scope)
+      : null;
+    if (!partition || !segment) {
+      await failCoveragePartitionClaim(partitionId);
+      continue;
+    }
+    try {
+      const allocation = allocationById.get(partitionId);
+      const job = await createSearchJob({
+        label: `${scope.label} · ${segment.tagAxis} · r${segment.row}c${segment.col}`,
+        city: null,
+        region: scope.region,
+        country: scope.country,
+        centerLat: null,
+        centerLng: null,
+        radiusKm: 0,
+        industries: [],
+        categories: [],
+        filters: {
+          catalogSegment: segment.key,
+          coveragePartitionId: partitionId,
+          allocationReason: allocation?.reason ?? "EXPLOIT",
+          allocationScore: allocation?.score ?? 0,
+          bbox: segment.bbox,
+          tagAxis: segment.tagAxis,
+        } as SearchJob["filters"],
+        depth: "STANDARD",
+        limitCount: SEGMENT_LIMIT,
+        createdBy,
+        areaScanId: run.id,
+      });
+      await createCoverageRunForSearchJob({
+        scopeKey: scope.key,
+        partitionKey: segment.key,
+        searchJobId: job.id,
+        areaScanId: run.id,
+      });
+      scheduled++;
+    } catch (error) {
+      await failCoveragePartitionClaim(partitionId);
+      throw error;
+    }
+  }
+  return scheduled;
+}
+
+function segmentFromPartition(
+  partition: Awaited<ReturnType<typeof listCoveragePartitions>>[number],
+  scope: CatalogScope,
+): CatalogSegment | null {
+  if (!partition.bbox || !partition.categoryAxis || partition.categoryAxis === "unknown") return null;
+  const grid = /\/r(\d+)c(\d+)\//.exec(partition.geographyKey);
+  return {
+    key: partition.geographyKey,
+    scopeKey: scope.key,
+    bbox: partition.bbox,
+    tagAxis: partition.categoryAxis,
+    row: grid ? Number(grid[1]) : 0,
+    col: grid ? Number(grid[2]) : 0,
+  };
 }
 
 export interface SegmentOutcome {
@@ -190,6 +301,7 @@ export async function runCatalogSegments(opts: {
   const maxSegments = Math.max(1, Math.min(60, opts.maxSegments ?? 3));
   const budgetMs = Math.max(5_000, Math.min(280_000, opts.budgetMs ?? 45_000));
   const startedAt = Date.now();
+  const workerId = newCorrelationId("catalog-worker");
 
   // Hängengebliebene Jobs aus abgebrochenen Läufen zurückholen.
   const reclaimed = await reclaimExpiredSearchJobs();
@@ -197,7 +309,10 @@ export async function runCatalogSegments(opts: {
 
   for (let i = 0; i < maxSegments; i++) {
     if (Date.now() - startedAt > budgetMs) break;
-    const job = await takeNextSearchJob({ areaScanId: opts.areaScanId ?? null });
+    const job = await takeNextSearchJob({
+      areaScanId: opts.areaScanId ?? null,
+      workerId,
+    });
     if (!job) break;
     const outcome = await runSegmentJob(job);
     outcomes.push(outcome);
@@ -235,24 +350,29 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
 
     const logs: DiscoveryResponse["providerLogs"] = [];
     const companies: DiscoveryResponse["companies"] = [];
-    for (const provider of providers) {
-      const res = await provider.discover({
-        city: job.city,
-        country: job.country,
-        centerLat: job.centerLat,
-        centerLng: job.centerLng,
-        radiusKm: job.radiusKm,
-        industries: job.industries,
-        categories: job.categories,
-        limit: job.limitCount,
-        depth: job.depth,
-        bbox: bbox ?? null,
-        tagAxis,
-      });
-      logs.push(...res.providerLogs);
-      companies.push(...res.companies);
-      if (companies.length >= job.limitCount) break;
-    }
+    let estimatedCostCents = 0;
+    let actualCostCents = 0;
+    const res = await executeDiscoveryFailover(providers, {
+      city: job.city,
+      country: job.country,
+      centerLat: job.centerLat,
+      centerLng: job.centerLng,
+      radiusKm: job.radiusKm,
+      industries: job.industries,
+      categories: job.categories,
+      limit: job.limitCount,
+      depth: job.depth,
+      bbox: bbox ?? null,
+      tagAxis,
+    }, {
+      searchJobId: job.id,
+      attempt: job.attempts,
+      correlationId: newCorrelationId("catalog-provider"),
+    });
+    logs.push(...res.providerLogs);
+    companies.push(...res.companies);
+    estimatedCostCents += res.estimatedCostCents;
+    actualCostCents += res.actualCostCents;
 
     // Ein leeres Ergebnis ist bei einem Segment dieser Größe kein
     // gültiger Befund. Overpass antwortet unter Last mit HTTP 200 und
@@ -271,7 +391,7 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
       // Versuch zu verbrauchen, mit der vom Provider genannten Wartezeit.
       const retryAfter = parseSlotBusy(providerError);
       if (retryAfter !== null) {
-        await requeueSearchJob(job.id, providerError, retryAfter);
+        await requeueSearchJob(job.id, providerError, retryAfter, job.workerToken);
         return {
           jobId: job.id,
           segment,
@@ -285,7 +405,24 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
         };
       }
 
-      await failSearchJob(job.id, providerError);
+      await failSearchJob(job.id, providerError, job.workerToken);
+      await completeCoverageRunForSearchJob({
+        searchJobId: job.id,
+        status: "failed",
+        estimatedCostCents,
+        actualCostCents,
+        providersAttempted: [...new Set(logs.map((log) => log.provider))],
+        requestCount: logs.length,
+        errorCode: providerError.includes("Timeout") || providerError.includes("timeout")
+          ? "PROVIDER_TIMEOUT"
+          : providerError.includes("RATE") || providerError.includes(SLOT_BUSY_MARKER)
+            ? "PROVIDER_RATE_LIMITED"
+            : "PROVIDER_FAILED",
+        error: providerError,
+      });
+      if (/timeout|zeitbudget|abbruch|memory|malformed/i.test(providerError)) {
+        await subdivideCoveragePartitionForSearchJob(job.id);
+      }
       return {
         jobId: job.id,
         segment,
@@ -312,7 +449,22 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
     await completeSearchJob(job.id, {
       discoveredCount: ingest.inserted,
       error: null,
+    }, job.workerToken);
+    await completeCoverageRunForSearchJob({
+      searchJobId: job.id,
+      status: "completed",
+      observations: res.providerObservedCount ?? ingest.received,
+      candidates: ingest.received,
+      newTargets: ingest.inserted,
+      matchedTargets: ingest.duplicates,
+      estimatedCostCents,
+      actualCostCents,
+      providersAttempted: [...new Set(logs.map((log) => log.provider))],
+      requestCount: logs.length,
     });
+    if (companies.length >= job.limitCount) {
+      await subdivideCoveragePartitionForSearchJob(job.id);
+    }
 
     if (job.areaScanId) {
       const progress = await searchJobProgress(job.areaScanId);
@@ -330,7 +482,12 @@ async function runSegmentJob(job: SearchJob): Promise<SegmentOutcome> {
     };
   } catch (err) {
     const message = (err as Error).message || "Segment fehlgeschlagen";
-    await failSearchJob(job.id, message);
+    await failSearchJob(job.id, message, job.workerToken);
+    await completeCoverageRunForSearchJob({
+      searchJobId: job.id,
+      status: "failed",
+      error: message,
+    });
     return {
       jobId: job.id,
       segment,

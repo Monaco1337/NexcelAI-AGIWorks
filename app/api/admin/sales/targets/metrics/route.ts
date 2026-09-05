@@ -14,7 +14,10 @@ import {
   computeDataQualityMetrics,
   listReviewQueue,
 } from "@/lib/sales/targets/hardening/storeAdditions";
-import { allProviderHealth } from "@/lib/sales/targets/providers/health";
+import { allProviderHealth, hydrateProviderHealth } from "@/lib/sales/targets/providers/health";
+import { getRollingFunnel } from "@/lib/sales/targets/metrics/store";
+import { FUNNEL_DENOMINATORS, METRIC_DEFINITION_VERSION } from "@/lib/sales/targets/metrics/definitions";
+import { getOperationalKpis } from "@/lib/sales/targets/metrics/operational";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,10 +26,13 @@ export async function GET() {
   const gate = await authorize("sales.read");
   if (!gate.ok) return gate.response;
 
-  const [metrics, reviewItems, extras] = await Promise.all([
+  await hydrateProviderHealth();
+  const [metrics, reviewItems, extras, rolling24h, operational] = await Promise.all([
     computeDataQualityMetrics(),
     listReviewQueue(500),
     fetchExtras(),
+    getRollingFunnel(24),
+    getOperationalKpis(24),
   ]);
 
   return NextResponse.json({
@@ -37,6 +43,13 @@ export async function GET() {
       updatedAt: new Date().toISOString(),
     },
     providerHealth: allProviderHealth(),
+    funnel: {
+      definitionVersion: METRIC_DEFINITION_VERSION,
+      windowHours: 24,
+      values: rolling24h,
+      definitions: FUNNEL_DENOMINATORS,
+    },
+    operational,
   });
 }
 

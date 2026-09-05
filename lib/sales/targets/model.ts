@@ -593,6 +593,17 @@ export interface TargetCompany {
   lastEnrichmentError: string | null;
   doNotContact: boolean;
   doNotContactReason: string | null;
+  /** Optimistic-lock version persisted on every canonical mutation. */
+  version: number;
+  /** True for a branch of an identified multi-location chain. */
+  isChain: boolean;
+  /** Cheap, discovery-only ordering signal; never a qualification decision. */
+  preScore: number | null;
+  preScoreClass: PriorityClass | null;
+  isGoldenDataset: boolean;
+  possibleDuplicateOf: string | null;
+  possibleDuplicateConfidence: number | null;
+  reviewFlags: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -686,6 +697,9 @@ export interface TargetOpportunity {
   estimatedMaxCents: number | null;
   currency: string;
   detectedAt: string;
+  ruleConfigVersionId?: string | null;
+  ruleVersion?: string;
+  evidenceConfidence?: number | null;
 }
 
 export interface FinancialSignal {
@@ -743,6 +757,9 @@ export interface LeadScore {
   evidenceConfidence?: number | null;
   matrixPriority?: string | null;
   explainability?: ExplainabilityEntry[];
+  ruleConfigVersionId?: string | null;
+  scoringConfigVersionId?: string | null;
+  featureSnapshot?: Record<string, unknown>;
 }
 
 export interface SalesBrief {
@@ -767,6 +784,8 @@ export interface SalesBrief {
   confidence: number;
   structured: Record<string, unknown>;
   isCurrent: boolean;
+  ruleConfigVersionId?: string | null;
+  scoringConfigVersionId?: string | null;
 }
 
 export interface SearchJob {
@@ -799,6 +818,9 @@ export interface SearchJob {
   maxAttempts: number;
   nextAttemptAt: string | null;
   leaseExpiresAt: string | null;
+  workerToken?: string | null;
+  heartbeatAt?: string | null;
+  idempotencyKey?: string | null;
   /** Zugehöriger Katalog-/Area-Run, falls der Job Teil eines Batches ist. */
   areaScanId: string | null;
 }
@@ -817,6 +839,10 @@ export interface EnrichmentJob {
   error: string | null;
   payload: Record<string, unknown>;
   actualCostCents: number;
+  leaseExpiresAt?: string | null;
+  workerToken?: string | null;
+  heartbeatAt?: string | null;
+  idempotencyKey?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -846,6 +872,7 @@ export interface ScoringConfig {
   key: string;
   label: string;
   weights: ScoringWeights;
+  thresholdAPlusPlus?: number;
   thresholdAPlus: number;
   thresholdA: number;
   thresholdB: number;

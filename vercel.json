@@ -17,6 +17,18 @@
       "maxDuration": 300,
       "memory": 1024
     },
+    "app/api/cron/sales-targets/enrichment/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/cron/sales-targets/rollup/route.ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "app/api/cron/sales-targets/retention/route.ts": {
+      "maxDuration": 60,
+      "memory": 512
+    },
     "app/api/admin/sales/targets/discovery-worker/route.ts": {
       "maxDuration": 120,
       "memory": 1024
@@ -26,6 +38,18 @@
     {
       "path": "/api/cron/sales-targets/tick",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/sales-targets/enrichment",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/sales-targets/rollup",
+      "schedule": "7 * * * *"
+    },
+    {
+      "path": "/api/cron/sales-targets/retention",
+      "schedule": "23 2 * * *"
     }
   ],
   "env": {

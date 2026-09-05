@@ -3,9 +3,20 @@ import bcrypt from "bcryptjs";
 import { findUserByEmail, updateUser } from "@/lib/demo-users";
 import { createSession } from "@/lib/auth";
 import { mirrorUser } from "@/lib/identity/usersStore";
+import { rateLimitDistributed, rateLimitKey } from "@/lib/security/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
+    const limit = await rateLimitDistributed(rateLimitKey("login", req.headers), {
+      windowMs: 15 * 60_000,
+      max: 10,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Zu viele Anmeldeversuche. Bitte später erneut versuchen." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+      );
+    }
     const body = await req.json();
     const { email, password } = body;
 

@@ -51,14 +51,19 @@ export interface MigrationStatus {
 const LOCK_KEY = 4023986541;
 
 async function ensureMigrationsTable(sql: Sql): Promise<void> {
-  await sql`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      id          TEXT PRIMARY KEY,
-      name        TEXT NOT NULL,
-      applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      duration_ms INTEGER NOT NULL DEFAULT 0
-    )
-  `;
+  // CREATE TABLE IF NOT EXISTS can still race on PostgreSQL's implicit row
+  // type when two fresh instances bootstrap simultaneously.
+  await sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(${LOCK_KEY})`;
+    await tx`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        id          TEXT PRIMARY KEY,
+        name        TEXT NOT NULL,
+        applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        duration_ms INTEGER NOT NULL DEFAULT 0
+      )
+    `;
+  });
 }
 
 async function appliedIds(sql: Sql): Promise<Set<string>> {

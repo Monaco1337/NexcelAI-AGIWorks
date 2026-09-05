@@ -185,6 +185,34 @@ type TabId =
   | "systeme"
   | "settings";
 
+const TAB_IDS: readonly TabId[] = [
+  "overview",
+  "analysen",
+  "contacts",
+  "pipeline",
+  "unternehmen",
+  "vertrieb",
+  "demo",
+  "projekte",
+  "tickets",
+  "rechnungen",
+  "automationen",
+  "analytics",
+  "logos",
+  "referenzen",
+  "systeme",
+  "settings",
+];
+
+function tabFromHash(hash: string): TabId | null {
+  try {
+    const candidate = decodeURIComponent(hash.replace(/^#/, "")).trim().toLowerCase();
+    return TAB_IDS.includes(candidate as TabId) ? (candidate as TabId) : null;
+  } catch {
+    return null;
+  }
+}
+
 type TimeRange = "24h" | "7d" | "30d";
 
 const TIME_RANGE_LABEL: Record<TimeRange, string> = {
@@ -382,6 +410,30 @@ export default function AdminDashboard() {
   const [openTickets, setOpenTickets] = useState(0);
   // Vorauswahl beim Sprung aus der Projektübersicht ins Ticketsystem.
   const [ticketProjectFilter, setTicketProjectFilter] = useState<string | null>(null);
+
+  // Direkte Admin-Links verwenden den Hash als stabile Hauptnavigation.
+  // Back/Forward und manuelle Hash-Änderungen bleiben damit synchron.
+  useEffect(() => {
+    const syncTabFromUrl = () => {
+      const next = tabFromHash(window.location.hash);
+      setActiveTab(next ?? "overview");
+
+      // Unbekannte Hashes nie als scheinbar aktive Ansicht stehen lassen.
+      if (window.location.hash && !next) {
+        const url = new URL(window.location.href);
+        url.hash = "overview";
+        window.history.replaceState(window.history.state, "", url);
+      }
+    };
+
+    syncTabFromUrl();
+    window.addEventListener("hashchange", syncTabFromUrl);
+    window.addEventListener("popstate", syncTabFromUrl);
+    return () => {
+      window.removeEventListener("hashchange", syncTabFromUrl);
+      window.removeEventListener("popstate", syncTabFromUrl);
+    };
+  }, []);
 
   // Filtered views derived from brandFilter. Legacy entries without a
   // brand tag default to "nexcel" so they remain visible under the
@@ -620,6 +672,9 @@ export default function AdminDashboard() {
   const openTab = (id: TabId) => {
     if (id === "tickets") setTicketProjectFilter(null);
     setActiveTab(id);
+    const url = new URL(window.location.href);
+    url.hash = id;
+    window.history.pushState(window.history.state, "", url);
   };
 
   const navItems: { id: TabId; label: string; badge?: number }[] = [

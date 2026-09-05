@@ -55,6 +55,7 @@ const TABS = [
   { key: "software", label: "Software" },
   { key: "finance", label: "Finanzen" },
   { key: "sources", label: "Quellen" },
+  { key: "review", label: "Qualitätsreview" },
   { key: "activities", label: "Aktivitäten" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
@@ -139,8 +140,25 @@ export default function TargetDetail({
         className="h-full w-full max-w-5xl overflow-y-auto border-l border-white/[0.06] bg-[#0B0B0F] p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        {loading || !data ? (
+        {loading ? (
           <div className="flex h-full items-center justify-center text-white/60">Lädt…</div>
+        ) : !data ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+            <div>
+              <div className="text-lg font-medium text-white">Details nicht verfügbar</div>
+              <div className="mt-1 text-sm text-white/50">
+                {error ? `Die Anfrage ist fehlgeschlagen (${error}).` : "Der Datenstand ist unbekannt."}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button className={buttonSecondary} onClick={() => void load()}>
+                Erneut laden
+              </button>
+              <button className={buttonSecondary} onClick={onClose}>
+                Schließen
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <Header
@@ -177,6 +195,9 @@ export default function TargetDetail({
               {tab === "software" && <SoftwareTab opportunities={data.opportunities} />}
               {tab === "finance" && <FinanceTab score={data.leadScore} signals={data.financialSignals} />}
               {tab === "sources" && <SourcesTab sources={data.sources} />}
+              {tab === "review" && (
+                <QualityReviewTab targetId={targetId} onCompleted={onChanged} />
+              )}
               {tab === "activities" && <ActivitiesTab activities={data.activities} />}
             </div>
           </>
@@ -208,23 +229,32 @@ function Header({
   converting: boolean;
 }) {
   const { target, leadScore, salesBrief } = data;
-  const priority = leadScore?.priorityClass ?? "D";
-  const priorityColor = PRIORITY_CLASS_COLOR[priority];
+  const priority = leadScore?.priorityClass ?? target.preScoreClass;
+  const priorityColor = priority ? PRIORITY_CLASS_COLOR[priority] : null;
+  const score = leadScore?.totalScore ?? target.preScore;
+  const isPreScore = !leadScore && target.preScore !== null;
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span
-            className="inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 text-[11px] font-bold"
-            style={{
-              color: priorityColor,
-              borderColor: `${priorityColor}66`,
-              background: `${priorityColor}18`,
-            }}
-            title={PRIORITY_CLASS_LABEL[priority]}
-          >
-            {priority}
-          </span>
+          {priority && priorityColor ? (
+            <span
+              className="inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 text-[11px] font-bold"
+              style={{
+                color: priorityColor,
+                borderColor: `${priorityColor}66`,
+                background: `${priorityColor}18`,
+              }}
+              title={`${PRIORITY_CLASS_LABEL[priority]}${isPreScore ? " · vorläufige Katalogbewertung" : ""}`}
+            >
+              {priority}
+              {isPreScore ? "*" : ""}
+            </span>
+          ) : (
+            <span className="inline-flex rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[11px] text-white/45">
+              Priorität unbekannt
+            </span>
+          )}
           <h2 className="truncate text-2xl font-semibold text-white">{target.name}</h2>
         </div>
         <div className="mt-1 text-sm text-white/60">
@@ -254,10 +284,13 @@ function Header({
       </div>
       <div className="flex flex-col items-end gap-2">
         <div className="text-right">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-white/40">Lead-Score</div>
-          <div className="text-4xl font-semibold" style={{ color: accent }}>
-            {leadScore?.totalScore ?? "—"}
+          <div className="text-[11px] uppercase tracking-[0.16em] text-white/40">
+            {isPreScore ? "Vorbewertung" : "Lead-Score"}
           </div>
+          <div className="text-4xl font-semibold" style={{ color: accent }}>
+            {score ?? "—"}
+          </div>
+          {isPreScore && <div className="text-[10px] text-white/40">noch nicht angereichert</div>}
         </div>
         <div className="flex flex-col items-end gap-2">
           <button className={buttonSecondary} onClick={onReanalyze} disabled={reanalyzing}>
@@ -389,12 +422,13 @@ function OverviewTab({ data, accent }: { data: DetailResponse; accent: string })
 
 function Fact({ label, value, link }: { label: string; value: string | null; link?: boolean }) {
   if (!value) return null;
+  const href = link ? safeHttpUrl(value) : null;
   return (
     <div className="grid grid-cols-[130px_1fr] items-baseline gap-2">
       <dt className="text-[11px] uppercase tracking-wider text-white/45">{label}</dt>
       <dd className="truncate text-sm text-white/85">
-        {link ? (
-          <a href={value} target="_blank" rel="noreferrer" className="hover:underline">
+        {href ? (
+          <a href={href} target="_blank" rel="noreferrer" className="hover:underline">
             {value}
           </a>
         ) : (
@@ -495,8 +529,8 @@ function DecisionMakersTab({ items }: { items: TargetDecisionMaker[] }) {
               {dm.businessEmail && <div>E-Mail: {dm.businessEmail}</div>}
               {dm.businessPhone && <div>Telefon: {dm.businessPhone}</div>}
               {dm.businessMobile && <div>Mobil: {dm.businessMobile}</div>}
-              {dm.linkedinUrl && (
-                <a href={dm.linkedinUrl} target="_blank" rel="noreferrer" className="underline">
+              {safeHttpUrl(dm.linkedinUrl) && (
+                <a href={safeHttpUrl(dm.linkedinUrl)!} target="_blank" rel="noreferrer" className="underline">
                   LinkedIn
                 </a>
               )}
@@ -708,10 +742,10 @@ function SourcesTab({ sources }: { sources: TargetSource[] }) {
               </div>
               <div className="mt-1 text-xs text-white/50">
                 Provider: {s.provider}
-                {s.sourceUrl && (
+                {safeHttpUrl(s.sourceUrl) && (
                   <>
                     {" · "}
-                    <a href={s.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+                    <a href={safeHttpUrl(s.sourceUrl)!} target="_blank" rel="noreferrer" className="underline">
                       Quelle öffnen
                     </a>
                   </>
@@ -724,6 +758,173 @@ function SourcesTab({ sources }: { sources: TargetSource[] }) {
         })}
       </div>
     </Section>
+  );
+}
+
+function safeHttpUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Tab: Qualitätsreview / Golden Dataset                                      */
+/* -------------------------------------------------------------------------- */
+
+const REVIEW_BOOLEAN_FIELDS = [
+  ["validCompany", "Reales, aktives Unternehmen"],
+  ["canonicalNameCorrect", "Kanonischer Name korrekt"],
+  ["geographyCorrect", "Geografie korrekt"],
+  ["qualificationCorrect", "Qualifikationsentscheidung korrekt"],
+  ["provenanceComplete", "Provenienz vollständig"],
+  ["wouldContact", "Sales würde den Datensatz kontaktieren"],
+] as const;
+
+function QualityReviewTab({
+  targetId,
+  onCompleted,
+}: {
+  targetId: string;
+  onCompleted: () => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({
+    identityVerdict: "NOT_APPLICABLE",
+    phoneVerdict: "UNKNOWN",
+    emailVerdict: "UNKNOWN",
+    decisionMakerVerdict: "UNKNOWN",
+    websiteVerdict: "UNKNOWN",
+    targetFitVerdict: "UNKNOWN",
+  });
+  const [notes, setNotes] = useState("");
+  const [historyCount, setHistoryCount] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetch(`/api/admin/sales/targets/${targetId}/evaluate`, { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+      .then((payload: { items?: unknown[] }) => setHistoryCount(payload.items?.length ?? 0))
+      .catch(() => setMessage("Vorherige Reviews konnten nicht geladen werden."));
+  }, [targetId]);
+
+  function setValue(key: string, value: string) {
+    setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  async function submit(completed: boolean) {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const body = {
+        ...values,
+        ...Object.fromEntries(
+          REVIEW_BOOLEAN_FIELDS.map(([key]) => [
+            key,
+            values[key] === "YES" ? true : values[key] === "NO" ? false : null,
+          ]),
+        ),
+        reviewStatus: completed ? "COMPLETED" : "DRAFT",
+        reviewVersion: "v1",
+        notes,
+      };
+      const response = await fetch(`/api/admin/sales/targets/${targetId}/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { message?: string; error?: string };
+        throw new Error(error.message ?? error.error ?? `HTTP ${response.status}`);
+      }
+      if (completed) {
+        const golden = await fetch(`/api/admin/sales/targets/${targetId}/golden`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flag: true }),
+        });
+        if (!golden.ok) throw new Error(`Golden-Markierung fehlgeschlagen (HTTP ${golden.status})`);
+        onCompleted();
+      }
+      setHistoryCount((count) => count + 1);
+      setMessage(completed ? "Review abgeschlossen und Golden-Dataset aufgenommen." : "Entwurf gespeichert.");
+    } catch (error) {
+      setMessage((error as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const fieldClass =
+    "w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none";
+  return (
+    <Section title={`Menschliches Qualitätsreview · ${historyCount} vorhanden`}>
+      <p className="mb-4 text-xs text-white/55">
+        Ein Datensatz wird erst nach einem vollständigen Review als Golden markiert. „UNKNOWN“ ist ein
+        ehrliches Label; fehlende Pflichtlabels werden serverseitig abgelehnt.
+      </p>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {REVIEW_BOOLEAN_FIELDS.map(([key, label]) => (
+          <label key={key} className="text-xs text-white/65">
+            {label}
+            <select className={fieldClass} value={values[key] ?? ""} onChange={(event) => setValue(key, event.target.value)}>
+              <option value="">Nicht bewertet</option>
+              <option value="YES">Ja</option>
+              <option value="NO">Nein</option>
+            </select>
+          </label>
+        ))}
+        <ReviewSelect label="Entity-Auflösung" value={values.identityVerdict} onChange={(value) => setValue("identityVerdict", value)}
+          options={["NOT_APPLICABLE", "SAME_ENTITY", "DISTINCT_ENTITY", "UNCERTAIN"]} className={fieldClass} />
+        <ReviewSelect label="Telefon" value={values.phoneVerdict} onChange={(value) => setValue("phoneVerdict", value)}
+          options={["YES", "NO", "UNKNOWN"]} className={fieldClass} />
+        <ReviewSelect label="E-Mail" value={values.emailVerdict} onChange={(value) => setValue("emailVerdict", value)}
+          options={["YES", "NO", "UNKNOWN"]} className={fieldClass} />
+        <ReviewSelect label="Entscheider" value={values.decisionMakerVerdict} onChange={(value) => setValue("decisionMakerVerdict", value)}
+          options={["YES", "NO", "UNKNOWN"]} className={fieldClass} />
+        <ReviewSelect label="Website" value={values.websiteVerdict} onChange={(value) => setValue("websiteVerdict", value)}
+          options={["YES", "PARTIAL", "NO", "UNKNOWN"]} className={fieldClass} />
+        <ReviewSelect label="Zielkunden-Fit" value={values.targetFitVerdict} onChange={(value) => setValue("targetFitVerdict", value)}
+          options={["YES", "NO", "UNKNOWN"]} className={fieldClass} />
+      </div>
+      <label className="mt-3 block text-xs text-white/65">
+        Review-Notizen
+        <textarea className={`${fieldClass} min-h-24`} value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={5_000} />
+      </label>
+      {message && <div className="mt-3 text-xs text-white/70">{message}</div>}
+      <div className="mt-4 flex gap-2">
+        <button className={buttonSecondary} disabled={saving} onClick={() => void submit(false)}>Entwurf speichern</button>
+        <button className={buttonPrimary} disabled={saving} onClick={() => void submit(true)}>
+          Review abschließen + Golden
+        </button>
+      </div>
+    </Section>
+  );
+}
+
+function ReviewSelect({
+  label,
+  value,
+  onChange,
+  options,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  className: string;
+}) {
+  return (
+    <label className="text-xs text-white/65">
+      {label}
+      <select className={className} value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
   );
 }
 

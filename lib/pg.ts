@@ -69,6 +69,8 @@ export function getSql(): Sql | null {
   if (sql) return sql;
 
   try {
+    const hostname = new URL(CONNECTION_STRING).hostname;
+    const localConnection = ["localhost", "127.0.0.1", "::1"].includes(hostname);
     // Vercel/Neon liefert eine bereits korrekt kodierte Connection-URL —
     // direkt verwenden, keine eigene Manipulation (zerschießt sonst das
     // Schema "postgres://").
@@ -78,7 +80,7 @@ export function getSql(): Sql | null {
       connect_timeout: 15,
       // Pooled-Verbindungen (PgBouncer/Neon) vertragen keine Prepared Statements.
       prepare: false,
-      ssl: "require",
+      ssl: localConnection ? false : "require",
     });
     return sql;
   } catch (error) {

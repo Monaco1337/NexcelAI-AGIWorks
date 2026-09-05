@@ -23,9 +23,11 @@ import { db } from "@/lib/pg";
 import { TargetError } from "../errors";
 
 export type ProviderState =
+  | "UNKNOWN"
   | "HEALTHY"
   | "DEGRADED"
   | "RATE_LIMITED"
+  | "CIRCUIT_OPEN"
   | "UNAVAILABLE"
   | "MISCONFIGURED";
 
@@ -50,6 +52,7 @@ interface InMemoryState {
 }
 
 const memory = new Map<string, InMemoryState>();
+let hydration: Promise<void> | null = null;
 
 const DEGRADED_THRESHOLD = 3;
 const UNAVAILABLE_THRESHOLD = 6;
@@ -61,7 +64,7 @@ function ensureState(provider: string): InMemoryState {
   let s = memory.get(provider);
   if (!s) {
     s = {
-      state: "HEALTHY",
+      state: "UNKNOWN",
       consecutiveFail: 0,
       cooldownUntil: null,
       lastSuccessAt: null,
@@ -83,13 +86,53 @@ export function assertProviderCallable(provider: string): void {
     if (s.state === "RATE_LIMITED") {
       throw new TargetError("PROVIDER_RATE_LIMITED", `Provider ${provider} steht im Cooldown (Rate-Limit)`);
     }
-    if (s.state === "UNAVAILABLE") {
+    if (s.state === "UNAVAILABLE" || s.state === "CIRCUIT_OPEN") {
       throw new TargetError("PROVIDER_UNAVAILABLE", `Provider ${provider} steht im Cooldown (unavailable)`);
     }
     if (s.state === "DEGRADED") {
       throw new TargetError("PROVIDER_UNAVAILABLE", `Provider ${provider} steht im Cooldown (degraded)`);
     }
   }
+}
+
+/**
+ * Hydrates persisted circuit state once per warm process. Callers that can
+ * perform network requests should use this async gate rather than relying on
+ * an empty process-local map after a cold start.
+ */
+export async function assertProviderCallablePersistent(provider: string): Promise<void> {
+  await hydrateProviderHealth();
+  assertProviderCallable(provider);
+}
+
+export async function hydrateProviderHealth(force = false): Promise<void> {
+  if (force) hydration = null;
+  if (hydration) return hydration;
+  hydration = (async () => {
+    try {
+      const sql = await db();
+      if (!sql) return;
+      const rows = await sql<Record<string, unknown>[]>`
+        SELECT provider, state, consecutive_fail, last_success_at,
+               last_failure_at, cooldown_until, note
+        FROM sales_target_provider_health
+      `;
+      for (const row of rows) {
+        memory.set(String(row.provider), {
+          state: row.state as ProviderState,
+          consecutiveFail: Number(row.consecutive_fail ?? 0),
+          cooldownUntil: asEpoch(row.cooldown_until),
+          lastSuccessAt: asEpoch(row.last_success_at),
+          lastFailureAt: asEpoch(row.last_failure_at),
+          note: (row.note as string | null) ?? null,
+        });
+      }
+    } catch {
+      // The provider call may still proceed using conservative in-process
+      // state when health persistence is temporarily unavailable.
+    }
+  })();
+  return hydration;
 }
 
 export function markProviderMisconfigured(provider: string, note: string): void {
@@ -124,11 +167,14 @@ export function markProviderFailure(provider: string, error: Error | string): vo
   s.lastFailureAt = Date.now();
   s.note = typeof error === "string" ? error : error.message;
   if (s.consecutiveFail >= UNAVAILABLE_THRESHOLD) {
-    s.state = "UNAVAILABLE";
+    s.state = "CIRCUIT_OPEN";
     s.cooldownUntil = Date.now() + UNAVAILABLE_COOLDOWN_MS;
   } else if (s.consecutiveFail >= DEGRADED_THRESHOLD) {
     s.state = "DEGRADED";
     s.cooldownUntil = Date.now() + DEGRADED_COOLDOWN_MS;
+  } else {
+    s.state = "DEGRADED";
+    s.cooldownUntil = null;
   }
   void persist(provider, s);
 }
@@ -195,4 +241,11 @@ async function persistDelete(provider: string): Promise<void> {
   } catch {
     /* siehe persist(): best-effort */
   }
+}
+
+function asEpoch(value: unknown): number | null {
+  if (!value) return null;
+  if (value instanceof Date) return value.getTime();
+  const parsed = Date.parse(String(value));
+  return Number.isFinite(parsed) ? parsed : null;
 }

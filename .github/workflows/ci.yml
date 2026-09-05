@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nexcel_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/nexcel_ci
+      JWT_SECRET: ci-only-secret-with-at-least-thirty-two-characters
+      CRON_SECRET: ci-only-cron-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run check:api-auth
+      - run: npm run test:sales
+      - run: npm run test:security
+      - run: npm run test:performance
+      - run: npm run test:provider-controls
+      - run: npm run test:provider-failover
+      - run: npm run test:golden-workflow
+      - run: npm run test:coverage-scheduler
+      - run: npm run test:concurrency
+      - run: npm run test:duplicate-coverage
+      - run: npm run test:rollout
+      - run: npm run test:resilience
+      - run: npm run test:migrations
+      - run: npm run test:migration-upgrades
+      - run: npm run test:performance-db
+      - run: npm run test:performance-100k
+      - run: npm run build
+

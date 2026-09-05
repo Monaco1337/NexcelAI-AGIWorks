@@ -2,9 +2,31 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { DemoUser } from "./demo-users";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "nexcel-ai-demo-secret-key-change-in-production"
-);
+const DEVELOPMENT_SECRET = "nexcel-ai-demo-secret-key-change-in-production";
+let encodedSecret: Uint8Array | null = null;
+
+/**
+ * Local development keeps the historical zero-config secret. Production and
+ * preview runtimes fail closed: no session may be signed or verified without
+ * an explicitly configured, non-demo secret of sufficient entropy.
+ */
+function getJwtSecret(): Uint8Array {
+  if (encodedSecret) return encodedSecret;
+
+  const configured = process.env.JWT_SECRET?.trim();
+  const isProduction = process.env.NODE_ENV === "production";
+  if (
+    isProduction &&
+    (!configured || configured === DEVELOPMENT_SECRET || configured.length < 32)
+  ) {
+    throw new Error(
+      "Authentication is unavailable: JWT_SECRET must be configured with at least 32 characters"
+    );
+  }
+
+  encodedSecret = new TextEncoder().encode(configured || DEVELOPMENT_SECRET);
+  return encodedSecret;
+}
 
 export async function createSession(user: DemoUser) {
   const expiresAt = new Date(user.expiresAt);
@@ -24,7 +46,7 @@ export async function createSession(user: DemoUser) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(expiresAt)
-    .sign(SECRET);
+    .sign(getJwtSecret());
 
   return session;
 }
@@ -46,7 +68,7 @@ export async function verifySession(): Promise<SessionPayload | null> {
   }
 
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return {
       userId: payload.userId as string,
       email: payload.email as string,

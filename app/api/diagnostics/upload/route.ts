@@ -16,6 +16,7 @@ import {
   analysisRepo,
   uploadRepo,
 } from "@/lib/diagnostics/db";
+import { guardPublicApi } from "@/lib/security/publicApiGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +35,11 @@ async function ensureUploadDir() {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = await guardPublicApi(req, "diagnostics-upload", {
+    windowMs: 60 * 60_000,
+    max: 10,
+  });
+  if (blocked) return blocked;
   const analysisId = req.nextUrl.searchParams.get("analysisId");
   if (!analysisId) {
     return NextResponse.json(

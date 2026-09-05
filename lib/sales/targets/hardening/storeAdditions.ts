@@ -19,7 +19,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { db } from "@/lib/pg";
+import { db, jsonParam } from "@/lib/pg";
 import { TargetError } from "../errors";
 import { newTargetId } from "../model";
 import type { TargetSource, WebsiteAudit } from "../model";
@@ -126,12 +126,12 @@ export async function saveWebsiteAuditIdempotent(audit: WebsiteAudit): Promise<W
     ) VALUES (
       ${audit.id}, ${audit.targetId}, ${audit.url}, ${audit.finalUrl}, ${audit.auditedAt},
       ${audit.httpStatus}, ${audit.ttfbMs}, ${audit.transferBytes},
-      ${JSON.stringify(audit.redirectChain)}::jsonb,
+      ${sql.json(jsonParam(audit.redirectChain))},
       ${audit.websiteScore}, ${audit.designScore}, ${audit.performanceScore}, ${audit.seoScore},
       ${audit.conversionScore}, ${audit.mobileScore}, ${audit.trustScore}, ${audit.technologyScore},
-      ${JSON.stringify(audit.subscores)}::jsonb,
-      ${JSON.stringify(audit.findings)}::jsonb,
-      ${JSON.stringify(audit.techStack)}::jsonb,
+      ${sql.json(jsonParam(audit.subscores))},
+      ${sql.json(jsonParam(audit.findings))},
+      ${sql.json(jsonParam(audit.techStack))},
       ${audit.snapshotHash}, ${audit.error}
     )
     ON CONFLICT DO NOTHING
@@ -235,42 +235,61 @@ export async function updateEnrichmentStatusWithVersion(
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Advisory-Lock pro Zielkunde                                                */
+/*  Persistenter Lease-Lock pro Zielkunde                                      */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Postgres-Advisory-Lock als Session-Mutex. `pg_try_advisory_lock`
- * garantiert, dass zwei parallele Enrichments für dieselbe Firma sich
- * nicht überholen.
- *
- * WICHTIG:
- *  - Lock ist session-scoped und wird vom postgres-Pool automatisch
- *    beim Verbindungsende freigegeben (Safety-Net).
- *  - Wir verwenden `pg_advisory_xact_lock` NICHT, weil unsere Enrichment-
- *    Phase mehrere Statements über die Zeit macht — Transaction-Locking
- *    wäre zu grob.
+ * Persistenter, token-gebundener Lease statt eines session-scoped Advisory
+ * Locks. Der alte Lock konnte auf einer Pool-Session erworben und auf einer
+ * anderen freigegeben werden. Dieser Lease überlebt Serverless-Abbrüche und
+ * kann nach Ablauf sicher übernommen werden.
  */
 export async function tryAcquireEnrichmentLock(
   targetId: string
 ): Promise<{ acquired: boolean; lockKey: LockKey }> {
   const sql = await db();
   if (!sql) throw new TargetError("DB_UNAVAILABLE");
-  const lockKey = hashToInt32Pair(`sales-target-enrich:${targetId}`);
-  const rows = await sql<{ locked: boolean }[]>`
-    SELECT pg_try_advisory_lock(${lockKey.k1}::int4, ${lockKey.k2}::int4) AS locked
+  const token = crypto.randomUUID();
+  const leaseExpiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
+  const rows = await sql<{ id: string }[]>`
+    INSERT INTO sales_target_phase_states (
+      id, target_id, phase, status, last_started_at, state
+    ) VALUES (
+      ${newTargetId("phase")}, ${targetId}, '__full_enrichment__', 'running', NOW(),
+      ${sql.json(jsonParam({ token, leaseExpiresAt }))}
+    )
+    ON CONFLICT (target_id, phase) DO UPDATE SET
+      status = 'running',
+      last_started_at = NOW(),
+      state = EXCLUDED.state,
+      version = sales_target_phase_states.version + 1,
+      updated_at = NOW()
+    WHERE sales_target_phase_states.status <> 'running'
+       OR COALESCE(
+         NULLIF(sales_target_phase_states.state->>'leaseExpiresAt', '')::timestamptz,
+         'epoch'::timestamptz
+       ) < NOW()
+    RETURNING id
   `;
-  return { acquired: Boolean(rows[0]?.locked), lockKey };
+  return { acquired: rows.length === 1, lockKey: { targetId, token } };
 }
 
 export async function releaseEnrichmentLock(lockKey: LockKey): Promise<void> {
   const sql = await db();
   if (!sql) return;
-  await sql`SELECT pg_advisory_unlock(${lockKey.k1}::int4, ${lockKey.k2}::int4)`;
+  await sql`
+    UPDATE sales_target_phase_states
+    SET status = 'pending', state = '{}'::jsonb, updated_at = NOW(),
+        version = version + 1
+    WHERE target_id = ${lockKey.targetId}
+      AND phase = '__full_enrichment__'
+      AND state->>'token' = ${lockKey.token}
+  `;
 }
 
 export interface LockKey {
-  k1: number;
-  k2: number;
+  targetId: string;
+  token: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -287,9 +306,21 @@ export interface ProviderRequestLog {
   responseStatus?: number | null;
   responseBytes?: number | null;
   latencyMs?: number | null;
+  estimatedCostCents?: number | null;
   costCents?: number | null;
   cached?: boolean;
   error?: string | null;
+  correlationId?: string | null;
+  externalRequestId?: string | null;
+  providerConfigId?: string | null;
+  budgetId?: string | null;
+  errorCode?: string | null;
+  providerVersion?: string | null;
+  attemptSequence?: number;
+  fallbackFromProvider?: string | null;
+  fallbackReason?: string | null;
+  providerObservedCount?: number;
+  contractRejectedCount?: number;
 }
 
 export async function logProviderRequest(entry: ProviderRequestLog): Promise<string> {
@@ -300,13 +331,23 @@ export async function logProviderRequest(entry: ProviderRequestLog): Promise<str
     INSERT INTO sales_target_provider_requests (
       id, target_id, search_job_id, enrichment_job_id, provider, endpoint,
       request_hash, response_status, response_bytes, latency_ms, cost_cents,
-      cached, error
+      estimated_cost_cents, cached, error, correlation_id, external_request_id,
+      provider_config_id, budget_id, error_code, provider_version,
+      attempt_sequence, fallback_from_provider, fallback_reason,
+      provider_observed_count, contract_rejected_count, completed_at
     ) VALUES (
       ${id}, ${entry.targetId ?? null}, ${entry.searchJobId ?? null},
       ${entry.enrichmentJobId ?? null}, ${entry.provider}, ${entry.endpoint},
       ${entry.requestHash}, ${entry.responseStatus ?? null},
       ${entry.responseBytes ?? null}, ${entry.latencyMs ?? null},
-      ${entry.costCents ?? 0}, ${entry.cached ?? false}, ${entry.error ?? null}
+      ${entry.costCents ?? 0}, ${entry.estimatedCostCents ?? 0},
+      ${entry.cached ?? false}, ${entry.error ?? null},
+      ${entry.correlationId ?? null}, ${entry.externalRequestId ?? null},
+      ${entry.providerConfigId ?? null}, ${entry.budgetId ?? null},
+      ${entry.errorCode ?? null}, ${entry.providerVersion ?? null},
+      ${entry.attemptSequence ?? 1}, ${entry.fallbackFromProvider ?? null},
+      ${entry.fallbackReason ?? null}, ${entry.providerObservedCount ?? 0},
+      ${entry.contractRejectedCount ?? 0}, NOW()
     )
   `;
   return id;
@@ -331,6 +372,16 @@ export interface EvaluationSubmission {
   commercialFitVerdict?: "OVER" | "CORRECT" | "UNDER" | "UNKNOWN" | null;
   priorityVerdict?: "TOO_HIGH" | "CORRECT" | "TOO_LOW" | "UNKNOWN" | null;
   wouldContact?: boolean | null;
+  reviewStatus?: "DRAFT" | "COMPLETED";
+  reviewVersion?: string;
+  comparisonTargetId?: string | null;
+  identityVerdict?: "SAME_ENTITY" | "DISTINCT_ENTITY" | "UNCERTAIN" | "NOT_APPLICABLE" | null;
+  validCompany?: boolean | null;
+  canonicalNameCorrect?: boolean | null;
+  geographyCorrect?: boolean | null;
+  targetFitVerdict?: "YES" | "NO" | "UNKNOWN" | null;
+  qualificationCorrect?: boolean | null;
+  provenanceComplete?: boolean | null;
   notes?: string | null;
   systemPrediction?: Record<string, unknown>;
 }
@@ -349,6 +400,17 @@ export interface EvaluationRecord {
   commercialFitVerdict: string | null;
   priorityVerdict: string | null;
   wouldContact: boolean | null;
+  reviewStatus: string;
+  reviewVersion: string;
+  comparisonTargetId: string | null;
+  identityVerdict: string | null;
+  validCompany: boolean | null;
+  canonicalNameCorrect: boolean | null;
+  geographyCorrect: boolean | null;
+  targetFitVerdict: string | null;
+  qualificationCorrect: boolean | null;
+  provenanceComplete: boolean | null;
+  reviewCompletedAt: string | null;
   notes: string | null;
   systemPrediction: Record<string, unknown>;
 }
@@ -356,13 +418,26 @@ export interface EvaluationRecord {
 export async function submitEvaluation(input: EvaluationSubmission): Promise<EvaluationRecord> {
   const sql = await db();
   if (!sql) throw new TargetError("DB_UNAVAILABLE");
+  if (input.reviewStatus === "COMPLETED" && !isCompleteEvaluation(input)) {
+    throw new TargetError(
+      "VALIDATION_FAILED",
+      "Ein vollständiges Golden-Review benötigt alle Qualitätslabels",
+    );
+  }
+  if (input.comparisonTargetId === input.targetId) {
+    throw new TargetError("VALIDATION_FAILED", "Vergleichsziel darf nicht das Ziel selbst sein");
+  }
   const id = newTargetId("eval");
   const rows = await sql<Record<string, unknown>[]>`
     INSERT INTO sales_target_evaluations (
       id, target_id, score_version, evaluator_id, evaluator_email,
       phone_verdict, email_verdict, decision_maker_verdict,
       website_verdict, opportunity_verdict, commercial_fit_verdict,
-      priority_verdict, would_contact, notes, system_prediction
+      priority_verdict, would_contact, review_status, review_version,
+      comparison_target_id, identity_verdict, valid_company,
+      canonical_name_correct, geography_correct, target_fit_verdict,
+      qualification_correct, provenance_complete, review_completed_at,
+      notes, system_prediction
     ) VALUES (
       ${id}, ${input.targetId}, ${input.scoreVersion ?? "v1"},
       ${input.evaluatorId ?? null}, ${input.evaluatorEmail ?? null},
@@ -370,8 +445,14 @@ export async function submitEvaluation(input: EvaluationSubmission): Promise<Eva
       ${input.decisionMakerVerdict ?? null}, ${input.websiteVerdict ?? null},
       ${input.opportunityVerdict ?? null}, ${input.commercialFitVerdict ?? null},
       ${input.priorityVerdict ?? null}, ${input.wouldContact ?? null},
+      ${input.reviewStatus ?? "DRAFT"}, ${input.reviewVersion ?? "v1"},
+      ${input.comparisonTargetId ?? null}, ${input.identityVerdict ?? null},
+      ${input.validCompany ?? null}, ${input.canonicalNameCorrect ?? null},
+      ${input.geographyCorrect ?? null}, ${input.targetFitVerdict ?? null},
+      ${input.qualificationCorrect ?? null}, ${input.provenanceComplete ?? null},
+      ${input.reviewStatus === "COMPLETED" ? new Date().toISOString() : null},
       ${input.notes ?? null},
-      ${JSON.stringify(input.systemPrediction ?? {})}::jsonb
+      ${sql.json(jsonParam(input.systemPrediction ?? {}))}
     )
     RETURNING *
   `;
@@ -407,9 +488,37 @@ function mapEvaluation(row: Record<string, unknown>): EvaluationRecord {
     commercialFitVerdict: (row.commercial_fit_verdict as string | null) ?? null,
     priorityVerdict: (row.priority_verdict as string | null) ?? null,
     wouldContact: (row.would_contact as boolean | null) ?? null,
+    reviewStatus: (row.review_status as string) ?? "DRAFT",
+    reviewVersion: (row.review_version as string) ?? "v1",
+    comparisonTargetId: (row.comparison_target_id as string | null) ?? null,
+    identityVerdict: (row.identity_verdict as string | null) ?? null,
+    validCompany: (row.valid_company as boolean | null) ?? null,
+    canonicalNameCorrect: (row.canonical_name_correct as boolean | null) ?? null,
+    geographyCorrect: (row.geography_correct as boolean | null) ?? null,
+    targetFitVerdict: (row.target_fit_verdict as string | null) ?? null,
+    qualificationCorrect: (row.qualification_correct as boolean | null) ?? null,
+    provenanceComplete: (row.provenance_complete as boolean | null) ?? null,
+    reviewCompletedAt: row.review_completed_at ? asIsoRequired(row.review_completed_at) : null,
     notes: (row.notes as string | null) ?? null,
     systemPrediction: (row.system_prediction as Record<string, unknown>) ?? {},
   };
+}
+
+function isCompleteEvaluation(input: EvaluationSubmission): boolean {
+  return (
+    typeof input.validCompany === "boolean" &&
+    typeof input.canonicalNameCorrect === "boolean" &&
+    typeof input.geographyCorrect === "boolean" &&
+    Boolean(input.identityVerdict) &&
+    Boolean(input.phoneVerdict) &&
+    Boolean(input.emailVerdict) &&
+    Boolean(input.decisionMakerVerdict) &&
+    Boolean(input.websiteVerdict) &&
+    Boolean(input.targetFitVerdict) &&
+    typeof input.qualificationCorrect === "boolean" &&
+    typeof input.provenanceComplete === "boolean" &&
+    typeof input.wouldContact === "boolean"
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -599,10 +708,24 @@ export async function computeDataQualityMetrics(): Promise<DataQualityMetrics> {
       ORDER BY updated_at DESC
     `,
     sql<Record<string, unknown>[]>`
+      WITH qualified AS (
+        SELECT DISTINCT target_id
+        FROM sales_target_milestone_events
+        WHERE milestone_key = 'FIRST_QUALIFIED' AND target_id IS NOT NULL
+      ),
+      cost_by_target AS (
+        SELECT target_id, SUM(cost_cents)::bigint AS cost_cents
+        FROM sales_target_provider_requests
+        WHERE target_id IS NOT NULL
+        GROUP BY target_id
+      )
       SELECT
-        COALESCE(SUM(cost_cents), 0)::bigint AS total_cost,
-        COUNT(DISTINCT target_id)::int AS distinct_targets
-      FROM sales_target_provider_requests
+        (SELECT COALESCE(SUM(cost_cents), 0)::bigint
+         FROM sales_target_provider_requests) AS total_cost,
+        COALESCE(SUM(cost_by_target.cost_cents), 0)::bigint AS qualified_cost,
+        COUNT(qualified.target_id)::int AS qualified_targets
+      FROM qualified
+      LEFT JOIN cost_by_target ON cost_by_target.target_id = qualified.target_id
     `,
   ]);
 
@@ -625,7 +748,8 @@ export async function computeDataQualityMetrics(): Promise<DataQualityMetrics> {
   const staleAudits = Number(stale[0]?.stale ?? 0);
 
   const totalCost = Number(costs[0]?.total_cost ?? 0);
-  const distinctTargets = Number(costs[0]?.distinct_targets ?? 0);
+  const qualifiedCost = Number(costs[0]?.qualified_cost ?? 0);
+  const qualifiedTargets = Number(costs[0]?.qualified_targets ?? 0);
 
   return {
     totalCompanies: total,
@@ -647,7 +771,8 @@ export async function computeDataQualityMetrics(): Promise<DataQualityMetrics> {
       consecutiveFail: Number(r.consecutive_fail ?? 0),
     })),
     totalProviderCostCents: totalCost,
-    perQualifiedLeadCostCents: distinctTargets === 0 ? null : Math.round(totalCost / distinctTargets),
+    perQualifiedLeadCostCents:
+      qualifiedTargets === 0 ? null : Math.round(qualifiedCost / qualifiedTargets),
   };
 }
 
@@ -731,6 +856,21 @@ export async function listReviewQueue(limit = 100): Promise<ReviewQueueItem[]> {
 export async function markGoldenDataset(targetId: string, flag: boolean): Promise<void> {
   const sql = await db();
   if (!sql) throw new TargetError("DB_UNAVAILABLE");
+  if (flag) {
+    const completed = await sql<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1
+        FROM sales_target_evaluations
+        WHERE target_id = ${targetId} AND review_status = 'COMPLETED'
+      ) AS exists
+    `;
+    if (!completed[0]?.exists) {
+      throw new TargetError(
+        "VALIDATION_FAILED",
+        "Golden-Dataset-Aufnahme erfordert ein abgeschlossenes menschliches Review",
+      );
+    }
+  }
   await sql`
     UPDATE sales_target_companies
     SET is_golden_dataset = ${flag}, updated_at = NOW()
@@ -768,34 +908,6 @@ function asIsoRequired(v: unknown): string {
   if (v instanceof Date) return v.toISOString();
   if (typeof v === "string") return v;
   return new Date(0).toISOString();
-}
-
-/**
- * Deterministischer, kollisionsarmer Hash → Postgres-Advisory-Lock-Key-Paar.
- *
- * Postgres akzeptiert `pg_try_advisory_lock(int4, int4)` — zwei 32-Bit-
- * Integer sind für unsere Zwecke völlig ausreichend (2⁶⁴ Adressraum ohne
- * BigInt-Ceremonie). Wir verwenden zwei unabhängige 32-Bit-FNV-1a-Hashes
- * mit unterschiedlichen Startwerten, um Kollisionen zu minimieren.
- */
-function hashToInt32Pair(input: string): LockKey {
-  const k1 = fnv1a32(input, 0x811c9dc5);
-  const k2 = fnv1a32(`${input}#salt`, 0x1000193);
-  return { k1: toSignedInt32(k1), k2: toSignedInt32(k2) };
-}
-
-function fnv1a32(input: string, seed: number): number {
-  let hash = seed >>> 0;
-  const PRIME = 0x01000193;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, PRIME) >>> 0;
-  }
-  return hash >>> 0;
-}
-
-function toSignedInt32(n: number): number {
-  return n | 0;
 }
 
 /**

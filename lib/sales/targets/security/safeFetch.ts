@@ -18,20 +18,28 @@
  */
 
 import { inspectUrlDeep } from "./ssrfGuard";
+import { Agent, buildConnector, fetch as undiciFetch } from "undici";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_BYTES = 2_500_000;
 const DEFAULT_MAX_REDIRECTS = 4;
+const DEFAULT_MAX_HEADER_BYTES = 32_768;
+const DEFAULT_CONTENT_TYPES = ["text/html", "application/xhtml+xml"];
 const DEFAULT_UA =
   "Mozilla/5.0 (compatible; NEXCEL-SalesIntel/1.0; +https://nexcel.ai/bot)";
 
 export interface SafeFetchOptions {
-  method?: "GET" | "HEAD";
+  method?: "GET" | "HEAD" | "POST";
+  body?: string;
+  contentType?: string;
+  accept?: string;
   timeoutMs?: number;
   maxBytes?: number;
   maxRedirects?: number;
   userAgent?: string;
   acceptLanguage?: string;
+  allowedContentTypes?: string[];
+  maxHeaderBytes?: number;
 }
 
 export interface SafeFetchResult {
@@ -54,6 +62,8 @@ export async function safeFetch(rawUrl: string, options: SafeFetchOptions = {}):
   const userAgent = options.userAgent ?? DEFAULT_UA;
   const acceptLanguage = options.acceptLanguage ?? "de-DE,de;q=0.9,en;q=0.6";
   const method = options.method ?? "GET";
+  const allowedContentTypes = options.allowedContentTypes ?? DEFAULT_CONTENT_TYPES;
+  const maxHeaderBytes = options.maxHeaderBytes ?? DEFAULT_MAX_HEADER_BYTES;
 
   const started = Date.now();
   const redirectChain: string[] = [];
@@ -76,22 +86,32 @@ export async function safeFetch(rawUrl: string, options: SafeFetchOptions = {}):
       };
     }
 
+    const remainingMs = timeoutMs - (Date.now() - started);
+    if (remainingMs <= 0) {
+      return finishError(rawUrl, currentUrl, redirectChain, 0, `Timeout nach ${timeoutMs}ms`, started);
+    }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    let response: Response;
+    const timer = setTimeout(() => controller.abort(), remainingMs);
+    const dispatcher = pinnedDispatcher(currentUrl, inspection.resolvedIp!);
+    let response: Awaited<ReturnType<typeof undiciFetch>>;
     try {
-      response = await fetch(currentUrl, {
+      response = await undiciFetch(currentUrl, {
         method,
         redirect: "manual",
         signal: controller.signal,
+        dispatcher,
         headers: {
           "User-Agent": userAgent,
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.7",
+          Accept: options.accept ?? "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.7",
           "Accept-Language": acceptLanguage,
+          "Accept-Encoding": "identity",
+          ...(options.contentType ? { "Content-Type": options.contentType } : {}),
         },
+        body: method === "POST" ? options.body : undefined,
       });
     } catch (err) {
       clearTimeout(timer);
+      await dispatcher.close();
       const isAbort = (err as Error).name === "AbortError";
       return {
         ok: false,
@@ -112,18 +132,22 @@ export async function safeFetch(rawUrl: string, options: SafeFetchOptions = {}):
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const location = response.headers.get("location");
       if (!location) {
-        return finishError(rawUrl, currentUrl, redirectChain, response.status, "Redirect ohne Location");
+        await dispatcher.close();
+        return finishError(rawUrl, currentUrl, redirectChain, response.status, "Redirect ohne Location", started);
       }
       let nextUrl: string;
       try {
         nextUrl = new URL(location, currentUrl).toString();
       } catch {
-        return finishError(rawUrl, currentUrl, redirectChain, response.status, "Ungültige Redirect-URL");
+        await dispatcher.close();
+        return finishError(rawUrl, currentUrl, redirectChain, response.status, "Ungültige Redirect-URL", started);
       }
+      await response.body?.cancel().catch(() => undefined);
+      await dispatcher.close();
       redirectChain.push(nextUrl);
       currentUrl = nextUrl;
       if (hop === maxRedirects) {
-        return finishError(rawUrl, currentUrl, redirectChain, response.status, "Zu viele Redirects");
+        return finishError(rawUrl, currentUrl, redirectChain, response.status, "Zu viele Redirects", started);
       }
       continue;
     }
@@ -132,13 +156,42 @@ export async function safeFetch(rawUrl: string, options: SafeFetchOptions = {}):
     const contentLength = contentLengthRaw ? parseInt(contentLengthRaw, 10) : NaN;
     if (Number.isFinite(contentLength) && contentLength > maxBytes) {
       response.body?.cancel().catch(() => undefined);
-      return finishError(rawUrl, currentUrl, redirectChain, response.status, `Content zu groß (${contentLength} B)`);
+      await dispatcher.close();
+      return finishError(rawUrl, currentUrl, redirectChain, response.status, `Content zu groß (${contentLength} B)`, started);
+    }
+    const headerBytes = Array.from(response.headers.entries()).reduce(
+      (total, [key, value]) => total + Buffer.byteLength(key) + Buffer.byteLength(value) + 4,
+      0,
+    );
+    if (headerBytes > maxHeaderBytes) {
+      response.body?.cancel().catch(() => undefined);
+      await dispatcher.close();
+      return finishError(rawUrl, currentUrl, redirectChain, response.status, "Response-Header zu groß", started);
+    }
+    const contentType = response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() ?? "";
+    if (method !== "HEAD" && !allowedContentTypes.includes(contentType)) {
+      response.body?.cancel().catch(() => undefined);
+      await dispatcher.close();
+      return finishError(
+        rawUrl,
+        currentUrl,
+        redirectChain,
+        response.status,
+        `Nicht erlaubter Content-Type: ${contentType || "fehlend"}`,
+        started,
+      );
+    }
+    const contentEncoding = response.headers.get("content-encoding")?.trim().toLowerCase();
+    if (contentEncoding && contentEncoding !== "identity") {
+      response.body?.cancel().catch(() => undefined);
+      await dispatcher.close();
+      return finishError(rawUrl, currentUrl, redirectChain, response.status, "Komprimierte Antwort abgelehnt", started);
     }
 
     // Body streaming lesen mit hartem Cap
     let bytesRead = 0;
     let bodyText = "";
-    if (method === "GET" && response.body) {
+    if (method !== "HEAD" && response.body) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8", { fatal: false });
       try {
@@ -149,16 +202,15 @@ export async function safeFetch(rawUrl: string, options: SafeFetchOptions = {}):
           bytesRead += value.byteLength;
           if (bytesRead > maxBytes) {
             reader.cancel().catch(() => undefined);
-            bodyText += decoder.decode(value.slice(0, Math.max(0, maxBytes - (bytesRead - value.byteLength))), {
-              stream: false,
-            });
-            break;
+            await dispatcher.close();
+            return finishError(rawUrl, currentUrl, redirectChain, response.status, "Content zu groß", started);
           }
           bodyText += decoder.decode(value, { stream: true });
         }
       } catch (err) {
         reader.releaseLock();
-        return finishError(rawUrl, currentUrl, redirectChain, response.status, `Body-Fehler: ${(err as Error).message}`);
+        await dispatcher.close();
+        return finishError(rawUrl, currentUrl, redirectChain, response.status, `Body-Fehler: ${(err as Error).message}`, started);
       }
       try {
         bodyText += decoder.decode();
@@ -171,6 +223,7 @@ export async function safeFetch(rawUrl: string, options: SafeFetchOptions = {}):
     response.headers.forEach((value, key) => {
       headers[key.toLowerCase()] = value;
     });
+    await dispatcher.close();
 
     return {
       ok: response.status >= 200 && response.status < 400,
@@ -185,7 +238,34 @@ export async function safeFetch(rawUrl: string, options: SafeFetchOptions = {}):
     };
   }
 
-  return finishError(rawUrl, currentUrl, redirectChain, 0, "Redirect-Limit überschritten");
+  return finishError(rawUrl, currentUrl, redirectChain, 0, "Redirect-Limit überschritten", started);
+}
+
+function pinnedDispatcher(rawUrl: string, resolvedIp: string): Agent {
+  const target = pinnedConnectionTarget(rawUrl, resolvedIp);
+  const connect = buildConnector({});
+  return new Agent({
+    connect(options, callback) {
+      connect(
+        {
+          ...options,
+          ...target,
+        },
+        callback,
+      );
+    },
+  });
+}
+
+export function pinnedConnectionTarget(
+  rawUrl: string,
+  resolvedIp: string,
+): { hostname: string; host: string; servername: string } {
+  return {
+    hostname: resolvedIp,
+    host: resolvedIp,
+    servername: new URL(rawUrl).hostname,
+  };
 }
 
 function finishError(
@@ -193,7 +273,8 @@ function finishError(
   finalUrl: string,
   redirectChain: string[],
   status: number,
-  error: string
+  error: string,
+  startedAt = Date.now(),
 ): SafeFetchResult {
   return {
     ok: false,
@@ -204,7 +285,7 @@ function finishError(
     headers: {},
     bodyText: "",
     bytesRead: 0,
-    latencyMs: 0,
+    latencyMs: Date.now() - startedAt,
     error,
   };
 }

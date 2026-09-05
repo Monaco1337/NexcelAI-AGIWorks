@@ -8,11 +8,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analysisRepo } from "@/lib/diagnostics/db";
 import { runAnalysisAsync } from "@/lib/diagnostics/services/analysisOrchestrator";
+import { guardPublicApi } from "@/lib/security/publicApiGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const blocked = await guardPublicApi(req, "diagnostics-start", {
+    windowMs: 60 * 60_000,
+    max: 5,
+  });
+  if (blocked) return blocked;
   const analysisId = req.nextUrl.searchParams.get("analysisId");
   if (!analysisId)
     return NextResponse.json({ error: "Missing analysisId" }, { status: 400 });

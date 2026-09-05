@@ -29,6 +29,31 @@ export async function middleware(request: NextRequest) {
   const path = url.pathname;
   const host = normalizeHost(request.headers.get("host"));
   const isDevHost = isLocalOrPreviewHost(host);
+  const nonce = btoa(crypto.randomUUID());
+  const csp = contentSecurityPolicy(nonce);
+  const forwardedHeaders = new Headers(request.headers);
+  forwardedHeaders.set("x-nonce", nonce);
+  forwardedHeaders.set("content-security-policy", csp);
+
+  // Browser session cookies protect admin APIs only when the mutation comes
+  // from the same origin. Bearer-authenticated cron routes live outside this
+  // prefix and are unaffected.
+  if (
+    path.startsWith("/api/admin/") &&
+    !["GET", "HEAD", "OPTIONS"].includes(request.method)
+  ) {
+    const origin = request.headers.get("origin");
+    const fetchSite = request.headers.get("sec-fetch-site");
+    if (
+      fetchSite === "cross-site" ||
+      (origin && !isSameOrigin(origin, request.nextUrl.origin))
+    ) {
+      return secure(
+        NextResponse.json({ error: "cross_origin_request_blocked" }, { status: 403 }),
+        csp,
+      );
+    }
+  }
 
   // ── Cross-domain URL ownership (hard 301) ────────────────────────────────
   // Canonical tags alone do NOT protect against cross-domain duplicates. The
@@ -39,7 +64,7 @@ export async function middleware(request: NextRequest) {
     const target = `${CANONICAL_DOMAIN.agiworks}${cleanAgiPath(path)}`;
     const dest = new URL(target);
     dest.search = url.search;
-    return NextResponse.redirect(dest, 301);
+    return secure(NextResponse.redirect(dest, 301), csp);
   }
 
   // Host-based brand rewrite: agiworks.de/* serves /agiworks/* internally,
@@ -51,15 +76,15 @@ export async function middleware(request: NextRequest) {
   ) {
     const target = url.clone();
     target.pathname = path === "/" ? "/agiworks" : `/agiworks${path}`;
-    const res = NextResponse.rewrite(target);
+    const res = NextResponse.rewrite(target, { request: { headers: forwardedHeaders } });
     res.headers.set("x-active-brand", "agiworks");
-    return res;
+    return secure(res, csp);
   }
 
   if (path.startsWith("/demo") && !path.startsWith("/demo-anfordern")) {
     const session = await verifySession();
     if (!session) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return secure(NextResponse.redirect(new URL("/login", request.url)), csp);
     }
   }
 
@@ -67,17 +92,51 @@ export async function middleware(request: NextRequest) {
     const session = await verifySession();
 
     if (path === "/admin/login" && session && session.role === "admin") {
-      return NextResponse.redirect(new URL("/admin", request.url));
+      return secure(NextResponse.redirect(new URL("/admin", request.url)), csp);
     }
 
     if (path !== "/admin/login") {
       if (!session || session.role !== "admin") {
-        return NextResponse.redirect(new URL("/admin/login", request.url));
+        return secure(NextResponse.redirect(new URL("/admin/login", request.url)), csp);
       }
     }
   }
 
-  return NextResponse.next();
+  return secure(NextResponse.next({ request: { headers: forwardedHeaders } }), csp);
+}
+
+function isSameOrigin(origin: string, expected: string): boolean {
+  try {
+    return new URL(origin).origin === expected;
+  } catch {
+    return false;
+  }
+}
+
+function contentSecurityPolicy(nonce: string): string {
+  const developmentEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${developmentEval}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://images.unsplash.com",
+    "font-src 'self' data:",
+    "connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co wss:",
+    "media-src 'self' blob:",
+    "worker-src 'self' blob:",
+    "frame-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+    "manifest-src 'self'",
+    process.env.NODE_ENV === "production" ? "upgrade-insecure-requests" : "",
+  ].filter(Boolean).join("; ");
+}
+
+function secure(response: NextResponse, csp: string): NextResponse {
+  response.headers.set("Content-Security-Policy", csp);
+  return response;
 }
 
 export const config = {
