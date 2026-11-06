@@ -8,9 +8,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useBrand } from "@/contexts/BrandContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeading } from "@/components/sections/SystemsGrid";
 import { STATIC_REFERENCES, type ReferenceEntry } from "@/lib/references-data";
+import NexcelReferencesCarousel from "@/components/sections/NexcelReferencesCarousel";
 
 // ─── Status Badge ────────────────────────────────────────────────────────────
 const STATUS_LABEL: Record<string, string> = {
@@ -560,10 +563,243 @@ function MobileReferenceSlider({
   );
 }
 
+
+function AgiDesktopReferenceSlider({
+  references,
+  onSelect,
+}: {
+  references: ReferenceEntry[];
+  onSelect: (project: ReferenceEntry) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const [firstVisible, setFirstVisible] = useState(0);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+
+  const syncScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+
+    const first = el.children.item(0) as HTMLElement | null;
+    const second = el.children.item(1) as HTMLElement | null;
+
+    const step =
+      first && second
+        ? second.offsetLeft - first.offsetLeft
+        : 1;
+
+    const max = Math.max(
+      0,
+      el.scrollWidth - el.clientWidth
+    );
+
+    const left = Math.max(
+      0,
+      Math.min(el.scrollLeft, max)
+    );
+
+    const index = Math.round(
+      left / Math.max(1, step)
+    );
+
+    setFirstVisible(
+      Math.min(
+        Math.max(0, index),
+        Math.max(0, references.length - 3)
+      )
+    );
+
+    setCanPrev(left > 3);
+    setCanNext(left < max - 3);
+  }, [references.length]);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+
+    el.scrollLeft = 0;
+    setFirstVisible(0);
+
+    const frame = requestAnimationFrame(syncScroll);
+    const observer = new ResizeObserver(syncScroll);
+
+    observer.observe(el);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [references.length, syncScroll]);
+
+  function move(direction: number) {
+    const el = trackRef.current;
+    if (!el) return;
+
+    const first = el.children.item(0) as HTMLElement | null;
+    const second = el.children.item(1) as HTMLElement | null;
+
+    if (!first) return;
+
+    const step = second
+      ? second.offsetLeft - first.offsetLeft
+      : first.offsetWidth + 20;
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    // Drei Karten pro Klick weiterblättern.
+    el.scrollBy({
+      left: direction * step * 3,
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+  }
+
+  const total = references.length;
+
+  const rangeStart = total > 0
+    ? firstVisible + 1
+    : 0;
+
+  const rangeEnd = Math.min(
+    total,
+    firstVisible + 3
+  );
+
+  return (
+    <div className="mt-12 hidden px-5 sm:px-8 lg:block">
+
+      {/* Dezente Steuerung oberhalb der Karten */}
+
+      <div className="mb-5 flex items-center justify-end gap-4">
+
+        <span
+          aria-live="polite"
+          className="text-[12px] tabular-nums tracking-[0.12em] text-white/45"
+        >
+          {String(rangeStart).padStart(2, "0")}
+          {"–"}
+          {String(rangeEnd).padStart(2, "0")}
+          {" / "}
+          {String(total).padStart(2, "0")}
+        </span>
+
+        <div className="flex items-center gap-2">
+
+          <button
+            type="button"
+            onClick={() => move(-1)}
+            disabled={!canPrev}
+            aria-label="Vorherige Referenzprojekte"
+            aria-controls="agi-references-track"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/85 transition-colors hover:border-sky-300/40 hover:bg-white/[0.10] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:opacity-25"
+          >
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="m15 18-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => move(1)}
+            disabled={!canNext}
+            aria-label="Nächste Referenzprojekte"
+            aria-controls="agi-references-track"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/85 transition-colors hover:border-sky-300/40 hover:bg-white/[0.10] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:opacity-25"
+          >
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="m9 18 6-6-6-6"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+        </div>
+      </div>
+
+      {/* Originalkarten im horizontalen Slider */}
+
+      <div
+        id="agi-references-track"
+        ref={trackRef}
+        onScroll={syncScroll}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+
+          if (event.key === "ArrowRight") {
+            event.preventDefault();
+            move(1);
+          }
+
+          if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            move(-1);
+          }
+        }}
+        tabIndex={0}
+        role="region"
+        aria-roledescription="Karussell"
+        aria-label="AGI Works Referenzprojekte"
+        className="flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 motion-reduce:scroll-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-300"
+      >
+
+        {references.map((project, index) => (
+          <div
+            key={project.id}
+            className="min-w-0 shrink-0 snap-start"
+            style={{
+              flex: "0 0 calc((100% - 40px) / 3)",
+            }}
+          >
+            <ReferenceCard
+              project={project}
+              index={index}
+              onClick={() => onSelect(project)}
+            />
+          </div>
+        ))}
+
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ProjectsShowcase() {
   const [references, setReferences] = useState<ReferenceEntry[]>(STATIC_REFERENCES.filter((r) => r.isPublished));
   const [activeRef, setActiveRef] = useState<ReferenceEntry | null>(null);
+
+  const brand = useBrand();
+  const pathname = usePathname();
+
+  const isAgiHomepage =
+    brand.id === "agiworks" &&
+    (pathname === "/" ||
+      pathname === "/agiworks" ||
+      pathname === "/agiworks/");
 
   useEffect(() => {
     fetch("/api/references")
@@ -578,7 +814,7 @@ export default function ProjectsShowcase() {
 
   return (
     <>
-      <section id="projekte" className="relative w-full scroll-mt-[108px] py-20 sm:py-28 lg:py-36">
+      <section id="projekte" className="relative w-full scroll-mt-[108px] py-20 sm:py-28 lg:py-36" data-nxl-ref-section="true">
         <div className="mx-auto w-full max-w-[1280px]">
           <div className="px-5 sm:px-8">
             <SectionHeading
@@ -593,17 +829,25 @@ export default function ProjectsShowcase() {
             <MobileReferenceSlider references={references} onSelect={setActiveRef} />
           </div>
 
-          {/* Desktop: einheitliches 3-Spalten-Grid — alle Karten gleich groß */}
-          <div className="mt-12 hidden px-5 sm:px-8 lg:grid lg:grid-cols-3 lg:gap-5">
-            {references.map((project, i) => (
-              <ReferenceCard
-                key={project.id}
-                project={project}
-                index={i}
-                onClick={() => setActiveRef(project)}
-              />
-            ))}
-          </div>
+          {/* AGI Startseite: Slider mit unveränderten Originalkarten */}
+          {isAgiHomepage ? (
+            <AgiDesktopReferenceSlider
+              references={references}
+              onSelect={setActiveRef}
+            />
+          ) : (
+            /* Sonstige Seiten und NEXCEL: originales Raster */
+            <div className="mt-12 hidden px-5 sm:px-8 lg:grid lg:grid-cols-3 lg:gap-5" data-nxl-ref-track="true">
+              {references.map((project, i) => (
+                <ReferenceCard
+                  key={project.id}
+                  project={project}
+                  index={i}
+                  onClick={() => setActiveRef(project)}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Bottom CTA */}
           <motion.div
@@ -625,7 +869,9 @@ export default function ProjectsShowcase() {
             </a>
           </motion.div>
         </div>
-      </section>
+
+<NexcelReferencesCarousel />
+</section>
 
       <AnimatePresence>
         {activeRef && (

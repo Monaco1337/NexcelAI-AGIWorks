@@ -6,7 +6,7 @@
  * what the user sees).
  */
 
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import { useBrand } from "@/contexts/BrandContext";
 import { getCanonicalDomain } from "@/config/seo/brands";
 import { breadcrumbSchema } from "@/lib/seo/jsonld";

@@ -6,6 +6,7 @@ import { BrandProvider } from "@/contexts/BrandContext";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import NavigationGate from "@/components/NavigationGate";
 import ClientOnly from "@/components/ClientOnly";
+import { SolutionUiEnhancer } from "@/components/nexcel/SolutionUiEnhancer";
 
 // Headline Font - Future-Premium
 // Optimiert für Performance: preload, display swap, subset optimization
@@ -299,6 +300,7 @@ export default function RootLayout({
           </ClientOnly>
           </BrandProvider>
         </ThemeProvider>
+              <SolutionUiEnhancer />
       </body>
     </html>
   );

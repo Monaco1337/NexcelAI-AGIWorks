@@ -1,3 +1,4 @@
+import NexcelLlmService from "@/components/sections/NexcelLlmService";
 import type { Metadata } from "next";
 import Footer from "@/components/Footer";
 import HubTemplate from "@/components/templates/HubTemplate";
@@ -32,6 +33,7 @@ export default function NexcelLoesungenHub() {
           items={items}
         />
       </div>
+      <NexcelLlmService kind="catalog" />
       <Footer />
     </div>
   );

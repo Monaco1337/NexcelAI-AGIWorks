@@ -1,178 +1,269 @@
-"use client";
 
-/**
- * NEXCEL AI / AGI WORKS · PricingSection
- *
- * „Transparente Orientierung. Keine Baukästen."
- * 6 Preiskorridore als hochwertige Karten. Preise sind Orientierung,
- * jedes System wird individuell kalkuliert. Anker: #preise.
- */
+"use client";
+// NXL_AGI_PRICING_EXPERIENCE_V4
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
-import { SectionHeading } from "@/components/sections/SystemsGrid";
+import styles from "./PricingSectionExperience.module.css";
 
-type Price = {
-  title: string;
+type CategoryId = "digital" | "process" | "platform";
+
+type Offer = {
+  name: string;
+  description: string;
   price: string;
-  suffix?: string;
-  note: string;
-  featured?: boolean;
+  note?: string;
 };
 
-/** Projektkorridore statt einzelner "ab"-Preise — realistischer Rahmen statt Einstiegspreis-Illusion. */
-const PRICES: Price[] = [
-  { title: "Premium-Websystem", price: "3.900–8.000 €", note: "Performance, Design und Conversion." },
-  { title: "Buchungssystem", price: "7.500–15.000 €", note: "Termine, Kunden und Abläufe digital." },
-  { title: "Lead-Funnel & CRM", price: "9.500–20.000 €", note: "Leads gewinnen und steuern." },
-  { title: "Unternehmenssystem", price: "15.000–35.000 €", note: "Prozesse zentral verbinden.", featured: true },
-  { title: "Individuelles ERP-System", price: "25.000–60.000 €", note: "Warenwirtschaft, Finanzen, Ressourcen." },
-  { title: "KI & Automatisierung", price: "ab 7.500 €", suffix: "zusätzlich", note: "Ergänzt jedes System." },
+type Category = {
+  id: CategoryId;
+  nav: string;
+  caption: string;
+  heading: string;
+  summary: string;
+  offers: readonly [Offer, Offer];
+};
+
+const CATEGORIES: readonly [Category, Category, Category] = [
+  {
+    id: "digital",
+    nav: "Web & Service",
+    caption: "DIGITALE ERLEBNISSE",
+    heading: "Ein Auftritt, der Vertrauen verdient.",
+    summary:
+      "Digitale Kontaktpunkte, die Menschen gerne nutzen und die sich sinnvoll in bestehende Abläufe einfügen.",
+    offers: [
+      {
+        name: "Premium-Websystem",
+        description: "Design, Performance und klare Nutzerführung.",
+        price: "3.900–8.000 €",
+      },
+      {
+        name: "Buchungssystem",
+        description: "Termine, Kunden und Buchungsprozesse digital.",
+        price: "7.500–15.000 €",
+      },
+    ],
+  },
+  {
+    id: "process",
+    nav: "Vertrieb & Prozesse",
+    caption: "WACHSTUM & ABLÄUFE",
+    heading: "Weniger Routine. Mehr Überblick.",
+    summary:
+      "Wiederkehrende Arbeit reduzieren, Informationen verbinden und Entscheidungen nachvollziehbarer machen.",
+    offers: [
+      {
+        name: "Lead-Funnel & CRM",
+        description: "Anfragen, Kontakte und Vertrieb zentral steuern.",
+        price: "9.500–20.000 €",
+      },
+      {
+        name: "Unternehmenssystem",
+        description: "Teams, Aufgaben und Datenflüsse verbinden.",
+        price: "15.000–35.000 €",
+      },
+    ],
+  },
+  {
+    id: "platform",
+    nav: "Plattformen & KI",
+    caption: "INDIVIDUELLE SYSTEME",
+    heading: "Komplexität gezielt beherrschen.",
+    summary:
+      "Für Vorhaben mit eigenen Datenmodellen, Integrationen und besonderen Anforderungen an Betrieb und Kontrolle.",
+    offers: [
+      {
+        name: "Individuelles ERP-System",
+        description: "Rollen, Daten, Warenwirtschaft und Integrationen.",
+        price: "25.000–60.000 €",
+      },
+      {
+        name: "KI & Automatisierung",
+        description:
+          "Kontrollierte KI-Unterstützung und automatisierte Abläufe.",
+        price: "ab 7.500 €",
+        note: "projektabhängig",
+      },
+    ],
+  },
 ];
 
-export default function PricingSection() {
+export default function PricingSection({
+  compact = false,
+}: {
+  compact?: boolean;
+} = {}) {
   const brand = useBrand();
-  const preiskalkulatorHref = resolveBrandNavHref("/preiskalkulator", brand.id);
-  const beratungHref = `${resolveBrandNavHref("/kontakt", brand.id)}?betreff=${encodeURIComponent(
-    "Beratung: Passendes System finden"
-  )}`;
+  const pathname = usePathname();
+  const isAgi = brand.id === "agiworks";
+
+  const [chosen, setChosen] = useState<CategoryId | null>(null);
+  const activeId = chosen ?? (isAgi ? "digital" : "process");
+
+  const current =
+    CATEGORIES.find((group) => group.id === activeId) ??
+    CATEGORIES[0];
+
+  const displayGroups = isAgi
+    ? CATEGORIES
+    : [CATEGORIES[1], CATEGORIES[2], CATEGORIES[0]];
+
+  const rawContact = resolveBrandNavHref("/kontakt", brand.id);
+
+  const prefix =
+    isAgi &&
+    pathname?.startsWith("/agiworks") &&
+    rawContact.startsWith("/") &&
+    !rawContact.startsWith("/agiworks/")
+      ? "/agiworks"
+      : "";
+
+  const contactPath = `${prefix}${rawContact}`;
+
+  const contactHref =
+    `${contactPath}${contactPath.includes("?") ? "&" : "?"}` +
+    `betreff=${encodeURIComponent("Projekt und Preisorientierung besprechen")}`;
+
+  const calculatorHref = resolveBrandNavHref(
+    "/preiskalkulator",
+    brand.id
+  );
 
   return (
-    <section id="preise" className="relative w-full scroll-mt-[108px] py-20 sm:py-28 lg:py-36">
-      <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8">
-        <SectionHeading
-          eyebrow="Preise"
-          title="Transparente Orientierung. Keine Baukästen."
-          subtitle="Jedes System wird individuell geplant. Die Preise dienen als realistische Orientierung."
-        />
+    <section
+      id="preise"
+      aria-labelledby="pricing-experience-title"
+      className={`${styles.root} ${compact ? styles.compact : ""}`}
+    >
+      <div className={styles.shell}>
+        <header className={styles.intro}>
+          <div>
+            <p className={styles.eyebrow}>
+              INVESTITION MIT KLAREM RAHMEN
+            </p>
 
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {PRICES.map((p, i) => (
-            <motion.div
-              key={p.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-8%" }}
-              transition={{ duration: 0.5, delay: (i % 3) * 0.07, ease: [0.22, 1, 0.36, 1] }}
-              className="group relative flex flex-col overflow-hidden rounded-2xl p-5"
-              style={{
-                background: p.featured
-                  ? "linear-gradient(180deg, var(--brand-glow-mid) 0%, rgba(255,255,255,0.02) 100%)"
-                  : "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.012) 100%)",
-                border: p.featured
-                  ? "1px solid var(--brand-line-mid)"
-                  : "1px solid var(--brand-card-border)",
-                boxShadow: p.featured
-                  ? "0 24px 60px var(--brand-card-glow), inset 0 1px 0 rgba(255,255,255,0.08)"
-                  : "inset 0 1px 0 rgba(255,255,255,0.05)",
-              }}
-            >
-              {p.featured && (
-                <span
-                  className="mb-3 w-fit rounded-full px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-[0.16em] text-white"
-                  style={{
-                    background: "color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.04))",
-                    border: "1px solid color-mix(in srgb, var(--accent) 45%, transparent)",
-                  }}
-                >
-                  Häufig gewählt
-                </span>
-              )}
-              <h3
-                className="text-[15px] font-medium text-white"
-                style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
+            <h2 id="pricing-experience-title" className={styles.title}>
+              {isAgi
+                ? "Individuell entwickelt."
+                : "Wirkung vor Aufwand."}
+
+              <span>
+                {isAgi
+                  ? "Nachvollziehbar kalkuliert."
+                  : "Klarheit vor Investition."}
+              </span>
+            </h2>
+          </div>
+
+          <p className={styles.lead}>
+            {isAgi
+              ? "Maßgeschneiderte Software braucht eine realistische Planung. Wählen Sie einen Projektbereich und entdecken Sie typische Investitionsrahmen."
+              : "Wir bewerten zuerst den tatsächlichen Nutzen. Wählen Sie einen Projektbereich und entdecken Sie typische Investitionsrahmen – ohne starre Pakete."}
+          </p>
+        </header>
+
+        <div className={styles.experience}>
+          <div
+            className={styles.selector}
+            role="group"
+            aria-label="Projektbereich auswählen"
+          >
+            {displayGroups.map((group) => (
+              <button
+                key={group.id}
+                type="button"
+                className={`${styles.categoryButton} ${
+                  activeId === group.id ? styles.categoryActive : ""
+                }`}
+                onClick={() => setChosen(group.id)}
+                aria-pressed={activeId === group.id}
+                aria-controls="pricing-category-detail"
               >
-                {p.title}
-              </h3>
-              <p className="mt-1 text-[12.5px] leading-[1.5] text-white/50">{p.note}</p>
-
-              <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span>{group.nav}</span>
                 <span
-                  className="text-[1.2rem] font-semibold sm:text-[1.32rem]"
-                  style={{
-                    fontFamily: "var(--font-headline), system-ui, sans-serif",
-                    background: "var(--brand-headline-gradient)",
-                    WebkitBackgroundClip: "text",
-                    backgroundClip: "text",
-                    color: "transparent",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
-                  {p.price}
+                  aria-hidden="true"
+                  className={styles.categoryIndicator}
+                />
+              </button>
+            ))}
+          </div>
+
+          <div
+            id="pricing-category-detail"
+            className={styles.stage}
+            role="region"
+            aria-label={`Preisorientierung: ${current.nav}`}
+          >
+            <div key={current.id} className={styles.stageInner}>
+              <div className={styles.story}>
+                <p className={styles.stageCaption}>
+                  {current.caption}
+                </p>
+
+                <h3>{current.heading}</h3>
+                <p>{current.summary}</p>
+
+                <span className={styles.storyTag}>
+                  INDIVIDUELLER PROJEKTUMFANG
                 </span>
-                {p.suffix && (
-                  <span className="text-[12px] text-white/45">{p.suffix}</span>
-                )}
               </div>
 
-              <Link
-                href={preiskalkulatorHref}
-                prefetch
-                className="group/pl mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium transition-colors"
-                style={{ color: "var(--accent)" }}
-              >
-                Projektkorridor berechnen
-                <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden className="transition-transform duration-300 group-hover/pl:translate-x-0.5">
-                  <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <div className={styles.offerGrid}>
+                {current.offers.map((offer) => (
+                  <div key={offer.name} className={styles.offer}>
+                    <div>
+                      <h4>{offer.name}</h4>
+                      <p className={styles.offerDescription}>
+                        {offer.description}
+                      </p>
+                    </div>
+
+                    <div className={styles.offerCost}>
+                      <p>INVESTITIONSRAHMEN</p>
+                      <strong>{offer.price}</strong>
+
+                      {offer.note && (
+                        <span>{offer.note}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.actionBar}>
+            <p>
+              Keine Festpreis-Pakete. Die tatsächliche Kalkulation
+              richtet sich nach Funktionen, Daten, Schnittstellen
+              und Betrieb.
+            </p>
+
+            <div className={styles.actionLinks}>
+              <Link href={calculatorHref} className={styles.secondary}>
+                Preisrahmen prüfen
+                <span aria-hidden="true">↗</span>
               </Link>
-            </motion.div>
-          ))}
+
+              <Link href={contactHref} className={styles.primary}>
+                {isAgi
+                  ? "Softwareprojekt besprechen"
+                  : "KI-Projekt besprechen"}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
         </div>
 
-        {/* ── Beratungs-CTA · für Unentschlossene ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-8%" }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mt-5 flex flex-col items-start gap-6 overflow-hidden rounded-2xl p-7 sm:p-9 md:flex-row md:items-center md:justify-between"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 100%)",
-            border: "1px solid var(--brand-card-border)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
-          }}
-        >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-60"
-            style={{
-              background:
-                "radial-gradient(70% 120% at 0% 0%, var(--brand-card-glow), transparent 60%)",
-            }}
-          />
-          <div className="relative max-w-2xl">
-            <h3
-              className="text-[1.15rem] leading-snug text-white sm:text-[1.35rem]"
-              style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300 }}
-            >
-              Sie wissen nicht, welches System zu Ihnen passt?
-            </h3>
-            <p className="mt-2.5 text-[13.5px] leading-[1.65] text-white/55">
-              Kein Problem. Beschreiben Sie uns kurz Ihr Unternehmen und woran es
-              hakt — wir melden uns zeitnah mit einer klaren Empfehlung, welches
-              System für Sie wirklich Sinn ergibt. Unverbindlich und ehrlich.
-            </p>
-          </div>
-          <Link
-            href={beratungHref}
-            className="group relative inline-flex shrink-0 items-center gap-2.5 rounded-full px-7 py-3.5 text-[13px] font-semibold text-white transition-all hover:gap-3.5"
-            style={{
-              background: "color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.03))",
-              border: "1px solid color-mix(in srgb, var(--accent) 48%, transparent)",
-              backdropFilter: "blur(10px)",
-              boxShadow: "0 4px 20px color-mix(in srgb, var(--accent) 20%, transparent)",
-            }}
-          >
-            Kostenlos beraten lassen
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-        </motion.div>
+        <p className={styles.disclaimer}>
+          Unverbindliche Preisorientierung, kein Angebot.
+          Steuern und gegebenenfalls anfallende Drittanbieter-Kosten
+          werden im individuellen Angebot ausgewiesen.
+        </p>
       </div>
     </section>
   );

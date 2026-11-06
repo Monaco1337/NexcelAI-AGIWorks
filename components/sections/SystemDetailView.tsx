@@ -10,7 +10,7 @@
 
 import Footer from "@/components/Footer";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";

@@ -1,4 +1,5 @@
 "use client";
+import "../homeflow.css";
 
 import { useTheme } from "@/contexts/ThemeContext";
 import dynamic from "next/dynamic";
@@ -20,17 +21,17 @@ import { organizationSchema, webSiteSchema } from "@/lib/seo/jsonld";
  *   → FoundersCta → Footer
  */
 
-const HowItWorksSection = dynamic(
-  () => import("@/components/sections/HowItWorksSection"),
+const AgiCoreServices = dynamic(
+  () => import("@/components/sections/AgiCoreServices"),
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
 
-const ProblemSolutionSection = dynamic(
-  () => import("@/components/sections/ProblemSolutionSection"),
+const AgiWorkflowPremium = dynamic(
+  () => import("@/components/sections/AgiWorkflowPremium"),
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
 
-const SystemsGrid = dynamic(() => import("@/components/sections/SystemsGrid"), {
+const AgiSystemsCarousel = dynamic(() => import("@/components/sections/AgiSystemsCarousel"), {
   ssr: true,
   loading: () => <div className="h-64 bg-transparent" />,
 });
@@ -40,17 +41,17 @@ const ProjectsShowcase = dynamic(
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
 
-const WhyUsSection = dynamic(() => import("@/components/sections/WhyUsSection"), {
+const AgiWhyUsEditorial = dynamic(() => import("@/components/sections/AgiWhyUsEditorial"), {
   ssr: true,
   loading: () => <div className="h-64 bg-transparent" />,
 });
 
 const PricingSection = dynamic(
-  () => import("@/components/sections/PricingSection"),
+  () => import("@/components/sections/AgiPricingEditorial"),
   { ssr: true, loading: () => <div className="h-64 bg-transparent" /> }
 );
 
-const FoundersCta = dynamic(() => import("@/components/sections/FoundersCta"), {
+const FoundersCta = dynamic(() => import("@/components/sections/AgiFoundersPremium"), {
   ssr: true,
   loading: () => <div className="h-64 bg-transparent" />,
 });
@@ -60,9 +61,9 @@ export default function AgiWorksPage() {
 
   return (
     <main
-      className="ds-app relative min-h-screen overflow-x-hidden"
+      className={`ds-app homeflow-main homeflow--agiworks ${theme === "dark" ? "hf-dark" : "hf-light"} relative min-h-screen overflow-x-hidden`}
       style={{
-        background: "transparent",
+        background: theme === "dark" ? "var(--homeflow-background, transparent)" : "transparent",
         color: theme === "dark" ? "#FFFFFF" : "#0C0F1A",
         position: "relative",
         zIndex: 10,
@@ -73,30 +74,47 @@ export default function AgiWorksPage() {
       <SectionErrorBoundary sectionName="Premium Hero">
         <PremiumHero />
       </SectionErrorBoundary>
+      <div className="homeflow-logo">
       <SectionErrorBoundary sectionName="Referenzleiste">
         <ReferenceBar />
       </SectionErrorBoundary>
-      <SectionErrorBoundary sectionName="Wie funktioniert das">
-        <HowItWorksSection />
+      </div>
+
+      <div className="homeflow-segment">
+      <SectionErrorBoundary sectionName="AGI Kernleistungen">
+        <AgiCoreServices />
       </SectionErrorBoundary>
-      <SectionErrorBoundary sectionName="Problem / Lösung">
-        <ProblemSolutionSection />
+      </div>
+      <div className="homeflow-segment">
+      <SectionErrorBoundary sectionName="AGI Premium Workflow">
+        <AgiWorkflowPremium />
       </SectionErrorBoundary>
+      </div>
+      <div className="homeflow-segment">
       <SectionErrorBoundary sectionName="Systeme">
-        <SystemsGrid />
+        <AgiSystemsCarousel />
       </SectionErrorBoundary>
+      </div>
+      <div className="homeflow-segment">
       <SectionErrorBoundary sectionName="Projekte">
         <ProjectsShowcase />
       </SectionErrorBoundary>
+      </div>
+      <div className="homeflow-segment">
       <SectionErrorBoundary sectionName="Warum wir">
-        <WhyUsSection />
+        <AgiWhyUsEditorial />
       </SectionErrorBoundary>
+      </div>
+      <div className="homeflow-segment">
       <SectionErrorBoundary sectionName="Preise">
         <PricingSection />
       </SectionErrorBoundary>
+      </div>
+      <div className="homeflow-segment">
       <SectionErrorBoundary sectionName="Gründerkontakt">
         <FoundersCta />
       </SectionErrorBoundary>
+      </div>
       <Footer />
     </main>
   );

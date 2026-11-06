@@ -1,0 +1,180 @@
+/* NXL_CONTACT_PREMIUM_V1 - scoped to NEXCEL /kontakt only */
+.nxl-contact-premium {
+  --nxl-c-accent: #b995f0;
+  --nxl-c-text: #f7f3ff;
+  --nxl-c-muted: rgba(229, 220, 245, .69);
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  color: var(--nxl-c-text);
+  background:
+    radial-gradient(ellipse 57% 35% at 53% 4%, rgba(112, 74, 179, .13), transparent 85%),
+    radial-gradient(ellipse 36% 45% at 100% 52%, rgba(86, 52, 139, .10), transparent 85%),
+    linear-gradient(180deg, #090a12 0%, #0c0a17 58%, #0a0c13 100%);
+}
+
+/* Let the page background flow behind the actual section canvas. */
+.nxl-contact-premium :is(main,section):has(form) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Editorial introduction: clear title and readable supporting copy. */
+.nxl-contact-premium h1 {
+  font-size: clamp(2.7rem, 4.5vw, 4.5rem) !important;
+  line-height: 1.10 !important;
+  letter-spacing: -.055em !important;
+  font-weight: 450 !important;
+  text-wrap: balance;
+}
+.nxl-contact-premium h1 + p {
+  max-width: 60ch;
+  margin-inline: auto;
+  line-height: 1.75 !important;
+  color: var(--nxl-c-muted) !important;
+}
+
+/* Preserve the original form and validation handlers. Change presentation only. */
+.nxl-contact-premium [data-nxl-contact-form="true"] {
+  position: relative;
+  border: 1px solid rgba(192, 160, 232, .17) !important;
+  border-radius: 27px !important;
+  background: linear-gradient(145deg, rgba(28, 23, 44, .74), rgba(13, 13, 23, .97)) !important;
+  box-shadow: 0 28px 74px rgba(0, 0, 0, .18), inset 0 1px rgba(255,255,255,.03);
+}
+.nxl-contact-premium form {
+  accent-color: #b995f0;
+}
+.nxl-contact-premium form label,
+.nxl-contact-premium form [data-label] {
+  color: rgba(244, 235, 255, .78) !important;
+  letter-spacing: .11em;
+}
+.nxl-contact-premium form :is(input:not([type="checkbox"]),textarea,select) {
+  color: #f7f2ff !important;
+  background: rgba(255, 255, 255, .045) !important;
+  border: 1px solid rgba(220, 202, 244, .18) !important;
+  border-radius: 13px !important;
+  outline: none;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.12);
+  transition: background-color .18s ease, border-color .18s ease,
+              box-shadow .18s ease;
+}
+.nxl-contact-premium form :is(input:not([type="checkbox"]),textarea,select):hover {
+  border-color: rgba(205, 170, 247, .34) !important;
+}
+.nxl-contact-premium form :is(input:not([type="checkbox"]),textarea,select):focus-visible {
+  background: rgba(255, 255, 255, .062) !important;
+  border-color: rgba(190, 151, 244, .73) !important;
+  box-shadow: 0 0 0 3px rgba(171, 126, 232, .16) !important;
+}
+.nxl-contact-premium form :is(input,textarea)::placeholder {
+  color: rgba(228, 217, 241, .44) !important;
+  opacity: 1;
+}
+.nxl-contact-premium form :is(input,textarea,select):-webkit-autofill {
+  -webkit-text-fill-color: #f7f2ff !important;
+  transition: background-color 9999s ease-out;
+}
+.nxl-contact-premium form textarea { line-height: 1.7; resize: vertical; }
+.nxl-contact-premium form input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.nxl-contact-premium form a { text-underline-offset: 3px; }
+.nxl-contact-premium form button[type="submit"]:not(:disabled) {
+  min-height: 53px;
+  color: #fff !important;
+  border: 1px solid rgba(199, 165, 248, .57) !important;
+  background: linear-gradient(116deg, rgba(125, 82, 185, .80), rgba(89, 55, 144, .91)) !important;
+  box-shadow: 0 12px 30px rgba(112, 72, 181, .20);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.nxl-contact-premium form button[type="submit"]:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(112, 72, 181, .25);
+}
+.nxl-contact-premium form button[type="submit"]:focus-visible {
+  outline: 2px solid #d7b9ff;
+  outline-offset: 3px;
+}
+.nxl-contact-premium form button[type="submit"]:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+}
+
+/* A compact contact panel, not a second form-height empty column. */
+.nxl-contact-premium [data-nxl-contact-grid="true"] {
+  align-items: start !important;
+}
+.nxl-contact-premium [data-nxl-contact-aside="true"] {
+  position: relative;
+  height: fit-content !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  align-self: start !important;
+  border: 1px solid rgba(190, 153, 230, .19) !important;
+  border-radius: 27px !important;
+  background:
+    radial-gradient(ellipse 88% 42% at 100% 0%, rgba(129, 87, 183, .11), transparent 83%),
+    linear-gradient(160deg, rgba(30, 24, 45, .88), rgba(13, 13, 23, .96)) !important;
+  box-shadow: 0 26px 68px rgba(0, 0, 0, .15), inset 0 1px rgba(255,255,255,.035);
+}
+.nxl-contact-premium [data-nxl-contact-aside="true"] :is(h2,h3) {
+  font-weight: 450 !important;
+  letter-spacing: -.035em !important;
+  line-height: 1.25 !important;
+  color: #f7f2ff !important;
+}
+.nxl-contact-premium [data-nxl-contact-aside="true"] :is(a[href^="mailto:"],a[href^="tel:"]) {
+  color: #f1e9ff !important;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.nxl-contact-premium [data-nxl-contact-aside="true"] :is(a[href^="mailto:"],a[href^="tel:"]):hover {
+  color: #cdaaff !important;
+}
+.nxl-contact-premium [data-nxl-contact-aside="true"] :is(a,button):focus-visible {
+  outline: 2px solid #d7b9ff;
+  outline-offset: 3px;
+}
+
+/* Desktop: keep contact details accessible while the longer form scrolls. */
+@media (min-width: 1024px) {
+  .nxl-contact-premium [data-nxl-contact-grid="true"] {
+    grid-template-columns: minmax(0, 1.47fr) minmax(285px, .73fr) !important;
+    gap: clamp(24px, 3.2vw, 42px) !important;
+  }
+  .nxl-contact-premium [data-nxl-contact-aside="true"] {
+    position: sticky;
+    top: 118px;
+  }
+}
+@media (max-width: 1023px) {
+  .nxl-contact-premium [data-nxl-contact-grid="true"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+  }
+  .nxl-contact-premium [data-nxl-contact-aside="true"] {
+    position: static;
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .nxl-contact-premium h1 { font-size: clamp(2.4rem, 10vw, 3.2rem) !important; }
+  .nxl-contact-premium [data-nxl-contact-form="true"],
+  .nxl-contact-premium [data-nxl-contact-aside="true"] {
+    border-radius: 21px !important;
+  }
+  .nxl-contact-premium form :is(input:not([type="checkbox"]),select,textarea) {
+    font-size: 16px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nxl-contact-premium form :is(input,textarea,select,button) {
+    transition: none !important;
+    transform: none !important;
+  }
+}

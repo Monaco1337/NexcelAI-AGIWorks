@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
+import AgiClosingCta from "@/components/sections/AgiClosingCta";
 import { usePathname } from "next/navigation";
 import { useBrand } from "@/contexts/BrandContext";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
@@ -78,6 +79,19 @@ const SOCIAL_LINKS_BY_BRAND: Record<string, { name: string; href: string; icon: 
 export default function Footer() {
   const pathname = usePathname();
   const brand = useBrand();
+
+  const isAgiHomepage =
+    brand.id === "agiworks" &&
+    (
+      pathname === "/" ||
+      pathname === "/agiworks" ||
+      pathname === "/agiworks/"
+    );
+  const isAgiWorks = brand.id === "agiworks";
+  const agiPrefix =
+    isAgiWorks && pathname?.startsWith("/agiworks")
+      ? "/agiworks"
+      : "";
   const { footer } = brand;
   const accentColor = brand.theme.accentPrimary;
   const socialLinks = SOCIAL_LINKS_BY_BRAND[brand.id] ?? SOCIAL_LINKS_BY_BRAND.nexcel;
@@ -94,10 +108,69 @@ export default function Footer() {
     pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse");
 
   return (
-    <footer className="relative border-t border-[#A45CFF]/10 bg-gradient-to-b from-transparent to-[#0C0F1A]">
+    <footer className="relative border-t border-white/[0.06] bg-gradient-to-b from-transparent to-[#0C0F1A]">
       {/* CTA Section */}
-      {!isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
-        <motion.section
+      {/* AGI_HOMEPAGE_FINAL_CTA_V1 */}
+      {isAgiHomepage && <AgiClosingCta />}
+      {!isAgiHomepage && !isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
+        isAgiWorks ? (
+
+<section
+  aria-labelledby="agi-global-final-cta"
+  className="relative isolate overflow-hidden border-t border-white/[0.07] bg-[#090e17] px-5 py-16 sm:py-20"
+>
+  {/* AGI_COMPACT_GLOBAL_FOOTER_CTA_V1 */}
+  <div
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 -z-10"
+    style={{
+      background:
+        "radial-gradient(ellipse at 50% 40%, rgba(48,122,190,0.12), transparent 65%)",
+    }}
+  />
+
+  <div className="mx-auto flex max-w-[740px] flex-col items-center text-center">
+
+    <p className="text-[11px] font-medium uppercase tracking-[0.23em] text-[#78b9ec]">
+      Ihr nächstes Softwareprojekt
+    </p>
+
+    <h2
+      id="agi-global-final-cta"
+      className="mt-5 text-[clamp(2rem,4.5vw,3.5rem)] font-medium leading-[1.17] tracking-[-0.04em] text-white"
+    >
+      Ihre Herausforderung.
+      <span className="block bg-gradient-to-r from-[#d3e3f0] to-[#65a9e8] bg-clip-text text-transparent">
+        Unsere Lösung.
+      </span>
+    </h2>
+
+    <p className="mx-auto mt-6 max-w-[590px] text-[15px] leading-[1.8] text-slate-400 sm:text-[16px]">
+      Ob CRM, ERP oder individuelle Unternehmensplattform:
+      Wir entwickeln Software, die zu Ihrem Unternehmen passt.
+    </p>
+
+    <Link
+      href="/agiworks/kontakt"
+      className="group mt-8 inline-flex min-h-[54px] items-center justify-center gap-5 rounded-xl border border-sky-300/45 bg-[#244e71] px-7 text-[14px] font-medium text-white shadow-[0_12px_35px_rgba(37,117,196,0.15)] transition-colors hover:bg-[#30638e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+    >
+      <span>Softwareprojekt besprechen</span>
+      <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">
+        →
+      </span>
+    </Link>
+
+    <p className="mt-6 text-[12px] leading-6 text-slate-500">
+      Direkter Gründerkontakt
+      <span aria-hidden="true" className="mx-3 text-sky-400/60">·</span>
+      Individuelle Projektplanung
+    </p>
+
+  </div>
+</section>
+
+) : (
+<motion.section
           aria-labelledby="footer-cta-title"
           className="relative overflow-hidden px-5 py-[clamp(6rem,13vw,9.5rem)] sm:px-8"
           initial={{ opacity: 0 }}
@@ -185,7 +258,7 @@ export default function Footer() {
             >
               {/* Primary — gefüllter Gradient-Button, clean & edel */}
               <Link
-                href={footer.ctaButtonHref}
+                href={isAgiWorks ? agiPrefix + "/kontakt" : footer.ctaButtonHref}
                 prefetch={true}
                 className="group/cta-primary relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-full px-9 py-[15px] text-[12.5px] font-medium uppercase text-white transition-all duration-300 hover:-translate-y-0.5 sm:w-auto sm:text-[13px]"
                 style={{
@@ -206,7 +279,7 @@ export default function Footer() {
                       "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 100%)",
                   }}
                 />
-                <span className="relative">{footer.ctaButtonText}</span>
+                <span className="relative">{isAgiWorks ? "Softwareprojekt besprechen" : footer.ctaButtonText}</span>
                 <svg
                   width="13"
                   height="13"
@@ -227,7 +300,7 @@ export default function Footer() {
 
               {(brand.id === "nexcel" || brand.id === "agiworks") && (
                 <Link
-                  href="/kontakt"
+                  href={isAgiWorks ? agiPrefix + "/leistungen" : "/kontakt"}
                   prefetch={true}
                   className="group/secondary relative inline-flex w-full items-center justify-center gap-2.5 rounded-full px-8 py-4 text-[12.5px] uppercase transition-all duration-500 hover:gap-3.5 sm:w-auto sm:text-[13px]"
                   style={{
@@ -247,7 +320,7 @@ export default function Footer() {
                       boxShadow: "0 0 28px var(--brand-glow-mid)",
                     }}
                   />
-                  <span className="relative">Projekt besprechen</span>
+                  <span className="relative">{isAgiWorks ? "Leistungen ansehen" : "Projekt besprechen"}</span>
                   <svg
                     className="relative h-3 w-3 shrink-0 transition-transform duration-500 group-hover/secondary:translate-x-0.5"
                     fill="none"
@@ -303,6 +376,7 @@ export default function Footer() {
             </motion.ul>
           </div>
         </motion.section>
+)
       )}
 
       {/* Main Footer Content */}
@@ -423,6 +497,16 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              {(
+                <li>
+                  <Link
+                    href={isAgiWorks ? "/agiworks/leistungen/eigene-llms" : "/loesungen/eigene-llms"}
+                    className="text-[#9CA3AF] transition-colors text-xs sm:text-sm font-light hover:text-[var(--accent)]"
+                  >
+                    Individuelle LLM-Entwicklung
+                  </Link>
+                </li>
+              )}
             </ul>
           </motion.div>
 
@@ -502,12 +586,45 @@ export default function Footer() {
           </motion.div>
         </div>
 
+        {/* COMPACT_SEO_DIRECTORY_V2 */}
+        <details className="group mb-7 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.015]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-5 py-4 outline-none transition-colors hover:bg-white/[0.035] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/45 sm:px-7 [&::-webkit-details-marker]:hidden">
+            <span className="flex min-w-0 flex-col gap-1">
+              <span
+                className="text-[9px] font-medium uppercase tracking-[0.18em]"
+                style={{ color: "var(--accent)" }}
+              >
+                Weitere Informationen
+              </span>
+              <span className="text-[13px] font-medium text-white/85 sm:text-[14px]">
+                Weitere Lösungen und Regionen
+              </span>
+            </span>
+            <span
+              aria-hidden="true"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-white/60 transition-transform duration-200 group-open:rotate-180"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
+          </summary>
+          <div className="border-t border-white/[0.06] px-5 pb-6 sm:px-7">
         {/* System-Verzeichnis — die Systeme sind sonst nur im Mega-Menü
             erreichbar, das erst clientseitig rendert und damit für Crawler
             unsichtbar bleibt. Hier stehen sie serverseitig im HTML. */}
         <motion.nav
           aria-label="Alle Systeme"
-          className="mt-12 sm:mt-16 pt-8 border-t border-[#A45CFF]/10"
+          className="mt-5 pt-4"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -516,7 +633,7 @@ export default function Footer() {
           <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-5">
             Alle Systeme
           </h4>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
             {FOOTER_SYSTEM_GROUPS.map((group) => (
               <div key={group.category}>
                 <p className="mb-2.5 text-[10px] uppercase tracking-[0.18em] text-[#6B7280]">
@@ -542,7 +659,7 @@ export default function Footer() {
         {/* Locations Directory */}
         <motion.nav
           aria-label="Standorte"
-          className="mt-10 sm:mt-12 pt-8 border-t border-[#A45CFF]/10"
+          className="mt-6 pt-5 border-t border-white/[0.08]"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -578,6 +695,9 @@ export default function Footer() {
             ))}
           </div>
         </motion.nav>
+
+          </div>
+        </details>
 
         {/* Bottom Bar */}
         <motion.div

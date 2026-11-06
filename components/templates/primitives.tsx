@@ -7,7 +7,7 @@
  */
 
 import { motion } from "framer-motion";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import type { ReactNode } from "react";
 import { track } from "@/lib/track";
 
@@ -64,18 +64,20 @@ export function TemplateSection({
   intro,
   children,
   id,
+  compact = false,
 }: {
   eyebrow?: ReactNode;
   heading?: ReactNode;
   intro?: ReactNode;
   children?: ReactNode;
   id?: string;
+  compact?: boolean;
 }) {
   return (
-    <section id={id} className="relative px-4 py-16 sm:px-6 md:py-20">
+    <section id={id} className={compact ? "relative px-4 py-10 sm:px-6 md:py-12" : "relative px-4 py-16 sm:px-6 md:py-20"}>
       <div className="mx-auto max-w-5xl">
         {(eyebrow || heading || intro) && (
-          <motion.div className="mb-10 max-w-3xl" {...reveal}>
+          <motion.div className={compact ? "mb-7 max-w-3xl" : "mb-10 max-w-3xl"} {...reveal}>
             {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
             {heading && typeof heading === "string" ? (
               <GradientHeading>{heading}</GradientHeading>

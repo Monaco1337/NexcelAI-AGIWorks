@@ -9,6 +9,9 @@
  */
 
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useBrand } from "@/contexts/BrandContext";
 
 const PROBLEM_BULLETS = [
   "Excel",
@@ -28,12 +31,48 @@ const SOLUTION_BULLETS = [
 ];
 
 export default function ProblemSolutionSection() {
+  const brand = useBrand();
+  const pathname = usePathname();
+  const isAgiWorks = brand.id === "agiworks";
+
+  const agiProblemTitle: [string, string] = [
+    "Daten verteilt.",
+    "Arbeit doppelt.",
+  ];
+
+  const agiSolutionTitle: [string, string] = [
+    "Systeme verbunden.",
+    "Abläufe klar.",
+  ];
+
+  const agiProblemBullets = [
+    "Doppelte Eingaben",
+    "Manuelle Übergaben",
+    "Verteilte Daten",
+    "Fehlender Überblick",
+  ];
+
+  const agiSolutionBullets = [
+    "CRM & ERP verbunden",
+    "Klare Zuständigkeiten",
+    "Automatische Übergaben",
+    "Aktuelle Kennzahlen",
+  ];
+
+  const contactHref = pathname?.startsWith("/agiworks")
+    ? "/agiworks/kontakt"
+    : "/kontakt";
+
   return (
     <section
-      className="relative w-full overflow-hidden pt-14 pb-24 sm:pt-16 sm:pb-32 lg:pt-20 lg:pb-40"
+      className={isAgiWorks
+    ? "relative w-full overflow-hidden pt-8 pb-16 sm:pt-10 sm:pb-20 lg:pt-12 lg:pb-24"
+    : "relative w-full overflow-hidden pt-14 pb-24 sm:pt-16 sm:pb-32 lg:pt-20 lg:pb-40"}
       style={{
         background:
-          "radial-gradient(ellipse 90% 60% at 50% 50%, rgba(109,40,217,0.07) 0%, transparent 70%)," +
+          (isAgiWorks
+    ? "radial-gradient(ellipse 90% 60% at 50% 50%, rgba(65,150,225,0.08) 0%, transparent 70%),"
+    : "radial-gradient(ellipse 90% 60% at 50% 50%, rgba(109,40,217,0.07) 0%, transparent 70%),") +
           "linear-gradient(to bottom, rgba(5,3,14,0.92) 0%, #08060f 40%, #08060f 60%, rgba(5,3,14,0.92) 100%)",
       }}
     >
@@ -56,28 +95,56 @@ export default function ProblemSolutionSection() {
           {/* ── Problem ── */}
           <Column
             tone="problem"
-            eyebrow="Heute"
-            title={["Zu viele Tools.", "Zu wenig Überblick."]}
-            bullets={PROBLEM_BULLETS}
+            eyebrow={isAgiWorks ? "Ausgangslage" : "Heute"}
+            title={isAgiWorks
+              ? agiProblemTitle
+              : ["Zu viele Tools.", "Zu wenig Überblick."]}
+            bullets={isAgiWorks
+              ? agiProblemBullets
+              : PROBLEM_BULLETS}
           />
 
           {/* ── Flow-Diagram ── */}
-          <div className="order-first flex flex-col items-center gap-3 lg:order-none">
+          <div className={isAgiWorks
+    ? "flex flex-col items-center gap-3"
+    : "order-first flex flex-col items-center gap-3 lg:order-none"}>
             <CoreVisual />
             <p className="hidden text-center text-[11px] font-medium uppercase tracking-[0.2em] text-white/30 lg:block">
-              Viele Tools → Ein Betriebssystem
+              {isAgiWorks ? "Bestehende Systeme. Ein Datenfluss." : "Viele Tools → Ein Betriebssystem"}
             </p>
           </div>
 
           {/* ── Lösung ── */}
           <Column
             tone="solution"
-            eyebrow="Morgen"
-            title={["Ein System.", "Alle Prozesse."]}
-            bullets={SOLUTION_BULLETS}
+            eyebrow={isAgiWorks ? "Mit AGI Works" : "Morgen"}
+            title={isAgiWorks
+              ? agiSolutionTitle
+              : ["Ein System.", "Alle Prozesse."]}
+            bullets={isAgiWorks
+              ? agiSolutionBullets
+              : SOLUTION_BULLETS}
           />
 
         </div>
+
+        {isAgiWorks && (
+          <div className="mx-auto mt-10 flex max-w-[720px] flex-col items-center gap-5 border-t border-white/10 pt-8 text-center">
+            <p className="text-[14px] leading-[1.75] text-white/55">
+              Wir nutzen vorhandene Software, wo sie sinnvoll ist,
+              und entwickeln individuelle Lösungen dort,
+              wo sie gebraucht werden.
+            </p>
+
+            <Link
+              href={contactHref}
+              className="inline-flex items-center justify-center gap-3 rounded-xl border border-sky-400/40 bg-sky-400/10 px-6 py-3.5 text-[13px] font-medium text-white transition-colors hover:bg-sky-400/20"
+            >
+              Softwareprojekt besprechen
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -137,7 +137,7 @@ const CORE_SEEDS: CoreSeed[] = [
     breadcrumbLabel: "Über",
     changefreq: "yearly",
     priority: 0.5,
-    title: (n) => `Über ${n}`,
+    title: (n) => `Über ${n} · Arbeitsweise`,
     description: (n) =>
       `Wer hinter ${n} steht: Ansatz, Arbeitsweise und Verständnis von digitaler Systemarchitektur.`,
   },
@@ -206,7 +206,7 @@ const CORE_SEEDS: CoreSeed[] = [
     changefreq: "yearly",
     priority: 0.2,
     title: (n) => `AGB · ${n}`,
-    description: (n) => `Allgemeine Geschäftsbedingungen von ${n}.`,
+    description: (n) => `Allgemeine Geschäftsbedingungen von ${n} für die vertragliche Zusammenarbeit.`,
   },
   {
     path: "/vertragsverarbeitung",
@@ -468,6 +468,37 @@ function buildRegistry(): SeoPage[] {
       changefreq: "weekly",
       priority: 0.7,
     });
+  });
+
+  pages.push({
+    id: "nexcel:/loesungen/eigene-llms",
+    brand: "nexcel",
+    path: "/loesungen/eigene-llms",
+    internalPath: "/loesungen/eigene-llms",
+    type: "money",
+    title: "Eigene LLMs entwickeln lassen | NEXCEL AI",
+    description: "NEXCEL AI konzipiert firmenspezifische Sprachmodelle und KI-Systeme: von Datenstrategie und Modellanpassung bis zur Integration.",
+    breadcrumbLabel: "Eigene LLMs",
+    approved: true,
+    manualIndexApproval: true,
+    quality: { index: true },
+    changefreq: "monthly",
+    priority: 0.7,
+  });
+  pages.push({
+    id: "agiworks:/leistungen/eigene-llms",
+    brand: "agiworks",
+    path: "/leistungen/eigene-llms",
+    internalPath: "/agiworks/leistungen/eigene-llms",
+    type: "money",
+    title: "LLM-Entwicklung und Integration | AGI Works",
+    description: "AGI Works entwickelt und integriert LLM-Systeme: Modellanpassung, RAG, APIs, Evaluierung, Sicherheit und kontrollierter Betrieb.",
+    breadcrumbLabel: "Eigene LLMs",
+    approved: true,
+    manualIndexApproval: true,
+    quality: { index: true },
+    changefreq: "monthly",
+    priority: 0.7,
   });
 
   return pages;

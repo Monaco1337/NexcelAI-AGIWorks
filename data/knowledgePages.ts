@@ -63,7 +63,7 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     slug: "was-ist-eine-web-app",
     path: "/wissen/was-ist-eine-web-app",
     topic: "Web-Apps",
-    title: "Was ist eine Web-App? Definition & Abgrenzung",
+    title: "Was ist eine Web-App? Definition & Abgrenzung | AGI Works",
     description:
       "Was eine Web-App ist, wie sie sich von Website und nativer App unterscheidet und wann sich individuelle Entwicklung für Unternehmen lohnt.",
     eyebrow: "Wissen",
@@ -114,7 +114,7 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     slug: "individualsoftware-vs-standardsoftware",
     path: "/wissen/individualsoftware-vs-standardsoftware",
     topic: "Software-Entscheidung",
-    title: "Individualsoftware oder Standardsoftware?",
+    title: "Individualsoftware oder Standardsoftware? | AGI Works",
     description:
       "Wann sich Individualsoftware lohnt und wann Standardsoftware ausreicht: Kriterien, Vor- und Nachteile und eine ehrliche Entscheidungshilfe.",
     eyebrow: "Wissen",
@@ -165,7 +165,7 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     slug: "was-kostet-softwareentwicklung",
     path: "/wissen/was-kostet-softwareentwicklung",
     topic: "Kosten",
-    title: "Was kostet Softwareentwicklung?",
+    title: "Was kostet Softwareentwicklung? | AGI Works",
     description:
       "Was den Preis von Softwareentwicklung wirklich bestimmt: die Kostentreiber, warum Fixpreise selten seriös sind und wie ein Projektkorridor entsteht.",
     eyebrow: "Wissen",
@@ -216,7 +216,7 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     slug: "erp-system-einfuehren",
     path: "/wissen/erp-system-einfuehren",
     topic: "ERP",
-    title: "ERP-System einführen: Leitfaden",
+    title: "ERP-System einführen: Leitfaden | AGI Works",
     description:
       "Wie Unternehmen ein ERP-System strukturiert einführen: Ausgangslage klären, Prozesse abbilden, Daten migrieren und den Betrieb absichern.",
     eyebrow: "Wissen",
@@ -272,7 +272,7 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     slug: "was-ist-ki-automatisierung",
     path: "/wissen/was-ist-ki-automatisierung",
     topic: "KI-Automatisierung",
-    title: "Was ist KI-Automatisierung?",
+    title: "Was ist KI-Automatisierung? | NEXCEL AI",
     description:
       "Was KI-Automatisierung bedeutet, wie sie sich von klassischer Automatisierung unterscheidet und wo sie im Unternehmen sinnvoll eingesetzt wird.",
     eyebrow: "Wissen",
@@ -323,7 +323,7 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     slug: "was-ist-ein-ki-agent",
     path: "/wissen/was-ist-ein-ki-agent",
     topic: "KI-Agenten",
-    title: "Was ist ein KI-Agent?",
+    title: "Was ist ein KI-Agent? | NEXCEL AI",
     description:
       "Was ein KI-Agent ist, wie er sich von einem einfachen Chatbot unterscheidet und welche Aufgaben er unter klaren Regeln übernehmen kann.",
     eyebrow: "Wissen",
@@ -374,7 +374,7 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     slug: "prozesse-automatisieren-im-mittelstand",
     path: "/wissen/prozesse-automatisieren-im-mittelstand",
     topic: "Automatisierung",
-    title: "Prozesse automatisieren im Mittelstand",
+    title: "Prozesse automatisieren im Mittelstand | NEXCEL AI",
     description:
       "Wie mittelständische Unternehmen Prozesse sinnvoll automatisieren: geeignete Abläufe erkennen, klein starten und den Nutzen messbar machen.",
     eyebrow: "Wissen",
@@ -425,7 +425,7 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
     slug: "customer-experience-mit-ki-verbessern",
     path: "/wissen/customer-experience-mit-ki-verbessern",
     topic: "Customer Experience",
-    title: "Customer Experience mit KI verbessern",
+    title: "Customer Experience mit KI verbessern | NEXCEL AI",
     description:
       "Wie KI die Customer Experience konsistenter und schneller macht, ohne die persönliche Note zu verlieren: Ansatzpunkte, Grenzen und Vorgehen.",
     eyebrow: "Wissen",

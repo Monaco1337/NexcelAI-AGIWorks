@@ -21,12 +21,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   if (!brand) return [];
 
-  const now = new Date();
   return getPagesForBrand(brand)
     .filter((page) => isPageIndexable(page))
     .map((page) => ({
       url: canonicalForPage(page),
-      lastModified: now,
       changeFrequency: page.changefreq,
       priority: page.priority,
     }));

@@ -11,7 +11,7 @@
  * Server component: no client JS, no layout shift.
  */
 
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import type { SystemPage } from "@/data/systemPages";
 import { SYSTEM_CATEGORY_LABEL } from "@/data/systemPages";
 import { internalLinks } from "@/lib/seo/internalLinks";
