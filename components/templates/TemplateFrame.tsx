@@ -7,6 +7,7 @@
  */
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { webPageForUrl } from "@/lib/seo/jsonld";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
 import Breadcrumbs from "@/components/trust/Breadcrumbs";
@@ -36,6 +37,18 @@ export default function TemplateFrame({
   showAuthor = true,
   emitAuthorSchema = false,
 }: TemplateFrameProps) {
+  const pathname = usePathname();
+  const isAgiWorks = base.brand === "agiworks";
+
+  const displayedCta = isAgiWorks
+    ? {
+        label: "Softwareprojekt besprechen",
+        href: pathname?.startsWith("/agiworks")
+          ? "/agiworks/kontakt"
+          : "/kontakt",
+      }
+    : cta;
+
   const webPage = webPageForUrl({
     brand: base.brand,
     url: base.canonicalUrl,
@@ -63,6 +76,7 @@ export default function TemplateFrame({
 
       <FaqSection items={base.faq} />
 
+      {!isAgiWorks && (
       <section className="relative px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-5xl space-y-6">
           <TrustStrip />
@@ -73,10 +87,11 @@ export default function TemplateFrame({
           )}
         </div>
       </section>
+      )}
 
       <section className="relative px-4 pb-24 sm:px-6">
         <div className="mx-auto flex max-w-5xl flex-col items-start gap-4">
-          <TemplateCta label={cta.label} href={cta.href} meta={{ page: base.canonicalUrl }} />
+          <TemplateCta label={displayedCta.label} href={displayedCta.href} meta={{ page: base.canonicalUrl }} />
         </div>
       </section>
 

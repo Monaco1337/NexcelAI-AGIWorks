@@ -1,0 +1,683 @@
+
+/* HOMEFLOW_V1 */
+/* Scoped to NEXCEL + AGI homepages */
+
+.homeflow--nexcel {
+  --homeflow-edge: #090814;
+
+  --homeflow-background:
+    radial-gradient(
+      ellipse 70rem 42rem at 14% 8%,
+      rgba(107,66,170,.16),
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 65rem 54rem at 83% 43%,
+      rgba(75,44,139,.12),
+      transparent 74%
+    ),
+    radial-gradient(
+      ellipse 65rem 45rem at 17% 84%,
+      rgba(94,57,152,.09),
+      transparent 77%
+    ),
+    linear-gradient(
+      180deg,
+      #080712 0%,
+      #0c0a18 41%,
+      #090b14 74%,
+      #090913 100%
+    );
+}
+
+.homeflow--agiworks {
+  --homeflow-edge: #080e17;
+
+  --homeflow-background:
+    radial-gradient(
+      ellipse 78rem 45rem at 82% 13%,
+      rgba(35,107,175,.14),
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 65rem 55rem at 11% 48%,
+      rgba(33,84,139,.10),
+      transparent 76%
+    ),
+    radial-gradient(
+      ellipse 68rem 46rem at 86% 84%,
+      rgba(36,103,166,.08),
+      transparent 80%
+    ),
+    linear-gradient(
+      180deg,
+      #080b12 0%,
+      #09121d 39%,
+      #080d17 74%,
+      #080c14 100%
+    );
+}
+
+.homeflow-main {
+  width: 100%;
+}
+
+.homeflow-main .homeflow-logo,
+.homeflow-main .homeflow-segment {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  margin-block: -1px;
+  isolation: isolate;
+}
+
+/*
+ * Soft section transitions.
+ * Existing sections, texts and interactive
+ * elements are preserved.
+ */
+
+.homeflow-main.hf-dark .homeflow-logo::before,
+.homeflow-main.hf-dark .homeflow-logo::after,
+.homeflow-main.hf-dark .homeflow-segment::before,
+.homeflow-main.hf-dark .homeflow-segment::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: clamp(28px, 4vw, 62px);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.homeflow-main.hf-dark .homeflow-logo::before,
+.homeflow-main.hf-dark .homeflow-segment::before {
+  top: 0;
+
+  background: linear-gradient(
+    to bottom,
+    var(--homeflow-edge),
+    transparent
+  );
+}
+
+.homeflow-main.hf-dark .homeflow-logo::after,
+.homeflow-main.hf-dark .homeflow-segment::after {
+  bottom: 0;
+
+  background: linear-gradient(
+    to top,
+    var(--homeflow-edge),
+    transparent
+  );
+}
+
+.homeflow-main.hf-dark .homeflow-logo::before,
+.homeflow-main.hf-dark .homeflow-logo::after {
+  height: 30px;
+}
+
+@media (max-width: 700px) {
+  .homeflow-main.hf-dark
+  .homeflow-segment::before,
+  .homeflow-main.hf-dark
+  .homeflow-segment::after {
+    height: 34px;
+  }
+
+  .homeflow-main.hf-dark
+  .homeflow-logo::before,
+  .homeflow-main.hf-dark
+  .homeflow-logo::after {
+    height: 20px;
+  }
+}
+
+
+/* =========================================================
+   HOMEFLOW_V2_START
+   CONTINUOUS PREMIUM BACKGROUND SYSTEM
+
+   Scope:
+   - NEXCEL AI homepage
+   - AGI Works homepage
+
+   No global component or card overrides.
+   ========================================================= */
+
+/* BRAND ATMOSPHERES */
+
+.homeflow-main.homeflow--nexcel.hf-dark {
+  --hf-base: #080713;
+  --hf-middle: #0d0a1b;
+  --hf-end: #090b15;
+
+  --hf-glow-a: rgba(127, 72, 203, 0.15);
+  --hf-glow-b: rgba(84, 53, 155, 0.115);
+  --hf-glow-c: rgba(151, 92, 214, 0.085);
+  --hf-glow-d: rgba(81, 52, 154, 0.10);
+}
+
+.homeflow-main.homeflow--agiworks.hf-dark {
+  --hf-base: #080d16;
+  --hf-middle: #0a1422;
+  --hf-end: #080c15;
+
+  --hf-glow-a: rgba(44, 119, 205, 0.145);
+  --hf-glow-b: rgba(35, 89, 164, 0.105);
+  --hf-glow-c: rgba(59, 146, 221, 0.08);
+  --hf-glow-d: rgba(29, 79, 150, 0.10);
+}
+
+/* ONE CONTINUOUS BACKGROUND FOR THE WHOLE PAGE */
+
+.homeflow-main.hf-dark {
+  background-color: var(--hf-base) !important;
+
+  background-image:
+    radial-gradient(
+      ellipse 80% 19% at 12% 7%,
+      var(--hf-glow-a),
+      transparent 85%
+    ),
+    radial-gradient(
+      ellipse 70% 22% at 89% 31%,
+      var(--hf-glow-b),
+      transparent 85%
+    ),
+    radial-gradient(
+      ellipse 75% 20% at 12% 57%,
+      var(--hf-glow-c),
+      transparent 86%
+    ),
+    radial-gradient(
+      ellipse 79% 19% at 88% 83%,
+      var(--hf-glow-d),
+      transparent 85%
+    ),
+    linear-gradient(
+      180deg,
+      var(--hf-base) 0%,
+      var(--hf-middle) 42%,
+      var(--hf-end) 100%
+    ) !important;
+
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+}
+
+/* REMOVE OLD TRANSITION BARS */
+
+.homeflow-main.hf-dark
+> .homeflow-segment::before,
+
+.homeflow-main.hf-dark
+> .homeflow-segment::after,
+
+.homeflow-main.hf-dark
+> .homeflow-logo::before,
+
+.homeflow-main.hf-dark
+> .homeflow-logo::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* SECTION WRAPPERS NO LONGER PAINT DARK RECTANGLES */
+
+.homeflow-main.hf-dark
+> .homeflow-segment,
+
+.homeflow-main.hf-dark
+> .homeflow-logo {
+  background: transparent !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+/*
+   Only the outer surface of each homepage section.
+   Internal cards, images and decorative UI are preserved.
+*/
+
+.homeflow-main.hf-dark
+> .homeflow-segment
+> :is(section, div, article, main),
+
+.homeflow-main.hf-dark
+> .homeflow-logo
+> :is(section, div, article),
+
+.homeflow-main.hf-dark
+> .homeflow-segment
+> div:only-child
+> section:only-child {
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+/*
+   Connect hero to the existing logo bar.
+
+   Only targets a hero root immediately preceding
+   the reference-logo wrapper.
+*/
+
+.homeflow-main.hf-dark
+> :is(section, div):has(+ .homeflow-logo) {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-bottom-color: transparent !important;
+}
+
+/* CONTINUOUS TRANSITION INTO FOOTER */
+
+.homeflow-main.hf-dark > footer {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-top-color: transparent !important;
+}
+
+/* SUBTLE ATMOSPHERIC DEPTH — NOT SECTION BARS */
+
+.homeflow-main.hf-dark
+> .homeflow-segment:nth-of-type(3n + 1) {
+  background-image: radial-gradient(
+    ellipse 64% 42% at 82% 52%,
+    var(--hf-glow-c),
+    transparent 88%
+  ) !important;
+}
+
+.homeflow-main.hf-dark
+> .homeflow-segment:nth-of-type(3n + 2) {
+  background-image: radial-gradient(
+    ellipse 60% 44% at 18% 48%,
+    var(--hf-glow-d),
+    transparent 88%
+  ) !important;
+}
+
+/* MOBILE: MAINTAIN ONE CONTINUOUS BACKGROUND */
+
+@media (max-width: 768px) {
+  .homeflow-main.hf-dark {
+    background-size: 100% 100% !important;
+  }
+}
+
+/* HOMEFLOW_V2_END */
+
+/* NEXCEL_LLM_SERVICE_V1 / HOMEFLOW_V3_COMPOSITE */
+/* Blend the ACTUAL rendered section subtree into one shared background. */
+.homeflow-main.homeflow--nexcel.hf-dark {
+  background-color: #080712 !important;
+  background-image:
+    radial-gradient(ellipse 82% 24% at 15% 8%, rgba(112,69,184,.16), transparent 85%),
+    radial-gradient(ellipse 76% 23% at 83% 42%, rgba(91,61,162,.13), transparent 83%),
+    radial-gradient(ellipse 75% 21% at 14% 76%, rgba(115,70,173,.12), transparent 85%),
+    linear-gradient(180deg,#080712 0%,#0d0a1b 45%,#080b16 100%) !important;
+  background-size: 100% 100% !important;
+}
+.homeflow-main.homeflow--agiworks.hf-dark {
+  background-color: #080d16 !important;
+  background-image:
+    radial-gradient(ellipse 78% 23% at 83% 10%, rgba(50,125,204,.16), transparent 84%),
+    radial-gradient(ellipse 79% 22% at 15% 49%, rgba(34,101,183,.12), transparent 84%),
+    radial-gradient(ellipse 78% 23% at 83% 82%, rgba(44,110,196,.10), transparent 86%),
+    linear-gradient(180deg,#080d16 0%,#0a1321 45%,#090d17 100%) !important;
+  background-size: 100% 100% !important;
+}
+/* V1 pseudo elements are black overlays: remove them rather than tint them. */
+.homeflow-main.hf-dark > .homeflow-segment::before,
+.homeflow-main.hf-dark > .homeflow-segment::after,
+.homeflow-main.hf-dark > .homeflow-logo::before,
+.homeflow-main.hf-dark > .homeflow-logo::after {
+  content: none !important;
+  display: none !important;
+}
+/* Mask the ENTIRE rendered section, including nested opaque backgrounds.
+   Content remains fully opaque through the central majority of each section. */
+.homeflow-main.hf-dark > .homeflow-segment {
+  border-block: 0 !important;
+  -webkit-mask-image: linear-gradient(to bottom,transparent 0,#000 56px,#000 calc(100% - 56px),transparent 100%);
+  mask-image: linear-gradient(to bottom,transparent 0,#000 56px,#000 calc(100% - 56px),transparent 100%);
+}
+.homeflow-main.hf-dark > .homeflow-logo {
+  -webkit-mask-image: linear-gradient(to bottom,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+  mask-image: linear-gradient(to bottom,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+}
+/* Soften the footer entrance as well; do not change nested CTA content. */
+.homeflow-main.hf-dark > footer {
+  -webkit-mask-image: linear-gradient(to bottom,transparent 0,#000 52px,#000 100%);
+  mask-image: linear-gradient(to bottom,transparent 0,#000 52px,#000 100%);
+}
+/* Blend the very bottom of the hero into the restored logo bar. */
+.homeflow-main.hf-dark > :is(section,div):has(+ .homeflow-logo) {
+  -webkit-mask-image: linear-gradient(to bottom,#000 0,#000 calc(100% - 28px),transparent 100%);
+  mask-image: linear-gradient(to bottom,#000 0,#000 calc(100% - 28px),transparent 100%);
+}
+@media (max-width:640px) {
+  .homeflow-main.hf-dark > .homeflow-segment {
+    -webkit-mask-image: linear-gradient(to bottom,transparent 0,#000 28px,#000 calc(100% - 28px),transparent 100%);
+    mask-image: linear-gradient(to bottom,transparent 0,#000 28px,#000 calc(100% - 28px),transparent 100%);
+  }
+}
+
+
+/* HOMEFLOW_V4_ROOT_SURFACES_START */
+
+/*
+  One continuous canvas for both homepages.
+  Existing content, cards and Hero remain unchanged.
+*/
+
+html body .homeflow-main.homeflow--nexcel.hf-dark {
+  background:
+    radial-gradient(
+      ellipse 85% 18% at 12% 9%,
+      rgba(111, 64, 177, .15),
+      transparent 82%
+    ),
+    radial-gradient(
+      ellipse 72% 24% at 85% 38%,
+      rgba(91, 53, 153, .12),
+      transparent 85%
+    ),
+    radial-gradient(
+      ellipse 78% 22% at 14% 70%,
+      rgba(114, 68, 175, .09),
+      transparent 85%
+    ),
+    linear-gradient(
+      180deg,
+      #090813 0%,
+      #0b0918 45%,
+      #090b15 100%
+    ) !important;
+}
+
+html body .homeflow-main.homeflow--agiworks.hf-dark {
+  background:
+    radial-gradient(
+      ellipse 80% 20% at 85% 12%,
+      rgba(34, 111, 193, .15),
+      transparent 83%
+    ),
+    radial-gradient(
+      ellipse 75% 25% at 14% 43%,
+      rgba(35, 90, 158, .12),
+      transparent 84%
+    ),
+    radial-gradient(
+      ellipse 80% 23% at 88% 78%,
+      rgba(42, 117, 188, .08),
+      transparent 85%
+    ),
+    linear-gradient(
+      180deg,
+      #080c15 0%,
+      #0a1320 48%,
+      #080d16 100%
+    ) !important;
+}
+
+/* Disable old wrapper masks and opaque surfaces. */
+
+html body
+.homeflow-main.homeflow-main.hf-dark.hf-dark
+:is(.homeflow-segment, .homeflow-logo) {
+  background: transparent !important;
+  background-image: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+/* Remove previous dark overlay strips. */
+
+html body
+.homeflow-main.homeflow-main.hf-dark.hf-dark
+:is(.homeflow-segment, .homeflow-logo)::before,
+
+html body
+.homeflow-main.homeflow-main.hf-dark.hf-dark
+:is(.homeflow-segment, .homeflow-logo)::after {
+  content: none !important;
+  display: none !important;
+}
+
+/*
+  Critical correction:
+  target the actual section root, not only its wrapper.
+  Internal card backgrounds are not selected.
+*/
+
+html body
+.homeflow-main.homeflow-main.hf-dark.hf-dark
+[data-homeflow-surface="true"][data-homeflow-surface="true"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+/* No hard boundary between content and footer. */
+
+html body
+.homeflow-main.homeflow-main.hf-dark.hf-dark
+> footer {
+  border-top-color: transparent !important;
+}
+
+/* HOMEFLOW_V4_ROOT_SURFACES_END */
+
+/* LUXHERO_EDITORIAL_V5 – scoped to the existing homepage hero only. */
+[data-luxhero-v5] {
+  --luxhero-soft: rgba(230, 234, 245, .79);
+  --luxhero-hairline: rgba(224, 229, 245, .16);
+}
+[data-luxhero-v5="agi"] {
+  --luxhero-glow: rgba(50, 166, 248, .19);
+}
+[data-luxhero-v5="nexcel"] {
+  --luxhero-glow: rgba(165, 96, 234, .18);
+}
+[data-luxhero-v5] [data-luxhero-title] {
+  max-width: 735px !important;
+  font-size: clamp(2.3rem, 3.28vw, 3.65rem) !important;
+  font-weight: 650 !important;
+  letter-spacing: -.046em !important;
+  line-height: 1.13 !important;
+  text-wrap: balance;
+  color: #f7f8ff;
+}
+[data-luxhero-v5] [data-luxhero-title] .luxhero-line {
+  display: block;
+  color: #f8f8fe;
+}
+[data-luxhero-v5] [data-luxhero-title] .luxhero-accent {
+  color: var(--accent, #ad8ded) !important;
+  -webkit-text-fill-color: currentColor;
+}
+[data-luxhero-v5] [data-luxhero-title]::after {
+  content: "";
+  display: block;
+  width: min(100%, 570px);
+  height: 1px;
+  margin-top: clamp(22px, 2.4vw, 31px);
+  background: linear-gradient(90deg, var(--luxhero-hairline), transparent);
+}
+[data-luxhero-v5] [data-luxhero-copy] {
+  max-width: 610px !important;
+  color: var(--luxhero-soft) !important;
+  font-size: clamp(.97rem, 1.08vw, 1.12rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.008em !important;
+  line-height: 1.73 !important;
+  text-wrap: pretty;
+}
+/* HERO_CTA_CONVERSION_V6 — one clickable element, one rendered button */
+[data-luxhero-v5] .luxhero-v6-button {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 12px 23px;
+  border-radius: 14px;
+  font-family: var(--font-headline), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -.012em;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+  cursor: pointer;
+  transform: translateZ(0);
+  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+}
+[data-luxhero-v5] .luxhero-v6-button span {
+  display: inline;
+  padding: 0;
+  min-height: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  white-space: normal;
+}
+[data-luxhero-v5] .luxhero-v6-button svg { flex: 0 0 auto; }
+[data-luxhero-v5] .luxhero-v6-primary {
+  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--accent) 63%, white 11%);
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--accent) 44%, #202337),
+    color-mix(in srgb, var(--accent) 24%, #101624)
+  );
+  box-shadow: 0 10px 29px color-mix(in srgb, var(--accent) 24%, transparent),
+    inset 0 1px rgba(255,255,255,.15);
+}
+[data-luxhero-v5] .luxhero-v6-secondary {
+  color: rgba(250,249,255,.93);
+  border: 1px solid rgba(220,226,241,.22);
+  background: linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.025));
+  box-shadow: inset 0 1px rgba(255,255,255,.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+[data-luxhero-v5] .luxhero-v6-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px color-mix(in srgb, var(--accent) 31%, transparent),
+    inset 0 1px rgba(255,255,255,.2);
+}
+[data-luxhero-v5] .luxhero-v6-secondary:hover {
+  transform: translateY(-2px);
+  border-color: rgba(220,226,241,.38);
+  background: linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+}
+[data-luxhero-v5] .luxhero-v6-button:focus-visible {
+  outline: 2px solid var(--accent,#b594ed);
+  outline-offset: 4px;
+}
+[data-luxhero-v5] [data-luxhero-copy] {
+  max-width: 565px !important;
+  color: rgba(239,237,247,.79) !important;
+  line-height: 1.69 !important;
+}
+@media (max-width: 640px) {
+  [data-luxhero-v5] .luxhero-v6-button { width: 100%; min-height: 50px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-luxhero-v5] .luxhero-v6-button { transition: none; }
+  [data-luxhero-v5] .luxhero-v6-button:hover { transform: none; }
+}
+[data-luxhero-v5] [data-luxhero-trust] {
+  position: relative;
+  z-index: 15;
+  width: min(calc(100% - 44px), 1320px);
+  margin: clamp(24px, 4.2vw, 56px) auto 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid rgba(208, 185, 247, .15);
+  border-radius: 22px;
+  background: linear-gradient(105deg,rgba(92,57,151,.12),rgba(33,25,55,.46));
+  box-shadow: 0 12px 50px rgba(0,0,0,.13);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+[data-luxhero-v5] [data-luxhero-trust] .luxhero-trust-item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px clamp(17px, 2vw, 29px);
+}
+[data-luxhero-v5] [data-luxhero-trust] .luxhero-trust-item + .luxhero-trust-item {
+  border-left: 1px solid rgba(224,208,251,.13);
+}
+[data-luxhero-v5] [data-luxhero-trust] svg {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  color: var(--accent,#bb8af3);
+}
+[data-luxhero-v5] [data-luxhero-trust] strong,
+[data-luxhero-v5] [data-luxhero-trust] span {
+  display: block;
+}
+[data-luxhero-v5] [data-luxhero-trust] strong {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #f6f3fd;
+}
+[data-luxhero-v5] [data-luxhero-trust] span {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(223,216,236,.65);
+}
+@media (max-width: 1050px) {
+  [data-luxhero-v5] [data-luxhero-title] { font-size: clamp(2.1rem,4.6vw,3.2rem) !important; }
+  [data-luxhero-v5] [data-luxhero-trust] .luxhero-trust-item { padding: 17px 14px; gap: 10px; }
+}
+@media (max-width: 740px) {
+  [data-luxhero-v5] [data-luxhero-title] {
+    font-size: clamp(2rem,7.7vw,3rem) !important;
+    max-width: 100% !important;
+    line-height: 1.15 !important;
+  }
+  [data-luxhero-v5] [data-luxhero-title] .luxhero-line { display: inline; }
+  [data-luxhero-v5] [data-luxhero-title] .luxhero-line + .luxhero-line::before { content: " "; }
+  [data-luxhero-v5] [data-luxhero-title]::after { margin-top: 20px; }
+  [data-luxhero-v5] [data-luxhero-copy] { font-size: 14px !important; line-height: 1.68 !important; }
+  [data-luxhero-v5] [data-luxhero-trust] {
+    grid-template-columns: 1fr;
+    width: min(calc(100% - 30px), 550px);
+    margin-top: 26px;
+  }
+  [data-luxhero-v5] [data-luxhero-trust] .luxhero-trust-item { padding: 13px 18px; }
+  [data-luxhero-v5] [data-luxhero-trust] .luxhero-trust-item + .luxhero-trust-item {
+    border-left: none;
+    border-top: 1px solid rgba(224,208,251,.11);
+  }
+  [data-luxhero-v5] [data-luxhero-cta] { min-height: 48px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-luxhero-v5] [data-luxhero-cta] { transition: none !important; }
+  [data-luxhero-v5] [data-luxhero-cta]:hover { transform: none; }
+}

@@ -9,6 +9,7 @@
  */
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
@@ -40,8 +41,20 @@ const FOUNDERS = [
 
 export default function FoundersCta() {
   const brand = useBrand();
-  const analyseHref = resolveBrandNavHref("/systemanalyse", brand.id);
-  const kontaktHref = resolveBrandNavHref("/kontakt", brand.id);
+  const pathname = usePathname();
+  const isAgiWorks = brand.id === "agiworks";
+  const agiPrefix =
+    isAgiWorks && pathname?.startsWith("/agiworks")
+      ? "/agiworks"
+      : "";
+
+  const analyseHref = isAgiWorks
+    ? agiPrefix + "/kontakt"
+    : resolveBrandNavHref("/kontakt", brand.id);
+
+  const kontaktHref = isAgiWorks
+    ? agiPrefix + "/leistungen"
+    : resolveBrandNavHref("/kontakt", brand.id);
 
   return (
     <section className="relative w-full py-20 sm:py-28 lg:py-36">
@@ -99,7 +112,7 @@ export default function FoundersCta() {
                 </span>
               </h2>
               <p className="mt-5 max-w-[520px] text-[15px] leading-[1.65] text-white/65">
-                Wir begleiten Ihr System persönlich – von der Analyse bis zum Livebetrieb.
+                {brand.id === "nexcel" ? "Sie sprechen direkt mit uns über den Ablauf, mögliche Automatisierung und die nächsten sinnvollen Schritte." : "Wir begleiten Ihr System persönlich – von der Analyse bis zum Livebetrieb."}
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -122,11 +135,11 @@ export default function FoundersCta() {
                           "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
                       }}
                     />
-                    <span className="relative">Kostenlose Systemanalyse starten</span>
+                    <span className="relative">{isAgiWorks ? "Softwareprojekt besprechen" : "KI-Projekt besprechen"}</span>
                   </span>
                 </Link>
 
-                <Link href={kontaktHref} prefetch className="group/sec">
+                <Link href={brand.id === "nexcel" ? "/#projekte" : kontaktHref} prefetch className="group/sec">
                   <span
                     className="flex items-center justify-center gap-2 rounded-2xl px-7 py-[16px] text-[14px] font-medium text-white/85 transition-colors duration-300 group-hover/sec:text-white"
                     style={{
@@ -136,7 +149,7 @@ export default function FoundersCta() {
                       border: "1px solid rgba(255,255,255,0.12)",
                     }}
                   >
-                    Projekt besprechen
+                    {isAgiWorks ? "Leistungen ansehen" : "Referenzen ansehen"}
                   </span>
                 </Link>
               </div>

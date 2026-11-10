@@ -61,9 +61,18 @@ function HeroStatIcon({ name }: { name: (typeof heroStats)[number]["icon"] }) {
 }
 
 function HeroStats() {
+  const isAgi = useBrand().id === "agiworks";
+  const displayStats = isAgi
+    ? ([
+        { icon: "users", label: "Direkter Kontakt" },
+        { icon: "buildings", label: "Individuelle Entwicklung" },
+        { icon: "link", label: "Klare Zuständigkeiten" },
+        { icon: "rocket", label: "Betrieb & Betreuung" },
+      ] as const)
+    : heroStats;
   return (
     <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-7 sm:flex sm:flex-wrap sm:gap-x-9 lg:gap-x-10">
-      {heroStats.map((stat, index) => (
+      {displayStats.map((stat, index) => (
         <motion.div
           key={stat.label}
           className="flex flex-col items-center gap-2.5 sm:items-start"
@@ -100,6 +109,7 @@ function HeroStats() {
 }
 
 function BrandBridge() {
+  const isAgi = useBrand().id === "agiworks";
   return (
     <motion.div
       className="relative mx-auto mt-10 w-full max-w-[860px] overflow-hidden rounded-[22px] sm:rounded-[28px]"
@@ -185,8 +195,9 @@ function BrandBridge() {
 
         {/* Subline — equal partnership, no hierarchy */}
         <p className="text-center text-[11px] leading-[1.6] text-white/38 sm:text-[11.5px]">
-          Zwei spezialisierte Unternehmen. Eine gemeinsame Verantwortung: digitale Systeme,
-          die nicht nur gut aussehen, sondern im Betrieb funktionieren.
+          {isAgi
+            ? "AGI Works entwickelt die technische Lösung. NEXCEL AI ergänzt bei Bedarf Strategie, Prozesse und Automatisierung. Die Zusammenarbeit richtet sich nach Ihrem Projekt."
+            : "Zwei spezialisierte Unternehmen. Eine gemeinsame Verantwortung: digitale Systeme, die nicht nur gut aussehen, sondern im Betrieb funktionieren."}
         </p>
       </div>
     </motion.div>
@@ -269,17 +280,16 @@ function WhyHeading() {
 }
 
 function WhyBody() {
+  const isAgi = useBrand().id === "agiworks";
   return (
     <div className="space-y-5">
       <p
         className="text-[15px] leading-[1.75] text-white/62 sm:text-[16px]"
         style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300 }}
       >
-        Viele Unternehmen trennen Strategie und Technik. Wir nicht. NEXCEL AI
-        entwickelt die systemische Logik — Unternehmensarchitektur,
-        Prozessdesign, Customer Experience und Automatisierung. AGI Works
-        entwickelt die technische Basis — Softwarearchitektur, Plattformen,
-        Infrastruktur und Integrationen.
+        {isAgi
+          ? "Ein gutes Softwaresystem beginnt bei Ihren Abläufen. AGI Works klärt Anforderungen, plant die technische Architektur und entwickelt die passende Lösung – von Webanwendungen über CRM und ERP bis zu Schnittstellen. NEXCEL AI ergänzt bei Bedarf Prozessstrategie, Nutzerführung und Automatisierung."
+          : "Viele Unternehmen trennen Strategie und Technik. Wir nicht. NEXCEL AI entwickelt die systemische Logik — Unternehmensarchitektur, Prozessdesign, Customer Experience und Automatisierung. AGI Works entwickelt die technische Basis — Softwarearchitektur, Plattformen, Infrastruktur und Integrationen."}
       </p>
       <p
         className="text-[15px] leading-[1.75] sm:text-[16px]"
@@ -292,8 +302,9 @@ function WhyBody() {
           backgroundClip: "text",
         }}
       >
-        Gemeinsam entwickeln wir Systeme — keine Trennung von Strategie und
-        Technik, kein Design ohne Funktion, keine Technik ohne Konzept.
+        {isAgi
+          ? "Für Sie zählt das Ergebnis: verständliche Entscheidungen, nachvollziehbare Entwicklungsschritte und Software, die im Alltag eingesetzt werden kann."
+          : "Gemeinsam entwickeln wir Systeme — keine Trennung von Strategie und Technik, kein Design ohne Funktion, keine Technik ohne Konzept."}
       </p>
     </div>
   );
@@ -513,6 +524,7 @@ const sharedResponsibilities = [
 
 function WhoDoesWhat() {
   const brand = useBrand();
+  const isAgi = brand.id === "agiworks";
   // Aktive Marke zuerst: AGI Works → Kevin voran, NEXCEL AI → Celina voran.
   const orderedFounders =
     brand.id === "agiworks" ? [founders[1], founders[0]] : [founders[0], founders[1]];
@@ -552,7 +564,9 @@ function WhoDoesWhat() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            Zwei Gründer. Zwei Architekturen. Keine Hierarchie — nur Kompetenz.
+            {isAgi
+              ? "Klare Rollen. Direkter Austausch. Gemeinsam gedacht."
+              : "Zwei Gründer. Zwei Architekturen. Keine Hierarchie — nur Kompetenz."}
           </motion.p>
 
           <motion.p
@@ -562,9 +576,9 @@ function WhoDoesWhat() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
           >
-            NEXCEL AI und AGI Works entwickeln gemeinsam digitale
-            Betriebssysteme — von der Systemlogik bis zur technischen
-            Plattform, von der Experience bis zur Infrastruktur.
+            {isAgi
+              ? "AGI Works verantwortet Softwarearchitektur und technische Umsetzung. NEXCEL AI ergänzt Prozesse, Strategie und Nutzererlebnis. So greifen die Kompetenzen ineinander, ohne die Zuständigkeiten zu verwischen."
+              : "NEXCEL AI und AGI Works entwickeln gemeinsam digitale Betriebssysteme — von der Systemlogik bis zur technischen Plattform, von der Experience bis zur Infrastruktur."}
           </motion.p>
         </div>
 
@@ -616,7 +630,11 @@ function WhoDoesWhat() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            Kein Silo. Kein &ldquo;einer macht Strategie, einer macht Technik&rdquo;. Beide entwickeln gemeinsam — mit klaren Rollen und tiefer gegenseitiger Integration.
+            {isAgi ? (
+              "Sie wissen, wer woran arbeitet. Anforderungen, Architektur und Umsetzung werden direkt abgestimmt – mit klaren Zuständigkeiten und nachvollziehbaren Entscheidungen."
+            ) : (
+              <>Kein Silo. Kein &ldquo;einer macht Strategie, einer macht Technik&rdquo;. Beide entwickeln gemeinsam — mit klaren Rollen und tiefer gegenseitiger Integration.</>
+            )}
           </motion.p>
 
           {/* Premium Typografie-Blöcke (keine Pills/Chips) */}
@@ -1020,7 +1038,7 @@ function ReasonCard({
   reason,
   index,
 }: {
-  reason: (typeof reasons)[number];
+  reason: { icon: string; title: string; desc: string };
   index: number;
 }) {
   return (
@@ -1076,13 +1094,47 @@ function ReasonCard({
 }
 
 function WhyClients() {
+  const isAgi = useBrand().id === "agiworks";
+  const agiReasons = [
+    {
+      icon: "users",
+      title: "Direkter Gründerkontakt",
+      desc: "Sie sprechen mit den Menschen, die Ihr Projekt planen und umsetzen.",
+    },
+    {
+      icon: "building",
+      title: "Klare Verantwortung",
+      desc: "Zuständigkeiten und nächste Schritte werden direkt abgestimmt.",
+    },
+    {
+      icon: "sliders",
+      title: "Passgenaue Lösungen",
+      desc: "Wir orientieren die Architektur an Ihren Abläufen – nicht an Standardpaketen.",
+    },
+    {
+      icon: "lock",
+      title: "Datenschutz mitgedacht",
+      desc: "Zugriffsrechte, Datenflüsse und Hosting berücksichtigen wir frühzeitig.",
+    },
+    {
+      icon: "rocket",
+      title: "Betrieb im Blick",
+      desc: "Wir denken Einführung, Betreuung und Weiterentwicklung von Anfang an mit.",
+    },
+    {
+      icon: "chart",
+      title: "Transparente Umsetzung",
+      desc: "Nachvollziehbare Projektphasen statt vager Versprechen.",
+    },
+  ];
+  const displayReasons = isAgi ? agiReasons : reasons;
   return (
     <section className="relative px-6 pb-28 md:pb-36">
       <div className="relative z-10 mx-auto max-w-6xl">
         <SectionEyebrow>Warum Kunden mit uns arbeiten</SectionEyebrow>
 
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {reasons.map((reason, i) => (
+          {displayReasons.map((reason, i) => (
             <ReasonCard key={reason.title} reason={reason} index={i} />
           ))}
         </div>
@@ -1092,6 +1144,7 @@ function WhyClients() {
 }
 
 export default function AboutPageContent() {
+  const isAgi = useBrand().id === "agiworks";
   return (
     <main className="relative min-h-screen overflow-x-clip">
 
@@ -1183,7 +1236,10 @@ export default function AboutPageContent() {
         <div className="relative z-20 mx-auto w-full max-w-[1300px] px-5 pb-12 sm:px-8 sm:pb-14 lg:pb-16">
 
           {/* Text block */}
-          <div className="max-w-[520px] lg:max-w-xl">
+          <div className={isAgi
+              ? "max-w-[520px] pt-3 md:pt-10 lg:max-w-xl lg:pt-14"
+              : "max-w-[520px] lg:max-w-xl"
+            }>
             <motion.span
               className="block text-[11px] font-medium uppercase tracking-[0.34em]"
               style={{ color: "var(--accent)" }}
@@ -1224,9 +1280,21 @@ export default function AboutPageContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
             >
-              NEXCEL AI und AGI Works entwickeln gemeinsam digitale Systeme,
-              die Strategie, Prozesse, Design, Software, Automatisierung und
-              Infrastruktur zu einem funktionierenden Betriebssystem verbinden.
+              {isAgi ? (
+                <>
+                  AGI Works entwickelt individuelle Software, die im
+                  Unternehmensalltag funktioniert. Von der Architektur bis
+                  zur Umsetzung haben Sie direkten Kontakt zu den
+                  Verantwortlichen. NEXCEL AI ergänzt bei Bedarf Strategie
+                  und Automatisierung.
+                </>
+              ) : (
+                <>
+                  NEXCEL AI und AGI Works entwickeln gemeinsam digitale Systeme,
+                  die Strategie, Prozesse, Design, Software, Automatisierung und
+                  Infrastruktur zu einem funktionierenden Betriebssystem verbinden.
+                </>
+              )}
             </motion.p>
 
             <HeroStats />

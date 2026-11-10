@@ -7,12 +7,12 @@ export const nexcelBrand: BrandConfig = {
   wizardSignatureProduct: "Systemanalyse",
   theme: nexcelTheme(),
   seo: {
-    title: "NEXCEL AI • Unternehmenssysteme, Prozesse & Customer Experience",
+    title: "NEXCEL AI • KI-Automatisierung & Agenten für Unternehmen",
     description:
-      "Wir gestalten Unternehmenssysteme: Systemdesign, Prozessdesign, Branding, Customer Experience und Automatisierung — die Struktur, auf der Ihr Unternehmen läuft.",
-    ogTitle: "NEXCEL AI • Unternehmenssysteme",
+      "KI-Agenten und Prozessautomatisierung für Unternehmen: NEXCEL AI verbindet Anfragen, Kommunikation und Abläufe mit passenden KI-Lösungen.",
+    ogTitle: "NEXCEL AI • KI-Agenten & Automatisierung",
     ogDescription:
-      "Systemdesign, Prozesse, Branding und Automatisierung — digitale Betriebsmodelle für Unternehmen.",
+      "KI-Agenten und Automatisierung für Anfragen, Kommunikation und Geschäftsprozesse – sinnvoll in bestehende Systeme eingebunden.",
   },
   navigation: {
     logoText: "NEXCEL",
@@ -33,7 +33,7 @@ export const nexcelBrand: BrandConfig = {
     subline:
       "Systemdesign, Prozessdesign, Branding und Automatisierung – verbunden zu einem digitalen Betriebsmodell, das skaliert.",
     ctaPrimary: { text: "Projekt besprechen", href: "/kontakt" },
-    ctaSecondary: { text: "Systemanalyse starten", href: "/systemanalyse" },
+    ctaSecondary: { text: "Anwendungsfälle ansehen", href: "/#systeme" },
   },
   capabilities: {
     headline: "Was NEXCEL AI gestaltet",
@@ -128,11 +128,11 @@ export const nexcelBrand: BrandConfig = {
     successMessage: "Ihre Anfrage wurde übermittelt. Wir melden uns mit einer ersten Einschätzung.",
   },
   footer: {
-    tagline: "Unternehmenssysteme: Systemdesign, Prozesse, Branding und Automatisierung.",
-    ctaTitle: "Finden Sie heraus, welches digitale System Ihrem Unternehmen aktuell den größten Hebel bringt.",
-    ctaSubline: "Kostenlos, unverbindlich und direkt mit den Gründern.",
-    ctaButtonText: "Kostenlose Systemanalyse starten",
-    ctaButtonHref: "/systemanalyse",
+    tagline: "KI-Agenten, Prozessautomatisierung und vernetzte Abläufe für Unternehmen.",
+    ctaTitle: "Welche Aufgabe sollte Ihr Team nicht länger manuell erledigen müssen?",
+    ctaSubline: "Schildern Sie den Ablauf. Wir besprechen mit Ihnen, was sinnvoll automatisiert werden kann.",
+    ctaButtonText: "Automatisierung besprechen",
+    ctaButtonHref: "/kontakt?betreff=KI-Automatisierung%20besprechen",
     links: {
       // Spalte „Systeme"
       products: [
@@ -144,7 +144,7 @@ export const nexcelBrand: BrandConfig = {
       ],
       // Spalte „Ressourcen"
       solutions: [
-        { label: "Systemanalyse", href: "/systemanalyse" },
+        { label: "KI-Agenten", href: "/loesungen/ki-agenten" },
         { label: "Wissen", href: "/wissen" },
         { label: "Preiskalkulator", href: "/preiskalkulator" },
       ],

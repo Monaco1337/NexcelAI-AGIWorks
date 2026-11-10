@@ -6,13 +6,14 @@ import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useBrand } from "@/contexts/BrandContext";
 import { useRouter, usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { isBrandNavItemActive, resolveBrandNavHref } from "@/lib/brandNav";
 import { SYSTEMS } from "@/lib/systems-data";
+import NexcelCompactMegaMenu from "@/components/NexcelCompactMegaMenu";
 
 /**
  * Suche ist architektonisch vorbereitet (Index, Modal, Drawer-Variante),
@@ -203,6 +204,33 @@ const GOAL_MENU: (Omit<MegaMenuEntry, "href"> & { systemSlug: string })[] = [
   },
 ];
 
+const AGI_COMPACT_MENU_GROUPS = [
+  {
+    id: "vertrieb",
+    label: "Vertrieb",
+    description: "Anfragen und Abschlüsse",
+    patterns: [/lead.funnel/i, /vertriebsplattform/i, /angebots.*beratung/i],
+  },
+  {
+    id: "kunden",
+    label: "Kunden",
+    description: "Portale und Service",
+    patterns: [/kundenportal/i, /buchungs/i, /service.*support/i],
+  },
+  {
+    id: "unternehmen",
+    label: "Unternehmen",
+    description: "Prozesse und Daten",
+    patterns: [/erp/i, /projekt.*aufgaben/i, /schnittstellen/i],
+  },
+  {
+    id: "ki",
+    label: "KI & Automatisierung",
+    description: "Weniger Routinearbeit",
+    patterns: [/ki\s*&\s*automatisierung/i, /ki.telefonagent/i, /omnichannel|saas/i],
+  },
+] as const;
+
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
@@ -223,6 +251,7 @@ export default function Navigation() {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [agiMenuCategory, setAgiMenuCategory] = useState<(typeof AGI_COMPACT_MENU_GROUPS)[number]["id"]>("vertrieb");
   const [mobileSolutionsOpen, setMobileSolutionsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const megaMenuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -232,6 +261,18 @@ export default function Navigation() {
   const pathname = usePathname();
   const navRef = useRef<HTMLDivElement>(null);
   const brand = useBrand();
+
+  const isAgiWorks = brand.id === "agiworks";
+
+  const navCtaHref = isAgiWorks
+    ? (pathname?.startsWith("/agiworks")
+        ? "/agiworks/kontakt"
+        : "/kontakt")
+    : resolveBrandNavHref("/kontakt", brand.id);
+
+  const navCtaLabel = isAgiWorks
+    ? "Softwareprojekt besprechen"
+    : "KI-Projekt besprechen";
 
   const brandSearchIndex = useMemo(
     () =>
@@ -1088,7 +1129,15 @@ export default function Navigation() {
 
                     {mainNavItems.map((item) => {
                       const isActive =
-                        isBrandNavItemActive(pathname, item.href, brand.navigation.baseHref) ||
+                        isBrandNavItemActive(
+                          pathname?.startsWith("/agiworks/")
+                            ? pathname.slice("/agiworks".length)
+                            : pathname === "/agiworks"
+                              ? "/"
+                              : pathname,
+                          item.href,
+                          brand.navigation.baseHref
+                        ) ||
                         activeSection === item.id;
 
                       return (
@@ -1128,7 +1177,7 @@ export default function Navigation() {
 
                   {/* Primärer CTA: Systemanalyse starten — stärkster Fokuspunkt der Navigation */}
                   <Link
-                    href={resolveBrandNavHref("/systemanalyse", brand.id)}
+                    href={navCtaHref}
                     prefetch={true}
                     className="group/cta relative ml-3 xl:ml-4 flex-shrink-0"
                   >
@@ -1168,7 +1217,7 @@ export default function Navigation() {
                             "linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)",
                         }}
                       />
-                      <span className="relative">Systemanalyse starten</span>
+                      <span className="relative">{navCtaLabel}</span>
                       <svg
                         width="14"
                         height="14"
@@ -1221,70 +1270,144 @@ export default function Navigation() {
                   boxShadow: "0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
                 }}
               >
-                <div className="grid grid-cols-2 gap-1">
-                  {/* Spalte 1 — Nach Ziel */}
-                  <div className="p-3">
-                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                      Nach Ziel
-                    </p>
-                    {solutionsGoalItems.map((entry) => (
-                      <Link
-                        key={entry.id}
-                        href={entry.href}
-                        onClick={() => setMegaMenuOpen(false)}
-                        className="group/mega flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors duration-150 hover:bg-white/[0.06]"
-                      >
-                        <span
-                          className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-150"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "var(--accent)" }}
-                        >
-                          {entry.icon}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-[13px] font-medium text-white/92 group-hover/mega:text-white">
-                            {entry.label}
-                          </span>
-                          <span className="block text-[11.5px] leading-snug text-white/45">
-                            {entry.description}
-                          </span>
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
+                {pathname?.startsWith("/agiworks") ? (
+<div
+  className="flex flex-col"
+  data-agi-premium-menu="true"
+>
+  <div className="border-b border-white/[0.08] px-5 pb-3 pt-4">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-300/85">
+      AGI Works · Lösungen
+    </p>
+    <div data-llm-menu-feature="agiworks" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+<p className="mt-1 text-[14px] font-medium text-white/90">
+      Was möchten Sie verbessern?
+    </p>
+<a
+  href="/agiworks/leistungen/eigene-llms"
+  aria-label="LLM Engineering & Private KI ansehen"
+  className="group/llm inline-flex min-h-[42px] shrink-0 items-center gap-2.5 rounded-[13px] border border-sky-300/25 bg-sky-400/[0.09] px-3.5 py-2 text-left no-underline transition-colors duration-200 hover:border-sky-300/50 hover:bg-sky-400/[0.16] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+>
+  <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-300 shadow-[0_0_12px_currentColor]" />
+  <span className="min-w-0">
+    <span className="block text-[12px] font-semibold leading-[1.25] text-white">LLM Engineering & Private KI</span>
+    <span className="hidden text-[10px] leading-4 text-white/55 sm:block">Modelle, Fine-Tuning und Integration</span>
+  </span>
+  <span aria-hidden="true" className="ml-1 text-[15px] text-sky-200 transition-transform duration-200 group-hover/llm:translate-x-0.5">↗</span>
+</a>
+</div>
+  </div>
 
-                  {/* Spalte 2 — Nach System */}
-                  <div
-                    className="p-3"
-                    style={{ borderLeft: "1px solid rgba(255,255,255,0.08)" }}
-                  >
-                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                      Nach System
-                    </p>
-                    {solutionsSystemItems.map((entry) => (
-                      <Link
-                        key={entry.id}
-                        href={entry.href}
-                        onClick={() => setMegaMenuOpen(false)}
-                        className="group/mega flex items-start gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.06]"
-                      >
-                        <span
-                          className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-150"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "var(--accent)" }}
-                        >
-                          {entry.icon}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-[12.5px] font-medium text-white/92 group-hover/mega:text-white">
-                            {entry.label}
-                          </span>
-                          <span className="block truncate text-[11px] leading-snug text-white/45">
-                            {entry.description}
-                          </span>
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+  <div className="grid grid-cols-[205px_minmax(0,1fr)] gap-2 p-3">
+
+    <div
+      className="flex flex-col gap-1"
+      aria-label="Lösungskategorien"
+    >
+      {AGI_COMPACT_MENU_GROUPS.map((group) => (
+        <button
+          key={group.id}
+          type="button"
+          aria-pressed={agiMenuCategory === group.id}
+          onMouseEnter={() => setAgiMenuCategory(group.id)}
+          onFocus={() => setAgiMenuCategory(group.id)}
+          onClick={() => setAgiMenuCategory(group.id)}
+          className={`w-full rounded-xl px-3 py-2.5 text-left transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
+            agiMenuCategory === group.id
+              ? "bg-sky-400/[0.12] ring-1 ring-inset ring-sky-300/30"
+              : "hover:bg-white/[0.05]"
+          }`}
+        >
+          <span
+            className={`block text-[13px] font-medium ${
+              agiMenuCategory === group.id
+                ? "text-white"
+                : "text-white/75"
+            }`}
+          >
+            {group.label}
+          </span>
+
+          <span className="mt-0.5 block text-[11px] text-white/40">
+            {group.description}
+          </span>
+        </button>
+      ))}
+    </div>
+
+    <div className="min-w-0 border-l border-white/[0.08] pl-3">
+      <p className="mb-2 px-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
+        Passende Systeme
+      </p>
+
+      {agiMenuCategory === "ki" && (
+          <Link
+            href="/agiworks/leistungen/eigene-llms"
+            onClick={() => setMegaMenuOpen(false)}
+            className="group/agi-llm flex min-h-[66px] items-center justify-between gap-3 rounded-xl bg-sky-400/[0.08] px-3 py-2 ring-1 ring-inset ring-sky-300/20 transition-colors hover:bg-sky-400/[0.15] focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+          >
+            <span className="min-w-0">
+              <span className="block text-[13px] font-medium text-sky-100">Eigene LLMs & Sprachmodelle</span>
+              <span className="mt-0.5 block text-[11px] text-white/50">Fine-Tuning, Private KI, Modellbetrieb</span>
+            </span>
+            <span aria-hidden="true" className="text-sky-300">→</span>
+          </Link>
+        )}
+        {(AGI_COMPACT_MENU_GROUPS.find(
+        (group) => group.id === agiMenuCategory
+      ) ?? AGI_COMPACT_MENU_GROUPS[0]).patterns
+        .map((pattern) =>
+          solutionsSystemItems.find((entry) =>
+            pattern.test(entry.label)
+          )
+        )
+        .filter(
+          (entry): entry is (typeof solutionsSystemItems)[number] =>
+            Boolean(entry)
+        )
+        .map((entry) => (
+          <Link
+            key={entry.id}
+            href={entry.href}
+            onClick={() => setMegaMenuOpen(false)}
+            className="group/agi-entry flex min-h-[66px] items-center justify-between gap-3 rounded-xl px-3 py-2 transition-colors duration-150 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+          >
+            <span className="min-w-0">
+              <span className="block text-[13px] font-medium text-white/90 group-hover/agi-entry:text-white">
+                {entry.label}
+              </span>
+
+              <span className="mt-0.5 block truncate text-[11px] text-white/45">
+                {entry.description}
+              </span>
+            </span>
+
+            <span
+              className="shrink-0 text-[15px] text-sky-300/75"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </Link>
+        ))}
+    </div>
+  </div>
+
+  <div className="flex items-center justify-between gap-4 border-t border-white/[0.08] px-5 py-3">
+    <span className="text-[11px] text-white/40">
+      Individuell statt Standard.
+    </span>
+
+    <Link
+      href="/agiworks/leistungen"
+      onClick={() => setMegaMenuOpen(false)}
+      className="text-[12px] font-medium text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+    >
+      Alle Lösungen ansehen <span aria-hidden="true">→</span>
+    </Link>
+  </div>
+</div>
+) : (<NexcelCompactMegaMenu items={solutionsSystemItems} onNavigate={() => setMegaMenuOpen(false)} />)}
 
                 {/* Footer-Zeile: alle Lösungen im Überblick */}
                 <Link
@@ -1814,7 +1937,7 @@ export default function Navigation() {
 
                 {/* Mobile CTA: Systemanalyse starten */}
                 <Link
-                  href={resolveBrandNavHref("/systemanalyse", brand.id)}
+                  href={navCtaHref}
                   prefetch={true}
                   onClick={() => setMobileMenuOpen(false)}
                   className="group/mcta block"
@@ -1833,7 +1956,7 @@ export default function Navigation() {
                       boxShadow: "0 4px 22px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,0.12)",
                     }}
                   >
-                    <span className="relative">Systemanalyse starten</span>
+                    <span className="relative">{navCtaLabel}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden className="relative">
                       <path
                         d="M5 12h14M13 6l6 6-6 6"

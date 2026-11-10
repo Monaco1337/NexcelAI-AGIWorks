@@ -1,4 +1,5 @@
 "use client";
+import { NexcelContactFormIntro, NexcelContactAsideDetails } from "./NexcelContactParityBlocks"; // NXL_CONTACT_AGI_PARITY_V3
 
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
@@ -557,6 +558,7 @@ function PhoneIcon() {
 export default function ContactPageContent() {
   const brand = useBrand();
   const { contactPage } = brand;
+  const isAgiWorks = brand.id === "agiworks";
   const homeHref = brand.navigation.baseHref || "/";
   const privacyHref = "/datenschutz";
 
@@ -613,6 +615,7 @@ export default function ContactPageContent() {
     } else if (!validateEmail(formData.email)) {
       newErrors.email = "Ungültige E-Mail-Adresse";
     }
+    if (isAgiWorks && !formData.unternehmen.trim()) newErrors.unternehmen = "Bitte nennen Sie Ihr Unternehmen";
     if (!formData.betreff.trim()) newErrors.betreff = "Betreff ist erforderlich";
     if (!formData.nachricht.trim()) {
       newErrors.nachricht = "Nachricht ist erforderlich";
@@ -701,17 +704,17 @@ export default function ContactPageContent() {
   };
 
   return (
-    <main className="relative overflow-hidden min-h-screen">
+    <main className={isAgiWorks ? "agi-contact relative overflow-hidden min-h-screen" : "relative overflow-hidden min-h-screen"}>
 
       <section className="relative pt-[120px] md:pt-[150px] pb-24 md:pb-32 px-6">
         <div className="relative z-10 max-w-7xl mx-auto">
           {/* Header */}
           <motion.div
-            className="text-center mb-16 md:mb-20 max-w-3xl mx-auto"
+            className={isAgiWorks ? "agi-contact-header text-center mb-16 md:mb-20 max-w-3xl mx-auto" : "text-center mb-16 md:mb-20 max-w-3xl mx-auto"}
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          >
+           data-nxl-contact-old-intro="true">
             <p
               className="text-[11px] uppercase tracking-[0.28em] mb-6"
               style={{ color: "var(--brand-primary)", opacity: 0.75 }}
@@ -730,15 +733,23 @@ export default function ContactPageContent() {
                   backgroundClip: "text",
                 }}
               >
-                {contactPage.headlineAccent}
+                {isAgiWorks ? "Ihr Projekt. Unser Fokus." : contactPage.headlineAccent}
               </span>
             </h1>
             <p className="text-base md:text-lg text-white/50 font-light leading-relaxed">
-              {contactPage.subline}
+              {isAgiWorks ? "Schildern Sie uns Ihr Softwareprojekt. Wir klären persönlich, wie der nächste sinnvolle Schritt aussieht." : contactPage.subline}
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+          {isAgiWorks && (
+            <div className="agi-contact-trust">
+              <div><span aria-hidden="true" className="agi-contact-trust-dot" />Direkter Gründerkontakt</div>
+              <div><span aria-hidden="true" className="agi-contact-trust-dot" />Individuelle Projektplanung</div>
+              <div><span aria-hidden="true" className="agi-contact-trust-dot" />Unverbindliche Anfrage</div>
+            </div>
+          )}
+
+          <div className={isAgiWorks ? "agi-contact-grid grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12" : "grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12"} data-nxl-contact-grid="true" data-nxl-contact-alignment-root="true">
             {/* Formular */}
             <motion.div
               className="lg:col-span-2"
@@ -746,7 +757,17 @@ export default function ContactPageContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="relative rounded-3xl overflow-hidden p-8 md:p-12" style={glassPanelStyle()}>
+              <div className={isAgiWorks ? "agi-contact-form-panel relative rounded-3xl overflow-hidden p-8 md:p-12" : "relative rounded-3xl overflow-hidden p-8 md:p-12"} style={isAgiWorks ? undefined : glassPanelStyle()} data-nxl-contact-form="true">
+      <NexcelContactFormIntro />
+
+                {isAgiWorks && !success && (
+                  <div className="agi-contact-form-intro">
+                    <p className="agi-contact-eyebrow">PROJEKTANFRAGE</p>
+                    <h2>Erzählen Sie uns von Ihrem Vorhaben.</h2>
+                    <p>Was möchten Sie entwickeln oder verbessern? Beschreiben Sie kurz Ihre Idee und Ihre Anforderungen.</p>
+                  </div>
+                )}
+
                 <AnimatePresence mode="wait">
                   {success ? (
                     <SuccessState
@@ -760,7 +781,7 @@ export default function ContactPageContent() {
                     <motion.form
                       key="form"
                       onSubmit={handleSubmit}
-                      className="space-y-6 relative z-10"
+                      className={isAgiWorks ? "agi-contact-fields space-y-6 relative z-10" : "space-y-6 relative z-10"}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -825,11 +846,12 @@ export default function ContactPageContent() {
                         }
                         error={errors.unternehmen}
                         placeholder="Ihr Unternehmen"
+                        required={isAgiWorks}
                       />
 
                       <PremiumSelect
                         id="system"
-                        label="Gewünschtes System"
+                        label={isAgiWorks ? "Projektbereich" : "Gewünschtes System"}
                         value={formData.system}
                         onChange={(e) => {
                           const slug = e.target.value;
@@ -860,13 +882,13 @@ export default function ContactPageContent() {
                       <div>
                         <PremiumInput
                           id="nachricht"
-                          label="Ihre Nachricht"
+                          label={isAgiWorks ? "Projektbeschreibung" : "Ihre Nachricht"}
                           value={formData.nachricht}
                           onChange={(e) =>
                             setFormData({ ...formData, nachricht: e.target.value })
                           }
                           error={errors.nachricht}
-                          placeholder="Teilen Sie uns mit, wie wir Ihnen helfen können…"
+                          placeholder={isAgiWorks ? "Was möchten Sie entwickeln? Welche Herausforderung möchten Sie lösen?" : "Teilen Sie uns mit, wie wir Ihnen helfen können…"}
                           required
                           textarea
                           rows={6}
@@ -899,10 +921,12 @@ export default function ContactPageContent() {
                         privacyHref={privacyHref}
                       />
 
-                      <GhostSubmitButton
-                        isLoading={isLoading}
-                        label={contactPage.submitLabel}
-                      />
+                      <div className={isAgiWorks ? "agi-contact-submit" : ""}>
+                        <GhostSubmitButton
+                          isLoading={isLoading}
+                          label={isAgiWorks ? "Projektanfrage senden" : contactPage.submitLabel}
+                        />
+                      </div>
                     </motion.form>
                   )}
                 </AnimatePresence>
@@ -916,9 +940,9 @@ export default function ContactPageContent() {
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
               <div
-                className="relative rounded-3xl overflow-hidden p-8 md:p-10 h-full"
-                style={glassPanelStyle()}
-              >
+                className={isAgiWorks ? "agi-contact-sidebar relative rounded-3xl overflow-hidden p-8 md:p-10 h-full" : "relative rounded-3xl overflow-hidden p-8 md:p-10 h-full"}
+                style={isAgiWorks ? undefined : glassPanelStyle()}
+               data-nxl-contact-aside="true">
                 <p
                   className="text-[11px] uppercase tracking-[0.28em] mb-4"
                   style={{ color: "var(--brand-primary)", opacity: 0.75 }}
@@ -929,10 +953,10 @@ export default function ContactPageContent() {
                   className="text-2xl md:text-3xl font-light text-white mb-4 tracking-tight"
                   style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
                 >
-                  Persönlich erreichbar
+                  {isAgiWorks ? "Persönlich erreichbar." : "Persönlich erreichbar"}
                 </h2>
                 <p className="text-white/45 text-sm font-light leading-relaxed mb-2">
-                  {contactPage.directIntro}
+                  {isAgiWorks ? "Sie möchten Ihr Vorhaben lieber direkt besprechen? Kontaktieren Sie uns persönlich." : contactPage.directIntro}
                 </p>
 
                 <div className="mt-5 flex flex-col gap-3">
@@ -950,11 +974,64 @@ export default function ContactPageContent() {
                   />
                 </div>
 
+                {isAgiWorks && (
+                  <div className="agi-contact-aside-extra">
+                    <div className="agi-contact-aside-section">
+                      <p className="agi-contact-eyebrow">DARUM AGI WORKS</p>
+
+                      <div className="agi-contact-perk">
+                        <span className="agi-contact-check" aria-hidden="true">✓</span>
+                        <div>
+                          <strong>Direkt mit den Gründern</strong>
+                          <p>Persönlicher Austausch statt wechselnder Ansprechpartner.</p>
+                        </div>
+                      </div>
+
+                      <div className="agi-contact-perk">
+                        <span className="agi-contact-check" aria-hidden="true">✓</span>
+                        <div>
+                          <strong>Individuelle Software</strong>
+                          <p>Entwickelt für Ihre Abläufe, nicht für ein Standardpaket.</p>
+                        </div>
+                      </div>
+
+                      <div className="agi-contact-perk">
+                        <span className="agi-contact-check" aria-hidden="true">✓</span>
+                        <div>
+                          <strong>Klare nächste Schritte</strong>
+                          <p>Wir besprechen Anforderungen und sinnvollen Projektumfang.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="agi-contact-aside-section">
+                      <p className="agi-contact-eyebrow">SO GEHT ES WEITER</p>
+
+                      <div className="agi-contact-step">
+                        <span>01</span>
+                        <div><strong>Anfrage senden</strong><p>Sie beschreiben kurz Ihr Vorhaben.</p></div>
+                      </div>
+
+                      <div className="agi-contact-step">
+                        <span>02</span>
+                        <div><strong>Persönlicher Austausch</strong><p>Wir klären Ihre Anforderungen.</p></div>
+                      </div>
+
+                      <div className="agi-contact-step">
+                        <span>03</span>
+                        <div><strong>Nächsten Schritt abstimmen</strong><p>Gemeinsam definieren wir das weitere Vorgehen.</p></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div
                   className="mt-8 pt-8"
                   style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
                 >
-                  <Link
+
+      <NexcelContactAsideDetails />
+<Link
                     href={homeHref}
                     className="group relative inline-flex items-center gap-3 rounded-full px-6 py-3 text-[11px] uppercase transition-all duration-500 hover:gap-4"
                     style={{

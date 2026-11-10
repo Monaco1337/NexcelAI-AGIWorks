@@ -1,7 +1,10 @@
 "use client";
 
+import NexcelContactParityShell from "./NexcelContactParityShell";
 import ContactPageContent from "@/components/contact/ContactPageContent";
 
 export default function KontaktPage() {
-  return <ContactPageContent />;
+  return <NexcelContactParityShell>
+<ContactPageContent />
+</NexcelContactParityShell>;
 }

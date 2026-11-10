@@ -1,3 +1,5 @@
+// HERO_CTA_CONVERSION_V6
+// LUXHERO_EDITORIAL_V5
 "use client";
 
 /**
@@ -15,6 +17,7 @@
  */
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
@@ -39,34 +42,42 @@ function Ico({ d, extra }: { d?: string; extra?: React.ReactNode }) {
  * geschäftlichen Nutzen: maximal 4 Chips, sofort verständlich.
  */
 const CHIPS = [
-  { label: "Mehr Kunden", icon: <Ico d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /> },
-  { label: "Weniger Aufwand", icon: <Ico d="M12 8v4l3 3M12 21a9 9 0 100-18 9 9 0 000 18z" /> },
-  { label: "Automatisierte Prozesse", icon: <Ico d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" /> },
-  { label: "Ein System statt zehn Tools", icon: <Ico extra={<><rect x="4" y="3" width="16" height="18" rx="1.6"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6"/></>} /> },
+  { label: "Datensouverän", icon: <Ico d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /> },
+  { label: "Integrierbar", icon: <Ico d="M12 8v4l3 3M12 21a9 9 0 100-18 9 9 0 000 18z" /> },
+  { label: "Prozessautomatisierung", icon: <Ico d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" /> },
+  { label: "Skalierbar", icon: <Ico extra={<><rect x="4" y="3" width="16" height="18" rx="1.6"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6"/></>} /> },
 ];
 
 /* ── Main component ─────────────────────────────────────────────────── */
 export default function PremiumHero() {
-  const brand       = useBrand();
-  const analyseHref = resolveBrandNavHref("/systemanalyse", brand.id);
+  const brand = useBrand();
+  const pathname = usePathname();
+  const isAgiWorks = brand.id === "agiworks";
+  const primaryHref = isAgiWorks
+    ? (pathname?.startsWith("/agiworks")
+        ? "/agiworks/kontakt"
+        : resolveBrandNavHref("/kontakt", brand.id))
+    : resolveBrandNavHref("/kontakt", brand.id);
+  const secondaryHref = isAgiWorks ? "#projekte" : "#systeme";
 
   return (
     <section
       id="hero"
+      data-nexcel-scroll={isAgiWorks ? undefined : "true"}
       className="relative w-full overflow-hidden min-h-[680px] lg:min-h-[720px]"
       style={{
         background:
           "radial-gradient(ellipse 80% 60% at 55% 8%, #0d0924 0%, #050412 55%, #020206 100%)",
       }}
-    >
+     data-luxhero-v5={isAgiWorks ? "agi" : "nexcel"}>
       {/* ── z-0  Background grid + animated glow ─────────────────── */}
       <HeroBg />
 
       {/* ── z-[6]  Schwebende UI-Fragmente — dezente Systemanmutung ── */}
-      <FloatingFragments />
+      {/* NEXCEL: FloatingFragments deaktiviert */}
 
       {/* ── Nav spacer ───────────────────────────────────────────── */}
-      <div aria-hidden style={{ height: "calc(env(safe-area-inset-top,0px) + 116px)" }} />
+      <div aria-hidden style={{ height: brand.id === "nexcel" ? "calc(env(safe-area-inset-top,0px) + 116px + clamp(24px, 4vw, 56px))" : "calc(env(safe-area-inset-top,0px) + 116px)" /* NEXCEL_HERO_SPACING_AST_V1 */ }} />
 
       {/* ══════════════════════════════════════════════════════════
           DESKTOP: Founders + Orbit  — absolute, z-10
@@ -192,17 +203,10 @@ export default function PremiumHero() {
       {/* ══════════════════════════════════════════════════════════
           CONTENT  — z-20, left-aligned, independent of founders
       ══════════════════════════════════════════════════════════ */}
-      <div className="relative z-20 mx-auto w-full max-w-[1300px] px-5 sm:px-8">
+      <div className={`relative z-20 mx-auto w-full max-w-[1300px] px-5 sm:px-8 ${isAgiWorks ? "lg:pt-14" : ""}`}>
 
         {/* Eyebrow */}
-        <motion.p
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="text-[11px] font-semibold uppercase tracking-[0.34em]"
-          style={{ color: "var(--accent)" }}
-        >
-          Individuell · Sicher · Skalierbar
-        </motion.p>
+
 
         {/* Headline */}
         <motion.h1
@@ -214,30 +218,36 @@ export default function PremiumHero() {
             sm:text-[3.1rem] md:text-[3.5rem] lg:text-[3.9rem]
           "
           style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
-        >
-          Digitale Betriebssysteme{" "}
-          <span style={{ fontWeight: 400 }}>für </span>
-          <span style={{
-            background: "var(--brand-headline-gradient)",
-            WebkitBackgroundClip: "text", backgroundClip: "text",
-            color: "transparent", WebkitTextFillColor: "transparent",
-            fontWeight: 400,
-            filter: "drop-shadow(0 0 26px var(--brand-glow-strong))",
-          }}>
-            Unternehmen.
-          </span>
-        </motion.h1>
+         data-luxhero-title="true">
+            {isAgiWorks ? (
+              <>
+                <span className="luxhero-line">Individuelle Software &amp;</span>
+                <span className="luxhero-line luxhero-accent">private LLM-Lösungen</span>
+                <span className="luxhero-line">für Unternehmen.</span>
+              </>
+            ) : (
+              <>
+                <span className="luxhero-line">KI-Automatisierung &amp; eigene</span>
+                <span className="luxhero-line">LLMs für <span className="luxhero-accent">Unternehmen.</span></span>
+              </>
+            )}
+          </motion.h1>
+
+
+
+
+
 
         {/* Sub */}
         <motion.p
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.13, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-5 max-w-[480px] text-[15px] leading-[1.72] text-white/65 sm:text-[16px]"
-        >
-          Wir entwickeln individuelle Systeme für Kunden, Buchungen, Leads,
-          Verwaltung, Kommunikation, Dokumente und Automatisierung — von der
-          Premium-Webseite bis zum ERP-ähnlichen Unternehmenssystem.
-        </motion.p>
+          className="mt-5 max-w-[480px] 2xl:max-w-[620px] text-[15px] leading-[1.72] text-white/65 sm:text-[16px]"
+         data-luxhero-copy="true">
+            {isAgiWorks
+              ? "Von CRM und ERP bis zu privaten Sprachmodellen: Wir entwickeln Software, die Ihre Prozesse verbindet, manuelle Arbeit reduziert und sich in Ihre bestehende IT integriert."
+              : "Weniger Routine für Ihr Team: Wir entwickeln KI-Agenten und individuelle LLM-Lösungen, die Kundenanfragen und interne Abläufe unterstützen – passgenau für Ihre bestehenden Systeme."}
+          </motion.p>
 
         {/* CTAs */}
         <motion.div
@@ -245,50 +255,29 @@ export default function PremiumHero() {
           transition={{ duration: 0.6, delay: 0.19, ease: [0.22, 1, 0.36, 1] }}
           className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
         >
-          <Link href={analyseHref} prefetch className="group/cta relative">
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -z-10 rounded-2xl opacity-70 blur-2xl transition-opacity duration-300 group-hover/cta:opacity-100"
-              style={{ background: "color-mix(in srgb, var(--accent) 40%, transparent)" }}
-            />
-            <span
-              className="relative flex w-fit items-center gap-2.5 overflow-hidden rounded-2xl px-7 py-[16px] text-[14px] font-semibold text-white transition-transform duration-300 group-hover/cta:-translate-y-0.5"
-              style={{
-                background: "color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,0.03))",
-                border: "1px solid color-mix(in srgb, var(--accent) 58%, transparent)",
-                fontFamily: "var(--font-headline), system-ui, sans-serif",
-                backdropFilter: "blur(12px)",
-                boxShadow: "0 8px 34px color-mix(in srgb, var(--accent) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)",
-              }}
-            >
-              <span aria-hidden
-                className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-out group-hover/cta:translate-x-full"
-                style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.13),transparent)" }}
-              />
-              <span className="relative">Systemanalyse starten</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden
-                className="relative transition-transform duration-300 group-hover/cta:translate-x-0.5">
-                <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </span>
+          <Link
+            href={primaryHref}
+            prefetch
+            data-luxhero-cta="primary"
+            data-hero-cta-v6="primary"
+            className="luxhero-v6-button luxhero-v6-primary"
+          >
+            <span>{isAgiWorks ? "Softwareprojekt besprechen" : "KI-Projekt besprechen"}</span>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </Link>
 
-          <a href="#systeme" className="group/sec">
-            <span
-              className="flex w-fit items-center gap-2 rounded-2xl px-7 py-[16px] text-[14px] font-medium text-white/85 backdrop-blur-sm transition-all duration-300 hover:text-white"
-              style={{
-                fontFamily: "var(--font-headline), system-ui, sans-serif",
-                background: "linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.025) 100%)",
-                border: "1px solid rgba(255,255,255,0.14)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)",
-              }}
-            >
-              Lösungen ansehen
-              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden
-                className="transition-transform duration-300 group-hover/sec:translate-y-0.5">
-                <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </span>
+          <a
+            href={secondaryHref}
+            data-luxhero-cta="secondary"
+            data-hero-cta-v6="secondary"
+            className="luxhero-v6-button luxhero-v6-secondary"
+          >
+            <span>{isAgiWorks ? "Referenzen ansehen" : "Lösungen entdecken"}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </a>
         </motion.div>
 
@@ -333,7 +322,7 @@ export default function PremiumHero() {
               lg:max-w-[700px] lg:flex-wrap lg:overflow-visible lg:pb-0
             "
           >
-            {CHIPS.map((c) => (
+            {CHIPS.map((c, i) => (
               <li key={c.label} className="shrink-0 snap-start lg:shrink">
                 <span
                   className="
@@ -352,7 +341,7 @@ export default function PremiumHero() {
                   }}
                 >
                   <span style={{ color: "var(--accent)" }}>{c.icon}</span>
-                  {c.label}
+                  {brand.id === "nexcel" ? ["KI-Agenten", "Weniger Handarbeit", "Automatisierte Abläufe", "Bestehende Tools verbinden"][i] : c.label}
                 </span>
               </li>
             ))}
@@ -444,6 +433,23 @@ export default function PremiumHero() {
         </motion.div>
         {/* /feature+card group */}
       </div>
+
+      {!isAgiWorks && (
+        <div data-luxhero-trust="true" aria-label="Ihre Vorteile bei NEXCEL AI">
+          <div className="luxhero-trust-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+            <div><strong>Sicher &amp; kontrollierbar</strong><span>Datenschutz und Zugriffskontrolle</span></div>
+          </div>
+          <div className="luxhero-trust-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg>
+            <div><strong>Individuell integriert</strong><span>Passend zu Ihren Systemen</span></div>
+          </div>
+          <div className="luxhero-trust-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M5 20V13M12 20V8M19 20V3"/></svg>
+            <div><strong>Effizient &amp; skalierbar</strong><span>Gezielte Prozessautomatisierung</span></div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

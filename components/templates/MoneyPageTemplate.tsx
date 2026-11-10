@@ -53,19 +53,19 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
   return (
     <TemplateFrame base={base} extraSchema={schema} cta={{ label: "Systemanalyse starten", href: "/systemanalyse" }}>
       {/* AEO direct answer */}
-      <TemplateSection eyebrow="Kurzantwort" heading="Das Wichtigste zuerst">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Kurzantwort" heading="Das Wichtigste zuerst">
         <GlassCard>
           <p className="text-base leading-relaxed text-white/80">{page.aeoAnswer}</p>
         </GlassCard>
       </TemplateSection>
 
       {/* Problem */}
-      <TemplateSection eyebrow="Ausgangslage" heading="Das Problem">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ausgangslage" heading="Das Problem">
         <p className="max-w-3xl text-base leading-relaxed text-white/70">{page.problem}</p>
       </TemplateSection>
 
       {/* Solution + modules */}
-      <TemplateSection eyebrow="Lösung" heading="Was gebaut wird" intro={page.solutionIntro}>
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Lösung" heading="Was gebaut wird" intro={page.solutionIntro}>
         <CardGrid>
           {page.modules.map((m, i) => (
             <GlassCard key={i}>
@@ -79,7 +79,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
       </TemplateSection>
 
       {/* Brand-specific approach */}
-      <TemplateSection eyebrow="Ansatz" heading="Wie wir vorgehen">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ansatz" heading="Wie wir vorgehen">
         <ul className="space-y-3">
           {page.approach.map((a, i) => (
             <li key={i} className="flex gap-3 text-sm leading-relaxed text-white/75">
@@ -91,7 +91,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
       </TemplateSection>
 
       {/* Industries */}
-      <TemplateSection eyebrow="Für wen" heading="Passende Einsatzbereiche">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Für wen" heading="Passende Einsatzbereiche">
         <div className="flex flex-wrap gap-2">
           {page.industries.map((ind, i) => (
             <span
@@ -106,7 +106,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
       </TemplateSection>
 
       {/* Decision matrix */}
-      <TemplateSection eyebrow="Entscheidung" heading="Wann sinnvoll — und wann nicht">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Entscheidung" heading="Wann sinnvoll — und wann nicht">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <GlassCard>
             <h3 className="text-base font-medium text-white/95">Sinnvoll, wenn</h3>
@@ -129,7 +129,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
       </TemplateSection>
 
       {/* Cost corridor */}
-      <TemplateSection eyebrow="Kosten" heading="Projektkorridor statt Fixpreis">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Kosten" heading="Projektkorridor statt Fixpreis">
         <GlassCard>
           <p className="text-sm leading-relaxed text-white/75">{page.costNote}</p>
           <Link
@@ -142,7 +142,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
       </TemplateSection>
 
       {/* Process */}
-      <TemplateSection eyebrow="Ablauf" heading="Wie ein Projekt läuft">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ablauf" heading="Wie ein Projekt läuft">
         <ol className="space-y-4">
           {page.process.map((step, i) => (
             <li key={i}>
@@ -160,7 +160,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
 
       {/* Internal links */}
       {page.relatedPaths.length > 0 && (
-        <TemplateSection eyebrow="Weiter" heading="Passende nächste Schritte">
+        <TemplateSection compact={page.brand === "agiworks"} eyebrow="Weiter" heading="Passende nächste Schritte">
           <div className="flex flex-wrap gap-3">
             {page.relatedPaths.map((href, i) => (
               <Link
@@ -177,7 +177,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
       )}
 
       {/* Proof constraints */}
-      <TemplateSection eyebrow="Transparenz" heading="Was wir zusichern — und was nicht">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Transparenz" heading="Was wir zusichern — und was nicht">
         <p className="max-w-3xl text-sm leading-relaxed text-white/60">{MONEY_PROOF_CONSTRAINTS}</p>
       </TemplateSection>
     </TemplateFrame>

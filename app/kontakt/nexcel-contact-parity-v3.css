@@ -1,0 +1,344 @@
+/* NXL_CONTACT_AGI_PARITY_V3 -- scoped exclusively to NEXCEL /kontakt */
+.nxl-contact-parity[data-nxl-contact-parity="true"] {
+  --nxl-contact-accent: #b88cf4;
+  color: #f5f2fb;
+  isolation: isolate;
+  position: relative;
+  min-height: 100vh;
+  background: radial-gradient(ellipse 66% 37% at 50% 4%, rgba(105,70,156,.14), transparent 82%),
+              radial-gradient(ellipse 43% 45% at 100% 64%, rgba(91,57,154,.07), transparent 86%),
+              linear-gradient(180deg,#090a13 0%,#0c0b17 54%,#090a13 100%);
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] .nxl-contact-parity-hero {
+  width: min(100% - 40px, 1250px);
+  margin-inline: auto;
+  padding: clamp(177px, 12vw, 208px) 0 35px;
+  text-align: center;
+}
+.nxl-contact-parity .nxl-contact-parity-hero-brand,
+.nxl-contact-parity .nxl-contact-parity-overline {
+  color: var(--nxl-contact-accent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .23em;
+  line-height: 1.5;
+}
+.nxl-contact-parity .nxl-contact-parity-hero-brand { margin: 0 0 33px; }
+.nxl-contact-parity .nxl-contact-parity-hero h1 {
+  font-size: clamp(40px, 5.25vw, 74px) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.055em !important;
+  line-height: 1.12 !important;
+  margin: 0 !important;
+  color: #f1eff8 !important;
+  text-wrap: balance;
+}
+.nxl-contact-parity .nxl-contact-parity-hero h1 span {
+  background: linear-gradient(110deg,#d4c9e8,#9d6adc 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.nxl-contact-parity .nxl-contact-parity-hero-subline {
+  max-width: 690px;
+  margin: 35px auto 0;
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 1.72;
+  color: rgba(227,220,237,.77);
+  text-wrap: pretty;
+}
+.nxl-contact-parity .nxl-contact-parity-signals {
+  display: flex;
+  gap: clamp(13px, 2.3vw, 30px);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+.nxl-contact-parity .nxl-contact-parity-signals span {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(226,218,237,.76);
+  font-size: 12px;
+  font-weight: 400;
+}
+.nxl-contact-parity .nxl-contact-parity-signals i {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  flex: none;
+  border: 1px solid rgba(184,140,244,.7);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%,#b88cf4 0 2px,transparent 2.5px);
+}
+/* The new intro replaces the old standalone "Kontakt" heading. */
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-old-intro="true"] { display: none !important; }
+/* Keep the actual form canvas transparent; the panels paint their own surfaces. */
+.nxl-contact-parity :is(main,section):has(form) {
+  background-color: transparent !important;
+  background-image: none !important;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-grid="true"] {
+  display: grid !important;
+  max-width: 1280px;
+  margin: 0 auto 72px !important;
+  padding: 0 20px !important;
+  gap: 20px !important;
+  grid-template-columns: minmax(0, 1.6fr) minmax(330px, .92fr) !important;
+  align-items: stretch !important;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"],
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-aside="true"] {
+  background: linear-gradient(156deg,rgba(24,21,38,.96),rgba(9,12,21,.98)) !important;
+  border: 1px solid rgba(173,138,213,.22) !important;
+  border-radius: 23px !important;
+  box-shadow: 0 18px 70px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.025) !important;
+  padding: clamp(24px, 2.75vw, 42px) !important;
+  min-width: 0;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] { height: auto !important; }
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-aside="true"] {
+  position: relative !important;
+  height: auto !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  align-self: stretch !important;
+}
+.nxl-contact-parity .nxl-contact-parity-form-intro { margin-bottom: 29px; }
+.nxl-contact-parity .nxl-contact-parity-form-intro .nxl-contact-parity-overline { margin: 0 0 15px; }
+.nxl-contact-parity .nxl-contact-parity-form-intro h2 {
+  font-size: clamp(23px,2.1vw,31px) !important;
+  letter-spacing: -.04em;
+  font-weight: 450 !important;
+  line-height: 1.2;
+  color: #f4f0fc !important;
+  margin: 0 0 11px;
+}
+.nxl-contact-parity .nxl-contact-parity-form-intro > p:last-child {
+  margin: 0;
+  color: rgba(226,217,241,.70);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] form {
+  accent-color: #b58de8;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  color: rgba(235,224,250,.83) !important;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] :is(input:not([type="checkbox"]),textarea,select) {
+  color: #f8f5ff !important;
+  background: rgba(225,209,250,.052) !important;
+  border: 1px solid rgba(213,190,236,.17) !important;
+  border-radius: 12px !important;
+  min-height: 54px;
+  transition: border-color .2s ease,box-shadow .2s ease;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] textarea { min-height: 155px; resize: vertical; }
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] :is(input,textarea)::placeholder {
+  color: rgba(222,213,237,.50) !important;
+  opacity: 1;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] :is(input:not([type="checkbox"]),textarea,select):focus-visible {
+  border-color: rgba(189,147,245,.72) !important;
+  outline: 2px solid transparent;
+  box-shadow: 0 0 0 3px rgba(179,135,240,.12) !important;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] button[type="submit"] {
+  min-height: 56px;
+  border: 1px solid rgba(181,139,238,.68) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(110deg,#8559c5,#6c449e) !important;
+  color: #fff !important;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 12px 32px rgba(94,61,153,.21);
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] button[type="submit"]:disabled {
+  opacity: .64;
+  cursor: not-allowed;
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] button[type="submit"]:not(:disabled):hover {
+  filter: brightness(1.09);
+}
+.nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] button[type="submit"]:focus-visible {
+  outline: 2px solid #d3a7ff;
+  outline-offset: 3px;
+}
+/* The right column has the same useful content density as the AGI card. */
+.nxl-contact-parity .nxl-contact-parity-aside-more { margin-top: 26px; }
+.nxl-contact-parity .nxl-contact-parity-list {
+  border-top: 1px solid rgba(211,189,238,.11);
+  padding-top: 24px;
+  margin-top: 22px;
+}
+.nxl-contact-parity .nxl-contact-parity-list .nxl-contact-parity-overline { margin: 0 0 17px; }
+.nxl-contact-parity .nxl-contact-parity-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(211,189,238,.09);
+}
+.nxl-contact-parity .nxl-contact-parity-reason:last-child { border-bottom: 0; }
+.nxl-contact-parity .nxl-contact-parity-check,
+.nxl-contact-parity .nxl-contact-parity-step {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(188,151,239,.5);
+  color: #d2b6fc;
+  background: rgba(147,99,210,.075);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  font-size: 12px;
+}
+.nxl-contact-parity .nxl-contact-parity-step { border-radius: 50%; font-size: 10px; }
+.nxl-contact-parity .nxl-contact-parity-reason strong {
+  display: block;
+  color: rgba(247,240,255,.95);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.nxl-contact-parity .nxl-contact-parity-reason p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(225,215,241,.65);
+}
+@media (max-width: 1023px) {
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-grid="true"] {
+    grid-template-columns: minmax(0,1fr) !important;
+    max-width: 760px;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-aside="true"] { min-height: 0 !important; }
+}
+@media (max-width: 640px) {
+  .nxl-contact-parity .nxl-contact-parity-hero { padding: 145px 0 30px; width: min(100% - 32px,520px); }
+  .nxl-contact-parity .nxl-contact-parity-hero h1 { font-size: clamp(37px,10vw,52px) !important; }
+  .nxl-contact-parity .nxl-contact-parity-hero-subline { margin-top: 25px; font-size: 14px; }
+  .nxl-contact-parity .nxl-contact-parity-signals { justify-content: flex-start; gap: 13px 20px; }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-grid="true"] { padding: 0 16px !important; }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"],
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-aside="true"] { padding: 23px !important; border-radius: 19px !important; }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] :is(input:not([type="checkbox"]),textarea,select) { font-size: 16px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] :is(button,input,select,textarea) { transition: none !important; }
+}
+/* NXL_CONTACT_GRID_V5_AST
+ * Single NEXCEL contact layout; supports nested direct Grid branches.
+ * AGI /agiworks/kontakt is not matched by the .nxl-contact-parity shell.
+ * Chrome 105+ / modern Safari use :has() to select the actual column wrappers.
+ */
+@media (min-width: 1024px) {
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-grid="true"]:not([data-nxl-contact-alignment-root="true"]) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: start !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-alignment-root="true"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr) !important;
+    gap: clamp(18px, 1.65vw, 26px) !important;
+    align-items: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-alignment-root="true"]:not([data-nxl-contact-grid="true"]) {
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-alignment-root="true"] > :is([data-nxl-contact-form="true"], :has([data-nxl-contact-form="true"])) {
+    grid-column: 1 / 2 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    align-self: start !important;
+    margin: 0 !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-alignment-root="true"] > :is([data-nxl-contact-aside="true"], :has([data-nxl-contact-aside="true"])) {
+    grid-column: 2 / 3 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    align-self: start !important;
+    margin: 0 !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-aside="true"] {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    align-self: start !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-form="true"] {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+}
+@media (max-width: 1023px) {
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-grid="true"],
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-alignment-root="true"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 18px !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-alignment-root="true"] > :is([data-nxl-contact-form="true"], :has([data-nxl-contact-form="true"])),
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-alignment-root="true"] > :is([data-nxl-contact-aside="true"], :has([data-nxl-contact-aside="true"])) {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .nxl-contact-parity[data-nxl-contact-parity="true"] [data-nxl-contact-aside="true"] {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+}
+
+/* NXL_CONTACT_TOP_ALIGN_V6 */
+
+@media (min-width: 1024px) {
+
+  /* Rechten Grid-Zweig oben ausrichten */
+  .nxl-contact-parity[data-nxl-contact-parity="true"]
+  [data-nxl-contact-alignment-root="true"]
+  > :has([data-nxl-contact-aside="true"]) {
+    align-self: start !important;
+    margin-block-start: 0 !important;
+    padding-block-start: 0 !important;
+    inset-block-start: 0 !important;
+  }
+
+  /* Alte Abstände verschachtelter Wrapper entfernen */
+  .nxl-contact-parity[data-nxl-contact-parity="true"]
+  [data-nxl-contact-alignment-root="true"]
+  :is(div, section, article, aside):has(
+    [data-nxl-contact-aside="true"]
+  ) {
+    margin-block-start: 0 !important;
+    padding-block-start: 0 !important;
+    inset-block-start: 0 !important;
+  }
+
+  /* Kontaktkarte selbst bündig positionieren */
+  .nxl-contact-parity[data-nxl-contact-parity="true"]
+  [data-nxl-contact-aside="true"] {
+    margin-block-start: 0 !important;
+    inset-block-start: 0 !important;
+    align-self: start !important;
+  }
+}
