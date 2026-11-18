@@ -1,73 +1,40 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
 
+/** Public brands deliberately ship a single, stable premium-dark theme. */
 type Theme = "dark" | "light";
 
 interface ThemeContextType {
   theme: Theme;
+  /** Backward-compatible API; switching to light has been disabled. */
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const DARK_THEME: ThemeContextType = {
+  theme: "dark",
+  toggleTheme: () => {
+    // Intentionally inert: a persisted light preference must never alter branding.
+  },
+};
 
-/** Ohne gespeicherte Wahl: immer dunkel (Marken-Default, Hero-Video). */
-function readThemeFromEnvironment(): Theme {
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-  try {
-    const saved = localStorage.getItem("theme") as Theme | null;
-    if (saved === "light" || saved === "dark") {
-      return saved;
-    }
-  } catch {
-    /* private mode */
-  }
-  return "dark";
-}
-
-function applyThemeToDom(theme: Theme) {
-  if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  root.classList.remove("dark", "light");
-  root.classList.add(theme);
-  try {
-    localStorage.setItem("theme", theme);
-  } catch {
-    /* noop */
-  }
-}
-
-// Erster Render: immer „dark“ = identisch mit SSR (layout: html class dark).
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
-
   useEffect(() => {
-    const next = readThemeFromEnvironment();
-    setTheme(next);
-    applyThemeToDom(next);
+    const root = document.documentElement;
+    root.classList.remove("light");
+    root.classList.add("dark");
+    root.style.colorScheme = "dark";
+    try {
+      // Remove the old preference so devices cannot revert on the next visit.
+      localStorage.removeItem("theme");
+    } catch {
+      // Private browsing or blocked storage: DOM still remains dark.
+    }
   }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      applyThemeToDom(next);
-      return next;
-    });
-  };
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={DARK_THEME}>{children}</ThemeContext.Provider>;
 }
 
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    return { theme: "dark" as Theme, toggleTheme: () => {} };
-  }
-  return context;
+export function useTheme(): ThemeContextType {
+  return useContext(ThemeContext) ?? DARK_THEME;
 }

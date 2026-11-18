@@ -33,7 +33,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
     canonicalUrl,
     breadcrumbs: [
       { label: "Start", href: "/" },
-      { label: collectionLabel, href: page.path },
+      { label: collectionLabel, href: page.collection === "leistungen" ? "/leistungen" : "/loesungen" },
       { label: page.serviceName, href: page.path },
     ],
     eyebrow: page.eyebrow,

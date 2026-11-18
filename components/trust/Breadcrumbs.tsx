@@ -33,7 +33,7 @@ export default function Breadcrumbs({ items }: { items: BreadcrumbNode[] }) {
         {items.map((item, i) => {
           const isLast = i === items.length - 1;
           return (
-            <li key={item.href} className="flex items-center gap-2">
+            <li key={`${item.href}-${i}`} className="flex items-center gap-2">
               {isLast ? (
                 <span aria-current="page" className="text-white/70">
                   {item.label}

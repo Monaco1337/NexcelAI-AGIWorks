@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth";
 import fs from "fs";
 import fsPromises from "fs/promises";
 import path from "path";
@@ -17,6 +18,10 @@ const STORAGE_FILE = IS_SERVERLESS
 // GET - Lade alle Kontakte
 export async function GET() {
   try {
+    const session = await verifySession();
+    if (!session || session.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     let contacts: any[] = [];
     
     if (fs.existsSync(STORAGE_FILE)) {
