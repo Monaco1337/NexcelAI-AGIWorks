@@ -34,6 +34,11 @@ const SalesCenter = dynamicImport(
   { ssr: false, loading: listSkeleton }
 );
 
+const ConsultationsCenter = dynamicImport(
+  () => import("@/components/admin/consultations/ConsultationsCenter"),
+  { ssr: false, loading: listSkeleton }
+);
+
 const ProjectsManager = dynamicImport(
   () => import("@/components/admin/projects/ProjectsManager"),
   { ssr: false, loading: listSkeleton }
@@ -175,6 +180,7 @@ type TabId =
   | "unternehmen"
   | "vertrieb"
   | "demo"
+  | "termine"
   | "projekte"
   | "tickets"
   | "rechnungen"
@@ -251,6 +257,13 @@ function NavIcon({ name }: { name: TabId }) {
         <svg {...common}>
           <rect x="3" y="5" width="14" height="14" rx="2" />
           <path d="M17 9l4-2v10l-4-2" />
+        </svg>
+      );
+    case "termine":
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M7 3v4M17 3v4M3 10h18M8 15h3M14 15h3" />
         </svg>
       );
     case "automationen":
@@ -630,6 +643,7 @@ export default function AdminDashboard() {
     { id: "unternehmen", label: "Unternehmen" },
     { id: "vertrieb", label: "Vertrieb" },
     { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
+    { id: "termine", label: "Termine / Buchungen" },
     { id: "projekte", label: "Projekte" },
     { id: "tickets", label: "Tickets", badge: openTickets },
     { id: "rechnungen", label: "Rechnungen" },
@@ -649,6 +663,7 @@ export default function AdminDashboard() {
     unternehmen: "Unternehmen",
     vertrieb: "Vertrieb",
     demo: "Demo-Anfragen",
+    termine: "Termine / Buchungen",
     projekte: "Projekte",
     tickets: "Ticket Control Center",
     rechnungen: "Rechnungen",
@@ -1407,6 +1422,11 @@ export default function AdminDashboard() {
             accent={sessionBrand.accent}
             initialProjectId={ticketProjectFilter}
           />
+        )}
+
+        {/* ─── ZENTRALER TERMINPLANER ──────────────────────────────────────── */}
+        {activeTab === "termine" && (
+          <ConsultationsCenter accent={sessionBrand.accent} />
         )}
 
         {/* ─── VERTRIEB ───────────────────────────────────────────────── */}

@@ -47,12 +47,12 @@ export async function POST(req: NextRequest) {
   if (host.endsWith("agiworks.de") && brand !== "agiworks") return reply({ error: "Falsche Marke" }, 400);
   const name = str(data.name, 150, 2);
   const email = str(data.email, 254, 5)?.toLowerCase();
-  const company = str(data.company ?? "", 150);
+  const company = str(data.company, 150, 2);
   const projectType = str(data.projectType, 80);
   const projectGoal = str(data.projectGoal, 2000, 20);
   const timeframe = str(data.timeframe, 40);
   const budgetRange = str(data.budgetRange, 40);
-  if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || company === null || !projectType || !TYPES.has(projectType) || !projectGoal || !timeframe || !TIMEFRAMES.has(timeframe) || !budgetRange || !BUDGETS.has(budgetRange) || typeof data.startsAt !== "string") {
+  if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !company || !projectType || !TYPES.has(projectType) || !projectGoal || !timeframe || !TIMEFRAMES.has(timeframe) || !budgetRange || !BUDGETS.has(budgetRange) || typeof data.startsAt !== "string") {
     return reply({ error: "Bitte Eingaben prüfen" }, 400);
   }
   const raw = data.attribution && typeof data.attribution === "object" && !Array.isArray(data.attribution)
@@ -82,12 +82,12 @@ export async function POST(req: NextRequest) {
     try {
       await recordInboundLead({
         sourceType: "booking", sourceId: result.id, brand: brand as ConsultationBrand,
-        name, email, company, subject: `Beratungstermin: ${projectType}`, message: projectGoal,
+        name, email, company, subject: `Terminanfrage: ${projectType}`, message: projectGoal,
         details: { startsAt: result.slot.startsAt, endsAt: result.slot.endsAt, timeframe, budgetRange },
         attribution: { ...bookingAttribution, origin: "consultation-booking" },
       });
     } catch { console.error("[consultation] CRM sync queued for recovery"); }
-    return reply({ booked: true, bookingId: result.id, slot: result.slot }, 201);
+    return reply({ requested: true, bookingId: result.id, slot: result.slot }, 201);
   } catch {
     console.error("[consultation] reservation failed");
     return reply({ error: "Buchung derzeit nicht möglich" }, 503);
