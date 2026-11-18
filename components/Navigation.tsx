@@ -1270,7 +1270,7 @@ export default function Navigation() {
                   boxShadow: "0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
                 }}
               >
-                {pathname?.startsWith("/agiworks") ? (
+                {isAgiWorks ? (
 <div
   className="flex flex-col"
   data-agi-premium-menu="true"

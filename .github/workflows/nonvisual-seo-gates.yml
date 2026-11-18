@@ -36,6 +36,8 @@ jobs:
         run: python3 scripts/seo/nonvisual-seo-guard.py
       - name: Cross-device dark-only theme invariant
         run: python3 scripts/seo/dark-theme-gate.py
+      - name: Brand-owned desktop mega-menu regression
+        run: python3 scripts/seo/brand-megamenu-gate.py
       - name: API auth regression
         run: npm run check:api-auth
       - name: IndexNow ownership and payload validation
