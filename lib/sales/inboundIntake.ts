@@ -10,7 +10,7 @@ export type IntakeBrand = "nexcel" | "agiworks";
 export type IntakeResult = "inserted" | "duplicate" | "unavailable";
 
 export interface IntakeInput {
-  sourceType: "contact-form" | "calculator";
+  sourceType: "contact-form" | "calculator" | "booking";
   sourceId: string;
   brand: IntakeBrand;
   name: string;

@@ -92,6 +92,19 @@ const CORE_SEEDS: CoreSeed[] = [
       `${n} gestaltet digitale Unternehmenssysteme: Systemdesign, Prozesse, Automatisierung und Webplattformen für Unternehmen.`,
   },
   {
+    path: "/beratung",
+    type: "money",
+    breadcrumbLabel: "Beratung",
+    changefreq: "monthly",
+    priority: 0.8,
+    title: (n) => n === "AGI Works"
+      ? "Softwareberatung und Architektur für Unternehmen | AGI Works"
+      : "KI-Beratung und Automatisierung für Unternehmen | NEXCEL AI",
+    description: (n) => n === "AGI Works"
+      ? "Technisches Erstgespräch zu Softwareentwicklung, ERP, CRM, SaaS, Web-Apps und Systemintegration. Ziele und Projektrahmen klären."
+      : "KI-Beratung für Unternehmen: KI-Agenten, Prozessautomatisierung und eigene LLMs. Projektziel und Integration gemeinsam klären.",
+  },
+  {
     path: "/preise",
     type: "money",
     breadcrumbLabel: "Preise",

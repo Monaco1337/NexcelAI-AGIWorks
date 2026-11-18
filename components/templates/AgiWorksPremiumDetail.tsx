@@ -1,5 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
+import { resolveBrandNavHref } from "@/lib/brandNav";
 import type { ReactNode } from "react";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
 import {
@@ -29,11 +30,7 @@ const VISUALS: Record<string, string> = {
 };
 
 function agiUrl(path: string): string {
-  if (/^https?:\/\//i.test(path)) return path;
-  if (path === "/agiworks" || path.startsWith("/agiworks/")) {
-    return path;
-  }
-  return `/agiworks${path.startsWith("/") ? path : `/${path}`}`;
+  return resolveBrandNavHref(path, "agiworks");
 }
 
 function relatedLabel(path: string): string {
@@ -97,14 +94,14 @@ export default function AgiWorksPremiumDetail({
       >
         <ol className="flex flex-wrap items-center gap-2 text-[12px] text-slate-500">
           <li>
-            <Link href="/agiworks" className="hover:text-white">
+            <Link href="/" className="hover:text-white">
               Start
             </Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
             <Link
-              href="/agiworks/leistungen"
+              href="/leistungen"
               className="hover:text-white"
             >
               Leistungen
@@ -134,7 +131,7 @@ export default function AgiWorksPremiumDetail({
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link
-              href="/agiworks/kontakt"
+              href="/kontakt"
               className="group inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-gradient-to-r from-[#244a68] to-[#17314b] px-6 text-[14px] font-medium text-white shadow-[0_12px_42px_rgba(21,109,175,.17)] transition-colors hover:border-sky-200/75 hover:from-[#30648c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
             >
               Softwareprojekt besprechen
@@ -434,13 +431,13 @@ export default function AgiWorksPremiumDetail({
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/agiworks/preiskalkulator"
+                href="/preiskalkulator"
                 className="inline-flex min-h-[48px] items-center gap-3 rounded-xl border border-sky-300/30 px-5 text-[13px] font-medium text-white transition-colors hover:border-sky-200/70"
               >
                 Projektkorridor berechnen <Arrow />
               </Link>
               <Link
-                href="/agiworks/kontakt"
+                href="/kontakt"
                 className="inline-flex min-h-[48px] items-center gap-3 text-[13px] text-slate-300 hover:text-white"
               >
                 Projekt besprechen <Arrow />
@@ -527,7 +524,7 @@ export default function AgiWorksPremiumDetail({
             sinnvollen Umfang und die nächsten Schritte.
           </p>
           <Link
-            href="/agiworks/kontakt"
+            href="/kontakt"
             className="mt-9 inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-[#234c6d] px-7 text-[14px] font-medium transition-colors hover:bg-[#30688e]"
           >
             Softwareprojekt besprechen <Arrow />

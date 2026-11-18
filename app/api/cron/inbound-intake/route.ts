@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/pg";
+import { dispatchBookingNotifications } from "@/lib/consultations/notifications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,11 +53,34 @@ export async function GET(req: NextRequest) {
       ON CONFLICT (source_type, source_id) DO NOTHING
       RETURNING id
     `;
+    const bookingLeads = await sql<{ id: string }[]>`
+      INSERT INTO marketing_inbound_leads (
+        id, source_type, source_id, brand, name, email, company, subject, message,
+        attribution, details, priority, next_action_at, created_at
+      )
+      SELECT
+        'in_' || b.id, 'booking', b.id, b.brand, b.name, b.email,
+        NULLIF(b.company, ''), LEFT('Beratungstermin: ' || b.project_type, 180),
+        LEFT(b.project_goal, 6000), b.attribution,
+        jsonb_build_object('startsAt', b.starts_at, 'endsAt', b.ends_at,
+                           'timeframe', b.timeframe, 'budgetRange', b.budget_range),
+        CASE WHEN b.company <> '' THEN 'high' ELSE 'normal' END,
+        NOW(), b.created_at
+      FROM consultation_bookings b
+      WHERE b.status = 'confirmed' AND NOT EXISTS (
+        SELECT 1 FROM marketing_inbound_leads m
+        WHERE m.source_type = 'booking' AND m.source_id = b.id
+      )
+      ORDER BY b.created_at ASC LIMIT 100
+      ON CONFLICT (source_type, source_id) DO NOTHING
+      RETURNING id
+    `;
+    const bookingEmails = await dispatchBookingNotifications(sql);
     const overdue = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM marketing_inbound_leads
       WHERE status IN ('new','in_review') AND next_action_at < NOW()
     `;
-    return NextResponse.json({ ok: true, imported: rows.length, overdue: Number(overdue[0]?.count ?? 0) }, {
+    return NextResponse.json({ ok: true, imported: rows.length, bookingLeadsImported: bookingLeads.length, bookingEmails, overdue: Number(overdue[0]?.count ?? 0) }, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch {

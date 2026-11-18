@@ -7,7 +7,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { submitContactForm } from "@/app/actions/contact";
 import { useBrand } from "@/contexts/BrandContext";
 import { SYSTEMS } from "@/lib/systems-data";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 
 const SYSTEM_OPTIONS = [
   { value: "", label: "Allgemeine Anfrage" },
@@ -741,6 +741,12 @@ export default function ContactPageContent() {
               {isAgiWorks ? "Schildern Sie uns Ihr Softwareprojekt. Wir klären persönlich, wie der nächste sinnvolle Schritt aussieht." : contactPage.subline}
             </p>
           </motion.div>
+
+          <div className="mx-auto mb-9 flex max-w-3xl justify-center">
+            <Link href="/beratung" className="inline-flex items-center gap-3 rounded-full border border-white/25 bg-white/[.06] px-6 py-3 text-sm font-medium text-white transition hover:border-white/55 hover:bg-white/[.10]">
+              Beratungstermin online reservieren <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
 
           {isAgiWorks && (
             <div className="agi-contact-trust">

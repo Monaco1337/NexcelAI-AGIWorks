@@ -2,8 +2,7 @@
 "use client";
 // NXL_AGI_PRICING_EXPERIENCE_V4
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/BrandAwareLink";
 import { useState } from "react";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
@@ -100,7 +99,6 @@ export default function PricingSection({
   standalonePage?: boolean;
 } = {}) {
   const brand = useBrand();
-  const pathname = usePathname();
   const isAgi = brand.id === "agiworks";
 
   const [chosen, setChosen] = useState<CategoryId | null>(null);
@@ -116,15 +114,7 @@ export default function PricingSection({
 
   const rawContact = resolveBrandNavHref("/kontakt", brand.id);
 
-  const prefix =
-    isAgi &&
-    pathname?.startsWith("/agiworks") &&
-    rawContact.startsWith("/") &&
-    !rawContact.startsWith("/agiworks/")
-      ? "/agiworks"
-      : "";
-
-  const contactPath = `${prefix}${rawContact}`;
+  const contactPath = rawContact;
 
   const contactHref =
     `${contactPath}${contactPath.includes("?") ? "&" : "?"}` +
