@@ -61,6 +61,18 @@ const PerformanceAuditor = dynamic(() => import("@/components/PerformanceAuditor
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.nexcelai.de"),
+  // This root metadata covers NEXCEL's public homepage. All indexable child
+  // routes provide their own registry-driven canonical and OG metadata.
+  // AGI Works overrides these values in app/agiworks/layout.tsx.
+  alternates: { canonical: "https://www.nexcelai.de/" },
+  openGraph: {
+    type: "website",
+    url: "https://www.nexcelai.de/",
+    siteName: "NEXCEL AI",
+    locale: "de_DE",
+    title: "NEXCEL AI • Individuelle KI-Systeme & Softwarelösungen",
+    description: "Intelligente Software. Maßgeschneiderte KI. Zukunft, die funktioniert. Individuelle KI-Systeme, Automationen und digitale Produkte für Unternehmen.",
+  },
   title: "NEXCEL AI • Individuelle KI-Systeme & Softwarelösungen",
   description: "Intelligente Software. Maßgeschneiderte KI. Zukunft, die funktioniert. Individuelle KI-Systeme, Automationen und digitale Produkte für Unternehmen.",
   icons: {
