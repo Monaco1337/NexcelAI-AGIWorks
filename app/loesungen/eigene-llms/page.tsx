@@ -1,26 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import SeoJsonLd from "@/components/seo/SeoJsonLd";
+import { serviceSchema, webPageForUrl } from "@/lib/seo/jsonld";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = (() => {
-    /* SEO_LLM_CANONICAL_FIX_20261106 */
-    const originalMeta: import("next").Metadata = ({
+export const metadata: Metadata = generateSeoMetadata({
+  brand: "nexcel",
+  path: "/loesungen/eigene-llms",
   title: "Individuelle LLM-Entwicklung & Private KI | NEXCEL AI",
   description: "Eigene Sprachmodelle für Unternehmen: Datenaufbereitung, Modelltraining, Fine-Tuning, Evaluation, sichere Integration und private Inferenz. Individuelle Projektplanung.",
 });
-    return {
-      ...originalMeta,
-      alternates: {
-        ...(originalMeta.alternates ?? {}),
-        canonical: "https://www.nexcelai.de/loesungen/eigene-llms"
-      },
-      robots: {
-        index: true,
-        follow: true,
-        googleBot: { index: true, follow: true }
-      }
-    };
-  })();
 
 const capabilities = [
   { title: "Modellarchitektur & Daten", body: "Ziele, Modellgröße, Lizenzen, Datenrechte und Trainingsdaten auf Ihren Anwendungsfall abstimmen." },
@@ -31,6 +21,21 @@ const capabilities = [
 export default function EigeneLLMsPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#0a0915] text-white">
+      <SeoJsonLd schema={[
+        webPageForUrl({
+          brand: "nexcel",
+          url: "https://www.nexcelai.de/loesungen/eigene-llms",
+          name: "Individuelle LLM-Entwicklung & Private KI | NEXCEL AI",
+          description: "Eigene Sprachmodelle für Unternehmen: Datenaufbereitung, Modelltraining, Fine-Tuning, Evaluation, sichere Integration und private Inferenz. Individuelle Projektplanung.",
+        }),
+        serviceSchema({
+          brand: "nexcel",
+          name: "Individuelle LLM-Entwicklung und Private KI",
+          description: "Modellstrategie, Fine-Tuning, Evaluation und optional private Inferenz für Unternehmen.",
+          serviceType: "LLM-Entwicklung",
+          url: "https://www.nexcelai.de/loesungen/eigene-llms",
+        }),
+      ]} />
       <section className="relative mx-auto max-w-[1160px] px-5 pb-16 pt-40 sm:px-8 sm:pb-24 sm:pt-48">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(ellipse_65%_50%_at_70%_23%,rgba(111,65,175,.16),transparent)]" />
         <div className="relative z-10">

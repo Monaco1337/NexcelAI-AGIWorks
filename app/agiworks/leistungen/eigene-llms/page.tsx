@@ -1,26 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import SeoJsonLd from "@/components/seo/SeoJsonLd";
+import { serviceSchema, webPageForUrl } from "@/lib/seo/jsonld";
+import { generateSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = (() => {
-    /* SEO_LLM_CANONICAL_FIX_20261106 */
-    const originalMeta: import("next").Metadata = ({
+export const metadata: Metadata = generateSeoMetadata({
+  brand: "agiworks",
+  path: "/leistungen/eigene-llms",
   title: "Individuelle LLM-Entwicklung & Private KI | AGI Works",
   description: "LLM-Engineering für Unternehmen: Fine-Tuning, Evaluierung, RAG, Datenpipelines, private Inferenz und Integration in produktive Software.",
 });
-    return {
-      ...originalMeta,
-      alternates: {
-        ...(originalMeta.alternates ?? {}),
-        canonical: "https://www.agiworks.de/leistungen/eigene-llms"
-      },
-      robots: {
-        index: true,
-        follow: true,
-        googleBot: { index: true, follow: true }
-      }
-    };
-  })();
 
 const steps = [
   { title: "Modell- & Datenstrategie", text: "Anwendungsfall, Lizenzbedingungen, Datenrechte, Modellbasis und Qualitätsziele klären." },
@@ -31,6 +21,21 @@ const steps = [
 export default function AgiLlmPage() {
   return (
     <main className="min-h-screen bg-[#080d17] text-white">
+      <SeoJsonLd schema={[
+        webPageForUrl({
+          brand: "agiworks",
+          url: "https://www.agiworks.de/leistungen/eigene-llms",
+          name: "Individuelle LLM-Entwicklung & Private KI | AGI Works",
+          description: "LLM-Engineering für Unternehmen: Fine-Tuning, Evaluierung, RAG, Datenpipelines, private Inferenz und Integration in produktive Software.",
+        }),
+        serviceSchema({
+          brand: "agiworks",
+          name: "LLM-Engineering, RAG und private KI-Integration",
+          description: "Fine-Tuning, Retrieval-Anbindung, Evaluierung, Datenpipelines, API-Integration und private Inferenz.",
+          serviceType: "LLM-Integration",
+          url: "https://www.agiworks.de/leistungen/eigene-llms",
+        }),
+      ]} />
       <section className="mx-auto max-w-[1150px] px-5 pb-16 pt-36 sm:px-8 sm:pt-44">
         <Link href="/agiworks/leistungen" className="text-sm text-sky-300 hover:text-sky-100">← Alle Leistungen</Link>
         <p className="mt-10 text-[11px] font-medium uppercase tracking-[.24em] text-sky-300">AGI WORKS / PRIVATE LANGUAGE MODELS</p>
