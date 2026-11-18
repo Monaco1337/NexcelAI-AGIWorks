@@ -41,7 +41,8 @@ class PageParser(html.parser.HTMLParser):
         if tag == 'html':
             self.lang = a.get('lang', '')
         elif tag == 'title':
-            self.in_title = True
+            # Do not concatenate several Next.js streamed title elements.
+            self.in_title = not self.title
         elif tag == 'h1':
             self.h1 += 1
         elif tag == 'script' and a.get('type', '').lower() == 'application/ld+json':
@@ -104,8 +105,9 @@ def inspect(item):
     result = dict(host=host, url=url, http_status='', redirect_final='', canonical='',
                   canonical_count='', title='', description='', og_url='', robots='',
                   h1='', lang='', json_ld_count='', inbound_pages=0, crawlable_links=0,
-                  issues='', error='')
+                  agi_prefix_examples='', issues='', error='')
     outgoing = set()
+    agi_bad_links = set()
     issues = []
     try:
         status, final, headers, body = get(url)
@@ -143,11 +145,14 @@ def inspect(item):
                 path = target.path or '/'
                 if path == '/agiworks' or path.startswith('/agiworks/'):
                     issues.append('AGI_INTERNAL_PREFIX_LINK' if host == 'www.agiworks.de' else 'CROSS_BRAND_INTERNAL_LINK')
+                    if host == 'www.agiworks.de':
+                        agi_bad_links.add(href)
                 if path.startswith(('/_next/', '/api/', '/admin/', '/images/')): continue
                 if re.search(r'\.(?:png|jpg|svg|webp|css|js|pdf|txt|xml)$', path, re.I): continue
                 outgoing.add(normalized(urllib.parse.urlunsplit(('https', host, path, '', ''))))
             except ValueError: continue
         result['crawlable_links'] = len(outgoing)
+        result['agi_prefix_examples'] = ' | '.join(sorted(agi_bad_links)[:5])
     except Exception as exc:
         issues.append('FETCH_ERROR')
         result['error'] = str(exc)[:280]

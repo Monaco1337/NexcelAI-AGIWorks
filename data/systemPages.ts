@@ -200,7 +200,7 @@ const COPY: CopyTable = {
     },
     agiworks: {
       systemName: "Kundenportal & Self-Service",
-      title: "Kundenportal entwickeln lassen | AGI Works",
+      title: "Kundenportal & Self-Service-Architektur | AGI Works",
       description:
         "Geschütztes Portal mit Login, Rechteverwaltung und Datenanbindung — als individuelle Web-App entwickelt statt aus Bausteinen gesetzt.",
       h1: "Ein Kundenportal auf Ihrer eigenen Datenbasis",
@@ -326,7 +326,7 @@ const COPY: CopyTable = {
     },
     agiworks: {
       systemName: "Individuelle ERP-Systeme",
-      title: "ERP-System entwickeln lassen | AGI Works",
+      title: "ERP-Datenmodell & Schnittstellen | AGI Works",
       description:
         "Individuelles ERP statt Standardlizenz: Datenmodell, Module und Rechte werden exakt an Ihren realen Betriebsablauf gebaut.",
       h1: "ERP-Software, die Ihren Betrieb abbildet",
@@ -351,7 +351,7 @@ const COPY: CopyTable = {
     },
     agiworks: {
       systemName: "Admin- & Operations-System",
-      title: "Admin-Panel entwickeln lassen | AGI Works",
+      title: "Admin- & Operations-Backend | AGI Works",
       description:
         "Backoffice-Oberfläche mit Rollen, Freigaben und Protokollierung — als individuelle Anwendung auf Ihre Datenstruktur entwickelt.",
       h1: "Ein Backoffice, das zu Ihren Daten passt",
@@ -628,7 +628,7 @@ const COPY: CopyTable = {
     },
     agiworks: {
       systemName: "SaaS-Plattform / Multi-Tenant",
-      title: "SaaS-Plattform entwickeln lassen | AGI Works",
+      title: "SaaS-Mandantenarchitektur & Betrieb | AGI Works",
       description:
         "Mandantenfähige Architektur mit Abo-Logik, Rechten und Skalierung — von der Datenbank bis zum Deployment entwickelt.",
       h1: "Mandantenfähige Architektur von Anfang an",

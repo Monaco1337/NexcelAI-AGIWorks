@@ -788,7 +788,7 @@ function AgiDesktopReferenceSlider({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function ProjectsShowcase() {
+export default function ProjectsShowcase({ standalonePage = false }: { standalonePage?: boolean } = {}) {
   const [references, setReferences] = useState<ReferenceEntry[]>(STATIC_REFERENCES.filter((r) => r.isPublished));
   const [activeRef, setActiveRef] = useState<ReferenceEntry | null>(null);
 
@@ -818,6 +818,7 @@ export default function ProjectsShowcase() {
         <div className="mx-auto w-full max-w-[1280px]">
           <div className="px-5 sm:px-8">
             <SectionHeading
+              level={standalonePage ? "h1" : "h2"}
               eyebrow="Referenzen"
               title="Reale Projekte. Reale Ergebnisse."
               subtitle="Von der Idee bis zum fertigen System — maßgeschneiderte digitale Lösungen für Unternehmen aus verschiedenen Branchen."

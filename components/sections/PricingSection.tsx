@@ -94,8 +94,10 @@ const CATEGORIES: readonly [Category, Category, Category] = [
 
 export default function PricingSection({
   compact = false,
+  standalonePage = false,
 }: {
   compact?: boolean;
+  standalonePage?: boolean;
 } = {}) {
   const brand = useBrand();
   const pathname = usePathname();
@@ -133,6 +135,7 @@ export default function PricingSection({
     brand.id
   );
 
+  const PricingHeading = standalonePage ? "h1" : "h2";
   return (
     <section
       id="preise"
@@ -146,7 +149,7 @@ export default function PricingSection({
               INVESTITION MIT KLAREM RAHMEN
             </p>
 
-            <h2 id="pricing-experience-title" className={styles.title}>
+            <PricingHeading id="pricing-experience-title" className={styles.title}>
               {isAgi
                 ? "Individuell entwickelt."
                 : "Wirkung vor Aufwand."}
@@ -156,7 +159,7 @@ export default function PricingSection({
                   ? "Nachvollziehbar kalkuliert."
                   : "Klarheit vor Investition."}
               </span>
-            </h2>
+            </PricingHeading>
           </div>
 
           <p className={styles.lead}>
