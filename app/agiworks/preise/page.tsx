@@ -9,7 +9,7 @@ export default function AgiWorksPreisePage() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       <div className="pt-[76px] sm:pt-[88px]">
-        <PricingSection />
+        <PricingSection standalonePage />
         <BrandLlmSpotlight brand="agiworks" compact />
       </div>
       <Footer />

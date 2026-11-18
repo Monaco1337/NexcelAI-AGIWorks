@@ -703,6 +703,7 @@ export default function ContactPageContent() {
     });
   };
 
+  const ContactHeading = isAgiWorks ? "h1" : "h2";
   return (
     <main className={isAgiWorks ? "agi-contact relative overflow-hidden min-h-screen" : "relative overflow-hidden min-h-screen"}>
 
@@ -721,7 +722,7 @@ export default function ContactPageContent() {
             >
               {brand.name}
             </p>
-            <h1
+            <ContactHeading
               className="text-4xl md:text-5xl lg:text-6xl font-light text-white tracking-tight mb-6"
               style={{ fontFamily: "var(--font-headline), system-ui, sans-serif" }}
             >
@@ -735,7 +736,7 @@ export default function ContactPageContent() {
               >
                 {isAgiWorks ? "Ihr Projekt. Unser Fokus." : contactPage.headlineAccent}
               </span>
-            </h1>
+            </ContactHeading>
             <p className="text-base md:text-lg text-white/50 font-light leading-relaxed">
               {isAgiWorks ? "Schildern Sie uns Ihr Softwareprojekt. Wir klären persönlich, wie der nächste sinnvolle Schritt aussieht." : contactPage.subline}
             </p>

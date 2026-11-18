@@ -8,6 +8,7 @@ export default function PreiskalkulatorPage() {
     <Suspense
       fallback={
         <main className="ds-app min-h-screen flex items-center justify-center text-white">
+          <h1 className="sr-only">Preiskalkulator fuer KI- und Automatisierungsprojekte</h1>
           <div
             className="rounded-2xl px-8 py-6 text-white/70"
             style={{ border: "1px solid rgba(255,255,255,0.08)" }}

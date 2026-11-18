@@ -2,7 +2,7 @@
 
 // AGI_LOCAL_BRAND_LINK_V1
 import NextLink from "next/link";
-import type { ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { usePathname } from "next/navigation";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
@@ -16,10 +16,19 @@ export default function BrandAwareLink({
   const pathname = usePathname() || "/";
   const brand = useBrand();
 
-  const isLocalAgi =
-    brand.id === "agiworks" &&
-    (pathname === "/agiworks" ||
-      pathname.startsWith("/agiworks/"));
+  // Initial SSR and hydration always emit public clean hrefs.
+  // Only an explicit local/preview /agiworks route may restore the internal
+  // prefix after mount. A production host rewrite must never cause it.
+  const [isLocalAgi, setIsLocalAgi] = useState(false);
+  useEffect(() => {
+    const host = window.location.hostname.toLowerCase();
+    const isPreview = host === "localhost" || host === "127.0.0.1" ||
+      host.endsWith(".localhost") || host.endsWith(".vercel.app");
+    setIsLocalAgi(
+      brand.id === "agiworks" && isPreview &&
+      (pathname === "/agiworks" || pathname.startsWith("/agiworks/"))
+    );
+  }, [brand.id, pathname]);
 
   let destination: Props["href"] = href;
 

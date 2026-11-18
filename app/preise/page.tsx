@@ -10,7 +10,7 @@ export default function PreisePage() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       <div className="pt-[76px] sm:pt-[88px]">
-        <PricingSection />
+        <PricingSection standalonePage />
         <NexcelLlmService kind="pricing" />
       </div>
       <Footer />

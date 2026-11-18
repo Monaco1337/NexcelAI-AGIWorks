@@ -595,12 +595,15 @@ export function SectionHeading({
   title,
   subtitle,
   center = true,
+  level = "h2",
 }: {
   eyebrow: string;
   title: string;
   subtitle?: string;
   center?: boolean;
+  level?: "h1" | "h2";
 }) {
+  const HeadingTag = level;
   return (
     <div className={center ? "mx-auto max-w-[760px] text-center" : ""}>
       <span
@@ -609,12 +612,12 @@ export function SectionHeading({
       >
         {eyebrow}
       </span>
-      <h2
+      <HeadingTag
         className="mt-3 text-[2rem] leading-[1.12] tracking-[-0.02em] text-white sm:text-[2.5rem]"
         style={{ fontFamily: "var(--font-headline), system-ui, sans-serif", fontWeight: 300 }}
       >
         {title}
-      </h2>
+      </HeadingTag>
       {subtitle && (
         <p className="mt-4 text-[14.5px] leading-[1.6] text-white/55">{subtitle}</p>
       )}
