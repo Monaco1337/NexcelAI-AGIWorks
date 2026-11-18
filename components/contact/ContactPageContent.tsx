@@ -765,7 +765,7 @@ export default function ContactPageContent() {
               transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className={isAgiWorks ? "agi-contact-form-panel relative rounded-3xl overflow-hidden p-8 md:p-12" : "relative rounded-3xl overflow-hidden p-8 md:p-12"} style={isAgiWorks ? undefined : glassPanelStyle()} data-nxl-contact-form="true">
-      <NexcelContactFormIntro />
+                {!isAgiWorks && !success && <NexcelContactFormIntro />}
 
                 {isAgiWorks && !success && (
                   <div className="agi-contact-form-intro">
