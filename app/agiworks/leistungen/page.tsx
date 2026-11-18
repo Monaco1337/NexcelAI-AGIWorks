@@ -1,7 +1,7 @@
 // AGI_PREMIUM_SERVICES_V1
 import BrandLlmSpotlight from "@/components/sections/BrandLlmSpotlight";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import Footer from "@/components/Footer";
 import { getMoneyPagesForBrand } from "@/data/moneyPages";
 import { generateSeoMetadata } from "@/lib/seo/metadata";
@@ -173,7 +173,7 @@ export default function AgiworksLeistungenHub() {
               className="flex gap-3 pt-8 text-[12px] text-slate-400 sm:pt-10"
             >
               <Link
-                href="/agiworks"
+                href="/"
                 className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
               >
                 Start

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import styles from "./BrandLlmSpotlight.module.css";
 
 type Brand = "nexcel" | "agiworks";
@@ -6,8 +6,8 @@ type Props = { brand: Brand; compact?: boolean };
 
 export default function BrandLlmSpotlight({ brand, compact = false }: Props) {
   const agi = brand === "agiworks";
-  const detail = agi ? "/agiworks/leistungen/eigene-llms" : "/loesungen/eigene-llms";
-  const contact = agi ? "/agiworks/kontakt?betreff=LLM-Engineering" : "/kontakt?betreff=Individuelle-LLM-Entwicklung";
+  const detail = agi ? "/leistungen/eigene-llms" : "/loesungen/eigene-llms";
+  const contact = agi ? "/kontakt?betreff=LLM-Engineering" : "/kontakt?betreff=Individuelle-LLM-Entwicklung";
   const headline = agi ? "LLM-Engineering. Unter Ihrer Kontrolle." : "Eigene LLMs. Passend zu Ihrem Unternehmen.";
   return (
     <section className={`${styles.root} ${agi ? styles.agi : styles.nexcel} ${compact ? styles.compact : ""}`}

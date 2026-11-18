@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/BrandAwareLink";
 
 const services = [
   {
@@ -34,12 +33,6 @@ const services = [
 ];
 
 export default function AgiCoreServices() {
-  const pathname = usePathname();
-
-  const prefix = pathname?.startsWith("/agiworks")
-    ? "/agiworks"
-    : "";
-
   return (
     <section
       id="agi-kernleistungen"
@@ -117,7 +110,7 @@ export default function AgiCoreServices() {
               </p>
 
               <Link
-                href={prefix + service.href}
+                href={service.href}
                 className="mt-auto flex items-center justify-between gap-4 border-t border-white/10 pt-6 text-[13px] font-medium text-white transition-colors hover:text-sky-300"
               >
                 <span>{service.linkLabel}</span>
@@ -134,7 +127,7 @@ export default function AgiCoreServices() {
           </p>
 
           <Link
-            href={prefix + "/kontakt"}
+            href="/kontakt"
             className="inline-flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-400/10 px-6 py-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-sky-400/20"
           >
             Softwareprojekt besprechen

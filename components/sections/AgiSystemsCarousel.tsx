@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/BrandAwareLink";
 import {
   useCallback,
   useEffect,
@@ -110,11 +109,8 @@ function fromStatic(s: (typeof SYSTEMS)[number]): Card {
 const initialCards: Card[] = SYSTEMS.map(fromStatic);
 
 export default function AgiSystemsCarousel() {
-  const pathname = usePathname();
 
-  const prefix = pathname?.startsWith("/agiworks")
-    ? "/agiworks"
-    : "";
+
 
   const [active, setActive] = useState<CategoryId>("vertrieb");
   const [cards, setCards] = useState<Card[]>(initialCards);
@@ -490,7 +486,7 @@ export default function AgiSystemsCarousel() {
             <Link
               key={card.slug}
               href={
-                prefix + "/systeme/" + card.slug
+                "/systeme/" + card.slug
               }
               aria-label={card.title + " ansehen"}
               className="group flex w-[84%] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#111722] transition-all duration-300 hover:-translate-y-1 hover:border-sky-400/35 hover:bg-[#151e2c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 sm:w-[57%] lg:w-[calc((100%-1.25rem)/2)]"
@@ -579,7 +575,7 @@ export default function AgiSystemsCarousel() {
           </p>
 
           <Link
-            href={prefix + "/kontakt"}
+            href="/kontakt"
             className="inline-flex min-h-12 shrink-0 items-center justify-center gap-3 rounded-xl border border-sky-300/40 bg-sky-400/[0.12] px-6 py-3 text-[13px] font-medium text-white transition-colors hover:bg-sky-400/[0.2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
           >
             Softwareprojekt besprechen

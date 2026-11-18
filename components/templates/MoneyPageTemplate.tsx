@@ -9,7 +9,7 @@
  * Purely presentational + factual: no ratings, no fixed prices, no guarantees.
  */
 
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 import TemplateFrame from "./TemplateFrame";
 import { TemplateSection, GlassCard, CardGrid } from "./primitives";
 import { serviceSchema } from "@/lib/seo/jsonld";

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/BrandAwareLink";
 
 const separateSteps = [
   { task: "Anfrage", tool: "E-Mail" },
@@ -25,11 +24,8 @@ const connectedSteps = [
 ];
 
 export default function AgiWorkflowPremium() {
-  const pathname = usePathname();
 
-  const contactHref = pathname?.startsWith("/agiworks")
-    ? "/agiworks/kontakt"
-    : "/kontakt";
+  const contactHref = "/kontakt";
 
   return (
     <section
