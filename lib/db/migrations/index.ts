@@ -29,6 +29,7 @@ import { migration0013 } from "./0013_sales_targets_bulk_catalog";
 import { migration0014 } from "./0014_sales_targets_chain_flag";
 import { migration0015 } from "./0015_sales_targets_prescore";
 import { migration0016 } from "./0016_inbound_lead_pipeline";
+import { migration0017 } from "./0017_shared_consultation_booking";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
@@ -47,4 +48,5 @@ export const MIGRATIONS: Migration[] = [
   migration0014,
   migration0015,
   migration0016,
+  migration0017,
 ];

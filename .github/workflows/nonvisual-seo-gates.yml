@@ -38,6 +38,10 @@ jobs:
         run: python3 scripts/seo/dark-theme-gate.py
       - name: Brand-owned desktop mega-menu regression
         run: python3 scripts/seo/brand-megamenu-gate.py
+      - name: Consultation booking, public AGI URL and CRM invariants
+        run: python3 scripts/seo/booking-brand-gate.py
+      - name: Shared appointment slot and DST self-test
+        run: npx tsx scripts/consultations/selftest.ts
       - name: API auth regression
         run: npm run check:api-auth
       - name: IndexNow ownership and payload validation
