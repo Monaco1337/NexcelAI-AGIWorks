@@ -10,17 +10,19 @@ const url = "https://www.nexcelai.de/beratung";
 const title = "KI-Beratung und Automatisierung für Unternehmen";
 const description = "Beratung für KI-Agenten, Unternehmensautomatisierung und eigene LLM-Systeme: Projektziel, Ausgangslage und mögliche Umsetzung gemeinsam klären.";
 export default function BeratungPage() {
-  return <main className="ds-app min-h-screen bg-[#080c15] pt-28 text-white">
+  return <main className="ds-app min-h-screen bg-[#080c15] pt-40 text-white sm:pt-44 lg:pt-48">
     <section className="mx-auto max-w-6xl px-5 sm:px-8">
-      <p className="text-xs font-semibold uppercase tracking-[.23em] text-violet-300">NEXCEL AI · Projektberatung</p>
-      <h1 className="mt-5 max-w-4xl text-4xl font-light tracking-tight sm:text-6xl">KI-Beratung: vom konkreten Problem zum passenden System.</h1>
-      <p className="mt-6 max-w-3xl text-base leading-8 text-white/65">Sie möchten KI-Agenten einführen, wiederkehrende Abläufe automatisieren oder Sprachmodelle kontrolliert in Ihre Prozesse integrieren? Im Gespräch klären wir Ziel, bestehende Systeme, Datenlage und den nächsten sinnvollen Umsetzungsschritt.</p>
+      <header className="mx-auto mb-11 max-w-3xl text-center sm:mb-14">
+        <p className="text-xs font-semibold uppercase tracking-[.23em] text-violet-300">NEXCEL AI · BERATUNGSTERMIN</p>
+        <h1 className="mx-auto mt-5 max-w-3xl text-3xl font-medium leading-tight tracking-tight sm:text-5xl">Lassen Sie uns über Ihr Vorhaben sprechen.</h1>
+        <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">Wählen Sie einen Termin und erzählen Sie uns kurz, wobei wir Sie unterstützen können.</p>
+      </header>
       <ConsultationBooking brand="nexcel" />
-      <div className="grid gap-6 py-16 md:grid-cols-3">
-        <div><h2 className="text-lg font-medium">Vor dem Gespräch</h2><p className="mt-2 text-sm leading-6 text-white/60">Teilen Sie uns Branche, Ziel, Zeitrahmen und vorhandene technische Systeme mit.</p></div>
-        <div><h2 className="text-lg font-medium">Im Gespräch</h2><p className="mt-2 text-sm leading-6 text-white/60">Wir besprechen sinnvolle Anwendungsfälle, Integrationsgrenzen und offene Anforderungen.</p></div>
-        <div><h2 className="text-lg font-medium">Danach</h2><p className="mt-2 text-sm leading-6 text-white/60">Die nächsten Schritte werden individuell abgestimmt; kein automatisiertes Produktversprechen.</p></div>
-      </div>
+      <section className="mx-auto max-w-2xl px-2 pb-20 pt-16 text-center sm:pt-20" aria-label="Persönliche Rückmeldung">
+        <p className="text-xs font-semibold uppercase tracking-[.2em] text-violet-300">PERSÖNLICH. DIREKT. UNKOMPLIZIERT.</p>
+        <h2 className="mt-4 text-2xl font-medium tracking-tight text-white sm:text-3xl">Wir freuen uns darauf, Sie kennenzulernen.</h2>
+        <p className="mt-4 text-sm leading-7 text-white/60 sm:text-base">Wir prüfen Ihre Anfrage persönlich und melden uns zur Terminbestätigung bei Ihnen.</p>
+      </section>
       <SeoJsonLd schema={[webPageForUrl({ brand: "nexcel", url, name: title, description }), serviceSchema({ brand: "nexcel", name: title, description, url, serviceType: "KI- und Automatisierungsberatung" })]} />
     </section><Footer />
   </main>;

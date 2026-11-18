@@ -95,6 +95,8 @@ export default function Footer() {
   const { footer } = brand;
   const accentColor = brand.theme.accentPrimary;
   const socialLinks = SOCIAL_LINKS_BY_BRAND[brand.id] ?? SOCIAL_LINKS_BY_BRAND.nexcel;
+  // Booking pages have their own personal closing message; hide the generic sales CTA only there.
+  const isConsultationPage = pathname === "/beratung" || pathname === "/agiworks/beratung";
   const isContactPage = pathname === "/kontakt" || pathname === "/agiworks/kontakt";
   const isProjektePage = pathname === "/projekte";
   const isImpressumPage = pathname === "/impressum";
@@ -112,7 +114,7 @@ export default function Footer() {
       {/* CTA Section */}
       {/* AGI_HOMEPAGE_FINAL_CTA_V1 */}
       {isAgiHomepage && <AgiClosingCta />}
-      {!isAgiHomepage && !isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
+      {!isAgiHomepage && !isConsultationPage && !isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
         isAgiWorks ? (
 
 <section
