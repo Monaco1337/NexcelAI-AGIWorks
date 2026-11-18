@@ -23,7 +23,7 @@ export default function BrandAwareLink({
 
   let destination: Props["href"] = href;
 
-  if (typeof href === "string" && isLocalAgi) {
+  if (typeof href === "string" && brand.id === "agiworks") {
     let clean = resolveBrandNavHref(href, brand.id);
 
     if (clean.startsWith("/agiworks?")) {
@@ -48,8 +48,13 @@ export default function BrandAwareLink({
     );
 
     if (internal && !shared) {
-      destination =
-        clean === "/" ? "/agiworks" : "/agiworks" + clean;
+      // Public domains use CLEAN paths. The /agiworks prefix is only for
+      // explicit local/preview /agiworks/* routes with no host rewrite.
+      destination = isLocalAgi
+        ? clean === "/" ? "/agiworks" : "/agiworks" + clean
+        : clean;
+    } else {
+      destination = clean;
     }
   }
 

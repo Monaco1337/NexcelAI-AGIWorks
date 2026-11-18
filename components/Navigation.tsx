@@ -1284,7 +1284,7 @@ export default function Navigation() {
       Was möchten Sie verbessern?
     </p>
 <a
-  href="/agiworks/leistungen/eigene-llms"
+  href="/leistungen/eigene-llms"
   aria-label="LLM Engineering & Private KI ansehen"
   className="group/llm inline-flex min-h-[42px] shrink-0 items-center gap-2.5 rounded-[13px] border border-sky-300/25 bg-sky-400/[0.09] px-3.5 py-2 text-left no-underline transition-colors duration-200 hover:border-sky-300/50 hover:bg-sky-400/[0.16] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
 >
