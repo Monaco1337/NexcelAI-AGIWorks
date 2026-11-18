@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+html, html.dark { color-scheme: dark; }
+
 /* ============================================
    MODAL-OPEN STATE — globale Navigation ausblenden
    ============================================
@@ -1408,7 +1410,7 @@ div[class*="content"] {
 }
 
 /* Dark Mode Support for Navigation Links */
-@media (prefers-color-scheme: dark) {
+@media all { /* Dark-only brand: identical navigation regardless of OS theme */
   .neural-nav-link {
     border-color: rgba(168, 85, 247, 0.4);
     background: rgba(168, 85, 247, 0.05);

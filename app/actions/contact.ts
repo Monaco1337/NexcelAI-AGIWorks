@@ -9,6 +9,7 @@ import fs from "fs";
 import path from "path";
 import { isDbEnabled } from "@/lib/pg";
 import { createContactPg } from "@/lib/contacts-store";
+import { recordInboundLead } from "@/lib/sales/inboundIntake";
 
 // IMMER lokale Datei verwenden - auch in Production!
 const STORAGE_PATH = path.join(process.cwd(), "data", "contact-posts.json");
@@ -191,7 +192,7 @@ export async function submitContactForm(formData: {
   /** Hostname for forensics (e.g. "www.agiworks.de"). */
   sourceHost?: string;
 }): Promise<{ success: boolean; id?: string; message?: string; error?: string }> {
-  console.log("📝 [CONTACT] Form submitted:", { firstName: formData.firstName, email: formData.email });
+  // Never log contact personal data in public request logs.
   
   try {
     const firstName = formData?.firstName ? String(formData.firstName).trim() : "Unbekannt";
@@ -199,6 +200,15 @@ export async function submitContactForm(formData: {
     const email = formData?.email ? String(formData.email).trim() : "unbekannt@example.com";
     const subject = formData?.subject ? String(formData.subject).trim() : "Kein Betreff";
     const message = formData?.message ? String(formData.message).trim() : "Keine Nachricht";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 ||
+        firstName.length > 100 || lastName.length > 100 || subject.length > 180 || message.length > 6000) {
+      return { success: false, error: "Bitte prüfen Sie die Pflichtfelder und die Länge der Nachricht." };
+    }
+
+    // Serverless files are ephemeral; never report false success when DB is missing.
+    if ((process.env.VERCEL === "1" || !!process.env.VERCEL_ENV) && !isDbEnabled()) {
+      return { success: false, error: "Speicherung derzeit nicht verfügbar. Bitte erneut versuchen." };
+    }
 
     // ── Persistente Speicherung über Postgres (wenn verbunden) ──
     if (isDbEnabled()) {
@@ -215,6 +225,22 @@ export async function submitContactForm(formData: {
       });
       if (saved) {
         console.log("✅ [CONTACT] Gespeichert in Postgres:", saved.id);
+        // Direct enqueue + periodic idempotent cron backfill for eventual recovery.
+        try {
+          await recordInboundLead({
+            sourceType: "contact-form", sourceId: saved.id,
+            brand: saved.brand === "agiworks" ? "agiworks" : "nexcel",
+            name: `${saved.vorname} ${saved.nachname}`,
+            email: saved.email,
+            company: saved.unternehmen,
+            subject: saved.betreff,
+            message: saved.nachricht,
+            attribution: { sourceHost: saved.sourceHost ?? null },
+          });
+        } catch {
+          // The contact itself is already durable. The cron sync will retry.
+          console.error("[inbound-intake] enqueue deferred to cron");
+        }
         return {
           success: true,
           id: saved.id,
@@ -222,7 +248,10 @@ export async function submitContactForm(formData: {
             "Ihre Anfrage wurde erfolgreich übermittelt. Wir werden uns schnellstmöglich bei Ihnen melden.",
         };
       }
-      console.warn("⚠️ [CONTACT] Postgres-Speicherung fehlgeschlagen, nutze Datei-Fallback");
+      if (process.env.VERCEL === "1" || !!process.env.VERCEL_ENV) {
+        return { success: false, error: "Anfrage konnte nicht gespeichert werden. Bitte erneut versuchen." };
+      }
+      console.warn("⚠️ [CONTACT] Local development: using filesystem fallback");
     }
 
     console.log("📝 [CONTACT] Loading posts...");
@@ -282,6 +311,9 @@ export async function submitContactForm(formData: {
     };
   } catch (error: any) {
     console.error("❌ [CONTACT] Error in submitContactForm:", error);
+    if (process.env.VERCEL === "1" || !!process.env.VERCEL_ENV) {
+      return { success: false, error: "Anfrage konnte nicht gespeichert werden. Bitte erneut versuchen." };
+    }
     try {
       const fallbackPost: ContactPost = {
         id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

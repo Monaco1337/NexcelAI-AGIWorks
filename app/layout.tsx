@@ -106,18 +106,18 @@ export default function RootLayout({
             Favicon via agiworks/layout.tsx metadata.icons überschreiben kann. */}
 
         {/* Theme Colors */}
-        <meta name="theme-color" content="#6B2DB8" />
-        <meta name="msapplication-TileColor" content="#6B2DB8" />
+        <meta name="theme-color" content="#0A0C17" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="msapplication-TileColor" content="#0A0C17" />
         
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  var saved = localStorage.getItem('theme');
-                  var theme = (saved === 'light' || saved === 'dark') ? saved : 'dark';
-                  document.documentElement.classList.remove('dark', 'light');
-                  document.documentElement.classList.add(theme);
+                  document.documentElement.classList.remove('light');
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.style.colorScheme = 'dark';
                 } catch (e) {
                   document.documentElement.classList.add('dark');
                 }
@@ -183,7 +183,7 @@ export default function RootLayout({
                     addLink("icon", "/images/logos/agiworks-logo.png", "image/png", "16x16");
                     addLink("shortcut icon", "/images/logos/agiworks-logo.png", "image/png");
                     addLink("apple-touch-icon", "/images/logos/agiworks-logo.png", null, "180x180");
-                    addMeta("theme-color", "#5BB8FF");
+                    addMeta("theme-color", "#0C1524");
                     addMeta("msapplication-TileColor", "#1E5A99");
 
                     // Cache-Buster: Tab-Title-Touch triggert Favicon-Refresh in einigen Browsern

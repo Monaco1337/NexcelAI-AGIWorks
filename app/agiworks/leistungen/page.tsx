@@ -33,16 +33,12 @@ export function generateMetadata(): Metadata {
 
 function agiHref(path: string) {
   const p = path.startsWith("/") ? path : `/${path}`;
-
-  if (p === "/agiworks" || p.startsWith("/agiworks/")) {
-    return p;
-  }
-
-  if (p === "/leistungen" || p.startsWith("/leistungen/")) {
-    return `/agiworks${p}`;
-  }
-
-  return `/agiworks/leistungen${p}`;
+  // On www.agiworks.de, the clean path is public. The /agiworks prefix
+  // is an internal App Router implementation detail and incurs a 301.
+  if (p === "/agiworks") return "/";
+  if (p.startsWith("/agiworks/")) return p.slice("/agiworks".length);
+  if (p === "/leistungen" || p.startsWith("/leistungen/")) return p;
+  return `/leistungen${p}`;
 }
 
 function shortCopy(title: string, fallback: string) {
@@ -212,7 +208,7 @@ export default function AgiworksLeistungenHub() {
                 </p>
 
                 <Link
-                  href="/agiworks/kontakt"
+                  href="/kontakt"
                   className="mt-8 inline-flex min-h-[52px] items-center gap-5 rounded-xl border border-sky-400/50 bg-[#244d70] px-6 text-[14px] font-medium shadow-[0_14px_44px_rgba(42,125,205,.17)] transition-colors hover:bg-[#32658f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                 >
                   Softwareprojekt besprechen
@@ -346,7 +342,7 @@ export default function AgiworksLeistungenHub() {
                 </div>
 
                 <Link
-                  href="/agiworks/kontakt"
+                  href="/kontakt"
                   className="inline-flex min-h-[52px] shrink-0 items-center justify-center gap-4 self-start rounded-xl border border-sky-400/50 bg-[#244d70] px-6 text-[14px] font-medium transition-colors hover:bg-[#32658f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                 >
                   Softwareprojekt besprechen

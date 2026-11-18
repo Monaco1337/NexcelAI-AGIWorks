@@ -40,7 +40,7 @@ export default function KnowledgePageTemplate({ page }: { page: KnowledgePage })
     canonicalUrl,
     breadcrumbs: [
       { label: "Start", href: "/" },
-      { label: "Wissen", href: page.path },
+      { label: "Wissen", href: "/wissen" },
       { label: page.topic, href: page.path },
     ],
     eyebrow: page.eyebrow,

@@ -1,0 +1,46 @@
+name: Nonvisual SEO quality gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  seo-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Checkout without persistent token
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Node runtime
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Install exact lockfile dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Existing SEO policy checks
+        run: npm run seo:all
+      - name: Public link and breadcrumb regressions
+        run: python3 scripts/seo/nonvisual-seo-guard.py
+      - name: Cross-device dark-only theme invariant
+        run: python3 scripts/seo/dark-theme-gate.py
+      - name: API auth regression
+        run: npm run check:api-auth
+      - name: IndexNow ownership and payload validation
+        run: python3 scripts/seo/indexnow-submit.py --self-test
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Production build
+        run: npm run build

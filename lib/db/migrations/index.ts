@@ -28,6 +28,7 @@ import { migration0012 } from "./0012_sales_targets_geocache";
 import { migration0013 } from "./0013_sales_targets_bulk_catalog";
 import { migration0014 } from "./0014_sales_targets_chain_flag";
 import { migration0015 } from "./0015_sales_targets_prescore";
+import { migration0016 } from "./0016_inbound_lead_pipeline";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
@@ -45,4 +46,5 @@ export const MIGRATIONS: Migration[] = [
   migration0013,
   migration0014,
   migration0015,
+  migration0016,
 ];

@@ -48,7 +48,7 @@ export default function LocationPageTemplate({ page }: { page: LocationPage }) {
     canonicalUrl,
     breadcrumbs: [
       { label: "Start", href: "/" },
-      { label: "Standorte", href: page.path },
+      { label: "Standorte", href: "/standorte" },
       { label: page.city, href: page.path },
     ],
     eyebrow: page.eyebrow,

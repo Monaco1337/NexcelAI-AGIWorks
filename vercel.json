@@ -26,6 +26,10 @@
     {
       "path": "/api/cron/sales-targets/tick",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/inbound-intake",
+      "schedule": "*/10 * * * *"
     }
   ],
   "env": {
