@@ -16,8 +16,7 @@
  *   Text → Founders (relative, max-w-[440px]) → Feature-Bar → Coop-Card
  */
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/BrandAwareLink";
 import { motion } from "framer-motion";
 import { useBrand } from "@/contexts/BrandContext";
 import { resolveBrandNavHref } from "@/lib/brandNav";
@@ -51,13 +50,8 @@ const CHIPS = [
 /* ── Main component ─────────────────────────────────────────────────── */
 export default function PremiumHero() {
   const brand = useBrand();
-  const pathname = usePathname();
   const isAgiWorks = brand.id === "agiworks";
-  const primaryHref = isAgiWorks
-    ? (pathname?.startsWith("/agiworks")
-        ? "/agiworks/kontakt"
-        : resolveBrandNavHref("/kontakt", brand.id))
-    : resolveBrandNavHref("/kontakt", brand.id);
+  const primaryHref = resolveBrandNavHref("/kontakt", brand.id);
   const secondaryHref = isAgiWorks ? "#projekte" : "#systeme";
 
   return (

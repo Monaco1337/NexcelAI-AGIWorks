@@ -3,7 +3,7 @@
 // AGI_FOUNDERS_PREMIUM_V1
 
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/BrandAwareLink";
 
 import {
   NexcelLogoMark
@@ -114,7 +114,7 @@ export default function AgiFoundersPremium() {
               {/* EIN EINZIGER KLARER CTA */}
 
               <Link
-                href="/agiworks/kontakt"
+                href="/kontakt"
                 className="group mt-9 inline-flex min-h-[54px] items-center justify-center gap-5 rounded-xl border border-sky-300/55 bg-[#244965]/85 px-6 py-3.5 text-[14px] font-medium text-white shadow-[0_10px_35px_rgba(30,108,177,0.17),inset_0_1px_0_rgba(255,255,255,0.12)] transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-200/80 hover:bg-[#315d80] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 motion-reduce:transform-none"
               >
                 Softwareprojekt besprechen

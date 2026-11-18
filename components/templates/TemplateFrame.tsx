@@ -7,7 +7,6 @@
  */
 
 import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
 import { webPageForUrl } from "@/lib/seo/jsonld";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
 import Breadcrumbs from "@/components/trust/Breadcrumbs";
@@ -37,15 +36,12 @@ export default function TemplateFrame({
   showAuthor = true,
   emitAuthorSchema = false,
 }: TemplateFrameProps) {
-  const pathname = usePathname();
   const isAgiWorks = base.brand === "agiworks";
 
   const displayedCta = isAgiWorks
     ? {
         label: "Softwareprojekt besprechen",
-        href: pathname?.startsWith("/agiworks")
-          ? "/agiworks/kontakt"
-          : "/kontakt",
+        href: "/kontakt",
       }
     : cta;
 
