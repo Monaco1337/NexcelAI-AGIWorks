@@ -63,6 +63,9 @@ export const SEO_BRANDS: Record<BrandKey, SeoBrandConfig> = {
       "Customer Experience",
       "Branding",
       "Automatisierung",
+      "KI-Agenten",
+      "Individuelle LLM-Entwicklung",
+      "Fine-Tuning und private KI-Inferenz",
     ],
     areaServed: ["Unna", "Kreis Unna", "Dortmund", "Nordrhein-Westfalen", "Deutschland"],
     cooperationLine:
@@ -84,6 +87,8 @@ export const SEO_BRANDS: Record<BrandKey, SeoBrandConfig> = {
       "Backend-Systeme",
       "Systemintegration",
       "Automatisierung",
+      "LLM-Engineering und RAG-Systeme",
+      "Private LLM-Infrastruktur",
     ],
     areaServed: ["Unna", "Kreis Unna", "Dortmund", "Nordrhein-Westfalen", "Deutschland"],
     cooperationLine:
