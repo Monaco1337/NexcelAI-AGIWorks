@@ -60,14 +60,14 @@ export async function GET(req: NextRequest) {
       )
       SELECT
         'in_' || b.id, 'booking', b.id, b.brand, b.name, b.email,
-        NULLIF(b.company, ''), LEFT('Beratungstermin: ' || b.project_type, 180),
+        NULLIF(b.company, ''), LEFT('Terminanfrage: ' || b.project_type, 180),
         LEFT(b.project_goal, 6000), b.attribution,
         jsonb_build_object('startsAt', b.starts_at, 'endsAt', b.ends_at,
                            'timeframe', b.timeframe, 'budgetRange', b.budget_range),
         CASE WHEN b.company <> '' THEN 'high' ELSE 'normal' END,
         NOW(), b.created_at
       FROM consultation_bookings b
-      WHERE b.status = 'confirmed' AND NOT EXISTS (
+      WHERE b.status IN ('pending','confirmed') AND NOT EXISTS (
         SELECT 1 FROM marketing_inbound_leads m
         WHERE m.source_type = 'booking' AND m.source_id = b.id
       )

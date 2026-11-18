@@ -1,0 +1,24 @@
+import {strict as assert} from "node:assert";
+import {berlinCivilToUtc, configuredSlots, parseLocalSlot, type AvailabilityConfig} from "../../lib/consultations/slots";
+
+const now = new Date("2026-11-18T08:00:00.000Z");
+const empty:AvailabilityConfig={weekly:[],overrides:[],blockedDates:[]};
+assert.equal(configuredSlots(empty,now).length,0,"fail-closed without admin settings");
+const weekly:AvailabilityConfig={weekly:[{weekday:5,startMinute:600},{weekday:5,startMinute:660}],overrides:[],blockedDates:[]};
+const slots=configuredSlots(weekly,now);
+assert.ok(slots.length>4);
+assert.equal(slots[0].startsAt,"2026-11-20T09:00:00.000Z");
+assert.equal(slots[1].startsAt,"2026-11-20T10:00:00.000Z");
+assert.equal(new Set(slots.map(x=>x.startsAt)).size,slots.length);
+assert.deepEqual(configuredSlots({...weekly,blockedDates:["2026-11-20"]},now).filter(x=>x.startsAt.startsWith("2026-11-20")),[]);
+const extra="2026-11-21T10:00:00.000Z";
+assert.equal(configuredSlots({...weekly,overrides:[{startsAt:extra,action:"open"}]},now).some(x=>x.startsAt===extra),true);
+assert.equal(configuredSlots({...weekly,overrides:[{startsAt:slots[0].startsAt,action:"block"}]},now).some(x=>x.startsAt===slots[0].startsAt),false);
+const overlap:AvailabilityConfig={weekly:[{weekday:5,startMinute:600},{weekday:5,startMinute:615}],overrides:[],blockedDates:[]};
+assert.equal(configuredSlots(overlap,now).some(s=>s.startsAt==="2026-11-20T09:15:00.000Z"),false,"never publish overlapping slots");
+assert.equal(berlinCivilToUtc(2026,7,15,10).toISOString(),"2026-07-15T08:00:00.000Z");
+assert.equal(berlinCivilToUtc(2026,1,15,10).toISOString(),"2026-01-15T09:00:00.000Z");
+assert.equal(parseLocalSlot("2026-11-20T10:15"),"2026-11-20T09:15:00.000Z");
+assert.equal(parseLocalSlot("2026-11-20T10:17"),null);
+assert.equal(parseLocalSlot("2026-02-30T10:00"),null);
+console.log("CONSULTATION_WIZARD_V2_SELFTEST_OK: admin-only availability, DST, closures, overrides, collision filtering");
