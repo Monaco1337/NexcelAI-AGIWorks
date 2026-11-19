@@ -1,58 +1,182 @@
 'use client';
-import {useCallback,useEffect,useState} from 'react';
-import {INITIAL_TEMPLATES,TEMPLATE_BRANDS,TEMPLATE_LABELS,type TemplateBrand,type TemplateCopy} from '@/lib/sales/offerTemplates';
-type Row={id:string;template_brand:TemplateBrand;version:number;state:string;content:TemplateCopy;created_by:string;approved_by:string|null;created_at:string};
-const copy=(x:TemplateCopy):TemplateCopy=>JSON.parse(JSON.stringify(x)) as TemplateCopy;
-const card='rounded-2xl border border-white/10 bg-white/[.035] p-5';
-const field='mt-2 w-full rounded-xl border border-white/15 bg-[#111b2a] px-3 py-2.5 text-sm text-white focus:border-sky-400 focus:outline-none';
-const btn='rounded-xl border border-white/20 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-40';
-const labels:Record<keyof TemplateCopy,string>={heading:'Überschrift',introduction:'Einleitung',recommendation:'Empfehlung',implementation:'Projektumsetzung',included:'Enthaltene Leistungen',excluded:'Nicht enthalten',assumptions:'Annahmen / Mitwirkung',nextSteps:'Nächste Schritte',closing:'Abschluss'};
-const textKeys:(keyof TemplateCopy)[]=['heading','introduction','recommendation','implementation','closing'];
-const listKeys:(keyof TemplateCopy)[]=['included','excluded','assumptions','nextSteps'];
-export default function OfferTemplatesWorkbench(){
- const [brand,setBrand]=useState<TemplateBrand>('agiworks');
- const [rows,setRows]=useState<Row[]>([]);
- const [content,setContent]=useState<TemplateCopy>(copy(INITIAL_TEMPLATES.agiworks));
- const [shared,setShared]=useState<TemplateCopy>(copy(INITIAL_TEMPLATES.shared));
- const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
- const load=useCallback(async()=>{
-  const [r,s]=await Promise.all([fetch('/api/admin/sales/offer-templates?brand='+brand,{cache:'no-store'}),fetch('/api/admin/sales/offer-templates?brand=shared',{cache:'no-store'})]);
-  const [d,common]=await Promise.all([r.json(),s.json()]);if(!r.ok||!s.ok)throw new Error(d.error||common.error||'Vorlagen nicht erreichbar');
-  setRows(d.versions||[]);
-  setContent(copy((d.versions as Row[]).find(x=>x.state==='draft')?.content||d.active?.content||d.defaults));
-  setShared(copy(common.active?.content||common.defaults));
- },[brand]);
- useEffect(()=>{load().catch(e=>setError(e.message||'Fehler'));},[load]);
- const action=async(body:Record<string,unknown>)=>{
-  setBusy(true);setMessage('');setError('');
-  try{
-   const r=await fetch('/api/admin/sales/offer-templates',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({brand,...body})});
-   const d=await r.json();if(!r.ok)throw new Error(d.error||'Aktion fehlgeschlagen');
-   await load();setMessage('Aktion ausgeführt. Änderungen sind versioniert.');
-  }catch(e){setError(e instanceof Error?e.message:'Aktion fehlgeschlagen');}finally{setBusy(false);}
- };
- const updateText=(key:keyof TemplateCopy,value:string)=>setContent(x=>({...x,[key]:value}));
- const updateList=(key:keyof TemplateCopy,value:string[])=>setContent(x=>({...x,[key]:value}));
- const preview=async()=>{
-  setBusy(true);setError('');
-  try{
-   const today=new Date();today.setUTCDate(today.getUTCDate()+21);
-   const commercial={brand:brand==='agiworks'?'agiworks':'nexcel',customer:'BEISPIEL GmbH – DEMO',title:'Musterangebot – nur zur Designprüfung',scope:'Muster-Leistungsumfang für eine reine Layoutvorschau.',deliverables:['Muster-Liefergegenstand'],netCents:10000,vatRate:.19,annualMaintenanceNetCents:0,validUntil:today.toISOString().slice(0,10)};
-   const payload={commercial,shared:brand==='shared'?content:shared,brand:brand==='shared'?INITIAL_TEMPLATES.nexcel:content};
-   const r=await fetch('/api/admin/sales/offer-templates/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-   if(!r.ok)throw new Error('PDF-Vorschau fehlgeschlagen; Vorlagenfelder prüfen');
-   const blob=await r.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='angebotsvorschau.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
-  }catch(e){setError(e instanceof Error?e.message:'Vorschau nicht verfügbar');}finally{setBusy(false);}
- };
- const active=rows.find(x=>x.state==='active'),pending=rows.filter(x=>x.state==='pending'),draft=rows.find(x=>x.state==='draft');
- return <div className="space-y-5">
-  <section className={card}><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-semibold">1. Vorlage auswählen</h2><p className="mt-2 text-sm text-slate-400">Die gemeinsame Vorlage definiert das sprachliche Fundament; alle PDFs verwenden denselben PDF-Renderer mit markengerechten Kopf- und Fußzeilen.</p></div><select aria-label="Vorlage" className={field+' max-w-xs'} value={brand} onChange={e=>setBrand(e.target.value as TemplateBrand)}>{TEMPLATE_BRANDS.map(x=><option key={x} value={x}>{TEMPLATE_LABELS[x]}</option>)}</select></div><div className="mt-5 flex gap-2 text-xs"><span className="rounded-lg bg-white/10 p-3">{active?`Freigegeben: v${active.version}`:'Noch nicht freigegeben'}</span><span className="rounded-lg bg-white/10 p-3">{pending.length} offene Freigaben</span><span className="rounded-lg bg-white/10 p-3">{rows.length} Versionen</span></div></section>
-  {error&&<p role="alert" className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</p>}
-  {message&&<p role="status" className="rounded-xl border border-sky-400/40 bg-sky-500/10 p-4 text-sm text-sky-100">{message}</p>}
-  <section className={card}><h2 className="text-xl font-semibold">2. Text und Angebotsstruktur</h2><p className="mt-2 text-sm text-slate-400">Keine festen Preise oder echten Kundenangaben in Vorlagen speichern. Listen enthalten jeweils eine Position pro Zeile.</p><div className="mt-5 grid gap-5 lg:grid-cols-2">
-   {textKeys.map(k=><label key={k} className={'block text-sm '+(k==='introduction'?'lg:col-span-2':'')}><span>{labels[k]}</span><textarea value={content[k] as string} className={field+' min-h-[98px]'} maxLength={2200} onChange={e=>updateText(k,e.target.value)}/></label>)}
-   {listKeys.map(k=><label key={k} className="block text-sm"><span>{labels[k]}</span><textarea value={(content[k] as string[]).join('\n')} className={field+' min-h-[130px]'} onChange={e=>updateList(k,e.target.value.split('\n').map(x=>x.trim()).filter(Boolean))}/></label>)}
-  </div><div className="mt-6 flex flex-wrap gap-3"><button disabled={busy} onClick={()=>action({action:'save',content})} className={btn}>Neue Vorlage als Entwurf speichern</button><button disabled={busy} onClick={preview} className={btn}>PDF-Designvorschau herunterladen</button>{draft&&<button disabled={busy} onClick={()=>action({action:'submit',versionId:draft.id})} className={btn}>Entwurf v{draft.version} zur Partnerfreigabe</button>}</div></section>
-  <section className={card}><h2 className="text-xl font-semibold">3. Vier-Augen-Freigabe</h2>{pending.length===0?<p className="mt-2 text-sm text-slate-400">Aktuell keine Vorlage zur Freigabe eingereicht.</p>:pending.map(v=><div key={v.id} className="mt-3 flex flex-wrap justify-between gap-3 rounded-xl border border-white/10 p-4"><div><strong>Version {v.version}</strong><p className="text-xs text-slate-400">Erstellt von {v.created_by.slice(0,30)}</p></div><div className="flex flex-wrap gap-2"><button className={btn} onClick={()=>setContent(copy(v.content))}>Prüfen</button><button className={btn} disabled={busy} onClick={()=>action({action:'approve',versionId:v.id})}>Als zweite Person freigeben</button><button className={btn} disabled={busy} onClick={()=>action({action:'reject',versionId:v.id})}>Ablehnen</button></div></div>)}<p className="mt-4 text-xs text-slate-500">Freigaben erfordern ein zweites aktives Administrationskonto. Vorlagen-Snapshots in bereits erzeugten Angeboten werden nicht rückwirkend geändert.</p></section>
- </div>;
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { INITIAL_TEMPLATES, TEMPLATE_BRANDS, TEMPLATE_LABELS, type TemplateBrand, type TemplateCopy } from '@/lib/sales/offerTemplates';
+
+type Row = { id: string; template_brand: TemplateBrand; version: number; state: string; content: TemplateCopy; created_by: string; approved_by: string | null; created_at: string };
+type Panel = 'intro' | 'scope' | 'terms' | 'approval';
+const clone = (value: TemplateCopy): TemplateCopy => JSON.parse(JSON.stringify(value)) as TemplateCopy;
+const surface = 'rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_14px_50px_-30px_rgba(27,48,79,.20)] sm:p-7';
+const field = 'mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[15px] leading-relaxed text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10';
+const primary = 'inline-flex min-h-[46px] items-center justify-center rounded-2xl bg-[#165dce] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_#165dce] transition hover:bg-[#0d4eb7] disabled:cursor-not-allowed disabled:opacity-40';
+const secondary = 'inline-flex min-h-[46px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40';
+const panelNames: Record<Panel, string> = { intro: 'Einführung', scope: 'Leistungsumfang', terms: 'Umsetzung & Abschluss', approval: 'Freigabe' };
+const labels: Record<keyof TemplateCopy, string> = {
+  heading: 'Angebotstitel', introduction: 'Einleitung', recommendation: 'Empfehlung', implementation: 'Projektumsetzung',
+  included: 'Enthaltene Leistungen', excluded: 'Nicht enthalten', assumptions: 'Annahmen und Mitwirkung', nextSteps: 'Nächste Schritte', closing: 'Abschlusstext',
+};
+const description: Partial<Record<keyof TemplateCopy, string>> = {
+  heading: 'Die zentrale Überschrift auf jedem Angebot dieser Marke.',
+  introduction: 'Kurze, persönliche Einordnung direkt nach der Anrede.',
+  recommendation: 'Warum die vorgeschlagene Umsetzung sinnvoll ist.',
+  included: 'Eine Leistung pro Zeile. Individuelle Angebotspositionen werden später im Vertrieb ergänzt.',
+  excluded: 'Leistungen, die ausdrücklich nicht Teil des Angebots sind.',
+  assumptions: 'Voraussetzungen und benötigte Kundenzuarbeit.',
+  implementation: 'Projektphasen vom Erstgespräch bis zur Übergabe.',
+  nextSteps: 'Was nach Erhalt des Angebots passieren soll.',
+  closing: 'Professioneller letzter Absatz im PDF.',
+};
+
+export default function OfferTemplatesWorkbench() {
+  const [brand, setBrand] = useState<TemplateBrand>('agiworks');
+  const [panel, setPanel] = useState<Panel>('intro');
+  const [rows, setRows] = useState<Row[]>([]);
+  const [content, setContent] = useState<TemplateCopy>(clone(INITIAL_TEMPLATES.agiworks));
+  const [shared, setShared] = useState<TemplateCopy>(clone(INITIAL_TEMPLATES.shared));
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const loadVersion = useRef(0);
+
+  const load = useCallback(async () => {
+    const version = ++loadVersion.current;
+    const [response, commonResponse] = await Promise.all([
+      fetch('/api/admin/sales/offer-templates?brand=' + brand, { credentials: 'same-origin', cache: 'no-store' }),
+      fetch('/api/admin/sales/offer-templates?brand=shared', { credentials: 'same-origin', cache: 'no-store' }),
+    ]);
+    const [data, common] = await Promise.all([response.json(), commonResponse.json()]);
+    if (version !== loadVersion.current) return;
+    if (!response.ok || !commonResponse.ok) throw new Error(data.error || common.error || 'Die Vorlagen konnten nicht geladen werden.');
+    const versions = (data.versions || []) as Row[];
+    setRows(versions);
+    setContent(clone(versions.find(item => item.state === 'draft')?.content || data.active?.content || data.defaults));
+    setShared(clone(common.active?.content || common.defaults));
+  }, [brand]);
+  useEffect(() => {
+    let live = true;
+    setLoading(true);
+    load().catch(e => { if (live) setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen'); })
+      .finally(() => { if (live) setLoading(false); });
+    return () => { live = false; };
+  }, [load]);
+
+  const action = async (body: Record<string, unknown>) => {
+    setBusy(true); setMessage(''); setError('');
+    try {
+      const response = await fetch('/api/admin/sales/offer-templates', {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brand, ...body }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Speichern fehlgeschlagen');
+      await load();
+      setMessage(body.action === 'save' ? 'Entwurf gespeichert. Änderungen werden erst nach Gegenfreigabe aktiv.' : body.action === 'submit' ? 'Zur zweiten Freigabe eingereicht.' : body.action === 'approve' ? 'Vorlage freigegeben.' : 'Aktion abgeschlossen.');
+    } catch (e) { setError(e instanceof Error ? e.message : 'Aktion fehlgeschlagen'); }
+    finally { setBusy(false); }
+  };
+  const change = (key: keyof TemplateCopy, value: string | string[]) => setContent(old => ({ ...old, [key]: value }));
+  const preview = async () => {
+    setBusy(true); setError('');
+    try {
+      const deadline = new Date(); deadline.setUTCDate(deadline.getUTCDate() + 21);
+      const commercial = {
+        brand: brand === 'agiworks' ? 'agiworks' : 'nexcel', customer: 'BEISPIEL GmbH – DEMO',
+        title: 'Musterangebot – reine Designvorschau', scope: 'Muster-Leistungsumfang zur Layoutprüfung',
+        deliverables: ['Muster-Liefergegenstand'], netCents: 10000, vatRate: 0.19,
+        annualMaintenanceNetCents: 0, validUntil: deadline.toISOString().slice(0, 10),
+      };
+      const payload = { commercial, shared: brand === 'shared' ? content : shared, brand: brand === 'shared' ? INITIAL_TEMPLATES.nexcel : content };
+      const response = await fetch('/api/admin/sales/offer-templates/preview', {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('PDF-Vorschau fehlgeschlagen. Bitte die Pflichtfelder prüfen.');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'angebotsvorschau.pdf'; anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setMessage('PDF-Designvorschau heruntergeladen. Es wurde kein Angebot versendet.');
+    } catch (e) { setError(e instanceof Error ? e.message : 'Vorschau fehlgeschlagen'); }
+    finally { setBusy(false); }
+  };
+
+  const active = rows.find(item => item.state === 'active');
+  const draft = rows.find(item => item.state === 'draft');
+  const pending = rows.filter(item => item.state === 'pending');
+  const updateBrand = (value: TemplateBrand) => { if (brand !== value) { ++loadVersion.current; setLoading(true); setBrand(value); setError(''); setMessage(''); } };
+  const textField = (key: keyof TemplateCopy, height = 'min-h-[115px]') => <label key={key} className="block text-sm font-semibold text-slate-800">
+    {labels[key]}{description[key] && <span className="mt-1 block text-xs font-normal leading-5 text-slate-500">{description[key]}</span>}
+    <textarea className={field + ' ' + height + ' resize-y'} maxLength={2200} value={content[key] as string} onChange={e => change(key, e.currentTarget.value)} />
+  </label>;
+  const listField = (key: keyof TemplateCopy) => <label key={key} className="block text-sm font-semibold text-slate-800">
+    {labels[key]}<span className="mt-1 block text-xs font-normal leading-5 text-slate-500">{description[key]}</span>
+    <textarea className={field + ' min-h-[150px] resize-y'} value={(content[key] as string[]).join('\n')} onChange={e => change(key, e.currentTarget.value.split('\n').map(x => x.trim()).filter(Boolean))} />
+  </label>;
+
+  return <div className="space-y-6 text-slate-900">
+    <div className={surface}>
+      <p className="text-xs font-bold uppercase tracking-[.2em] text-blue-600">Vorlagenbibliothek</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3" role="group" aria-label="Angebotsmarke">
+        {TEMPLATE_BRANDS.map(item => <button key={item} type="button" aria-pressed={brand === item} onClick={() => updateBrand(item)}
+          className={'min-h-[70px] rounded-2xl border px-4 py-3 text-left transition ' + (brand === item ? 'border-blue-400 bg-blue-50 text-blue-900 shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-white')}>
+          <span className="block text-sm font-bold">{TEMPLATE_LABELS[item]}</span><span className="mt-1 block text-xs opacity-70">{item === 'shared' ? 'Markenübergreifende Texte' : 'Eigene Sprache und Positionierung'}</span>
+        </button>)}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2"><span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">{active ? 'Freigegeben: v' + active.version : 'Noch keine Freigabe'}</span><span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">{pending.length} offen</span><span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">{rows.length} Versionen</span></div>
+    </div>
+
+    <nav className="grid grid-cols-2 gap-2 rounded-[24px] bg-slate-200/60 p-1.5 md:grid-cols-4" aria-label="Vorlagen bearbeiten">
+      {(['intro', 'scope', 'terms', 'approval'] as const).map((key, index) => <button key={key} type="button" onClick={() => setPanel(key)} aria-current={panel === key ? 'step' : undefined}
+        className={'min-h-[48px] rounded-[18px] px-2 text-xs font-semibold transition sm:text-sm ' + (panel === key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:bg-white/60')}><span className="mr-2 hidden text-blue-600 sm:inline">0{index + 1}</span>{panelNames[key]}</button>)}
+    </nav>
+    {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">{error}</p>}
+    {message && <p role="status" className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-medium text-blue-800">{message}</p>}
+
+    {loading ? <div className={surface + ' text-slate-500'}>Vorlage wird geladen …</div> : <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(290px,365px)]">
+      <div className="space-y-6">
+        {panel === 'intro' && <section className={surface}>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Schritt 1 · Basis</p><h2 className="mt-2 text-2xl font-semibold tracking-tight">Die richtige Ansprache</h2>
+          <p className="mb-6 mt-2 text-sm text-slate-500">Nur die wichtigsten Texte. Du musst nicht das komplette Angebot auf einmal ausfüllen.</p>
+          <div className="space-y-5">{textField('heading', 'min-h-[70px]')}{textField('introduction')}{textField('recommendation')}</div>
+        </section>}
+        {panel === 'scope' && <section className={surface}>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Schritt 2 · Leistungen</p><h2 className="mt-2 text-2xl font-semibold tracking-tight">Was ist im Angebot?</h2>
+          <p className="mb-6 mt-2 text-sm text-slate-500">Eine Leistung pro Zeile. Keine Preise und keine echten Kundenangaben in der Vorlage hinterlegen.</p>
+          <div className="space-y-5">{listField('included')}{listField('excluded')}</div>
+        </section>}
+        {panel === 'terms' && <section className={surface}>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Schritt 3 · Projektablauf</p><h2 className="mt-2 text-2xl font-semibold tracking-tight">Umsetzung und Abschluss</h2>
+          <div className="mt-6 space-y-5">{textField('implementation')}{listField('assumptions')}{listField('nextSteps')}{textField('closing')}</div>
+        </section>}
+        {panel === 'approval' && <section className={surface}>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Schritt 4 · Freigabe</p><h2 className="mt-2 text-2xl font-semibold tracking-tight">Versionen sicher freigeben</h2>
+          <p className="mt-2 text-sm text-slate-500">Eine andere berechtigte Person muss die Vorlage freigeben. Eigene Änderungen werden nicht automatisch aktiv.</p>
+          <div className="mt-6 space-y-3">{draft ? <div className="rounded-2xl border border-slate-200 p-5"><strong>Entwurf v{draft.version}</strong><p className="mt-1 text-xs text-slate-500">Noch nicht für neue Angebote aktiv</p><button type="button" className={primary + ' mt-4 w-full'} disabled={busy} onClick={() => action({ action: 'submit', versionId: draft.id })}>Zur Gegenfreigabe einreichen</button></div> : <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">Noch kein Entwurf. Zuerst die Vorlage speichern.</p>}
+            {pending.map(item => <div key={item.id} className="rounded-2xl border border-slate-200 p-5"><strong>Offen: v{item.version}</strong><p className="mt-1 text-xs text-slate-500">Erstellt von {item.created_by.slice(0, 28)}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setContent(clone(item.content)); setPanel('intro'); }}>Prüfen</button><button type="button" className={primary} disabled={busy} onClick={() => action({ action: 'approve', versionId: item.id })}>Freigeben</button><button type="button" className={secondary} disabled={busy} onClick={() => action({ action: 'reject', versionId: item.id })}>Ablehnen</button></div></div>)}
+            {!pending.length && <p className="text-sm text-slate-500">Keine Gegenfreigaben offen.</p>}</div>
+        </section>}
+        {panel !== 'approval' && <div className={surface + ' flex flex-wrap items-center justify-between gap-3'}><div><strong className="text-sm">Noch nicht veröffentlicht</strong><p className="mt-1 text-xs text-slate-500">Speichern legt einen neuen Entwurf an. Die Freigabe ist separat.</p></div><button type="button" className={primary} disabled={busy} onClick={() => action({ action: 'save', content })}>Entwurf speichern</button></div>}
+      </div>
+
+      <aside className="space-y-5 lg:sticky lg:top-6">
+        <section className={surface}>
+          <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-blue-600">Vorschau</p><h3 className="mt-1 text-lg font-semibold">So wirkt dein Angebot</h3></div><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Entwurf</span></div>
+          <div className="rounded-[20px] border border-slate-200 bg-[#fdfefe] px-5 py-6 shadow-[0_18px_40px_-28px_rgba(0,0,0,.28)]">
+            <p className="text-[10px] font-bold uppercase tracking-[.22em] text-blue-700">{TEMPLATE_LABELS[brand]}</p>
+            <div className="mt-4 h-1 w-10 rounded-full bg-blue-600" />
+            <h4 className="mt-5 break-words text-lg font-semibold leading-6 tracking-tight text-slate-900">{content.heading || 'Dein Angebotstitel'}</h4>
+            <p className="mt-4 whitespace-pre-line text-xs leading-5 text-slate-600">{content.introduction || 'Einleitung hier eingeben …'}</p>
+            <div className="my-5 h-px bg-slate-100" />
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Empfehlung</p>
+            <p className="mt-2 whitespace-pre-line text-xs leading-5 text-slate-600">{content.recommendation || 'Kurzempfehlung hier eingeben …'}</p>
+            <div className="mt-5 rounded-xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Leistungsumfang</p><ul className="mt-2 space-y-1 text-xs text-slate-600">{content.included.slice(0, 4).map((item, index) => <li key={index}>• {item}</li>)}</ul></div>
+            <p className="mt-5 border-t border-slate-100 pt-3 text-[10px] text-slate-400">PDF-Vorschau nur zur Gestaltung. Preise und Kundendaten werden separat im Vertrieb festgelegt.</p>
+          </div>
+          <button type="button" className={secondary + ' mt-5 w-full'} disabled={busy} onClick={preview}>PDF herunterladen ↗</button>
+        </section>
+        <div className="rounded-[24px] bg-[#102441] p-6 text-white"><p className="text-xs font-bold uppercase tracking-widest text-blue-200">Ein System · zwei Marken</p><p className="mt-3 text-sm leading-6 text-slate-200">Gestaltung und Textvorlagen zentral verwalten. Der feste Kundenpreis wird erst beim konkreten Angebot hinterlegt.</p><Link className="mt-4 inline-flex text-sm font-semibold text-white underline underline-offset-4" href="/admin/kalkulation">Zur Preiskalkulation →</Link></div>
+      </aside>
+    </div>}
+  </div>;
 }
