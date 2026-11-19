@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/pg";
 import { dispatchBookingNotifications } from "@/lib/consultations/notifications";
+import { dispatchAdminAlerts } from "@/lib/push/dispatch";
+import { dispatchInternalCalendarInvites } from "@/lib/consultations/internalCalendar";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,11 +78,13 @@ export async function GET(req: NextRequest) {
       RETURNING id
     `;
     const bookingEmails = await dispatchBookingNotifications(sql);
+    const adminAlerts = await dispatchAdminAlerts(sql).catch(() => ({error:"alert_dispatch_unavailable"}));
+    const internalCalendar = await dispatchInternalCalendarInvites(sql).catch(() => ({error:"calendar_dispatch_unavailable"}));
     const overdue = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM marketing_inbound_leads
       WHERE status IN ('new','in_review') AND next_action_at < NOW()
     `;
-    return NextResponse.json({ ok: true, imported: rows.length, bookingLeadsImported: bookingLeads.length, bookingEmails, overdue: Number(overdue[0]?.count ?? 0) }, {
+    return NextResponse.json({ ok: true, imported: rows.length, bookingLeadsImported: bookingLeads.length, bookingEmails, adminAlerts, internalCalendar, overdue: Number(overdue[0]?.count ?? 0) }, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch {

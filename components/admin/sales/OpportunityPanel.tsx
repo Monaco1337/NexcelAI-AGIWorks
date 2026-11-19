@@ -655,6 +655,18 @@ function ProposalsBlock({
   const [busy, setBusy] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [versionsById, setVersionsById] = useState<Record<string, ProposalVersion[]>>({});
+  const [recipientById, setRecipientById] = useState<Record<string,string>>({});
+  const [composeFor, setComposeFor] = useState<string | null>(null);
+  const [availableQuotes, setAvailableQuotes] = useState<Array<{id:string;customer_label:string;calculation:{projectNet?:{min:number;max:number}};created_at:string}>>([]);
+  const [templateReady, setTemplateReady] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState('');
+  const [fixedPrice, setFixedPrice] = useState('');
+  const [maintenanceNet, setMaintenanceNet] = useState('');
+  const [scopeText, setScopeText] = useState('');
+  const [deliverablesText, setDeliverablesText] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+  const [outOfRangeReason, setOutOfRangeReason] = useState('');
+  const [proposalError, setProposalError] = useState('');
 
   const createProposal = async () => {
     if (!solutionApproved) {
@@ -713,13 +725,41 @@ function ProposalsBlock({
     }
   };
 
+  const openComposer = async (proposalId: string) => {
+    setProposalError(''); setComposeFor(proposalId); setAvailableQuotes([]); setSelectedQuote('');
+    const res = await fetch(`/api/admin/sales/proposals/${proposalId}/compose`, {cache:'no-store'});
+    const data = await res.json();
+    if (!res.ok) { setProposalError(data.error || 'Angebote nicht verfügbar'); return; }
+    setAvailableQuotes(data.quotes || []); setTemplateReady(Boolean(data.templatesReady));
+    const first = data.quotes?.[0]; if(first) setSelectedQuote(first.id);
+    const date = new Date();date.setUTCDate(date.getUTCDate()+21);setValidUntil(date.toISOString().slice(0,10));
+  };
+  const composeOffer = async (proposalId: string) => {
+    setProposalError('');
+    const netCents = Math.round(Number(fixedPrice.replace(',','.')) * 100);
+    const annualMaintenanceNetCents = maintenanceNet.trim()?Math.round(Number(maintenanceNet.replace(',','.'))*100):0;
+    if (!Number.isSafeInteger(annualMaintenanceNetCents) || annualMaintenanceNetCents < 0) {setProposalError('Jahreswartung muss ein gültiger Netto-Betrag sein.');return;}
+    if (!Number.isSafeInteger(netCents) || netCents <= 0) { setProposalError('Verbindlichen Nettobetrag eingeben.'); return; }
+    const res = await fetch(`/api/admin/sales/proposals/${proposalId}/compose`, {
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({quoteId:selectedQuote,netCents,scope:scopeText,deliverables:deliverablesText.split('\n').map(s=>s.trim()).filter(Boolean),annualMaintenanceNetCents,validUntil,outOfRangeReason,title:opp.title})
+    });
+    const d = await res.json();
+    if (!res.ok) { setProposalError(d.error || 'Angebot konnte nicht erstellt werden'); return; }
+    setComposeFor(null); setVersionsById({}); onChanged();
+    alert(`Angebotsentwurf v${d.number} angelegt. PDF prüfen, dann durch zweite Person freigeben.`);
+  };
   const sendVersion = async (versionId: string) => {
-    if (!confirm("Angebot als versendet markieren? Es werden Follow-ups geplant.")) return;
-    const res = await fetch(`/api/admin/sales/proposal-versions/${versionId}/send`, { method: "POST" });
-    if (res.ok) {
-      setVersionsById({});
-      onChanged();
-    }
+    const recipient=(recipientById[versionId] || '').trim();
+    if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(recipient)) {setProposalError('Gültige Kunden-E-Mail erforderlich');return;}
+    if (!confirm(`Freigegebene Angebots-PDF wirklich an ${recipient} senden?`)) return;
+    setProposalError('');
+    const res = await fetch(`/api/admin/sales/proposal-versions/${versionId}/deliver`, {
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recipient})
+    });
+    const d = await res.json();
+    if (!res.ok) {setProposalError(d.error || 'E-Mail-Versand fehlgeschlagen');return;}
+    setVersionsById({});onChanged();alert('Versand vom E-Mail-Anbieter angenommen. Posteingang/Zustellung prüfen.');
   };
 
   return (
@@ -736,6 +776,7 @@ function ProposalsBlock({
         </button>
       }
     >
+      {proposalError && <p role="alert" className="mb-3 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-200">{proposalError}</p>}
       {!solutionApproved && (
         <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
           Angebote sind erst nach freigegebener Lösung erstellbar (Proposal Gate).
@@ -774,7 +815,20 @@ function ProposalsBlock({
                   <div className="border-t border-white/[0.05] px-4 py-3">
                     <div className="mb-3 flex items-center justify-end gap-2">
                       <button onClick={() => generateVersion(p.id)} className={buttonSecondary}>+ Version aus Analyse</button>
+                      <button onClick={() => openComposer(p.id)} className={buttonSecondary}>+ Version aus interner Kalkulation</button>
                     </div>
+                    {composeFor===p.id && <div className="mb-4 grid gap-3 rounded-xl border border-sky-300/20 bg-sky-400/[.04] p-4 sm:grid-cols-2">
+                      <div className="sm:col-span-2 text-sm text-sky-200">Angebot erstellen · nur freigegebene Vorlagen und gespeicherte Kalkulationen. <a href="/admin/angebotsvorlagen" className="underline">Vorlagen bearbeiten</a></div>
+                      {!templateReady && <p className="sm:col-span-2 text-sm text-amber-200">Gemeinsame und markenspezifische Vorlagen müssen zuerst durch zwei Admins freigegeben werden.</p>}
+                      <label className="text-xs">Gespeicherte Kalkulation<select className={selectClasses+' mt-2 w-full'} value={selectedQuote} onChange={e=>setSelectedQuote(e.target.value)}><option value="">Auswählen</option>{availableQuotes.map(q=><option key={q.id} value={q.id}>{q.customer_label} · {q.calculation?.projectNet?.min||0}–{q.calculation?.projectNet?.max||0} € netto</option>)}</select></label>
+                      <label className="text-xs">Verbindlicher Nettobetrag (€)<input className={inputClasses+' mt-2 w-full'} value={fixedPrice} onChange={e=>setFixedPrice(e.target.value)} placeholder="Nach Gespräch festlegen" /></label>
+                      <label className="text-xs">Jahreswartung netto (€ / Jahr; optional)<input className={inputClasses+' mt-2 w-full'} value={maintenanceNet} onChange={e=>setMaintenanceNet(e.target.value)} placeholder="Falls gesondert vereinbart" /></label>
+                      <label className="text-xs sm:col-span-2">Abgestimmter Leistungsumfang<textarea className={textareaClasses+' mt-2 w-full'} value={scopeText} onChange={e=>setScopeText(e.target.value)} placeholder="Konkrete Leistungsbeschreibung" /></label>
+                      <label className="text-xs sm:col-span-2">Liefergegenstände (je Zeile)<textarea className={textareaClasses+' mt-2 w-full'} value={deliverablesText} onChange={e=>setDeliverablesText(e.target.value)} placeholder="Liefergegenstand 1\nLiefergegenstand 2" /></label>
+                      <label className="text-xs">Gültig bis<input type="date" className={inputClasses+' mt-2 w-full'} value={validUntil} onChange={e=>setValidUntil(e.target.value)} /></label>
+                      <label className="text-xs">Begründung bei Preisabweichung<textarea className={textareaClasses+' mt-2 w-full'} value={outOfRangeReason} onChange={e=>setOutOfRangeReason(e.target.value)} /></label>
+                      <div className="sm:col-span-2"><button disabled={!templateReady||!selectedQuote} onClick={()=>composeOffer(p.id)} className={buttonPrimary}>PDF-Entwurf aus freigegebenen Vorlagen erstellen</button></div>
+                    </div>}
                     {versions.length === 0 ? (
                       <div className="text-sm text-white/45">Noch keine Versionen. Erzeuge eine Version aus einer freigegebenen Angebots-Analyse.</div>
                     ) : (
@@ -800,9 +854,10 @@ function ProposalsBlock({
                                   <button onClick={() => approveVersion(v.id)} className={buttonSecondary}>Freigeben</button>
                                 )}
                                 {v.approvedAt && !v.sentAt && (
-                                  <button onClick={() => sendVersion(v.id)} className={buttonPrimary} style={{ backgroundColor: "#22C55E" }}>
-                                    Als versendet markieren
-                                  </button>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <input type="email" autoComplete="off" aria-label="Angebot an Kunden-E-Mail" placeholder="Kunden-E-Mail" className={inputClasses+' max-w-[230px]'} value={recipientById[v.id]||''} onChange={e=>setRecipientById(x=>({...x,[v.id]:e.target.value}))}/>
+                                    <button onClick={() => sendVersion(v.id)} className={buttonPrimary} style={{ backgroundColor: "#22C55E" }}>PDF per E-Mail versenden</button>
+                                  </div>
                                 )}
                               </div>
                             </div>

@@ -5,6 +5,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { db, jsonParam } from "@/lib/pg";
+import { dispatchAdminAlerts } from "@/lib/push/dispatch";
 
 export type IntakeBrand = "nexcel" | "agiworks";
 export type IntakeResult = "inserted" | "duplicate" | "unavailable";
@@ -62,5 +63,9 @@ export async function recordInboundLead(input: IntakeInput): Promise<IntakeResul
     ON CONFLICT (source_type, source_id) DO NOTHING
     RETURNING id
   `;
+  if (rows.length) {
+    try { await dispatchAdminAlerts(sql); }
+    catch { console.error("[admin alerts] immediate dispatch deferred to cron"); }
+  }
   return rows.length ? "inserted" : "duplicate";
 }

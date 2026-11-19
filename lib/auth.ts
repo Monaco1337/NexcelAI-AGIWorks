@@ -2,11 +2,14 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { DemoUser } from "./demo-users";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "nexcel-ai-demo-secret-key-change-in-production"
-);
+function signingSecret(): Uint8Array | null {
+  const value = process.env.JWT_SECRET;
+  return value && value.length >= 32 ? new TextEncoder().encode(value) : null;
+}
 
 export async function createSession(user: DemoUser) {
+  const secret = signingSecret();
+  if (!secret) throw new Error("JWT_SECRET missing or too short");
   const expiresAt = new Date(user.expiresAt);
   const now = new Date();
   
@@ -24,7 +27,7 @@ export async function createSession(user: DemoUser) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(expiresAt)
-    .sign(SECRET);
+    .sign(secret);
 
   return session;
 }
@@ -38,6 +41,8 @@ export interface SessionPayload {
 }
 
 export async function verifySession(): Promise<SessionPayload | null> {
+  const secret = signingSecret();
+  if (!secret) return null;
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 
@@ -46,7 +51,7 @@ export async function verifySession(): Promise<SessionPayload | null> {
   }
 
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, secret);
     return {
       userId: payload.userId as string,
       email: payload.email as string,

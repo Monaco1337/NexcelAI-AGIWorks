@@ -23,7 +23,7 @@ export async function GET(_: NextRequest, ctx: { params: Promise<{ id: string }>
   const version = await getProposalVersion(id);
   if (!version) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  if (version.documentId) {
+  if (version.documentId && !version.approvedAt) {
     const doc = await loadProposalDocumentBytes(version.documentId);
     if (doc) {
       return new NextResponse(new Uint8Array(doc.bytes), {
@@ -46,7 +46,7 @@ export async function GET(_: NextRequest, ctx: { params: Promise<{ id: string }>
     generatedAt: new Date(version.generatedAt),
     watermark: version.approvedAt ? undefined : "Vorschau",
   });
-  await saveProposalDocument(version.id, bytes);
+  if (!version.approvedAt) await saveProposalDocument(version.id, bytes);
   return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "content-type": "application/pdf",

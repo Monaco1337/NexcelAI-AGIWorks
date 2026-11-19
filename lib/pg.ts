@@ -39,6 +39,21 @@ export function jsonParam(value: unknown): JsonParam {
 
 /** Erste verfügbare Postgres-URL aus den üblichen Vercel/Neon-Variablen. */
 function resolveConnectionString(): string | null {
+  if (process.env.VERCEL_ENV === "preview") {
+    const pairs = [
+      ["DATABASE_URL", "PREVIEW_DB_DATABASE_URL"],
+      ["POSTGRES_URL", "PREVIEW_DB_POSTGRES_URL"],
+      ["PRISMA_DATABASE_URL", "PREVIEW_DB_PRISMA_DATABASE_URL"],
+    ] as const;
+    for (const [name, prefixed] of pairs) {
+      const configured = process.env[name]?.trim();
+      const expected = process.env[prefixed]?.trim();
+      if (!configured || !expected || configured !== expected) {
+        console.error("[DB] Preview database attestation failed for " + name + " (secrets hidden)");
+        return null;
+      }
+    }
+  }
   const candidates = [
     process.env.POSTGRES_URL,
     process.env.DATABASE_URL,

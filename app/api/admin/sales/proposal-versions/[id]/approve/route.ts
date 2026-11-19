@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authorize } from "@/lib/auth/authorize";
 import { serviceApproveProposalVersion } from "@/lib/sales/service";
+import { getProposalVersion } from "@/lib/sales/proposalsStore";
 import { SalesError } from "@/lib/sales/model";
 
 export const runtime = "nodejs";
@@ -9,6 +10,12 @@ export async function POST(_: NextRequest, ctx: { params: Promise<{ id: string }
   const gate = await authorize("sales.proposal.approve");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
+  if (!gate.auth.user?.isActive || !['owner','admin'].includes(gate.auth.role))
+    return NextResponse.json({error:'Aktives CRM-Admin-Konto erforderlich'}, {status:403});
+  const snapshot = await getProposalVersion(id);
+  if (!snapshot) return NextResponse.json({error:'Angebotsversion nicht gefunden'}, {status:404});
+  if (snapshot.generatedBy === gate.auth.userId)
+    return NextResponse.json({error:'Vier-Augen-Prinzip: zweite Person muss freigeben'}, {status:409});
   try {
     const version = await serviceApproveProposalVersion(gate.auth, id);
     return NextResponse.json({ version });
