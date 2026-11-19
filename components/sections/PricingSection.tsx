@@ -1,263 +1,37 @@
-
-"use client";
-// NXL_AGI_PRICING_EXPERIENCE_V4
-
+'use client';
+/** Public pricing has moved to the private sales workbench. This component never renders prices. */
 import Link from "@/components/BrandAwareLink";
-import { useState } from "react";
-import { useBrand } from "@/contexts/BrandContext";
-import { resolveBrandNavHref } from "@/lib/brandNav";
-import styles from "./PricingSectionExperience.module.css";
+import {useBrand} from '@/contexts/BrandContext';
+import {resolveBrandNavHref} from '@/lib/brandNav';
+import {track} from '@/lib/track';
+import styles from './PricingSectionExperience.module.css';
 
-type CategoryId = "digital" | "process" | "platform";
-
-type Offer = {
-  name: string;
-  description: string;
-  price: string;
-  note?: string;
-};
-
-type Category = {
-  id: CategoryId;
-  nav: string;
-  caption: string;
-  heading: string;
-  summary: string;
-  offers: readonly [Offer, Offer];
-};
-
-const CATEGORIES: readonly [Category, Category, Category] = [
-  {
-    id: "digital",
-    nav: "Web & Service",
-    caption: "DIGITALE ERLEBNISSE",
-    heading: "Ein Auftritt, der Vertrauen verdient.",
-    summary:
-      "Digitale Kontaktpunkte, die Menschen gerne nutzen und die sich sinnvoll in bestehende Abläufe einfügen.",
-    offers: [
-      {
-        name: "Premium-Websystem",
-        description: "Design, Performance und klare Nutzerführung.",
-        price: "3.900–8.000 €",
-      },
-      {
-        name: "Buchungssystem",
-        description: "Termine, Kunden und Buchungsprozesse digital.",
-        price: "7.500–15.000 €",
-      },
-    ],
-  },
-  {
-    id: "process",
-    nav: "Vertrieb & Prozesse",
-    caption: "WACHSTUM & ABLÄUFE",
-    heading: "Weniger Routine. Mehr Überblick.",
-    summary:
-      "Wiederkehrende Arbeit reduzieren, Informationen verbinden und Entscheidungen nachvollziehbarer machen.",
-    offers: [
-      {
-        name: "Lead-Funnel & CRM",
-        description: "Anfragen, Kontakte und Vertrieb zentral steuern.",
-        price: "9.500–20.000 €",
-      },
-      {
-        name: "Unternehmenssystem",
-        description: "Teams, Aufgaben und Datenflüsse verbinden.",
-        price: "15.000–35.000 €",
-      },
-    ],
-  },
-  {
-    id: "platform",
-    nav: "Plattformen & KI",
-    caption: "INDIVIDUELLE SYSTEME",
-    heading: "Komplexität gezielt beherrschen.",
-    summary:
-      "Für Vorhaben mit eigenen Datenmodellen, Integrationen und besonderen Anforderungen an Betrieb und Kontrolle.",
-    offers: [
-      {
-        name: "Individuelles ERP-System",
-        description: "Rollen, Daten, Warenwirtschaft und Integrationen.",
-        price: "25.000–60.000 €",
-      },
-      {
-        name: "KI & Automatisierung",
-        description:
-          "Kontrollierte KI-Unterstützung und automatisierte Abläufe.",
-        price: "ab 7.500 €",
-        note: "projektabhängig",
-      },
-    ],
-  },
+const TOPICS=[
+ {title:'Bedarf verstehen',description:'Wir sprechen über Ihr Unternehmen, konkrete Ziele und den bisherigen Prozess.'},
+ {title:'Lösung eingrenzen',description:'Wir vergleichen einen schlanken Einstieg mit weiteren Integrations- und Ausbauoptionen.'},
+ {title:'Verbindlich planen',description:'Nach technischer Klärung erhalten Sie ein individuelles Angebot mit nachvollziehbarem Leistungsumfang.'},
 ];
-
-export default function PricingSection({
-  compact = false,
-  standalonePage = false,
-}: {
-  compact?: boolean;
-  standalonePage?: boolean;
-} = {}) {
-  const brand = useBrand();
-  const isAgi = brand.id === "agiworks";
-
-  const [chosen, setChosen] = useState<CategoryId | null>(null);
-  const activeId = chosen ?? (isAgi ? "digital" : "process");
-
-  const current =
-    CATEGORIES.find((group) => group.id === activeId) ??
-    CATEGORIES[0];
-
-  const displayGroups = isAgi
-    ? CATEGORIES
-    : [CATEGORIES[1], CATEGORIES[2], CATEGORIES[0]];
-
-  const rawContact = resolveBrandNavHref("/kontakt", brand.id);
-
-  const contactPath = rawContact;
-
-  const contactHref =
-    `${contactPath}${contactPath.includes("?") ? "&" : "?"}` +
-    `betreff=${encodeURIComponent("Projekt und Preisorientierung besprechen")}`;
-
-  const calculatorHref = resolveBrandNavHref(
-    "/preiskalkulator",
-    brand.id
-  );
-
-  const PricingHeading = standalonePage ? "h1" : "h2";
-  return (
-    <section
-      id="preise"
-      aria-labelledby="pricing-experience-title"
-      className={`${styles.root} ${compact ? styles.compact : ""}`}
-    >
-      <div className={styles.shell}>
-        <header className={styles.intro}>
-          <div>
-            <p className={styles.eyebrow}>
-              INVESTITION MIT KLAREM RAHMEN
-            </p>
-
-            <PricingHeading id="pricing-experience-title" className={styles.title}>
-              {isAgi
-                ? "Individuell entwickelt."
-                : "Wirkung vor Aufwand."}
-
-              <span>
-                {isAgi
-                  ? "Nachvollziehbar kalkuliert."
-                  : "Klarheit vor Investition."}
-              </span>
-            </PricingHeading>
-          </div>
-
-          <p className={styles.lead}>
-            {isAgi
-              ? "Maßgeschneiderte Software braucht eine realistische Planung. Wählen Sie einen Projektbereich und entdecken Sie typische Investitionsrahmen."
-              : "Wir bewerten zuerst den tatsächlichen Nutzen. Wählen Sie einen Projektbereich und entdecken Sie typische Investitionsrahmen – ohne starre Pakete."}
-          </p>
-        </header>
-
-        <div className={styles.experience}>
-          <div
-            className={styles.selector}
-            role="group"
-            aria-label="Projektbereich auswählen"
-          >
-            {displayGroups.map((group) => (
-              <button
-                key={group.id}
-                type="button"
-                className={`${styles.categoryButton} ${
-                  activeId === group.id ? styles.categoryActive : ""
-                }`}
-                onClick={() => setChosen(group.id)}
-                aria-pressed={activeId === group.id}
-                aria-controls="pricing-category-detail"
-              >
-                <span>{group.nav}</span>
-                <span
-                  aria-hidden="true"
-                  className={styles.categoryIndicator}
-                />
-              </button>
-            ))}
-          </div>
-
-          <div
-            id="pricing-category-detail"
-            className={styles.stage}
-            role="region"
-            aria-label={`Preisorientierung: ${current.nav}`}
-          >
-            <div key={current.id} className={styles.stageInner}>
-              <div className={styles.story}>
-                <p className={styles.stageCaption}>
-                  {current.caption}
-                </p>
-
-                <h3>{current.heading}</h3>
-                <p>{current.summary}</p>
-
-                <span className={styles.storyTag}>
-                  INDIVIDUELLER PROJEKTUMFANG
-                </span>
-              </div>
-
-              <div className={styles.offerGrid}>
-                {current.offers.map((offer) => (
-                  <div key={offer.name} className={styles.offer}>
-                    <div>
-                      <h4>{offer.name}</h4>
-                      <p className={styles.offerDescription}>
-                        {offer.description}
-                      </p>
-                    </div>
-
-                    <div className={styles.offerCost}>
-                      <p>INVESTITIONSRAHMEN</p>
-                      <strong>{offer.price}</strong>
-
-                      {offer.note && (
-                        <span>{offer.note}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.actionBar}>
-            <p>
-              Keine Festpreis-Pakete. Die tatsächliche Kalkulation
-              richtet sich nach Funktionen, Daten, Schnittstellen
-              und Betrieb.
-            </p>
-
-            <div className={styles.actionLinks}>
-              <Link href={calculatorHref} className={styles.secondary}>
-                Preisrahmen prüfen
-                <span aria-hidden="true">↗</span>
-              </Link>
-
-              <Link href={contactHref} className={styles.primary}>
-                {isAgi
-                  ? "Softwareprojekt besprechen"
-                  : "KI-Projekt besprechen"}
-                <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <p className={styles.disclaimer}>
-          Unverbindliche Preisorientierung, kein Angebot.
-          Steuern und gegebenenfalls anfallende Drittanbieter-Kosten
-          werden im individuellen Angebot ausgewiesen.
-        </p>
-      </div>
-    </section>
-  );
+export default function PricingSection({compact=false,standalonePage=false}:{compact?:boolean;standalonePage?:boolean}={}){
+ const brand=useBrand();
+ const isAgi=brand.id==='agiworks';
+ const booking=resolveBrandNavHref('/beratung',brand.id);
+ const contact=resolveBrandNavHref('/kontakt',brand.id);
+ const Headline=standalonePage?'h1':'h2';
+ return <section id="preise" aria-labelledby="pricing-experience-title" className={`${styles.root} ${compact?styles.compact:''}`}>
+  <div className={styles.shell}>
+   <header className={styles.intro}>
+    <div><p className={styles.eyebrow}>PROJEKTKLÄRUNG STATT PREISLISTE</p><Headline id="pricing-experience-title" className={styles.title}>{isAgi?'Softwarevorhaben planen.':'KI-Vorhaben konkretisieren.'}<span>Persönlich. Technisch fundiert.</span></Headline></div>
+    <p className={styles.lead}>Jedes Unternehmen hat andere Anforderungen. Wir bestimmen zuerst den notwendigen Umfang, den Nutzen und die Integrationen. Danach folgt eine belastbare individuelle Kalkulation.</p>
+   </header>
+   <div className={styles.experience}>
+    <div className={styles.stage}><div className={styles.stageInner}><div className={styles.story}><p className={styles.stageCaption}>SO ENTSTEHT IHR ANGEBOT</p><h3>Ein klarer Einstieg. Keine Scheingenauigkeit.</h3><p>Sie müssen keine technische Lösung vorgeben. Wir übersetzen Ihre Anforderungen in mögliche nächste Schritte.</p><span className={styles.storyTag}>INDIVIDUELLER PROJEKTUMFANG</span></div>
+    <div className={styles.offerGrid}>{TOPICS.map(t=><div className={styles.offer} key={t.title}><div><h4>{t.title}</h4><p className={styles.offerDescription}>{t.description}</p></div></div>)}</div></div></div>
+    <div className={styles.actionBar}><p>Das Erstgespräch ist für Sie unverbindlich. Das konkrete Projektangebot wird anschließend anhand Ihrer Anforderungen erstellt.</p><div className={styles.actionLinks}>
+     <Link href={booking} className={styles.primary} onClick={()=>track('consultation_cta_click',{meta:{source:'pricing_section'}})}>Beratungstermin buchen <span aria-hidden="true">→</span></Link>
+     <Link href={contact} className={styles.secondary} onClick={()=>track('contact_cta_click',{meta:{source:'pricing_section'}})}>Projektanfrage senden <span aria-hidden="true">↗</span></Link>
+    </div></div>
+   </div>
+   <p className={styles.disclaimer}>Projektumfang, Leistungsgrenzen, laufende Kosten und ein individuelles Angebot werden im direkten Austausch geklärt.</p>
+  </div>
+ </section>;
 }

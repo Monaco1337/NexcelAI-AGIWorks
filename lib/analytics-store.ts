@@ -35,6 +35,8 @@ export type AnalyticsEventType =
   | "visibility_change"
   // Forms / Conversions
   | "contact_submit"
+  | "consultation_cta_click"
+  | "contact_cta_click"
   | "demo_request"
   | "lead_submit"
   // Pricing-Wizard
@@ -367,6 +369,8 @@ interface FunnelStats {
   pricingQuote: number;
   pricingSubmit: number;
   contactSubmit: number;
+  consultationCtaClick: number;
+  contactCtaClick: number;
 }
 
 export interface SessionSummary {
@@ -573,6 +577,8 @@ export async function getSnapshot(
     pricingQuote: totals.pricingQuotes,
     pricingSubmit: totals.pricingSubmits,
     contactSubmit: totals.contacts,
+    consultationCtaClick: all.filter((e) => e.type === "consultation_cta_click").length,
+    contactCtaClick: all.filter((e) => e.type === "contact_cta_click").length,
   };
 
   const recentEvents = all

@@ -233,10 +233,10 @@ export function NexcelInvestmentSection() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
             <Link href="/kontakt?betreff=Projektanfrage%20KI-Automatisierung" className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[#9E74EB] px-6 py-3.5 text-[13px] font-semibold text-[#0A0714] transition-colors hover:bg-[#BA9BFB]">Projekt besprechen <span className="transition-transform group-hover:translate-x-1"><Arrow /></span></Link>
-            <Link href="/preise" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-[13px] font-medium text-white/80 transition-colors hover:border-[#B49BEE]/60 hover:text-white">Preisorientierung ansehen <Arrow /></Link>
+            <Link href="/beratung" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-[13px] font-medium text-white/80 transition-colors hover:border-[#B49BEE]/60 hover:text-white">Preisorientierung ansehen <Arrow /></Link>
           </div>
         </div>
       </div>
-    </section>} primaryAction={<Link href="/kontakt?betreff=Projektanfrage%20KI-Automatisierung" className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[#9E74EB] px-6 py-3.5 text-[13px] font-semibold text-[#0A0714] transition-colors hover:bg-[#BA9BFB]">Projekt besprechen <span className="transition-transform group-hover:translate-x-1"><Arrow /></span></Link>} secondaryAction={<Link href="/preise" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-[13px] font-medium text-white/80 transition-colors hover:border-[#B49BEE]/60 hover:text-white">Preisorientierung ansehen <Arrow /></Link>} anchorId={"preise"} />
+    </section>} primaryAction={<Link href="/kontakt?betreff=Projektanfrage%20KI-Automatisierung" className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[#9E74EB] px-6 py-3.5 text-[13px] font-semibold text-[#0A0714] transition-colors hover:bg-[#BA9BFB]">Projekt besprechen <span className="transition-transform group-hover:translate-x-1"><Arrow /></span></Link>} secondaryAction={<Link href="/beratung" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-[13px] font-medium text-white/80 transition-colors hover:border-[#B49BEE]/60 hover:text-white">Preisorientierung ansehen <Arrow /></Link>} anchorId={"preise"} />
   );
 }

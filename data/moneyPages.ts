@@ -130,7 +130,7 @@ const AGI_PAGES: MoneyPage[] = [
       alternative: "Für eine reine Visitenkarte ist ein etablierter Baukasten oft günstiger und ausreichend.",
     },
     costNote:
-      "Der Projektkorridor hängt von Seitenzahl, individuellen Komponenten, CMS-Umfang und Integrationen ab. Eine erste Orientierung liefert der Preiskalkulator.",
+      "Der Projektkorridor hängt von Seitenzahl, individuellen Komponenten, CMS-Umfang und Integrationen ab. Den konkreten Bedarf und den Kostenrahmen klären wir im Erstgespräch.",
     process: [
       { title: "Analyse", description: "Ziele, Zielgruppe und Anforderungen an Struktur und Inhalte klären." },
       { title: "Konzept", description: "Informationsarchitektur, Seitenstruktur und Komponenten festlegen." },
@@ -145,7 +145,7 @@ const AGI_PAGES: MoneyPage[] = [
       { question: "Wie lange dauert ein Projekt?", answer: "Das hängt vom Umfang ab. Nach der Analyse erhalten Sie einen realistischen Zeit- und Projektkorridor." },
       { question: "Sind Datenschutz und Impressum enthalten?", answer: "Ja, Rechtstexte und ein Cookie-Consent werden sauber eingebunden; die inhaltliche Prüfung erfolgt mit Ihnen." },
     ],
-    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/softwareentwicklung", "/preiskalkulator", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/softwareentwicklung", "/beratung", "/systemanalyse", "/kontakt"],
     tags: ["Webseite", "Frontend", "SEO"],
     approved: true,
     manualIndexApproval: true,
@@ -196,7 +196,7 @@ const AGI_PAGES: MoneyPage[] = [
       alternative: "Für reine Inhalte reicht ein Websystem mit CMS statt einer Web-App.",
     },
     costNote:
-      "Der Projektkorridor richtet sich nach Modulen, Rollen, Integrationen und Datenkomplexität. Der Preiskalkulator gibt eine erste Einordnung.",
+      "Der Projektkorridor richtet sich nach Modulen, Rollen, Integrationen und Datenkomplexität. Eine konkrete Einordnung folgt nach der Bedarfsanalyse im Erstgespräch.",
     process: [
       { title: "Analyse", description: "Prozesse, Rollen und Datenobjekte aufnehmen." },
       { title: "Architektur", description: "Datenmodell und Systemdesign festlegen." },
@@ -396,7 +396,7 @@ const AGI_PAGES: MoneyPage[] = [
       alternative: "Für Standardanforderungen kann ein etabliertes CRM-Produkt der schnellere Weg sein.",
     },
     costNote:
-      "Der Projektkorridor richtet sich nach Pipeline-Komplexität, Rollen, Automatisierungen und Schnittstellen. Der Preiskalkulator gibt eine Orientierung.",
+      "Der Projektkorridor richtet sich nach Pipeline-Komplexität, Rollen, Automatisierungen und Schnittstellen. Den passenden Kostenrahmen klären wir gemeinsam im Beratungsgespräch.",
     process: [
       { title: "Analyse", description: "Vertriebsprozess, Felder und Rollen aufnehmen." },
       { title: "Datenmodell", description: "Kontakte, Vorgänge und Status modellieren." },
@@ -1008,7 +1008,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       alternative: "Bei wenigen Kontakten kann persönliche Betreuung ohne Automatisierung ausreichen.",
     },
     costNote:
-      "Der Projektkorridor hängt von Funnel-Umfang, CRM-Anbindung und Automatisierungstiefe ab. Der Preiskalkulator gibt eine Orientierung.",
+      "Der Projektkorridor hängt von Funnel-Umfang, CRM-Anbindung und Automatisierungstiefe ab. Den passenden Kostenrahmen klären wir gemeinsam im Beratungsgespräch.",
     process: [
       { title: "Analyse", description: "Kanäle, Leads und Nachfass-Lücken erfassen." },
       { title: "Funnel-Design", description: "Qualifizierung und Strecke entwerfen." },
@@ -1023,7 +1023,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { question: "Wird ein CRM benötigt?", answer: "Ja, die Leads laufen strukturiert in ein CRM, das AGI Works umsetzt oder anbindet." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die die Lead-Strecke bewertet und den Projektkorridor bestimmt." },
     ],
-    relatedPaths: ["/loesungen/automatisierung", "/loesungen/crm-automation", "/loesungen/ki-fuer-vertrieb", "/preiskalkulator", "/systemanalyse"],
+    relatedPaths: ["/loesungen/automatisierung", "/loesungen/crm-automation", "/loesungen/ki-fuer-vertrieb", "/beratung", "/systemanalyse"],
     tags: ["Lead", "Funnel", "Vertrieb"],
     approved: true,
     manualIndexApproval: true,

@@ -31,6 +31,7 @@ import { migration0015 } from "./0015_sales_targets_prescore";
 import { migration0016 } from "./0016_inbound_lead_pipeline";
 import { migration0017 } from "./0017_shared_consultation_booking";
 import { migration0018 } from "./0018_consultation_availability";
+import { migration0019 } from "./0019_internal_pricing";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
@@ -51,4 +52,5 @@ export const MIGRATIONS: Migration[] = [
   migration0016,
   migration0017,
   migration0018,
+  migration0019,
 ];

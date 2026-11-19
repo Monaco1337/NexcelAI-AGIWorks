@@ -133,7 +133,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
         <GlassCard>
           <p className="text-sm leading-relaxed text-white/75">{page.costNote}</p>
           <Link
-            href="/preiskalkulator"
+            href="/beratung"
             className="mt-4 inline-block text-sm text-white/85 underline underline-offset-4"
           >
             Zum Preiskalkulator

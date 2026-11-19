@@ -104,8 +104,8 @@ export default function Footer() {
     pathname === "/cookie-richtlinie" || pathname === "/agiworks/cookie-richtlinie";
   const isDemoPage = pathname?.startsWith("/demo") || pathname === "/login" || pathname === "/demo-anfordern";
   const isPreiskalkulatorPage =
-    pathname === "/preiskalkulator" || pathname === "/agiworks/preiskalkulator" ||
-    pathname === "/preise" || pathname === "/agiworks/preise";
+    pathname === "/beratung" || pathname === "/agiworks/preiskalkulator" ||
+    pathname === "/beratung" || pathname === "/agiworks/preise";
   const isSystemanalysePage =
     pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse");
 

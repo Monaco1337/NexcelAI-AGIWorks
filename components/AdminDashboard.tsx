@@ -34,6 +34,11 @@ const SalesCenter = dynamicImport(
   { ssr: false, loading: listSkeleton }
 );
 
+const InternalPricingWorkbench = dynamicImport(
+  () => import("@/components/admin/sales/InternalPricingWorkbench"),
+  { ssr: false, loading: listSkeleton }
+);
+
 const ConsultationsCenter = dynamicImport(
   () => import("@/components/admin/consultations/ConsultationsCenter"),
   { ssr: false, loading: listSkeleton }
@@ -179,6 +184,7 @@ type TabId =
   | "pipeline"
   | "unternehmen"
   | "vertrieb"
+  | "kalkulation"
   | "demo"
   | "termine"
   | "projekte"
@@ -320,6 +326,8 @@ function NavIcon({ name }: { name: TabId }) {
           <path d="M13 6v2M13 11v2M13 16v2" />
         </svg>
       );
+    case "kalkulation":
+      return <svg {...common}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 9h10M7 13h3M13 13h4M7 17h3M13 17h4" /></svg>;
     case "vertrieb":
       return (
         <svg {...common}>
@@ -642,6 +650,7 @@ export default function AdminDashboard() {
     { id: "pipeline", label: "Pipeline" },
     { id: "unternehmen", label: "Unternehmen" },
     { id: "vertrieb", label: "Vertrieb" },
+    { id: "kalkulation", label: "Interne Kalkulation" },
     { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
     { id: "termine", label: "Termine / Buchungen" },
     { id: "projekte", label: "Projekte" },
@@ -662,6 +671,7 @@ export default function AdminDashboard() {
     pipeline: "Pipeline",
     unternehmen: "Unternehmen",
     vertrieb: "Vertrieb",
+    kalkulation: "Interne Kalkulation",
     demo: "Demo-Anfragen",
     termine: "Termine / Buchungen",
     projekte: "Projekte",
@@ -1434,6 +1444,11 @@ export default function AdminDashboard() {
           <SalesCenter accent={sessionBrand.accent} />
         )}
 
+        {/* ─── INTERNE KALKULATION (nur Admins) ─── */}
+        {activeTab === "kalkulation" && (
+          <InternalPricingWorkbench />
+        )}
+
         {/* ─── RECHNUNGEN ─────────────────────────────────────────────── */}
         {activeTab === "rechnungen" && (
           <BillingCenter accent={sessionBrand.accent} />
@@ -2152,6 +2167,8 @@ const EVENT_LABEL: Record<string, { label: string; color: string }> = {
   outbound_click: { label: "Outbound", color: "#F472B6" },
   visibility_change: { label: "Visibility", color: "#6B7280" },
   contact_submit: { label: "Contact ✓", color: "#22C55E" },
+  consultation_cta_click: { label: "Beratung CTA", color: "#5BB8FF" },
+  contact_cta_click: { label: "Kontakt CTA", color: "#5BB8FF" },
   demo_request: { label: "Demo ✓", color: "#22C55E" },
   lead_submit: { label: "Lead ✓", color: "#22C55E" },
   pricing_start: { label: "Pricing Start", color: "#FBBF24" },

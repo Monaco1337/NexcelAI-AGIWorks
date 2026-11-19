@@ -431,7 +431,7 @@ export default function AgiWorksPremiumDetail({
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/preiskalkulator"
+                href="/beratung"
                 className="inline-flex min-h-[48px] items-center gap-3 rounded-xl border border-sky-300/30 px-5 text-[13px] font-medium text-white transition-colors hover:border-sky-200/70"
               >
                 Projektkorridor berechnen <Arrow />

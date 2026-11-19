@@ -1,24 +1,3 @@
-"use client";
-
-import { Suspense } from "react";
-import PreiskalkulatorContent from "@/components/pricing/PreiskalkulatorContent";
-
-export default function PreiskalkulatorPage() {
-  return (
-    <Suspense
-      fallback={
-        <main className="ds-app min-h-screen flex items-center justify-center text-white">
-          <h1 className="sr-only">Preiskalkulator fuer KI- und Automatisierungsprojekte</h1>
-          <div
-            className="rounded-2xl px-8 py-6 text-white/70"
-            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
-          >
-            Laden …
-          </div>
-        </main>
-      }
-    >
-      <PreiskalkulatorContent />
-    </Suspense>
-  );
-}
+import { permanentRedirect } from "next/navigation";
+/** Permanent decommission of public pricing; no calculator or prices served. */
+export default function Page(){ permanentRedirect("/beratung"); }

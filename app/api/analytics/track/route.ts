@@ -19,6 +19,8 @@ const ALLOWED_TYPES: AnalyticsEventType[] = [
   "outbound_click",
   "visibility_change",
   "contact_submit",
+  "consultation_cta_click",
+  "contact_cta_click",
   "demo_request",
   "lead_submit",
   "pricing_start",

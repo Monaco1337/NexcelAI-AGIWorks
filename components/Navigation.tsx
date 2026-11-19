@@ -92,22 +92,6 @@ const BASE_SEARCH_INDEX: SearchIndexItem[] = [
     category: "page",
   },
   {
-    id: "preise",
-    title: "Preise",
-    href: "/preise",
-    description: "Preiskorridore – transparente Orientierung für Ihr digitales System",
-    keywords: ["preis", "preise", "kosten", "budget", "angebot", "orientierung"],
-    category: "page",
-  },
-  {
-    id: "preiskalkulator",
-    title: "Preiskalkulator",
-    href: "/preiskalkulator",
-    description: "Preiskalkulator - Transparente Kostenschätzung für Ihr System",
-    keywords: ["preiskalkulator", "kalkulator", "schätzung", "berechnen"],
-    category: "page",
-  },
-  {
     id: "kontakt",
     title: "Kontakt",
     href: "/kontakt",
@@ -315,7 +299,7 @@ export default function Navigation() {
       const r = (h: string) => resolveBrandNavHref(h, brand.id);
       return [
         { id: "referenzen", label: "Referenzen", href: r("/projekte") },
-        { id: "preise", label: "Preise", href: r("/preise") },
+        { id: "beratung", label: "Beratung", href: r("/beratung") },
         { id: "ueber-uns", label: "Über uns", href: r("/ueber-mich") },
         { id: "kontakt", label: "Kontakt", href: r("/kontakt") },
       ];

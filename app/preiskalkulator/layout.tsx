@@ -1,15 +1,3 @@
-import { generateSeoMetadata } from "@/lib/seo/metadata";
-
-export const metadata = generateSeoMetadata({ brand: "nexcel", path: "/preiskalkulator" });
-
-export default function PreiskalkulatorLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="ds-app" style={{ minHeight: "100vh", overflowX: "hidden" }}>
-      {children}
-    </div>
-  );
-}
+import type {Metadata} from "next";
+export const metadata:Metadata={robots:{index:false,follow:false},title:"Beratung und Projektklärung"};
+export default function Layout({children}:{children:React.ReactNode}){return children;}
