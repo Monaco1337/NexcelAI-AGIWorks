@@ -159,13 +159,13 @@ const AGI_PAGES: MoneyPage[] = [
     serviceName: "Web-App-Entwicklung",
     title: "Web-App entwickeln lassen | AGI Works",
     description:
-      "AGI Works entwickelt individuelle Web-Apps mit Nutzerkonten, Rollen, Dashboards und Datenlogik — produktionsreif, sicher und skalierbar.",
+      "Web-App entwickeln lassen: AGI Works plant individuelle Browser-Anwendungen mit Login, Rollen, Datenmodell, APIs, Tests und kontrolliertem Betrieb.",
     eyebrow: "Leistung",
     h1: "Individuelle Web-Apps entwickeln lassen",
     heroIntro:
       "Wenn eine Website nicht mehr reicht: Wir entwickeln Web-Apps mit Login, Rollen, Datenlogik und Oberflächen, die reale Arbeitsprozesse abbilden.",
     aeoAnswer:
-      "Eine Web-App ist die richtige Wahl, wenn Nutzer sich anmelden, Daten verwalten und Prozesse durchführen sollen. AGI Works entwickelt die App als produktionsreife Anwendung mit sauberem Datenmodell, Rollen und Rechten. Geeignet für Unternehmen, die interne oder kundenseitige Abläufe digitalisieren wollen. Der nächste Schritt ist eine Systemanalyse, die den konkreten Funktionsumfang klärt.",
+      "Eine individuelle Web-App ist sinnvoll, wenn Mitarbeitende oder Kunden im Browser mit Daten, Rollen und klaren Arbeitsabläufen arbeiten sollen. AGI Works entwickelt dafür Anwendungslogik, Berechtigungen, Datenmodell und APIs passend zu den vorhandenen Systemen. Der Aufwand hängt von Nutzertypen, Funktionsumfang, Integrationen und Betriebsanforderungen ab. Im technischen Erstgespräch wird geklärt, welcher erste Ausbaustand wirtschaftlich und fachlich sinnvoll ist.",
     problem:
       "Prozesse laufen über Excel, E-Mail und Einzeltools. Daten sind doppelt, Rechte unklar und niemand hat eine verlässliche Gesamtsicht.",
     solutionIntro:
@@ -205,13 +205,14 @@ const AGI_PAGES: MoneyPage[] = [
       { title: "Launch & Betrieb", description: "Ausrollen und iterativ erweitern." },
     ],
     faq: [
+      { question: "Welche Angaben brauchen Sie, um eine Web-App entwickeln zu lassen?", answer: "Hilfreich sind die betroffenen Nutzergruppen, der wichtigste Ablauf, vorhandene Datenquellen, Integrationspartner und Anforderungen an Rollen, Sicherheit und Betrieb. Daraus wird der erste Projektumfang abgeleitet." },
       { question: "Was unterscheidet eine Web-App von einer Website?", answer: "Eine Web-App hat Nutzerkonten, Rollen und Datenlogik; sie bildet Prozesse ab, statt nur Inhalte darzustellen." },
       { question: "Welche Technologien setzen Sie ein?", answer: "In der Regel Next.js im Frontend, eine relationale Datenbank und serverseitige APIs mit Validierung." },
       { question: "Ist die App sicher?", answer: "Zugriffsschutz, Eingabevalidierung und ein Rollenkonzept sind fester Bestandteil der Umsetzung." },
       { question: "Kann die App später wachsen?", answer: "Ja, die Architektur ist modular angelegt, sodass weitere Module ergänzt werden können." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, in der wir den konkreten Funktionsumfang und den Projektkorridor bestimmen." },
     ],
-    relatedPaths: ["/leistungen/saas-entwicklung", "/leistungen/admin-panel-entwicklung", "/leistungen/api-entwicklung", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/leistungen/saas-entwicklung", "/leistungen/admin-panel-entwicklung", "/leistungen/api-entwicklung", "/systemanalyse", "/beratung"],
     tags: ["Web-App", "Backend", "Datenmodell"],
     approved: true,
     manualIndexApproval: true,
@@ -489,15 +490,15 @@ const AGI_PAGES: MoneyPage[] = [
     path: "/leistungen/api-entwicklung",
     systemSlug: "schnittstellen-integrationen",
     serviceName: "API- & Integrationsentwicklung",
-    title: "API-Entwicklung & Integrationen | AGI Works",
+    title: "ERP-Integration & API-Entwicklung | AGI Works",
     description:
-      "AGI Works entwickelt APIs und verbindet Systeme sauber: Datenmapping, Fehler-Handling und automatische Wiederholung — DSGVO-konform und verschlüsselt.",
+      "AGI Works entwickelt ERP- und CRM-Schnittstellen: API-Verträge, Datenmapping, sichere Authentifizierung, idempotente Verarbeitung und Monitoring.",
     eyebrow: "Leistung",
     h1: "API-Entwicklung und System-Integrationen",
     heroIntro:
       "Damit Ihre Systeme als Einheit arbeiten: Wir entwickeln APIs und verbinden Zahlungsanbieter, CRM, Kalender und beliebige Dienste stabil miteinander.",
     aeoAnswer:
-      "API- und Integrationsentwicklung ist nötig, wenn getrennte Systeme zuverlässig Daten austauschen sollen. AGI Works baut Schnittstellen mit klarem Datenmapping, Fehler-Handling und automatischer Wiederholung. Geeignet für Unternehmen, deren Tools bislang manuell oder gar nicht verbunden sind. Der nächste Schritt ist eine Systemanalyse zur Klärung der Datenflüsse.",
+      "ERP-Integration verbindet bestehende Unternehmenssysteme über definierte Schnittstellen und nachvollziehbare Datenflüsse. AGI Works konzipiert APIs, Datenmapping, Authentifizierung sowie Fehler- und Wiederholungsstrategien, damit fachliche Zustände konsistent bleiben. Für Unternehmen mit ERP-, CRM-, Shop- oder Abrechnungssystemen prüfen wir zuerst Datenhoheit, Änderungsrisiken und Verantwortlichkeiten. Danach wird der Integrationsumfang in einem technischen Erstgespräch eingegrenzt.",
     problem:
       "Zwischen Shop, CRM, Buchhaltung und Kalender werden Daten manuell übertragen. Das kostet Zeit, erzeugt Fehler und blockiert Automatisierung.",
     solutionIntro:
@@ -505,10 +506,10 @@ const AGI_PAGES: MoneyPage[] = [
     modules: [
       { title: "REST- & Webhook-APIs", description: "Eigene und angebundene Schnittstellen." },
       { title: "Zahlungsanbindung", description: "Stripe, PayPal und SEPA serverseitig." },
-      { title: "CRM-/ERP-Integration", description: "Systeme sauber koppeln." },
+      { title: "CRM-/ERP-Integration", description: "Datenobjekte, führende Systeme und Synchronisationsregeln vor der Kopplung festlegen." },
       { title: "Kalender & E-Mail", description: "Google, iCal, IMAP/SMTP anbinden." },
-      { title: "Datenmapping", description: "Formate zuverlässig transformieren." },
-      { title: "Fehler-Handling", description: "Wiederholung und Alarmierung bei Störungen." },
+      { title: "Datenmapping", description: "Felder, Identifikatoren, Validierung und fachliche Konflikte dokumentiert abbilden." },
+      { title: "Fehler-Handling", description: "Idempotente Wiederholung, Dead-Letter-Fälle, Monitoring und Alarmierung einplanen." },
     ],
     approach: [
       "Klare Vertragsdefinition der Schnittstellen",
@@ -537,13 +538,14 @@ const AGI_PAGES: MoneyPage[] = [
       { title: "Betrieb", description: "Monitoring aufsetzen und stabil halten." },
     ],
     faq: [
+      { question: "Wie funktioniert eine ERP-Integration ohne doppelte Buchungen?", answer: "Durch eindeutige Vorgangs-IDs, idempotente Verarbeitung, geprüfte Datenzuordnung und überwachte Wiederholungen lassen sich doppelte Aktionen und unbemerkte Übertragungsfehler reduzieren." },
       { question: "Was ist eine Integration?", answer: "Eine kontrollierte Verbindung zwischen Systemen, über die Daten automatisch und zuverlässig ausgetauscht werden." },
       { question: "Was passiert bei Fehlern?", answer: "Die Schnittstellen haben ein definiertes Fehler-Handling mit automatischer Wiederholung und Alarmierung." },
       { question: "Ist die Übertragung sicher?", answer: "Ja, die Übertragung erfolgt verschlüsselt und DSGVO-konform, ohne Secrets im Frontend." },
       { question: "Welche Dienste lassen sich anbinden?", answer: "Zahlungsanbieter, CRM/ERP, Kalender, E-Mail und beliebige Systeme mit API oder Webhook." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Datenflüsse und den Projektkorridor klärt." },
     ],
-    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/systemanalyse", "/beratung"],
     tags: ["API", "Integration", "Schnittstellen"],
     approved: true,
     manualIndexApproval: true,
@@ -623,24 +625,24 @@ const AGI_PAGES: MoneyPage[] = [
     serviceName: "Individuelle Softwareentwicklung",
     title: "Individuelle Softwareentwicklung | AGI Works",
     description:
-      "AGI Works entwickelt individuelle Software: Web-Apps, Plattformen, ERP-, CRM- und Admin-Systeme mit sauberer Architektur, Sicherheit und Skalierung.",
+      "Individuelle Software entwickeln lassen: AGI Works plant Web-Apps, ERP- und CRM-Systeme mit nachvollziehbarer Architektur, Sicherheit und Betrieb.",
     eyebrow: "Leistung",
     h1: "Individuelle Softwareentwicklung für Unternehmen",
     heroIntro:
       "Software, die zu Ihrem Prozess passt: Wir entwickeln individuelle Anwendungen von der Architektur bis zum Betrieb — produktionsreif und wartbar.",
     aeoAnswer:
-      "Individuelle Softwareentwicklung ist der richtige Weg, wenn Standardsoftware Ihre Abläufe nicht abbildet. AGI Works entwickelt Web-Apps, Plattformen und Unternehmenssysteme mit sauberer Architektur und Betriebssicht. Geeignet für Unternehmen mit spezifischen Prozessen und Wachstumsanspruch. Der nächste Schritt ist eine Systemanalyse, die Umfang und Projektkorridor bestimmt.",
+      "Individuelle Softwareentwicklung lohnt sich, wenn Standardsoftware entscheidende Unternehmensabläufe nicht ausreichend abbildet. AGI Works klärt zunächst Ziele, Nutzerrollen, Datenflüsse und Integrationen und leitet daraus einen begrenzten ersten Ausbaustand ab. Architektur, Entwicklung, Qualitätssicherung und Betrieb werden passend zum Projekt geplant. Für eine belastbare Aufwandsschätzung sind vorhandene Systeme, Anforderungen und Verantwortlichkeiten im Erstgespräch zu prüfen.",
     problem:
       "Prozesse werden aus Standardtools zusammengestückelt. Das erzeugt Medienbrüche, doppelte Daten und Grenzen, die mit dem Unternehmen nicht mitwachsen.",
     solutionIntro:
       "Wir entwickeln die passende Anwendung entlang Ihrer Prozesse — mit einer Architektur, die trägt und mitwächst.",
     modules: [
-      { title: "Architektur", description: "Systemdesign vor Featureliste." },
+      { title: "Architektur", description: "Anforderungen, Systemgrenzen und Datenflüsse als dokumentierte Entscheidungen vor der Umsetzung." },
       { title: "Datenmodell", description: "Konsistente, saubere Datenbasis." },
       { title: "Anwendungslogik", description: "Ihre Abläufe als Software abgebildet." },
-      { title: "Integrationen", description: "Anbindung bestehender Systeme." },
+      { title: "Integrationen", description: "ERP, CRM und externe APIs über definierte Verträge, Fehlerroutinen und sichere Authentifizierung anbinden." },
       { title: "Sicherheit", description: "Zugriffsschutz und Validierung." },
-      { title: "Betrieb", description: "Deployment, Monitoring und Wartung." },
+      { title: "Betrieb", description: "Deployment, Monitoring, Backups, Wiederherstellung und vereinbarte Wartung berücksichtigen." },
     ],
     approach: [
       "Prozess- und Anforderungsanalyse zuerst",
@@ -669,13 +671,14 @@ const AGI_PAGES: MoneyPage[] = [
       { title: "Launch & Betrieb", description: "Ausrollen, überwachen und weiterentwickeln." },
     ],
     faq: [
+      { question: "Was kostet es, individuelle Software entwickeln zu lassen?", answer: "Das hängt vor allem von Umfang, Datenmodell, Anzahl der Integrationen, Rollen und Anforderungen an Sicherheit und Betrieb ab. Nach Klärung dieser Punkte lässt sich ein nachvollziehbarer Projektkorridor ableiten." },
       { question: "Wann lohnt sich individuelle Software?", answer: "Wenn Standardsoftware Ihre Prozesse nicht abbildet oder mehrere Systeme sauber zusammenspielen müssen." },
       { question: "Wie behalten wir Kosten im Griff?", answer: "Durch einen klar geschnittenen ersten Ausbaustand und iterative Lieferung statt Big-Bang." },
       { question: "Wem gehört der Code?", answer: "Das wird vertraglich geregelt; Ziel ist eine wartbare Codebasis, die Ihnen langfristig dient." },
       { question: "Wird die Software gewartet?", answer: "Betrieb, Monitoring und Wartung können Teil der Zusammenarbeit sein." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Umfang, Architektur und Projektkorridor bestimmt." },
     ],
-    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/preiskalkulator", "/systemanalyse"],
+    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/beratung", "/systemanalyse"],
     tags: ["Software", "Architektur", "Engineering"],
     approved: true,
     manualIndexApproval: true,
@@ -695,15 +698,15 @@ const NEXCEL_PAGES: MoneyPage[] = [
     path: "/loesungen/ki-systeme",
     systemSlug: "ki-automatisierung",
     serviceName: "KI-Systeme",
-    title: "KI-Systeme für Unternehmen · NEXCEL AI",
+    title: "KI-Beratung für Unternehmen & KI-Systeme | NEXCEL AI",
     description:
-      "NEXCEL AI konzipiert KI-Systeme, die in reale Prozesse eingebettet sind: Eingänge lesen, priorisieren, Antworten vorbereiten und Aktionen auslösen.",
+      "KI-Beratung für Unternehmen und Mittelstand: NEXCEL AI priorisiert Prozesse, prüft Daten und Risiken und entwickelt einen umsetzbaren KI-System-Fahrplan.",
     eyebrow: "Lösung",
     h1: "KI-Systeme für Unternehmen",
     heroIntro:
       "KI wird erst nützlich, wenn sie im Prozess sitzt: Wir konzipieren KI-Systeme, die Eingänge verstehen, priorisieren und konkrete Folgeaktionen auslösen.",
     aeoAnswer:
-      "Ein KI-System ist sinnvoll, wenn wiederkehrende Aufgaben Zeit binden, die sich strukturiert automatisieren lassen. NEXCEL AI konzipiert das System entlang Ihres Prozesses und lässt die technische Umsetzung mit AGI Works produktionsreif bauen. Geeignet für Unternehmen mit hohem Eingangs- und Kommunikationsvolumen. Der nächste Schritt ist eine Systemanalyse, die die Automatisierungspotenziale bewertet.",
+      "KI-Beratung für Unternehmen beginnt nicht mit einem Modell, sondern mit dem konkreten Geschäftsprozess. NEXCEL AI bewertet Aufgaben, Datenquellen, menschliche Freigaben und den erwarteten Nutzen, bevor ein KI-System entworfen wird. Geeignete Fälle reichen von Anfragenklassifizierung bis zur Vorbereitung regelgebundener Folgeaktionen. Eine begrenzte Pilotphase mit Qualitäts- und Sicherheitskriterien zeigt, ob eine Integration in den Unternehmensalltag sinnvoll ist.",
     problem:
       "Anfragen, Dokumente und Nachrichten laufen unstrukturiert ein. Mitarbeitende sortieren, priorisieren und beantworten manuell — jeden Tag aufs Neue.",
     solutionIntro:
@@ -711,9 +714,9 @@ const NEXCEL_PAGES: MoneyPage[] = [
     modules: [
       { title: "Eingangsverarbeitung", description: "E-Mails, Formulare und Dokumente automatisch erfassen." },
       { title: "Klassifizierung", description: "Themen und Dringlichkeit erkennen." },
-      { title: "Priorisierung", description: "Das Wichtige zuerst." },
+      { title: "Priorisierung", description: "Anfragen nach Geschäftsrelevanz, Frist und definierten Eskalationsregeln sortieren." },
       { title: "Antwort-Entwürfe", description: "Vorschläge nach Ihren Vorgaben." },
-      { title: "Aktions-Trigger", description: "Folgeschritte regelbasiert auslösen." },
+      { title: "Aktions-Trigger", description: "Freigegebene Folgeaktionen an CRM, Tickets oder interne Abläufe übergeben." },
       { title: "Zusammenfassungen", description: "Kernaussagen kompakt extrahieren." },
     ],
     approach: [
@@ -743,13 +746,15 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Optimierung", description: "Regeln und Modelle nachschärfen." },
     ],
     faq: [
+      { question: "Was ist bei KI-Beratung im Mittelstand besonders wichtig?", answer: "Entscheidend sind ein kleiner, wirtschaftlich prüfbarer Einstieg, die Nutzung bestehender Systeme, klare Zuständigkeiten, Datenschutz und eine nachvollziehbare Entscheidung darüber, welche Schritte Menschen freigeben müssen." },
+      { question: "Was umfasst eine KI-Beratung für Unternehmen?", answer: "Zunächst werden Ziele, Prozesse, Datenquellen und Risiken geprüft. Danach folgen Priorisierung der Anwendungsfälle, Entscheidung über Automatisierung oder Assistenz, ein begrenzter Pilot und eine Bewertung anhand vereinbarter Qualitätskriterien." },
       { question: "Ersetzt KI meine Mitarbeitenden?", answer: "Nein, das Ziel ist Entlastung: Routine wird automatisiert, Entscheidungen bleiben beim Menschen." },
       { question: "Bleibt die Kontrolle beim Team?", answer: "Ja, das System arbeitet nach Ihren Regeln, und kritische Schritte behalten eine menschliche Freigabe." },
       { question: "Wie steht es um den Datenschutz?", answer: "Datenschutz und Nachvollziehbarkeit werden von Beginn an eingeplant." },
       { question: "Wie messen wir den Nutzen?", answer: "Über konkrete, vorab definierte Ziele statt pauschaler Versprechen." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Potenziale bewertet und einen ersten Anwendungsfall abgrenzt." },
     ],
-    relatedPaths: ["/loesungen/automatisierung", "/loesungen/ki-agenten", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/loesungen/automatisierung", "/loesungen/ki-agenten", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/beratung"],
     tags: ["KI", "Automatisierung", "Prozess"],
     approved: true,
     manualIndexApproval: true,
@@ -763,23 +768,23 @@ const NEXCEL_PAGES: MoneyPage[] = [
     serviceName: "KI-Agenten",
     title: "KI-Agenten für Unternehmen · NEXCEL AI",
     description:
-      "NEXCEL AI konzipiert KI-Agenten, die definierte Aufgaben eigenständig ausführen — mit klaren Regeln, Grenzen und menschlicher Kontrolle.",
+      "KI-Agenten für Unternehmen: NEXCEL AI konzipiert Aufgaben, Werkzeugzugriffe, Freigaben, Eskalation und Monitoring für kontrollierte Agentensysteme.",
     eyebrow: "Lösung",
     h1: "KI-Agenten für definierte Aufgaben",
     heroIntro:
       "Ein KI-Agent übernimmt eine klar umrissene Aufgabe von Anfang bis Ende — von der Anfrage bis zur ausgelösten Aktion, nach Ihren Regeln.",
     aeoAnswer:
-      "KI-Agenten sind sinnvoll, wenn eine abgegrenzte Aufgabe wiederholt und regelbasiert abläuft. NEXCEL AI definiert Aufgabe, Grenzen und Kontrollpunkte und lässt den Agenten mit AGI Works sicher umsetzen. Geeignet für Teams, die konkrete Abläufe delegieren wollen. Der nächste Schritt ist eine Systemanalyse, die die passende Aufgabe identifiziert.",
+      "Ein KI-Agent für Unternehmen erledigt eine abgegrenzte Aufgabe mit definierten Werkzeugen und überprüfbaren Grenzen. NEXCEL AI prüft, ob ein Agent gegenüber einem einfachen Workflow tatsächlich sinnvoll ist, und definiert zulässige Aktionen, Datenzugriffe und menschliche Freigaben. Protokollierung, Abbruchbedingungen und Eskalationen werden bereits bei der Konzeption berücksichtigt. Ein begrenzter Pilot dient dazu, Zuverlässigkeit, Kosten und Betrieb unter realistischen Bedingungen zu bewerten.",
     problem:
       "Viele kleine Aufgaben sind zu unwichtig für einen Menschen, aber zu wichtig, um liegen zu bleiben. Sie fressen Aufmerksamkeit und verzögern Reaktionen.",
     solutionIntro:
       "Wir umreißen eine konkrete Aufgabe klar genug, dass ein Agent sie zuverlässig und kontrolliert übernehmen kann.",
     modules: [
       { title: "Aufgabendefinition", description: "Ziel, Eingaben und Ergebnis klar umrissen." },
-      { title: "Regeln & Grenzen", description: "Was der Agent darf und was nicht." },
+      { title: "Regeln & Grenzen", description: "Werkzeugrechte, erlaubte Daten, Budgetgrenzen und Abbruchbedingungen definieren." },
       { title: "Kontrollpunkte", description: "Menschliche Freigabe an kritischen Stellen." },
       { title: "Aktionsanbindung", description: "Ergebnisse lösen echte Folgeschritte aus." },
-      { title: "Protokollierung", description: "Nachvollziehbare Entscheidungen." },
+      { title: "Protokollierung", description: "Tool-Aufrufe, Freigaben und Fehler für Prüfung und Betrieb nachvollziehbar erfassen." },
       { title: "Eskalation", description: "Unklare Fälle gehen an den Menschen." },
     ],
     approach: [
@@ -809,13 +814,15 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Betrieb", description: "Überwachen und nachschärfen." },
     ],
     faq: [
+      { question: "Wie werden KI-Agenten gegen unbefugte Aktionen abgesichert?", answer: "Mit minimalen Werkzeugberechtigungen, serverseitiger Prüfung, menschlichen Freigaben für riskante Aktionen, Protokollierung und definierten Eskalations- und Abbruchregeln." },
+      { question: "Was kostet ein KI-Agent für Unternehmen?", answer: "Der Aufwand hängt von den eingebundenen Werkzeugen, dem Berechtigungsmodell, erforderlichen Tests, Modellnutzung und laufendem Monitoring ab. Eine erste Schätzung setzt eine klar eingegrenzte Aufgabe voraus." },
       { question: "Was ist ein KI-Agent?", answer: "Eine KI, die eine klar definierte Aufgabe eigenständig ausführt, innerhalb festgelegter Regeln und Grenzen." },
       { question: "Handelt der Agent unkontrolliert?", answer: "Nein, er arbeitet in definierten Grenzen, mit Kontrollpunkten und Eskalation an den Menschen." },
       { question: "Sind Entscheidungen nachvollziehbar?", answer: "Ja, Aktionen werden protokolliert, sodass Entscheidungen nachvollziehbar bleiben." },
       { question: "Was passiert bei unklaren Fällen?", answer: "Unklare oder kritische Fälle werden an eine zuständige Person eskaliert." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die eine geeignete Aufgabe und den Projektkorridor bestimmt." },
     ],
-    relatedPaths: ["/loesungen/ki-systeme", "/loesungen/automatisierung", "/loesungen/ki-fuer-vertrieb", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/loesungen/ki-systeme", "/loesungen/automatisierung", "/loesungen/ki-fuer-vertrieb", "/systemanalyse", "/beratung"],
     tags: ["KI-Agent", "Automatisierung", "Kontrolle"],
     approved: true,
     manualIndexApproval: true,
@@ -828,15 +835,15 @@ const NEXCEL_PAGES: MoneyPage[] = [
     path: "/loesungen/automatisierung",
     systemSlug: "ki-automatisierung",
     serviceName: "Prozessautomatisierung",
-    title: "Prozessautomatisierung für Unternehmen · NEXCEL AI",
+    title: "KI-Automatisierung & Prozesse | NEXCEL AI",
     description:
-      "NEXCEL AI automatisiert wiederkehrende Abläufe: Auslöser, Regeln und Aktionen, die Aufgaben erstellen, Nachrichten senden und Systeme verbinden.",
+      "KI-Automatisierung für Unternehmen: NEXCEL AI analysiert wiederkehrende Abläufe, verbindet CRM/ERP und plant Regeln, Freigaben und Fehlerroutinen.",
     eyebrow: "Lösung",
     h1: "Prozessautomatisierung, die im Alltag wirkt",
     heroIntro:
       "Wiederkehrende Abläufe müssen niemanden mehr beschäftigen: Wir automatisieren Routinen mit klaren Auslösern, Regeln und Aktionen.",
     aeoAnswer:
-      "Prozessautomatisierung lohnt sich, wenn wiederkehrende Handgriffe Zeit binden und fehleranfällig sind. NEXCEL AI entwirft die Automatisierungslogik und setzt sie mit AGI Works technisch um. Geeignet für Teams mit klaren, wiederholbaren Abläufen. Der nächste Schritt ist eine Systemanalyse, die die lohnendsten Automatisierungen identifiziert.",
+      "KI-Automatisierung verbindet definierte Geschäftsprozesse mit geeigneten Regeln und, wo nötig, KI zur Verarbeitung unstrukturierter Eingaben. NEXCEL AI bewertet zunächst, welche Aufgaben sich ohne KI automatisieren lassen und wo Sprach- oder Dokumentenverstehen zusätzlichen Nutzen bringt. Auslöser, Datenübergaben, Ausnahmen und menschliche Freigaben werden vor der Umsetzung festgelegt. Erst dann wird der Ablauf mit bestehenden CRM- oder ERP-Systemen verbunden und anhand vereinbarter Kennzahlen überprüft.",
     problem:
       "Dieselben Handgriffe wiederholen sich täglich: Daten kopieren, Nachrichten senden, Aufgaben anlegen. Das kostet Zeit und geht regelmäßig unter.",
     solutionIntro:
@@ -845,9 +852,9 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Auslöser", description: "Ereignisse, die Abläufe starten." },
       { title: "Regeln", description: "Bedingungen und Verzweigungen." },
       { title: "Aktionen", description: "Aufgaben, Nachrichten und Updates automatisch." },
-      { title: "System-Verbindungen", description: "Tools sinnvoll verketten." },
+      { title: "System-Verbindungen", description: "ERP, CRM und Fachanwendungen mit eindeutigen Datenübergaben und Verantwortlichkeiten verknüpfen." },
       { title: "Benachrichtigungen", description: "Beteiligte automatisch informieren." },
-      { title: "Kontrolle", description: "Übersicht und Eingriff bei Bedarf." },
+      { title: "Kontrolle", description: "Ausnahmefälle, menschliche Freigaben und den Status fehlgeschlagener Abläufe sichtbar machen." },
     ],
     approach: [
       "Automatisierungen entlang echter Engpässe priorisieren",
@@ -876,13 +883,14 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Ausbau", description: "Weitere Abläufe ergänzen." },
     ],
     faq: [
+      { question: "Wann braucht Prozessautomatisierung überhaupt KI?", answer: "Regelbasierte Abläufe sollten zuerst ohne KI umgesetzt werden. KI ist vor allem dann sinnvoll, wenn unstrukturierte Texte, Dokumente oder Anfragen verstanden werden müssen; kritische Entscheidungen bleiben kontrollierbar." },
       { question: "Was lässt sich automatisieren?", answer: "Wiederkehrende, regelbasierte Abläufe wie Datenübertragung, Benachrichtigungen und Aufgabenerstellung." },
       { question: "Verliere ich die Kontrolle?", answer: "Nein, sensible Schritte behalten eine menschliche Kontrolle, und Sie können jederzeit eingreifen." },
       { question: "Wie schnell zeigt sich der Nutzen?", answer: "Oft schon beim ersten automatisierten Ablauf; die Wirkung wird über konkrete Ziele gemessen." },
       { question: "Werden bestehende Tools eingebunden?", answer: "Ja, vorhandene Systeme werden über Schnittstellen sinnvoll verkettet." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die die lohnendsten Automatisierungen und den Projektkorridor bestimmt." },
     ],
-    relatedPaths: ["/loesungen/ki-systeme", "/loesungen/lead-automation", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/loesungen/ki-systeme", "/loesungen/lead-automation", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/beratung"],
     tags: ["Automatisierung", "Prozess", "Effizienz"],
     approved: true,
     manualIndexApproval: true,
