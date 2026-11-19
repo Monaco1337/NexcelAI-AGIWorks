@@ -85,8 +85,8 @@ export function hostToBrand(host: string | null | undefined): BrandKey | null {
  * public AGI Works path that is served on agiworks.de.
  *
  *   "/agiworks"            → "/"
- *   "/agiworks/preise"     → "/preise"
- *   "/preise"              → "/preise"  (already clean)
+ *   "/agiworks/preise"     → "/beratung"
+ *   "/beratung"              → "/beratung"  (already clean)
  */
 export function cleanAgiPath(path: string): string {
   if (!path) return "/";

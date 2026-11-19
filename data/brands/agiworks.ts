@@ -151,13 +151,13 @@ export const agiworksBrand: BrandConfig = {
         { label: "Leistungen", href: "/leistungen" },
         { label: "Standorte", href: "/standorte" },
         { label: "Projekte", href: "/projekte" },
-        { label: "Preise", href: "/preise" },
+        { label: "Preise", href: "/beratung" },
       ],
       // Spalte „Ressourcen"
       solutions: [
         { label: "Systemanalyse", href: "/systemanalyse" },
         { label: "Wissen", href: "/wissen" },
-        { label: "Preiskalkulator", href: "/preiskalkulator" },
+        { label: "Preiskalkulator", href: "/beratung" },
       ],
       // Spalte „Unternehmen"
       company: [

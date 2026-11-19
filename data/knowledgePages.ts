@@ -204,19 +204,19 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
       {
         heading: "Vom Rahmen zum belastbaren Angebot",
         body:
-          "Am Anfang steht eine Analyse der Anforderungen. Daraus entsteht ein Projektkorridor – eine ehrliche Spanne statt einer Scheingenauigkeit. Mit fortschreitender Klärung wird dieser Rahmen präziser.\n\nWer eine erste Orientierung sucht, kann den Preiskalkulator nutzen; die verbindliche Einordnung folgt aus der gemeinsamen Analyse des Vorhabens.",
+          "Am Anfang steht eine Analyse der Anforderungen. Daraus entsteht ein Projektkorridor – eine ehrliche Spanne statt einer Scheingenauigkeit. Mit fortschreitender Klärung wird dieser Rahmen präziser.\n\nWer eine erste Orientierung sucht, kann ein Erstgespräch buchen; die Kalkulation entsteht anschließend aus der gemeinsamen Analyse des Vorhabens.",
       },
     ],
     faq: [
       { question: "Wie wird der Kostenrahmen für eine Web-App oder Individualsoftware ermittelt?", answer: "Im Erstgespräch werden Ziele, Nutzerrollen, Datenmodell, Schnittstellen, Sicherheitsanforderungen und Betriebsverantwortung erfasst. Ein abgegrenzter Funktionsumfang bildet anschließend die Grundlage für einen transparenten Projektkorridor." },
       { question: "Warum bekomme ich keinen Fixpreis am Telefon?", answer: "Weil der Aufwand vom konkreten Umfang abhängt. Ohne Kenntnis der Anforderungen wäre eine Zahl geraten, nicht belastbar." },
       { question: "Was treibt die Kosten am stärksten?", answer: "Funktionsumfang und -tiefe, Komplexität der Datenlogik, Schnittstellen sowie Anforderungen an Sicherheit und Betrieb." },
-      { question: "Wie bekomme ich eine erste Orientierung?", answer: "Über den Preiskalkulator für einen groben Rahmen und anschließend eine Systemanalyse für eine belastbare Einordnung." },
+      { question: "Wie bekomme ich eine erste Orientierung?", answer: "Über das Beratungsgespräch und bei Bedarf eine Systemanalyse für eine belastbare Einordnung." },
       { question: "Gehört der Betrieb zu den Kosten?", answer: "Ja. Wartung, Betrieb und geplante Weiterentwicklung sollten von Anfang an mitgedacht werden." },
     ],
     datePublished: PUBLISHED,
     dateModified: "2026-11-19",
-    relatedPaths: ["/leistungen/softwareentwicklung", "/preiskalkulator", "/systemanalyse", "/beratung"],
+    relatedPaths: ["/leistungen/softwareentwicklung", "/beratung", "/systemanalyse", "/beratung"],
     tags: ["Kosten", "Projektkorridor", "Softwareentwicklung"],
     approved: true,
     manualIndexApproval: true,

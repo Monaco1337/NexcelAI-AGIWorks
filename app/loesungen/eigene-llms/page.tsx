@@ -45,7 +45,7 @@ export default function EigeneLLMsPage() {
           <p className="mt-6 max-w-[770px] text-[clamp(1rem,1.5vw,1.15rem)] leading-[1.8] text-white/70">Wir konzipieren, entwickeln und betreiben individuelle KI-Sprachmodelle für unternehmensspezifische Aufgaben. Dazu gehören Modellarchitektur, Datenaufbereitung, Fine-Tuning, Qualitätstests sowie bei Bedarf private Inferenz auf eigener Infrastruktur.</p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link href="/kontakt?betreff=Individuelle%20LLM-Entwicklung" className="inline-flex min-h-12 items-center rounded-xl border border-violet-300/45 bg-violet-500/30 px-6 text-sm font-medium hover:bg-violet-500/40">LLM-Projekt besprechen →</Link>
-            <Link href="/preise" className="inline-flex min-h-12 items-center rounded-xl border border-white/15 px-5 text-sm text-white/80 hover:border-white/30">Preise ansehen ↗</Link>
+            <Link href="/beratung" className="inline-flex min-h-12 items-center rounded-xl border border-white/15 px-5 text-sm text-white/80 hover:border-white/30">Preise ansehen ↗</Link>
           </div>
         </div>
       </section>

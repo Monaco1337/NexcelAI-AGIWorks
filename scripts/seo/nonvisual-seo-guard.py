@@ -9,7 +9,7 @@ checks = {
     'components/templates/KnowledgePageTemplate.tsx': ['{ label: "Wissen", href: "/wissen" },'],
     'components/trust/Breadcrumbs.tsx': ['key={`${item.href}-${i}`}'],
     'app/agiworks/leistungen/page.tsx': ['if (p === "/leistungen" || p.startsWith("/leistungen/")) return p;', 'href="/kontakt"'],
-    'app/agiworks/leistungen/eigene-llms/page.tsx': ['href="/leistungen"', 'href="/kontakt?betreff=LLM-Engineering"', 'href="/preise"'],
+    'app/agiworks/leistungen/eigene-llms/page.tsx': ['href="/leistungen"', 'href="/kontakt?betreff=LLM-Engineering"', 'href="/beratung"'],
 }
 fail = []
 for name, snippets in checks.items():
@@ -25,6 +25,10 @@ for name in ('app/agiworks/leistungen/page.tsx', 'app/agiworks/leistungen/eigene
     content = (ROOT / name).read_text(encoding='utf-8')
     if 'href="/agiworks/' in content:
         fail.append(f'INTERNAL_PREFIX_LINK: {name}')
+for name in ('app/agiworks/leistungen/eigene-llms/page.tsx',):
+    content = (ROOT / name).read_text(encoding='utf-8')
+    if 'href="/preise"' in content or 'href="/preiskalkulator"' in content:
+        fail.append(f'RETIRED_PUBLIC_PRICING_LINK: {name}')
 if fail:
     print('\n'.join(fail), file=sys.stderr)
     sys.exit(1)

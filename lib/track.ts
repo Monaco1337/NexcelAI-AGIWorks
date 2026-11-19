@@ -1,3 +1,4 @@
+import {hasAnalyticsConsent} from "@/lib/cookieConsent";
 /**
  * Client-side tracking helper.
  *
@@ -86,7 +87,7 @@ export interface TrackPayload {
 }
 
 export function track(type: string, data: Omit<TrackPayload, "type"> = {}): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
   try {
     const body = {
       type,
@@ -117,7 +118,7 @@ export function track(type: string, data: Omit<TrackPayload, "type"> = {}): void
 
 /* Convenience: dispatch a batch (used on unload to flush dwell+scroll). */
 export function trackBatch(events: TrackPayload[]): void {
-  if (typeof window === "undefined" || events.length === 0) return;
+  if (typeof window === "undefined" || events.length === 0 || !hasAnalyticsConsent()) return;
   try {
     const session = getSessionId();
     const visitor = getVisitorId();

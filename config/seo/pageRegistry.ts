@@ -45,7 +45,7 @@ export interface SeoPage {
   /** Stable id: `${brand}:${path}`. */
   id: string;
   brand: BrandKey;
-  /** Clean, public canonical path (what the user sees, e.g. "/preise"). */
+  /** Clean, public canonical path (what the user sees, e.g. "/beratung"). */
   path: string;
   /** Physical app-tree path (AGI pages live under /agiworks/*). */
   internalPath: string;
@@ -103,26 +103,6 @@ const CORE_SEEDS: CoreSeed[] = [
     description: (n) => n === "AGI Works"
       ? "Technisches Erstgespräch zu Softwareentwicklung, ERP, CRM, SaaS, Web-Apps und Systemintegration. Ziele und Projektrahmen klären."
       : "KI-Beratung für Unternehmen: KI-Agenten, Prozessautomatisierung und eigene LLMs. Projektziel und Integration gemeinsam klären.",
-  },
-  {
-    path: "/preise",
-    type: "money",
-    breadcrumbLabel: "Preise",
-    changefreq: "monthly",
-    priority: 0.8,
-    title: (n) => `Preise · ${n}`,
-    description: (n) =>
-      `Transparente Leistungspakete und Preisorientierung für Projekte mit ${n}.`,
-  },
-  {
-    path: "/preiskalkulator",
-    type: "tool",
-    breadcrumbLabel: "Preiskalkulator",
-    changefreq: "monthly",
-    priority: 0.7,
-    title: (n) => `Preiskalkulator · ${n}`,
-    description: (n) =>
-      `Kalkulieren Sie den Rahmen Ihres Projekts mit dem interaktiven Preiskalkulator von ${n}.`,
   },
   {
     path: "/projekte",

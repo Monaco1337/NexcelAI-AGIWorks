@@ -1,11 +1,3 @@
-import { generateSeoMetadata } from "@/lib/seo/metadata";
-
-export const metadata = generateSeoMetadata({ brand: "agiworks", path: "/preiskalkulator" });
-
-export default function AgiWorksPreiskalkulatorLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <>{children}</>;
-}
+import type {Metadata} from "next";
+export const metadata:Metadata={robots:{index:false,follow:false},title:"Beratung und Projektklärung"};
+export default function Layout({children}:{children:React.ReactNode}){return children;}

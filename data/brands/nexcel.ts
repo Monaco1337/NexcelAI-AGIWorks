@@ -140,13 +140,13 @@ export const nexcelBrand: BrandConfig = {
         { label: "Lösungen", href: "/loesungen" },
         { label: "Standorte", href: "/standorte" },
         { label: "Projekte", href: "/projekte" },
-        { label: "Preise", href: "/preise" },
+        { label: "Preise", href: "/beratung" },
       ],
       // Spalte „Ressourcen"
       solutions: [
         { label: "KI-Agenten", href: "/loesungen/ki-agenten" },
         { label: "Wissen", href: "/wissen" },
-        { label: "Preiskalkulator", href: "/preiskalkulator" },
+        { label: "Preiskalkulator", href: "/beratung" },
       ],
       // Spalte „Unternehmen"
       company: [

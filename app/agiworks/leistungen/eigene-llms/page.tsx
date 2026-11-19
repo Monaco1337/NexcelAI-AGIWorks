@@ -43,7 +43,7 @@ export default function AgiLlmPage() {
         <p className="mt-7 max-w-[740px] text-[16px] leading-[1.8] text-slate-300">Wir entwickeln und integrieren unternehmensspezifische Sprachmodelle – von Modellwahl, Datenpipelines und Fine-Tuning bis zu Evaluation, Private Inference und sicherem Betrieb. Vollständiges Vortraining wird gesondert nach Machbarkeit kalkuliert.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/kontakt?betreff=LLM-Engineering" className="inline-flex min-h-12 items-center rounded-xl border border-sky-300/30 bg-sky-400/15 px-6 text-sm font-medium text-sky-100 hover:bg-sky-400/25">LLM-Projekt besprechen →</Link>
-          <Link href="/preise" className="inline-flex min-h-12 items-center rounded-xl border border-white/15 px-6 text-sm text-white/75 hover:border-white/30">Preise ansehen ↗</Link>
+          <Link href="/beratung" className="inline-flex min-h-12 items-center rounded-xl border border-white/15 px-6 text-sm text-white/75 hover:border-white/30">Preise ansehen ↗</Link>
         </div>
       </section>
       <section className="mx-auto max-w-[1150px] px-5 py-14 sm:px-8" aria-labelledby="agi-llm-umfang">

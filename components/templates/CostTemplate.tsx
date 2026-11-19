@@ -12,7 +12,7 @@ import type { CostTemplateProps } from "@/lib/templates/types";
 
 export default function CostTemplate(props: CostTemplateProps) {
   return (
-    <TemplateFrame base={props} cta={{ label: "Preis kalkulieren", href: "/preiskalkulator" }}>
+    <TemplateFrame base={props} cta={{ label: "Preis kalkulieren", href: "/beratung" }}>
       <TemplateSection eyebrow="Orientierung" heading="Kostenrahmen">
         <CardGrid>
           {props.tiers.map((tier, i) => (

@@ -22,8 +22,7 @@ import type { TemplateBase } from "@/lib/templates/types";
 
 const CORE_LINK_LABELS: Record<string, string> = {
   "/systemanalyse": "Systemanalyse",
-  "/preiskalkulator": "Preiskalkulator",
-  "/preise": "Preise",
+  "/beratung": "Beratung",
   "/projekte": "Projekte",
   "/kontakt": "Kontakt",
 };
