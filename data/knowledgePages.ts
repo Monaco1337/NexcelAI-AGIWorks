@@ -167,7 +167,7 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
     topic: "Kosten",
     title: "Was kostet Softwareentwicklung? | AGI Works",
     description:
-      "Was den Preis von Softwareentwicklung wirklich bestimmt: die Kostentreiber, warum Fixpreise selten seriös sind und wie ein Projektkorridor entsteht.",
+      "Softwareentwicklung Kosten verstehen: Funktionsumfang, Integrationen, Sicherheit, Test und Betrieb bestimmen den Projektkorridor. Mit AGI Works strukturiert planen.",
     eyebrow: "Wissen",
     h1: "Was kostet Softwareentwicklung?",
     heroIntro:
@@ -181,6 +181,16 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
       "Ein Projektkorridor wird nach Analyse gebildet und laufend präzisiert.",
     ],
     sections: [
+      {
+        heading: "Beispiel: Wie ein Projektumfang die Kosten verändert",
+        body:
+          "Bei einer internen Web-App mit wenigen Nutzerrollen ohne Schnittstellen liegen andere Aufwandsblöcke vor als bei einem Kundenportal mit ERP-Synchronisation, Zahlungsabläufen und revisionsrelevanten Freigaben. Entscheidend sind nicht die Namen der Funktionen, sondern die fachlichen Sonderfälle, Zugriffskonzepte und externen Abhängigkeiten.\n\nEine belastbare Schätzung zerlegt den geplanten ersten Ausbaustand in Anforderungen, UI, Backend, Integration, Tests, Infrastruktur und Betrieb. Annahmen und ausgeschlossene Leistungen werden schriftlich festgehalten; erst dann lässt sich ein Projektkorridor sinnvoll besprechen.",
+      },
+      {
+        heading: "Betriebskosten und Folgekosten von Anfang an planen",
+        body:
+          "Neben der initialen Entwicklung sind Hosting, Datensicherung, Monitoring, Sicherheitsaktualisierungen und Reaktion auf Störungen zu berücksichtigen. Dazu kommen gegebenenfalls Lizenz- und API-Nutzungskosten, Support, Datenmigration und spätere Funktionsänderungen.\n\nNicht jede Leistung muss vom Entwicklungsdienstleister erbracht werden. Wichtig sind klare Verantwortlichkeiten, vertragliche Regelungen und ein dokumentierter Übergabe- und Betriebsplan.",
+      },
       {
         heading: "Warum es keinen Listenpreis gibt",
         body:
@@ -198,14 +208,15 @@ const AGI_KNOWLEDGE: KnowledgePage[] = [
       },
     ],
     faq: [
+      { question: "Wie wird der Kostenrahmen für eine Web-App oder Individualsoftware ermittelt?", answer: "Im Erstgespräch werden Ziele, Nutzerrollen, Datenmodell, Schnittstellen, Sicherheitsanforderungen und Betriebsverantwortung erfasst. Ein abgegrenzter Funktionsumfang bildet anschließend die Grundlage für einen transparenten Projektkorridor." },
       { question: "Warum bekomme ich keinen Fixpreis am Telefon?", answer: "Weil der Aufwand vom konkreten Umfang abhängt. Ohne Kenntnis der Anforderungen wäre eine Zahl geraten, nicht belastbar." },
       { question: "Was treibt die Kosten am stärksten?", answer: "Funktionsumfang und -tiefe, Komplexität der Datenlogik, Schnittstellen sowie Anforderungen an Sicherheit und Betrieb." },
       { question: "Wie bekomme ich eine erste Orientierung?", answer: "Über den Preiskalkulator für einen groben Rahmen und anschließend eine Systemanalyse für eine belastbare Einordnung." },
       { question: "Gehört der Betrieb zu den Kosten?", answer: "Ja. Wartung, Betrieb und geplante Weiterentwicklung sollten von Anfang an mitgedacht werden." },
     ],
     datePublished: PUBLISHED,
-    dateModified: PUBLISHED,
-    relatedPaths: ["/leistungen/softwareentwicklung", "/preiskalkulator", "/systemanalyse", "/kontakt"],
+    dateModified: "2026-11-19",
+    relatedPaths: ["/leistungen/softwareentwicklung", "/preiskalkulator", "/systemanalyse", "/beratung"],
     tags: ["Kosten", "Projektkorridor", "Softwareentwicklung"],
     approved: true,
     manualIndexApproval: true,
