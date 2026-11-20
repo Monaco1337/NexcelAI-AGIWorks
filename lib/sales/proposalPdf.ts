@@ -123,30 +123,30 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
   drawHeader(state, opts);
   drawCover(state, opts.structured);
   drawAufEinenBlick(state, opts.structured.aufEinenBlick ?? []);
-  drawSection(state, "Wo Sie heute stehen", () => {
+  if (!!(opts.structured.wieHeute?.ausgangslage || opts.structured.wieHeute?.kernpunkte?.length)) drawSection(state, "Wo Sie heute stehen", () => {
     const s = opts.structured.wieHeute;
     if (s?.ausgangslage) drawParagraph(state, s.ausgangslage);
     if (s?.kernpunkte?.length) drawBullets(state, s.kernpunkte);
   });
-  drawSection(state, "Wo Sie hinwollen", () => {
+  if (!!(opts.structured.wieMorgen?.zielzustand || opts.structured.wieMorgen?.wirkung || opts.structured.wieMorgen?.erfolgsbild?.length)) drawSection(state, "Wo Sie hinwollen", () => {
     const s = opts.structured.wieMorgen;
     if (s?.zielzustand) drawParagraph(state, s.zielzustand);
     if (s?.wirkung) drawParagraph(state, s.wirkung);
     if (s?.erfolgsbild?.length) drawBullets(state, s.erfolgsbild);
   });
-  drawSection(state, "Der entscheidende Hebel", () => {
+  if (!!(opts.structured.hebel?.titel || opts.structured.hebel?.beschreibung || opts.structured.hebel?.warumEntscheidend)) drawSection(state, "Der entscheidende Hebel", () => {
     const s = opts.structured.hebel;
     if (s?.titel) drawSubheading(state, s.titel);
     if (s?.beschreibung) drawParagraph(state, s.beschreibung);
     if (s?.warumEntscheidend) drawParagraphMuted(state, s.warumEntscheidend);
   });
-  drawSection(state, "Unsere Empfehlung", () => {
+  if (!!(opts.structured.empfehlung?.titel || opts.structured.empfehlung?.kern || opts.structured.empfehlung?.warum)) drawSection(state, "Unsere Empfehlung", () => {
     const s = opts.structured.empfehlung;
     if (s?.titel) drawSubheading(state, s.titel);
     if (s?.kern) drawParagraph(state, s.kern);
     if (s?.warum) drawParagraphMuted(state, s.warum);
   });
-  drawSection(state, "Lösungsarchitektur", () => {
+  if (!!(opts.structured.loesungsarchitektur?.beschreibung || opts.structured.loesungsarchitektur?.phasen?.length)) drawSection(state, "Lösungsarchitektur", () => {
     const s = opts.structured.loesungsarchitektur;
     if (s?.beschreibung) drawParagraph(state, s.beschreibung);
     for (const phase of s?.phasen ?? []) {
@@ -154,7 +154,7 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
       drawParagraph(state, phase.beschreibung);
     }
   });
-  drawSection(state, "Lösungsbausteine", () => {
+  if (!!opts.structured.loesungsbausteine?.length) drawSection(state, "Lösungsbausteine", () => {
     for (const b of opts.structured.loesungsbausteine ?? []) {
       drawSubheading(state, b.name);
       if (b.was) drawParagraph(state, b.was);
@@ -162,7 +162,7 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
       if (b.nutzen) drawParagraphMuted(state, `Nutzen: ${b.nutzen}`);
     }
   });
-  drawSection(state, "Leistungsumfang", () => {
+  if (!!(opts.structured.leistungsumfang?.nexcel?.length || opts.structured.leistungsumfang?.agiWorks?.length)) drawSection(state, "Leistungsumfang", () => {
     const s = opts.structured.leistungsumfang;
     if (s?.nexcel?.length) {
       drawSubheading(state, "NEXCEL AI");
@@ -173,7 +173,7 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
       drawBullets(state, s.agiWorks);
     }
   });
-  drawSection(state, "Projektablauf", () => {
+  if (!!opts.structured.projektablauf?.length) drawSection(state, "Projektablauf", () => {
     for (const p of opts.structured.projektablauf ?? []) {
       drawSubheading(state, p.phase);
       if (p.ziel) drawParagraphMuted(state, `Ziel: ${p.ziel}`);
@@ -181,9 +181,9 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
       if (p.ergebnis) drawParagraphMuted(state, `Ergebnis: ${p.ergebnis}`);
     }
   });
-  drawSection(state, "Deliverables", () => drawBullets(state, opts.structured.deliverables ?? []));
-  drawSection(state, "Erfolgskriterien", () => drawBullets(state, opts.structured.erfolgskriterien ?? []));
-  drawSection(state, "Investition", () => {
+  if (!!opts.structured.deliverables?.length) drawSection(state, "Deliverables", () => drawBullets(state, opts.structured.deliverables ?? []));
+  if (!!opts.structured.erfolgskriterien?.length) drawSection(state, "Erfolgskriterien", () => drawBullets(state, opts.structured.erfolgskriterien ?? []));
+  if (!!(opts.structured.investition?.einmalig?.length || opts.structured.investition?.wiederkehrend?.length || opts.structured.investition?.summeEinmalig)) drawSection(state, "Investition", () => {
     const s = opts.structured.investition;
     if (s?.einmalig?.length) {
       drawSubheading(state, "Einmalig");
@@ -208,12 +208,12 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
     }
     if (s?.hinweise?.length) drawBullets(state, s.hinweise);
   });
-  drawSection(state, "Zahlungsplan", () => {
+  if (!!opts.structured.zahlungsplan?.length) drawSection(state, "Zahlungsplan", () => {
     for (const it of opts.structured.zahlungsplan ?? []) {
       drawKeyValue(state, it.meilenstein, [it.betrag, it.faelligkeit].filter(Boolean).join(" · "));
     }
   });
-  drawSection(state, "Scope & Rahmen", () => {
+  if (!!(opts.structured.scope?.inScope?.length || opts.structured.scope?.outOfScope?.length || opts.structured.scope?.annahmen?.length || opts.structured.scope?.mitwirkung?.length)) drawSection(state, "Scope & Rahmen", () => {
     const s = opts.structured.scope;
     if (s?.inScope?.length) {
       drawSubheading(state, "In Scope");
@@ -232,7 +232,7 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
       drawBullets(state, s.mitwirkung);
     }
   });
-  drawSection(state, "Zeitrahmen", () => {
+  if (!!(opts.structured.zeitrahmen?.start || opts.structured.zeitrahmen?.dauer || opts.structured.zeitrahmen?.meilensteine?.length || opts.structured.zeitrahmen?.gueltigBis)) drawSection(state, "Zeitrahmen", () => {
     const s = opts.structured.zeitrahmen;
     if (s?.start) drawKeyValue(state, "Start", s.start);
     if (s?.dauer) drawKeyValue(state, "Dauer", s.dauer);
@@ -252,8 +252,8 @@ export async function renderProposalPdf(opts: RenderProposalOptions): Promise<Ui
       drawParagraph(state, opts.structured.partnerschaft ?? "")
     );
   }
-  drawSection(state, "Ihr nächster Schritt", () => drawBullets(state, opts.structured.naechsterSchritt ?? []));
-  drawSection(state, "Absender", () => {
+  if (!!opts.structured.naechsterSchritt?.length) drawSection(state, "Ihr nächster Schritt", () => drawBullets(state, opts.structured.naechsterSchritt ?? []));
+  if (!!(opts.structured.absender?.brand || opts.structured.absender?.unternehmen || opts.structured.absender?.kontakt?.length)) drawSection(state, "Absender", () => {
     const s = opts.structured.absender;
     if (s?.brand) drawSubheading(state, s.brand);
     if (s?.unternehmen) drawParagraph(state, s.unternehmen);

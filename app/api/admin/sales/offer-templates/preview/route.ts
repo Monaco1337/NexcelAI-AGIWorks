@@ -1,6 +1,6 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {authorize} from '@/lib/auth/authorize';
-import {renderProposalPdf} from '@/lib/sales/proposalPdf';
+import {renderBrandedOfferPdf} from '@/lib/sales/brandedOfferPdf';
 import {offerStructured,validateCommercial} from '@/lib/sales/offerCompose';
 import {validateTemplate} from '@/lib/sales/offerTemplates';
 export const runtime='nodejs';
@@ -13,7 +13,7 @@ export async function POST(req:NextRequest){
   const body=await req.json();
   const commercial=validateCommercial(body.commercial);
   const shared=validateTemplate(body.shared),brand=validateTemplate(body.brand);
-  const bytes=await renderProposalPdf({brand:commercial.brand,structured:offerStructured(commercial,shared,brand),watermark:'ENTWURF – NICHT VERSENDEN'});
+  const bytes=await renderBrandedOfferPdf({brand:commercial.brand,structured:offerStructured(commercial,shared,brand),watermark:'ENTWURF – NICHT VERSENDEN'});
   return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/pdf','Content-Disposition':'inline; filename="angebotsvorschau.pdf"','Cache-Control':'private, no-store'}});
  }catch{return NextResponse.json({error:'Ungültige Angebotsvorschau'},{status:400});}
 }

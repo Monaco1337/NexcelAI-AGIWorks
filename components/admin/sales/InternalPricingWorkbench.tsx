@@ -10,6 +10,9 @@ import {
 type Version = { id: string; brand: Brand; version: number; state: string; rules: PriceRules; created_by: string; approved_by: string | null; created_at: string };
 type Quote = { projectNet: Range; projectGross: Range; annualMaintenanceNet: Range; vat: Range; vatRate: number; items: { label: string; min: number; max: number }[]; disclaimer: string };
 type Panel = 'consult' | 'catalog' | 'approval';
+type CustomerSource = { sourceType: 'booking'|'lead'; sourceId:string; brand: Brand; name:string; company:string; email:string; label:string; date:string; detail:string; status:string };
+type SalesOpportunity = { id:string; title:string; companyName:string; brandContext: Brand; status:string };
+
 
 const initialSelection: QuoteInput = {
   projectTypes: ['app'], scope: 'growth', timeframe: 'standard', quality: 'professional',
@@ -22,7 +25,7 @@ const field = 'w-full rounded-2xl border border-[#ced8e5] bg-white px-4 py-3 tex
 const primary = 'inline-flex min-h-[46px] items-center justify-center rounded-2xl bg-[#165dce] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_#165dce] transition hover:bg-[#0d4eb7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40';
 const secondary = 'inline-flex min-h-[46px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40';
 const badge = 'inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600';
-const categoryName: Record<QuoteInput['scope'], string> = { mvp: 'Kompakt / MVP', growth: 'Wachstum', enterprise: 'Enterprise' };
+const categoryName: Record<QuoteInput['scope'], string> = { mvp: 'Wachstum', growth: 'Standard', enterprise: 'Premium' };
 const durationName: Record<QuoteInput['timeframe'], string> = { asap: 'Priorisiert', standard: 'Standard', relaxed: 'Flexibel' };
 const qualityName: Record<QuoteInput['quality'], string> = { startup: 'Basis', professional: 'Professional', elite: 'Premium' };
 const title: Record<Panel, string> = { consult: 'Gesprächskalkulation', catalog: 'Preise festlegen', approval: 'Freigaben' };
@@ -50,6 +53,21 @@ export default function InternalPricingWorkbench() {
   const [configured, setConfigured] = useState(false);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [customerLabel, setCustomerLabel] = useState('');
+  const [customerSources, setCustomerSources] = useState<CustomerSource[]>([]);
+  const [customerSourceKey, setCustomerSourceKey] = useState('manual');
+  const [sourceError, setSourceError] = useState('');
+  const [opportunities, setOpportunities] = useState<SalesOpportunity[]>([]);
+  const [opportunityId, setOpportunityId] = useState('');
+  const [savedQuoteId, setSavedQuoteId] = useState('');
+  const [createdProposalId, setCreatedProposalId] = useState('');
+  const [offerTitle, setOfferTitle] = useState('Individuelles Projektangebot');
+  const [validUntil, setValidUntil] = useState(() => new Date(Date.now() + 14 * 86400000).toISOString().slice(0,10));
+  const [maintenanceNet, setMaintenanceNet] = useState('');
+  const [outOfRangeReason, setOutOfRangeReason] = useState('');
+  const [pdfUrl, setPdfUrl] = useState('');
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState('');
+
   const [notes, setNotes] = useState('');
   const [manualNet, setManualNet] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,6 +76,27 @@ export default function InternalPricingWorkbench() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const loadVersion = useRef(0);
+
+  useEffect(() => {
+    let live = true;
+    setCustomerSources([]);setSourceError('');setOpportunities([]);setOpportunityId('');
+    const loadCustomers = async () => {
+      const [customersResponse, opportunitiesResponse] = await Promise.all([
+        fetch('/api/admin/sales/consultation-context?brand=' + brand,{credentials:'same-origin',cache:'no-store'}),
+        fetch('/api/admin/sales/opportunities?brand=' + brand + '&open=1&limit=150',{credentials:'same-origin',cache:'no-store'}),
+      ]);
+      if(!live)return;
+      const customersData=await customersResponse.json();
+      const opportunitiesData=await opportunitiesResponse.json();
+      if(!customersResponse.ok) throw new Error(customersData.error || 'Termine und Leads können nicht geladen werden');
+      if(!opportunitiesResponse.ok) throw new Error(opportunitiesData.error || 'CRM kann nicht geladen werden');
+      if(!live)return;
+      setCustomerSources((customersData.customers || []) as CustomerSource[]);
+      setOpportunities((opportunitiesData.opportunities || []) as SalesOpportunity[]);
+    };
+    loadCustomers().catch(e=>{if(live)setSourceError(e instanceof Error?e.message:'Kundenverwaltung nicht verfügbar');});
+    return ()=>{live=false;};
+  },[brand]);
 
   const load = useCallback(async () => {
     const version = ++loadVersion.current;
@@ -121,7 +160,7 @@ export default function InternalPricingWorkbench() {
   };
   const updateChoice = <K extends keyof QuoteInput>(key: K, value: QuoteInput[K]) => {
     setSelection(previous => ({ ...previous, [key]: value }));
-    setQuote(null);
+    setQuote(null); setSavedQuoteId(''); setCreatedProposalId('');
   };
   const flip = <T extends string,>(items: T[], key: T): T[] => items.includes(key) ? items.filter(item => item !== key) : [...items, key];
   const pending = versions.filter(item => item.state === 'pending');
@@ -144,12 +183,51 @@ export default function InternalPricingWorkbench() {
     if (data) { await load(); setMessage(action === 'approve' ? 'Preisversion freigegeben.' : action === 'submit' ? 'Zur Gegenfreigabe eingereicht.' : 'Preisversion abgelehnt.'); }
   };
   const saveQuote = async () => {
-    const data = await request({ action: 'saveQuote', selection, customerLabel, notes });
-    if (data) { setQuote(data.quote); setMessage('Kalkulation mit freigegebenem Preisstand gespeichert: ' + data.quoteId); }
+    const source = customerSources.find(x => `${x.sourceType}:${x.sourceId}` === customerSourceKey);
+    const data = await request({ action: 'saveQuote', selection, customerLabel, notes, sourceType: source?.sourceType ?? null, sourceId: source?.sourceId ?? null });
+    if (data) {
+      setQuote(data.quote);setSavedQuoteId(data.quoteId);setCreatedProposalId('');
+      setMessage('Kalkulationssnapshot gespeichert: ' + data.quoteId + '. Als nächstes die freigegebene CRM-Verkaufschance auswählen.');
+    }
+  };
+  const createOffer = async () => {
+    if(!savedQuoteId || !opportunityId || !validNet || !offerTitle.trim())return;
+    const opp=opportunities.find(x=>x.id===opportunityId);
+    if(!opp||opp.brandContext!==brand||opp.companyName.trim().toLocaleLowerCase('de-DE')!==customerLabel.trim().toLocaleLowerCase('de-DE')){setError('Die ausgewählte CRM-Verkaufschance muss exakt zu dieser Marke und diesem Kunden gehören. Bitte im Vertrieb die passende Kundenakte wählen.');return;}
+    const deliverables=[...selection.projectTypes,...selection.modules].map(x=>LABELS[x]).slice(0,20);
+    setBusy(true);setMessage('');setError('');
+    try{
+      // Before creating a CRM proposal, enforce both template approval gates.
+      const gates=await Promise.all(['shared',brand].map(x=>fetch('/api/admin/sales/offer-templates?brand='+x,{credentials:'same-origin',cache:'no-store'})));
+      const templates=await Promise.all(gates.map(x=>x.json()));
+      if(gates.some(x=>!x.ok)||templates.some(x=>!x.active))throw new Error('Zuerst gemeinsame und markenspezifische Angebotsvorlage mit zwei Konten freigeben.');
+      let proposalId=createdProposalId;
+      if(!proposalId){
+        const head=await fetch('/api/admin/sales/opportunities/'+encodeURIComponent(opportunityId)+'/proposals',{
+          method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({title:offerTitle.trim(),brandContext:brand,customerSnapshot:{name:customerLabel.trim()}}),
+        });
+        const hd=await head.json();
+        if(!head.ok)throw new Error(hd.error || 'CRM-Anlage verweigert. Die Lösung muss zuerst freigegeben werden.');
+        proposalId=hd.proposal?.id;
+        if(!proposalId)throw new Error('CRM-Antwort enthält keine Angebots-ID');
+        setCreatedProposalId(proposalId);
+      }
+      const compose=await fetch('/api/admin/sales/proposals/'+encodeURIComponent(proposalId)+'/compose',{
+        method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({quoteId:savedQuoteId,title:offerTitle.trim(),scope:notes.trim() || 'Im Beratungsgespräch abgestimmter Leistungsumfang',deliverables,
+          netCents:Math.round(net*100),annualMaintenanceNetCents:Math.round(Number(maintenanceNet || 0)*100),validUntil,outOfRangeReason}),
+      });
+      const cd=await compose.json();
+      if(!compose.ok)throw new Error(cd.error||'PDF konnte nicht erzeugt werden. Der CRM-Entwurf bleibt für einen erneuten Versuch erhalten.');
+      setMessage('Angebotsentwurf v'+cd.number+' wurde samt PDF im CRM archiviert. Er ist NICHT versendet und benötigt eine Gegenfreigabe.');
+    }catch(e){setError(e instanceof Error?e.message:'Angebotsanlage fehlgeschlagen');}
+    finally{setBusy(false);}
   };
   const changeBrand = (next: Brand) => {
     if (brand === next) return;
-    ++loadVersion.current; setError(''); setMessage(''); setRules(null); setLoading(true); setBrand(next);
+    ++loadVersion.current;setError('');setMessage('');setRules(null);setLoading(true);
+    setCustomerLabel('');setCustomerSourceKey('manual');setSavedQuoteId('');setCreatedProposalId('');setPdfUrl('');setBrand(next);
   };
   useEffect(() => {
     if (panel !== 'consult' || !rules || invalidRanges > 0) return;
@@ -174,6 +252,36 @@ export default function InternalPricingWorkbench() {
   const net = Number(manualNet);
   const validNet = manualNet.trim() !== '' && Number.isFinite(net) && net > 0 && net <= 5000000;
   const vat = rules?.vatRate ?? 0.19;
+  const selectedSource=customerSources.find(x=>`${x.sourceType}:${x.sourceId}`===customerSourceKey);
+  const deliverableLabels=[...selection.projectTypes,...selection.modules].map(x=>LABELS[x]).slice(0,20);
+  const offerPreviewInput=JSON.stringify({
+    brand,customer:customerLabel.trim()||'Musterkunde',title:offerTitle.trim()||'Individuelles Projektangebot',
+    scope:notes.trim()||'Individuell abgestimmter Projektumfang',deliverables:deliverableLabels,
+    netCents:validNet?Math.round(net*100):0,vatRate:vat,
+    annualMaintenanceNetCents:Math.round(Number(maintenanceNet||0)*100),validUntil,
+  });
+  useEffect(()=>{
+    if(!validNet || !offerTitle.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(validUntil)){
+      setPdfUrl('');setPdfError('');setPdfBusy(false);return;
+    }
+    const ctrl=new AbortController();
+    let ownedUrl='';
+    setPdfBusy(true);setPdfError('');setPdfUrl('');
+    const timer=window.setTimeout(async()=>{
+      try{
+        const result=await fetch('/api/admin/sales/consultation-offer-preview',{
+          method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({commercial:JSON.parse(offerPreviewInput)}),signal:ctrl.signal,
+        });
+        if(!result.ok){const e=await result.json().catch(()=>({}));throw new Error(e.error || 'Vorschau nicht verfügbar');}
+        const blob=await result.blob();
+        if(ctrl.signal.aborted)return;
+        ownedUrl=URL.createObjectURL(blob);setPdfUrl(ownedUrl);
+      }catch(e){if(!ctrl.signal.aborted)setPdfError(e instanceof Error?e.message:'PDF-Fehler');}
+      finally{if(!ctrl.signal.aborted)setPdfBusy(false);}
+    },850);
+    return()=>{window.clearTimeout(timer);ctrl.abort();if(ownedUrl)URL.revokeObjectURL(ownedUrl);};
+  },[offerPreviewInput,validNet,offerTitle,validUntil]);
 
   return <div className="sales-calm-ui space-y-6 rounded-[26px] bg-[#f5f7fa] p-3 text-[#1c293d] sm:p-5 lg:p-6">
     <style jsx global>
@@ -275,9 +383,23 @@ export default function InternalPricingWorkbench() {
           <section className={surface}>
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Schritt 3 · Dokumentation</p>
             <h2 className="mt-2 text-xl font-semibold">Kundengespräch</h2>
-            <div className="mt-5 grid gap-4"><label className="block text-sm font-semibold">Kunde / Unternehmen<input className={field + ' mt-2'} maxLength={160} placeholder="z. B. Muster GmbH" value={customerLabel} onChange={e => setCustomerLabel(e.target.value)} /></label>
-            <label className="block text-sm font-semibold">Gesprächsnotizen<textarea className={field + ' mt-2 min-h-[100px] resize-y'} placeholder="Besprochener Umfang, Anforderungen, nächste Schritte" maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} /></label></div>
-            <button type="button" className={primary + ' mt-5 w-full'} disabled={busy || !configured || customerLabel.trim().length < 2} onClick={saveQuote}>Kalkulation revisionssicher speichern</button>
+            <div className="mt-5 grid gap-4">
+              <label className="block text-sm font-semibold">Kunde aus Termin oder Lead auswählen
+                <select className={field+' mt-2'} value={customerSourceKey} onChange={e=>{
+                  const key=e.target.value;setCustomerSourceKey(key);setSavedQuoteId('');setCreatedProposalId('');
+                  const item=customerSources.find(x=>`${x.sourceType}:${x.sourceId}`===key);
+                  if(item){setCustomerLabel(item.label);setNotes(item.detail.slice(0,2000));}
+                }}>
+                  <option value="manual">Neuer Kunde / manuelle Eingabe</option>
+                  {customerSources.map(x=><option key={x.sourceType+':'+x.sourceId} value={x.sourceType+':'+x.sourceId}>{x.sourceType==='booking'?'Termin':'Lead'} · {x.label} · {new Date(x.date).toLocaleDateString('de-DE')}</option>)}
+                </select>
+              </label>
+              {sourceError&&<p role="status" className="text-xs text-amber-700">{sourceError}. Manuelle Kundeneingabe bleibt möglich.</p>}
+              {selectedSource&&<div className="rounded-2xl bg-blue-50 p-3 text-xs text-blue-900"><strong>{selectedSource.name}</strong> · {selectedSource.email}<br/>{selectedSource.detail||'Keine Angaben zum Bedarf'}</div>}
+              <label className="block text-sm font-semibold">Kunde / Unternehmen<input className={field + ' mt-2'} maxLength={160} placeholder="z. B. Muster GmbH" value={customerLabel} onChange={e => {setCustomerLabel(e.target.value);setCustomerSourceKey('manual');setSavedQuoteId('');setCreatedProposalId('');}} /></label>
+            <label className="block text-sm font-semibold">Gesprächsnotizen<textarea className={field + ' mt-2 min-h-[100px] resize-y'} placeholder="Besprochener Umfang, Anforderungen, nächste Schritte" maxLength={2000} value={notes} onChange={e => {setNotes(e.target.value);setSavedQuoteId('');setCreatedProposalId('');}} /></label></div>
+            <button type="button" className={primary + ' mt-5 w-full'} disabled={busy || !configured || customerLabel.trim().length < 2} onClick={saveQuote}>{busy?'Speichere …':'Kalkulationsversion speichern'}</button>
+            {savedQuoteId&&<p role="status" className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 text-xs text-green-800">Gespeichert · {savedQuoteId} · Preisstand ist unveränderlich referenziert.</p>}
             {!configured && <p className="mt-3 text-xs leading-5 text-amber-700">Zum Speichern muss zuerst ein Preisstand von einer zweiten Person freigegeben werden. Die Vorschau ist trotzdem möglich.</p>}
           </section>
         </div>
@@ -294,13 +416,38 @@ export default function InternalPricingWorkbench() {
             {quote && <p className="mt-4 text-xs leading-5 text-slate-600">{quote.disclaimer}</p>}
           </section>
           <section className={surface}>
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Direkten Angebotspreis notieren</p>
+            <div className="mb-4 flex items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-widest text-blue-600">Echte PDF-Live-Vorschau</p><h3 className="mt-2 text-lg font-bold text-slate-900">So sieht das Kundenangebot aus</h3></div><span className={badge}>Nur Entwurf</span></div>
+            {!validNet?<p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Trage unten einen Netto-Angebotspreis ein. Die Vorschau erscheint automatisch und aktualisiert sich bei Änderungen.</p>
+            :pdfBusy?<p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">PDF wird aktualisiert …</p>
+            :pdfError?<p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{pdfError}</p>
+            :pdfUrl?<div><iframe title="Live-PDF-Angebotsentwurf" src={pdfUrl} className="h-[430px] w-full rounded-xl border border-slate-200 bg-white"/><a href={pdfUrl} download="angebotsentwurf.pdf" className={secondary+' mt-3 w-full'}>PDF-Entwurf herunterladen</a></div>:null}
+            <p className="mt-3 text-xs text-slate-500">Vorschau und CRM-PDF verwenden denselben Renderer und die Logos der gewählten Marke. Die verbindliche Version wird erst nach Freigaben erstellt.</p>
+          </section>
+          <section className={surface}>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Angebotspreis für diesen Kunden</p>
             <h3 className="mt-2 text-lg font-semibold">Angebotspreis netto</h3>
             <p className="mt-1 text-xs leading-5 text-slate-500">Freier Gesprächswert. Er verändert weder den Preiskatalog noch einen gespeicherten Snapshot.</p>
             <div className="mt-4"><label className="text-xs font-semibold text-slate-500" htmlFor="manual-offer-amount">Betrag in Euro</label><div className="relative mt-2"><input id="manual-offer-amount" type="text" inputMode="numeric" autoComplete="off" maxLength={9} className={field + ' pr-10 text-xl tabular-nums'} placeholder="z. B. 12500" value={manualNet} onFocus={e => e.currentTarget.select()} onChange={e => setManualNet(e.currentTarget.value.replace(/\D/g, ''))} /><span className="pointer-events-none absolute inset-y-0 right-4 flex items-center font-bold text-slate-400">€</span></div></div>
             <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 p-3 text-sm"><span className="text-slate-500">Brutto mit {Math.round(vat * 100)} % USt.</span><strong className="tabular-nums">{validNet ? euro(Math.round(net * (1 + vat))) : '–'}</strong></div>
-            <Link className={secondary + ' mt-4 w-full'} href="/admin/vertrieb">Angebot im Vertrieb erstellen →</Link>
-            <p className="mt-2 text-xs text-slate-500">Der hier eingegebene freie Betrag wird nicht automatisch übernommen. Im Vertrieb verbindlichen Angebotspreis und Leistungsumfang separat festlegen.</p>
+            <label className="mt-4 block text-xs font-semibold text-slate-600">Angebotstitel<input className={field+' mt-2'} maxLength={180} value={offerTitle} onChange={e=>setOfferTitle(e.target.value)}/></label>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <label className="block text-xs font-semibold text-slate-600">Gültig bis<input type="date" className={field+' mt-2'} value={validUntil} onChange={e=>setValidUntil(e.target.value)}/></label>
+              <label className="block text-xs font-semibold text-slate-600">Wartung netto / Jahr<input inputMode="numeric" className={field+' mt-2'} value={maintenanceNet} placeholder="0" onChange={e=>setMaintenanceNet(e.target.value.replace(/\D/g,''))}/></label>
+            </div>
+            <label className="mt-4 block text-xs font-semibold text-slate-600">Begründung bei Preis außerhalb des freigegebenen Rahmens<textarea className={field+' mt-2 min-h-[70px]'} maxLength={1000} value={outOfRangeReason} onChange={e=>setOutOfRangeReason(e.target.value)} placeholder="Nur erforderlich, wenn der Angebotspreis außerhalb des berechneten Korridors liegt"/></label>
+            <div className="mt-4 rounded-2xl bg-blue-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-700">CRM-Übergabe</p>
+              <label className="mt-3 block text-xs font-semibold text-slate-700">Freigegebene Verkaufschance
+                <select value={opportunityId} className={field+' mt-2'} onChange={e=>{setOpportunityId(e.target.value);setCreatedProposalId('');}}>
+                  <option value="">Bitte Verkaufschance auswählen</option>
+                  {opportunities.filter(o=>o.companyName.trim().toLocaleLowerCase('de-DE')===customerLabel.trim().toLocaleLowerCase('de-DE')).map(o=><option key={o.id} value={o.id}>{o.companyName} · {o.title}</option>)}
+                </select>
+              </label>
+              <p className="mt-2 text-xs leading-5 text-blue-900">Falls noch keine Verkaufschance existiert: Im Vertrieb eine Kundenakte anlegen und den Leistungsumfang durch eine zweite Person freigeben.</p>
+              <Link className="mt-2 inline-block text-xs font-semibold text-blue-800 underline" href="/admin/vertrieb">Vertrieb öffnen</Link>
+              <button type="button" className={primary+' mt-4 w-full'} disabled={busy||!savedQuoteId||!opportunityId||!validNet||!offerTitle.trim()} onClick={createOffer}>{busy?'Erstelle …':'Angebot aus gespeicherter Kalkulation erstellen'}</button>
+              <p className="mt-2 text-xs text-blue-800">Erzeugt einen CRM-Entwurf samt gebrandeter PDF. Kein Versand; die Gegenfreigabe bleibt Pflicht.</p>
+            </div>
           </section>
         </aside>
       </div>}

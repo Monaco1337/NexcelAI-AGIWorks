@@ -3,7 +3,7 @@ import {authorize,type AuthResult} from '@/lib/auth/authorize';
 import {db} from '@/lib/pg';
 import {getProposal,saveProposalDocument} from '@/lib/sales/proposalsStore';
 import {serviceAddProposalVersion} from '@/lib/sales/service';
-import {renderProposalPdf} from '@/lib/sales/proposalPdf';
+import {renderBrandedOfferPdf} from '@/lib/sales/brandedOfferPdf';
 import {offerStructured,validateCommercial} from '@/lib/sales/offerCompose';
 import {validateTemplate} from '@/lib/sales/offerTemplates';
 export const runtime='nodejs';export const dynamic='force-dynamic';
@@ -62,7 +62,7 @@ export async function POST(req:NextRequest,ctx:{params:Promise<{id:string}>}){
    pricingSnapshot:{quoteId:quote.id,priceVersionId:quote.price_version_id,quoteCalculation:quote.calculation,netCents:commercial.netCents,vatRate:commercial.vatRate,overrideReason:override,templateIds:[shared.id,business.id]},
    timeframeSnapshot:{validUntil:commercial.validUntil},
   });
-  const bytes=await renderProposalPdf({brand:proposal.brandContext,structured,proposalNumber:`${proposal.title}-v${version.version}`,watermark:'ENTWURF'});
+  const bytes=await renderBrandedOfferPdf({brand:proposal.brandContext,structured,proposalNumber:`${proposal.title}-v${version.version}`,watermark:'ENTWURF'});
   await saveProposalDocument(version.id,bytes);
   return reply({ok:true,versionId:version.id,number:version.version},201);
  }catch(e){

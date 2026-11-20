@@ -35,6 +35,7 @@ import { migration0019 } from "./0019_internal_pricing";
 import { migration0020 } from "./0020_offer_templates";
 import { migration0021 } from "./0021_admin_push";
 import { migration0022 } from "./0022_calendar_invites";
+import { migration0023 } from "./0023_consultation_quote_sources";
 
 export const MIGRATIONS: Migration[] = [
   migration0001,
@@ -59,4 +60,5 @@ export const MIGRATIONS: Migration[] = [
   migration0020,
   migration0021,
   migration0022,
+  migration0023,
 ];

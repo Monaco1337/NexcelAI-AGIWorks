@@ -29,6 +29,10 @@ const nextConfig = {
   
   // Experimentelle Features für Performance
   experimental: {
+    // Trace the existing, official brand assets into serverless PDF functions.
+    outputFileTracingIncludes: {
+      '/api/admin/sales/**/*': ['./public/images/logos/nexcel-logo.png', './public/images/logos/agiworks-logo-full.png'],
+    },
     optimizePackageImports: [
       'framer-motion',
       'lucide-react',

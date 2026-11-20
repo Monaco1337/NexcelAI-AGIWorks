@@ -11,7 +11,8 @@ import {
   loadProposalDocumentBytes,
   saveProposalDocument,
 } from "@/lib/sales/proposalsStore";
-import { renderProposalPdf, type ProposalStructured } from "@/lib/sales/proposalPdf";
+import { type ProposalStructured } from "@/lib/sales/proposalPdf";
+import { renderBrandedOfferPdf } from "@/lib/sales/brandedOfferPdf";
 
 export const runtime = "nodejs";
 
@@ -39,7 +40,7 @@ export async function GET(_: NextRequest, ctx: { params: Promise<{ id: string }>
   const proposal = await getProposal(version.proposalId);
   if (!proposal) return NextResponse.json({ error: "proposal_not_found" }, { status: 404 });
 
-  const bytes = await renderProposalPdf({
+  const bytes = await renderBrandedOfferPdf({
     brand: proposal.brandContext,
     structured: version.structured as ProposalStructured,
     proposalNumber: `${proposal.title}-v${version.version}`,

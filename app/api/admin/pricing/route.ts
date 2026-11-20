@@ -87,10 +87,22 @@ export async function POST(req:NextRequest){
       const notes=typeof body.notes==='string'?body.notes.trim():'';
       if(label.length<2||label.length>160||notes.length>2000)return response({error:'Kundennamen/Notizen prüfen'},400);
       const selection=validateInput(body.selection);
+      const sourceType=body.sourceType===null||body.sourceType===undefined?null:body.sourceType;
+      const sourceId=body.sourceId===null||body.sourceId===undefined?null:body.sourceId;
+      if(sourceType!==null && sourceType!=='booking' && sourceType!=='lead') return response({error:'Kundenquelle ungültig'},400);
+      if((sourceType===null)!==(sourceId===null) || (sourceId!==null && (typeof sourceId!=='string'||sourceId.length>150))) return response({error:'Kundenreferenz ungültig'},400);
+      if(sourceType==='booking'){
+        const rows=await sql<{id:string;name:string;company:string|null}[]>`SELECT id,name,company FROM consultation_bookings WHERE id=${sourceId as string} AND brand=${brand} AND status IN ('pending','confirmed') LIMIT 1`;
+        if(!rows.length || (rows[0].company?.trim()||rows[0].name).toLocaleLowerCase('de-DE')!==label.toLocaleLowerCase('de-DE'))return response({error:'Termin/Kundenzuordnung nicht konsistent'},409);
+      }
+      if(sourceType==='lead'){
+        const rows=await sql<{id:string;name:string;company:string|null}[]>`SELECT id,name,company FROM marketing_inbound_leads WHERE id=${sourceId as string} AND brand=${brand} AND status IN ('new','in_review','accepted') LIMIT 1`;
+        if(!rows.length || (rows[0].company?.trim()||rows[0].name).toLocaleLowerCase('de-DE')!==label.toLocaleLowerCase('de-DE'))return response({error:'Lead/Kundenzuordnung nicht konsistent'},409);
+      }
       const quote=calculateInternalQuote(selection,validateRules(active.rules));
       const id=`quote_${randomUUID()}`;
-      await sql`INSERT INTO internal_pricing_quotes(id,brand,price_version_id,customer_label,notes,selection,calculation,created_by)
-        VALUES(${id},${brand},${active.id},${label},${notes},${sql.json(jsonParam(selection))},${sql.json(jsonParam(quote))},${auth.auth.userId})`;
+      await sql`INSERT INTO internal_pricing_quotes(id,brand,price_version_id,customer_label,notes,selection,calculation,created_by,source_type,source_id)
+        VALUES(${id},${brand},${active.id},${label},${notes},${sql.json(jsonParam(selection))},${sql.json(jsonParam(quote))},${auth.auth.userId},${sourceType},${sourceId as string | null})`;
       return response({ok:true,quoteId:id,quote},201);
     }
     return response({error:'Aktion nicht unterstützt'},400);
