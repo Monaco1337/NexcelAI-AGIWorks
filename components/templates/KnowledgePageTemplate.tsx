@@ -9,6 +9,8 @@
  * legally responsible brand owner (from the brand config).
  */
 
+// SEO_ENTERPRISE_AUTHORITY_100_V3_20261120
+import PremiumKnowledgePage from "@/components/authority/PremiumKnowledgePage";
 import Link from "next/link";
 import TemplateFrame from "./TemplateFrame";
 import { TemplateSection, GlassCard } from "./primitives";
@@ -32,6 +34,13 @@ function relatedLabel(brand: KnowledgePage["brand"], href: string): string {
 }
 
 export default function KnowledgePageTemplate({ page }: { page: KnowledgePage }) {
+  // SEO_ENTERPRISE_AUTHORITY_100_V3_20261120: retain existing 8 knowledge pages; upgrade only the 4 SEO V2 topics.
+  if (new Set([
+    "ki-agenten-im-unternehmen-einfuehren",
+    "ki-projekte-datenschutz-sicherheit-planen",
+    "softwareprojekt-anforderungen-vorbereiten",
+    "erp-schnittstellen-systemintegration-planen",
+  ]).has(page.slug)) return <PremiumKnowledgePage page={page} />;
   const canonicalUrl = toAbsoluteUrl(page.brand, page.path);
 
   const base: TemplateBase = {
