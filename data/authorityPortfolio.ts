@@ -37,8 +37,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Ein Vorhaben ist startfähig, wenn Ergebnisqualität, Kostenobergrenze, Verantwortlichkeit und Stop-Kriterium feststehen.",
     "benefit": "Investitionsentscheidungen werden nachvollziehbar; technische Experimente erhalten einen klaren Geschäftszweck.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -55,8 +55,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Jede Etappe muss eine konkrete Fähigkeit produktiv bereitstellen und anhand vereinbarter Kennzahlen überprüfbar sein.",
     "benefit": "Aus isolierten Versuchen wird ein steuerbares Unternehmensprogramm mit klarer Reihenfolge.",
     "primaryLink": "/beratung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -73,8 +73,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Nachweisbar sind vollständige Verantwortlichkeiten, geprüfte Datenflüsse und wirksame technische Zugriffsgrenzen.",
     "benefit": "Unternehmen gewinnen Kontrolle über KI-Nutzung, ohne Innovation über unnötige Bürokratie auszubremsen.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -91,8 +91,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend ist, welche Alternative das fachliche Ziel bei vertretbarem Risiko dauerhaft abdeckt.",
     "benefit": "Die Technologiewahl folgt dem Geschäft statt einem vorgegebenen Produkt oder Modell.",
     "primaryLink": "/loesungen/digitale-betriebssysteme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -109,8 +109,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Eine Fortsetzung ist sinnvoll, wenn Prozessqualität und Gesamtkosten gegenüber der Ausgangslage belastbar besser werden.",
     "benefit": "Investitionen bekommen eine fachliche Entscheidungsgrundlage statt unverbindlicher Produktversprechen.",
     "primaryLink": "/beratung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -127,8 +127,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Reife zeigt sich an reproduzierbaren Eingaben, eindeutigen Entscheidungen und messbaren Ergebnissen.",
     "benefit": "Ungeeignete Automatisierungsprojekte werden früh erkannt und betriebliche Grundlagen zielgerichtet verbessert.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -145,8 +145,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Ein besserer Prozess reduziert Übergaben und Fehler, ohne Transparenz oder Eingriffsmöglichkeiten zu verlieren.",
     "benefit": "KI wird Teil eines durchdachten Betriebsmodells, nicht nur ein weiterer Schritt im alten Ablauf.",
     "primaryLink": "/loesungen/digitale-betriebssysteme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -163,8 +163,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Freigabefähigkeit entsteht erst mit kontrollierbaren Risiken, dokumentierten Nachweisen und klarer Verantwortlichkeit.",
     "benefit": "Entscheidungen werden belastbar, auch wenn Modelle, Datenquellen oder Prozesse später verändert werden.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -181,8 +181,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Vergleichbar sind Lösungen nur bei identischem Funktionsumfang, Abnahmekriterien und transparenten Betriebskosten.",
     "benefit": "Beschaffung wird strukturiert und spätere Nachträge durch überprüfbare Leistungsgrenzen begrenzt.",
     "primaryLink": "/beratung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -199,8 +199,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Akzeptanz wird an tatsächlicher Nutzung, Qualität der Übergaben und sinkender Nacharbeit bewertet.",
     "benefit": "Die Organisation erhält einen arbeitsfähigen Prozess statt eines isolierten Demonstrators.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -217,8 +217,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Lösungsquote, Rückfragen, Eskalationsqualität und fachliche Fehler statt bloßer Antwortgeschwindigkeit.",
     "benefit": "Teams bearbeiten anspruchsvolle Anliegen konzentrierter und Kunden erhalten konsistente Informationen.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -235,8 +235,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg zeigt sich an kürzerer Vorbereitungszeit, korrekter Dokumentation und stabiler Nachverfolgung.",
     "benefit": "Vertriebsteams gewinnen Zeit für Beratung, ohne Kontrolle über Kundenbeziehungen abzugeben.",
     "primaryLink": "/loesungen/ki-fuer-vertrieb",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -253,8 +253,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Relevant sind erfolgreich bestätigte Termine, Fehlerquoten, Umbuchungsaufwand und Abbruchgründe.",
     "benefit": "Terminprozesse werden für Kunden einfacher und intern nachvollziehbarer.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -271,8 +271,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Qualität wird an korrekten Feldern, manueller Nacharbeit, Durchlaufzeit und Fehlzuordnungen gemessen.",
     "benefit": "Eingänge werden schneller bearbeitbar, ohne stille Datenfehler in Folgesysteme zu übertragen.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -289,8 +289,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Maßstab sind Aktualität, Quellenbezug, weniger Abstimmungsaufwand und verlässliche Eskalation.",
     "benefit": "Projektteams erhalten einen gemeinsamen, überprüfbaren Arbeitsstand.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -307,8 +307,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden vollständig erledigte Schritte, Rückfragevolumen und Qualität der bereitgestellten Informationen.",
     "benefit": "Der Einstieg wird konsistenter, ohne vertrauliche Personalvorgänge zu automatisieren.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -325,8 +325,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolgsfaktoren sind vollständige Angebotsvergleiche, kürzere Vorbereitung und weniger Bestellkorrekturen.",
     "benefit": "Einkaufsvorgänge werden besser vorbereitet und bleiben vollständig verantwortbar.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -343,8 +343,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Aussagekräftig sind korrekte Fallzuordnung, Bearbeitungsdauer und Abschlussqualität von Maßnahmen.",
     "benefit": "Qualitätsteams erkennen Muster früher und dokumentieren Entscheidungen konsistenter.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -361,8 +361,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind End-to-End-Erfolgsquote, Fehlerisolierung, Kosten und Reproduzierbarkeit.",
     "benefit": "Komplexere Abläufe werden modular steuerbar statt zu schwer überprüfbarer Autonomie.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -379,8 +379,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Durchlaufzeit, unnötige Eskalationen und vermiedene Fehlaktionen.",
     "benefit": "Teams können operative KI nutzen, ohne Entscheidungsbefugnisse unkontrolliert zu delegieren.",
     "primaryLink": "/loesungen/ki-agenten",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -397,8 +397,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Relevant sind weniger Medienbrüche, nachvollziehbare Reaktionszeiten und bessere Übergabequalität.",
     "benefit": "Kunden erleben einen zusammenhängenden Prozess statt einzelner unverbundener Kanäle.",
     "primaryLink": "/loesungen/customer-experience-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -415,8 +415,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg zeigt sich an vollständigen Anfragen, korrekt zugewiesenen Vorgängen und reduzierten Rückfragen.",
     "benefit": "Mitarbeitende beginnen mit verwertbarem Kontext statt wiederholter Datenerfassung.",
     "primaryLink": "/loesungen/lead-automation",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -433,8 +433,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Wir bewerten Korrekturbedarf, Konsistenz, Antwortqualität und Kundenzufriedenheit anhand realer Vorgänge.",
     "benefit": "Markenkommunikation wird einheitlicher, ohne unpersönliche Vollautomatik zu erzwingen.",
     "primaryLink": "/loesungen/customer-experience-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -451,8 +451,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind qualifizierte Folgegespräche, Reaktionsquoten und nachvollziehbare Lead-Entwicklung.",
     "benefit": "Interessenten erhalten passende Informationen, ohne mit generischen Sequenzen überlastet zu werden.",
     "primaryLink": "/loesungen/lead-automation",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -469,8 +469,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Die Bewertung nutzt Trefferquote, falsch niedrige Prioritäten und Zeit bis zur zuständigen Bearbeitung.",
     "benefit": "Supportteams steuern Volumen und Dringlichkeit transparenter.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -487,8 +487,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Relevante Kennzahlen sind wiederholte Rückfragen, Übergabeabbrüche und die Zeit bis zur Lösung.",
     "benefit": "Ein Serviceerlebnis entsteht über Kanalgrenzen hinweg mit nachvollziehbaren Verantwortlichkeiten.",
     "primaryLink": "/loesungen/customer-experience-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -505,8 +505,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Messbar sind bestätigte Termine, Nichterscheinen, fehlerhafte Nachrichten und Rückfragen.",
     "benefit": "Terminkommunikation wird zuverlässig, ohne Kunden mit unnötigen Nachrichten zu belasten.",
     "primaryLink": "/loesungen/email-automation",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -523,8 +523,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Bewertet werden Datenqualität, Relevanz und Widerspruchsverarbeitung, nicht allein Klickzahlen.",
     "benefit": "Kunden erhalten passendere Informationen auf einer belastbaren Datenbasis.",
     "primaryLink": "/loesungen/customer-experience-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -541,8 +541,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Wichtig sind vollständig übergebene Fälle, Servicequalität und nachvollziehbare Folgeanliegen.",
     "benefit": "Die Kundenbeziehung wird nach dem Verkauf nicht dem Zufall überlassen.",
     "primaryLink": "/loesungen/customer-experience-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -559,8 +559,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Wir messen Themenabdeckung, Klassifikationsqualität und abgeschlossene Verbesserungsmaßnahmen.",
     "benefit": "Kundenstimmen werden zu einer belastbaren Grundlage für konkrete Prozessverbesserungen.",
     "primaryLink": "/loesungen/customer-experience-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -577,8 +577,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind korrekte Daten, vermiedene Dubletten und die Zeit bis zur Freigabe.",
     "benefit": "Der Rechnungseingang wird reproduzierbar, prüfbar und weniger manuell.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -595,8 +595,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Bearbeitungsaufwand, Anzahl Korrekturschleifen und Vollständigkeit der Ausgangsdaten.",
     "benefit": "Angebote entstehen konsistenter und lassen sich fachlich sicher freigeben.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -613,8 +613,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg bedeutet weniger Fehlzuordnungen, kürzere Liegezeiten und nachvollziehbare Prioritäten.",
     "benefit": "Teams erhalten die richtigen Aufgaben mit ausreichendem Kontext.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -631,8 +631,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Messbar sind Dublettenquote, Pflichtfeldqualität und Korrekturaufwand.",
     "benefit": "Das CRM wird als verlässliche Arbeitsgrundlage nutzbar.",
     "primaryLink": "/loesungen/crm-automation",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -649,8 +649,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Wichtige Kriterien sind Durchlaufzeiten, Rückfragen und vollständige Nachweise.",
     "benefit": "Freigaben werden auditierbar und weniger personenabhängig.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -667,8 +667,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden korrekte Bedarfswarnungen, Fehlalarme und Aktualität der Bestandsdaten.",
     "benefit": "Beschaffungsentscheidungen stützen sich auf aktuellere, konsistente Informationen.",
     "primaryLink": "/loesungen/digitale-betriebssysteme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -685,8 +685,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg heißt weniger manueller Aufwand und mehr Vertrauen in identische Kennzahlen.",
     "benefit": "Führungskräfte entscheiden anhand einer gemeinsamen Datenlage.",
     "primaryLink": "/loesungen/digitale-betriebssysteme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -703,8 +703,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Messbar sind verlorene Anfragen, korrekte Zuordnung und Zeit bis zum ersten sinnvollen Bearbeitungsschritt.",
     "benefit": "Postfächer werden Teil eines steuerbaren Prozesses statt einer ungeordneten Aufgabenliste.",
     "primaryLink": "/loesungen/email-automation",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -721,8 +721,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden unbemerkte Fehler, Wiederherstellungsdauer und Anteil korrekt behandelter Ausnahmen.",
     "benefit": "Automatisierungen bleiben auch bei realen Betriebsstörungen beherrschbar.",
     "primaryLink": "/loesungen/automatisierung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -739,8 +739,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind weniger doppelte Eingaben, transparente Auftragszustände und weniger manuelle Übergaben.",
     "benefit": "Das Unternehmen steuert seine Arbeit entlang eines konsistenten Prozesses.",
     "primaryLink": "/loesungen/digitale-betriebssysteme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -757,8 +757,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind Fundstellenqualität, korrekte Berechtigungen und weniger Suchaufwand.",
     "benefit": "Fachwissen wird verfügbar, ohne Kontrolle über vertrauliche Inhalte zu verlieren.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -775,8 +775,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Trefferqualität, Quellenbezug, unbeantwortbare Fragen und fachliche Korrekturen.",
     "benefit": "Teams erhalten kontextgestützte Antworten statt unkontrollierter Modellvermutungen.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -793,8 +793,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind Aktualität, richtige Versionen und nachweisbare Zuordnung einer Antwort zur Quelle.",
     "benefit": "Interne KI bleibt bei Änderungen von Regeln und Dokumenten beherrschbar.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -811,8 +811,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Qualität zeigt sich an konsistenten Schlüsseln, plausiblen Werten und stabilen Aktualisierungen.",
     "benefit": "KI-Projekte erhalten belastbare Eingaben und messbar weniger Fehlerursachen.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -829,8 +829,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolgsmaßstab sind korrekte Zugriffsergebnisse und abgewehrte unberechtigte Suchanfragen.",
     "benefit": "Unternehmenswissen wird kontrolliert zugänglich statt pauschal zentralisiert.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -847,8 +847,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind nachgewiesene Datenkontrolle, akzeptable Latenz und wirtschaftlicher Dauerbetrieb.",
     "benefit": "Unternehmen wählen ihre KI-Betriebsform mit nachvollziehbaren Trade-offs.",
     "primaryLink": "/loesungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -865,8 +865,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Sucherfolg, Zeit bis zum passenden Dokument und fälschlich hervorgehobene Treffer.",
     "benefit": "Wissen wird über fachliche Fragestellungen statt nur Dateinamen erreichbar.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -883,8 +883,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg zeigt sich an reproduzierbaren Erkenntnissen und sinnvoll umgesetzten Folgeentscheidungen.",
     "benefit": "Fachabteilungen analysieren schneller, ohne Zahlenvertrauen gegen Sprachkomfort einzutauschen.",
     "primaryLink": "/loesungen/ki-systeme",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -901,8 +901,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Produktionsreife verlangt definierte Mindestqualität, stabile Regressionstests und verantwortliche Freigabe.",
     "benefit": "Modellentscheidungen werden vergleichbar und langfristig steuerbar.",
     "primaryLink": "/loesungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "nexcel",
@@ -919,8 +919,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Bewertet werden Kosten je erfolgreich erledigtem Vorgang und die Einhaltung festgelegter Qualitätsziele.",
     "benefit": "Unternehmens-KI bleibt wirtschaftlich planbar, auch wenn Nutzung und Datenvolumen wachsen.",
     "primaryLink": "/loesungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -937,8 +937,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind Änderbarkeit, Fehlerisolierung und planbare Weiterentwicklung.",
     "benefit": "Ein unabhängiger Architekturabgleich macht Investitionsentscheidungen transparent und zeigt, welche Verbesserungen ohne Komplettumbau möglich sind.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -955,8 +955,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Wir messen Änderungsauswirkungen, Teststabilität und Kopplung zwischen Fachbereichen.",
     "benefit": "Neue Fachfunktionen können in klaren Verantwortungsbereichen entstehen, statt quer durch den gesamten Codebestand zu wirken.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -973,8 +973,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind produktive Teilmigrationen, stabile Daten und sinkendes Änderungsrisiko.",
     "benefit": "Geschäftskritische Bestandsfunktionen bleiben verfügbar, während technische Abhängigkeiten kontrolliert schrittweise ersetzt werden.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -991,8 +991,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind klare Verantwortlichkeiten und geringere Reibung bei fachlichen Änderungen.",
     "benefit": "Fachsprache, Code und Zuständigkeiten stimmen überein; Änderungen lassen sich dadurch gezielter konzipieren und abnehmen.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1009,8 +1009,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolgreich ist eine entkoppelte Verarbeitung mit messbaren Verzögerungen und Wiederherstellbarkeit.",
     "benefit": "Geschäftsereignisse lassen sich unabhängig konsumieren, ohne dass jeder Ablauf direkte synchrone Kopplungen benötigt.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1027,8 +1027,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Nachweisbar sind Isolationstests, kontrollierte Migrationen und zuverlässige Mandantenmetriken.",
     "benefit": "Eine gemeinsame Produktplattform bleibt operativ wartbar, während jeder Mandant klar abgegrenzte Daten- und Rechtebereiche erhält.",
     "primaryLink": "/leistungen/saas-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1045,8 +1045,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Maßstab sind zuverlässige Fachvorgänge, verständliche Bedienung und wartbare Erweiterungen.",
     "benefit": "Eine stabile technische Basis verbindet Bedienbarkeit, Sicherheit und fachlich konsistente Abläufe bei steigender Produktkomplexität.",
     "primaryLink": "/leistungen/web-app-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1063,8 +1063,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden P95-Latenzen, Durchsatz, Fehlerbudget und stabile Wiederherstellung.",
     "benefit": "Backendkapazität wird entlang gemessener Engpässe erweitert, ohne Verfügbarkeit durch unkontrollierte Lastverteilung zu gefährden.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1081,8 +1081,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind bessere Core Web Vitals und stabile Nutzerinteraktionen unter realen Bedingungen.",
     "benefit": "Die Anwendung liefert relevante Inhalte und nutzbare Interaktionen schneller aus, statt nur synthetische Benchmarks zu optimieren.",
     "primaryLink": "/leistungen/webseiten-erstellen-lassen",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1099,8 +1099,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind weniger Fehländerungen, höhere Testbarkeit und planbare Entwicklungszyklen.",
     "benefit": "Technische Verbesserungen werden mit dem größten geschäftlichen Risikogewinn priorisiert, statt pauschal den gesamten Code neu zu schreiben.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1117,8 +1117,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind reproduzierbare Datentransfers und geringerer manueller Abgleich.",
     "benefit": "Klare Schnittstellenverträge reduzieren Datenbrüche und ermöglichen Änderungen, ohne abhängige Systeme ungeplant mitzuziehen.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1135,8 +1135,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Dubletten, Synchronisationsfehler und Abgleichdauer.",
     "benefit": "Ein sauber synchronisierter Datenfluss verhindert widersprüchliche Kunden- und Auftragsstände über ERP und CRM hinweg.",
     "primaryLink": "/leistungen/erp-system-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1153,8 +1153,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolgreich sind nachvollziehbare Zugriffe, konsistente Sicherheitsgrenzen und stabile Schnittstellen.",
     "benefit": "Zentrale Eingangskontrollen und dezentrale Fachrechte bilden gemeinsam nachvollziehbare Sicherheitsgrenzen für Integrationen.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1171,8 +1171,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Messbar sind verlorene Ereignisse, Dublettenwirkungen und Wiederanlaufzeit.",
     "benefit": "Externe Ereignisse werden auch bei Wiederholungen und Verzögerungen fachlich genau einmal wirksam verarbeitet.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1189,8 +1189,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg bedeutet prüfbare Vollständigkeit und eingehaltenes Betriebsfenster.",
     "benefit": "Datenbestände werden nachprüfbar übernommen, während der Übergang zum neuen Schema kontrollierbar bleibt.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1207,8 +1207,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Bewertet werden Erkennungszeit, Fehlerbehebung und Datenkonsistenz.",
     "benefit": "Technische Fehler und fachliche Abweichungen werden früher sichtbar und lassen sich einem eindeutigen Vorgang zuordnen.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1225,8 +1225,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind kontrollierter Durchsatz und Wiederaufnahme ohne doppelte fachliche Wirkung.",
     "benefit": "Schwankende Last und temporäre Ausfälle werden entkoppelt, ohne Geschäftsvorgänge unkontrolliert zu verlieren.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1243,8 +1243,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Provisionierungszeit, Rechteabweichungen und erfolgreiche Entzüge.",
     "benefit": "Mitarbeitende arbeiten mit einer zentralen Identität, während Rollenwechsel und Entzüge zuverlässig in den Fachsystemen ankommen.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1261,8 +1261,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Maßstab sind korrekte Statusübergänge, vermiedene Doppelbuchungen und nachvollziehbare Abrechnung.",
     "benefit": "Zahlungszustände, Rechnungsbezug und Rückerstattungen bleiben auch bei asynchronen Ereignissen konsistent.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1279,8 +1279,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind geringere Legacy-Abhängigkeiten und prüfbare Integrationsänderungen.",
     "benefit": "Moderne Anwendungen können Altbestände nutzen, ohne deren technische Einschränkungen direkt in die neue Architektur zu übernehmen.",
     "primaryLink": "/leistungen/api-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1297,8 +1297,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolgreich sind fachliche Abdeckung, saubere Synchronisation und niedrige Update-Abhängigkeit.",
     "benefit": "Spezifische Geschäftsregeln werden ergänzt, ohne funktionierende ERP-Kernprozesse oder Datenverantwortung unnötig neu aufzubauen.",
     "primaryLink": "/leistungen/erp-system-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1315,8 +1315,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind konsistente Daten und weniger Medienbrüche beim Bearbeiten von Kundenprozessen.",
     "benefit": "Der Kundenprozess erhält eine passende Softwarelogik statt wiederkehrender Workarounds in starren Standard-Pipelines.",
     "primaryLink": "/leistungen/crm-system-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1333,8 +1333,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Messbar sind weniger Rückfragen und zuverlässige Selbstbedienungsprozesse.",
     "benefit": "Kunden sehen nur ihre eigenen Vorgänge und können standardisierte Anliegen sicher selbst bearbeiten.",
     "primaryLink": "/leistungen/kundenportal-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1351,8 +1351,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind sichere Eingriffe und nachvollziehbare Betriebsentscheidungen.",
     "benefit": "Betriebsteams erhalten einen konsistenten Steuerungspunkt für Aufgaben, Abweichungen und freigegebene Eingriffe.",
     "primaryLink": "/leistungen/admin-panel-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1369,8 +1369,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind korrekte Berechtigungen und rekonstruierbare Abrechnungsvorgänge.",
     "benefit": "Produktrechte, Tarifwechsel und Abrechnungsereignisse bleiben auch über mehrere Mandanten hinweg nachvollziehbar.",
     "primaryLink": "/leistungen/saas-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1387,8 +1387,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind kontrollierbare Abläufe und sichere Anpassungen im laufenden Betrieb.",
     "benefit": "Geschäftsprozesse lassen sich kontrolliert erweitern, ohne dass jede Änderung unübersichtliche UI-Sonderfälle erzeugt.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1405,8 +1405,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden vollständige Akten und weniger Versionskonflikte.",
     "benefit": "Dokumente besitzen eindeutige Versionen und Freigabezustände, sodass Zusammenarbeit nachvollziehbar bleibt.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1423,8 +1423,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind eindeutige Buchungen und geringer manueller Korrekturaufwand.",
     "benefit": "Reservierungen, Ressourcen und Zahlungsereignisse folgen einem konsistenten fachlichen Ablauf statt verstreuten Einzelaktionen.",
     "primaryLink": "/leistungen/web-app-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1441,8 +1441,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Maßstab sind kontrollierte Zusammenarbeit und weniger manuelle Statusanfragen.",
     "benefit": "Partner arbeiten über eine gemeinsame, berechtigungsgesteuerte Oberfläche mit klaren Prozessen und Dokumentständen zusammen.",
     "primaryLink": "/leistungen/kundenportal-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1459,8 +1459,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind kurze Erkennungszeiten und klar zuordenbare Maßnahmen.",
     "benefit": "Relevante Betriebsabweichungen werden sichtbar, wenn eine konkrete Handlung erforderlich ist, nicht erst im Wochenreport.",
     "primaryLink": "/leistungen/admin-panel-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1477,8 +1477,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden früh erkannte Schwachstellen und kontrollierte Releasequalität.",
     "benefit": "Sicherheits- und Qualitätsanforderungen werden bei jeder Änderung reproduzierbar geprüft, bevor sie den produktiven Betrieb erreichen.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1495,8 +1495,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind geschlossene Angriffswege und nachprüfbare Regressionstests.",
     "benefit": "Schwachstellen werden entlang echter Geschäftsabläufe entdeckt und mit nachvollziehbaren Gegenmaßnahmen geschlossen.",
     "primaryLink": "/leistungen/web-app-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1513,8 +1513,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind minimale Rechte und reproduzierbare Zugriffsentscheidungen.",
     "benefit": "Zugriffsentscheidungen lassen sich für Nutzer, Objekte und Fachaktionen konsistent durchsetzen und testen.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1531,8 +1531,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Qualität zeigt sich an vollständigen, nachvollziehbaren Audit-Ketten.",
     "benefit": "Kritische Fachentscheidungen hinterlassen verwertbare Nachweise, ohne sensible Daten unkontrolliert zu vervielfältigen.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1549,8 +1549,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind verifizierte Wiederherstellungszeit und Datenvollständigkeit.",
     "benefit": "Die Organisation kann Wiederanlauf und Datenverlustgrenzen tatsächlich nachweisen, statt sich auf ungeprüfte Sicherungsjobs zu verlassen.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1567,8 +1567,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind kürzere Erkennungs- und Behebungszeiten bei reproduzierbaren Vorfällen.",
     "benefit": "Störungen werden über ihre Abhängigkeiten schneller eingegrenzt und anhand vereinbarter Serviceziele bewertet.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1585,8 +1585,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind reproduzierbare Releases mit getesteter Rückfallfähigkeit.",
     "benefit": "Neue Versionen werden kontrolliert aktiviert und können bei Fehlern innerhalb definierter Grenzen zurückgenommen werden.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1603,8 +1603,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind nachweisbare Zugriffskontrolle und automatisierbare Rotation.",
     "benefit": "Zugangsdaten bleiben über Entwicklung, Deployment und Rotation hinweg außerhalb von Code, Logs und Endgeräten geschützt.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1621,8 +1621,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend sind P95/P99-Latenzen, Fehlerrate und nachhaltiger Durchsatz.",
     "benefit": "Systemgrenzen werden vor dem produktiven Lastanstieg messbar, sodass Optimierungen auf reale Engpässe zielen.",
     "primaryLink": "/leistungen/web-app-entwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1639,8 +1639,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg ist ein geprobter Betrieb unter Störung mit klaren Verantwortlichkeiten.",
     "benefit": "Kritische Arbeitsabläufe besitzen getestete Wiederanlauf- und Übergangsprozesse auch bei technischen Störungen.",
     "primaryLink": "/leistungen/softwareentwicklung",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1657,8 +1657,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind korrekte Antworten mit belegbaren Fundstellen und stabiler Zugriffsgrenze.",
     "benefit": "Interne KI-Antworten werden durch nachvollziehbare Quellen und strikte Berechtigungen fachlich überprüfbar.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1675,8 +1675,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Relevant sind Time-to-First-Token, Qualität, Kosten und stabile Auslastung.",
     "benefit": "Modellbetrieb lässt sich an tatsächlichen Qualitäts-, Kosten- und Latenzzielen ausrichten und reproduzierbar betreiben.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1693,8 +1693,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind nachvollziehbare Freigaben und früh erkannte Qualitätsabweichungen.",
     "benefit": "Modelländerungen erhalten belastbare Freigabekriterien und bleiben bei Fehlern auf bekannte Versionen rückführbar.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1711,8 +1711,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind blockierte unerlaubte Aktionen und nachvollziehbare Ausführungsentscheidungen.",
     "benefit": "KI-Agenten können definierte Aufgaben ausführen, ohne sich durch Modelltext zusätzliche Systemrechte zu verschaffen.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1729,8 +1729,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind kontrollierte Datenflüsse und ein reproduzierbarer Modellbetrieb.",
     "benefit": "Eigene Modellinfrastruktur bietet kontrollierbare Datenflüsse und Betriebsparameter bei klarer technischer Verantwortung.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1747,8 +1747,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Gemessen werden Qualität je Aufgabenklasse, Verfügbarkeit und Kosten pro Vorgang.",
     "benefit": "Jede Anfrage erreicht ein geeignetes, freigegebenes Modell und behält auch beim Fallback definierte Sicherheits- und Qualitätsgrenzen.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1765,8 +1765,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind relevante Treffer bei korrekten Zugriffsgrenzen und kontrolliertem Indexstand.",
     "benefit": "Semantische Suche wird zur verlässlichen Wissenskomponente mit prüfbaren Treffern und gesicherter Quellenzuordnung.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1783,8 +1783,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind erklärbare Qualitätsabweichungen und schnelle Ursachenanalyse.",
     "benefit": "Fehlantworten, Kosten und Werkzeugaktionen lassen sich im Kontext des jeweiligen Fachvorgangs untersuchen.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1801,8 +1801,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Entscheidend ist belastbare Qualitätsverbesserung bei vertretbarem Pflegeaufwand.",
     "benefit": "Modellanpassungen werden nur dort umgesetzt, wo ein belastbarer Test einen Vorteil gegenüber einfacheren Verfahren zeigt.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   },
   {
     "brand": "agiworks",
@@ -1819,8 +1819,8 @@ export const AUTHORITY_PAGES: AuthorityPage[] = [
     "metric": "Erfolg sind deterministische Kontrollgrenzen, Wiederanlauf und überprüfbare Ergebnisqualität.",
     "benefit": "Mehrstufige KI-Prozesse bleiben hinsichtlich Kontrolle, Wiederaufnahme und Ressourcenverbrauch nachvollziehbar.",
     "primaryLink": "/leistungen/eigene-llms",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
   }
 ];
 export function getAuthorityPage(brand: BrandKey, slug: string): AuthorityPage | undefined {

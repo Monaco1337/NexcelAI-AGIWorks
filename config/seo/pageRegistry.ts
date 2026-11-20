@@ -378,7 +378,7 @@ function buildRegistry(): SeoPage[] {
     });
   });
 
-  // SEO_ENTERPRISE_AUTHORITY_100_V3_20261120: 100 curated candidates and 2 hubs; no auto-indexing.
+  // SEO_ENTERPRISE_AUTHORITY_100_V3_20261120: 100 owner-approved pages and 2 owner-approved hubs; index release 2026-11-20.
   AUTHORITY_PAGES.forEach((ap) => pages.push({
     id: `${ap.brand}:${ap.path}`,
     brand: ap.brand,
@@ -390,7 +390,7 @@ function buildRegistry(): SeoPage[] {
     breadcrumbLabel: ap.headline,
     approved: ap.approved,
     manualIndexApproval: ap.manualIndexApproval,
-    quality: { index: false },
+    quality: { index: true },
     changefreq: "monthly",
     priority: 0.4,
   }));
@@ -405,8 +405,8 @@ function buildRegistry(): SeoPage[] {
         ? "KI-Agenten, Automatisierung, Kundenerlebnis und Unternehmenswissen: konkrete KI-Einsatzfelder für Geschäftsprozesse von NEXCEL AI."
         : "Softwarearchitektur, Systemintegration, Plattformen und KI-Engineering: technische Schwerpunkte von AGI Works für Unternehmen.",
       breadcrumbLabel: brand === "nexcel" ? "Anwendungen" : "Engineering",
-      approved: false, manualIndexApproval: false,
-      quality: { index: false }, changefreq: "monthly", priority: 0.4,
+      approved: true, manualIndexApproval: true,
+      quality: { index: true }, changefreq: "monthly", priority: 0.4,
     });
   });
 

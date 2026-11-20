@@ -552,8 +552,8 @@ const SEO_TOPIC_V2_GUIDES: KnowledgePage[] = [
     ],
     "datePublished": "2026-11-20",
     "dateModified": "2026-11-20",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
 },
 {
     "brand": "nexcel",
@@ -622,8 +622,8 @@ const SEO_TOPIC_V2_GUIDES: KnowledgePage[] = [
     ],
     "datePublished": "2026-11-20",
     "dateModified": "2026-11-20",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
 },
 {
     "brand": "agiworks",
@@ -692,8 +692,8 @@ const SEO_TOPIC_V2_GUIDES: KnowledgePage[] = [
     ],
     "datePublished": "2026-11-20",
     "dateModified": "2026-11-20",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
 },
 {
     "brand": "agiworks",
@@ -762,8 +762,8 @@ const SEO_TOPIC_V2_GUIDES: KnowledgePage[] = [
     ],
     "datePublished": "2026-11-20",
     "dateModified": "2026-11-20",
-    "approved": false,
-    "manualIndexApproval": false
+    "approved": true,
+    "manualIndexApproval": true
 }
 ];
 
