@@ -1,3 +1,4 @@
+// SEO_TOPIC_AUTHORITY_V2_20261120 — guarded targeted FAQ and related-link improvements.
 /**
  * Money pages — commercial service/solution pages (Phase 6).
  *
@@ -205,6 +206,7 @@ const AGI_PAGES: MoneyPage[] = [
       { title: "Launch & Betrieb", description: "Ausrollen und iterativ erweitern." },
     ],
     faq: [
+      { question: "Was gehört vor dem Web-App-Start in die Sicherheitsprüfung?", answer: "Rollen und Berechtigungen, Eingabevalidierung, Session-Schutz, API-Zugriffe sowie automatisierte und manuelle Tests." },
       { question: "Welche Angaben brauchen Sie, um eine Web-App entwickeln zu lassen?", answer: "Hilfreich sind die betroffenen Nutzergruppen, der wichtigste Ablauf, vorhandene Datenquellen, Integrationspartner und Anforderungen an Rollen, Sicherheit und Betrieb. Daraus wird der erste Projektumfang abgeleitet." },
       { question: "Was unterscheidet eine Web-App von einer Website?", answer: "Eine Web-App hat Nutzerkonten, Rollen und Datenlogik; sie bildet Prozesse ab, statt nur Inhalte darzustellen." },
       { question: "Welche Technologien setzen Sie ein?", answer: "In der Regel Next.js im Frontend, eine relationale Datenbank und serverseitige APIs mit Validierung." },
@@ -212,7 +214,7 @@ const AGI_PAGES: MoneyPage[] = [
       { question: "Kann die App später wachsen?", answer: "Ja, die Architektur ist modular angelegt, sodass weitere Module ergänzt werden können." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, in der wir den konkreten Funktionsumfang und den Projektkorridor bestimmen." },
     ],
-    relatedPaths: ["/leistungen/saas-entwicklung", "/leistungen/admin-panel-entwicklung", "/leistungen/api-entwicklung", "/systemanalyse", "/beratung"],
+    relatedPaths: ["/wissen/softwareprojekt-anforderungen-vorbereiten", "/leistungen/saas-entwicklung", "/leistungen/admin-panel-entwicklung", "/leistungen/api-entwicklung", "/systemanalyse", "/beratung"],
     tags: ["Web-App", "Backend", "Datenmodell"],
     approved: true,
     manualIndexApproval: true,
@@ -339,13 +341,14 @@ const AGI_PAGES: MoneyPage[] = [
       { title: "Rollout", description: "Schrittweise einführen und erweitern." },
     ],
     faq: [
+      { question: "Wie werden Datenkonflikte bei ERP-Integrationen vermieden?", answer: "Durch festgelegte führende Systeme, eindeutige Identifikatoren und dokumentierte Synchronisationsregeln." },
       { question: "Warum ein individuelles ERP statt Standardsoftware?", answer: "Wenn Ihre Prozesse spezifisch sind, bildet ein individuelles ERP sie exakt ab, statt Sie in fremde Abläufe zu zwingen." },
       { question: "Können Bestandsdaten übernommen werden?", answer: "Ja, ein Migrationspfad aus vorhandenen Tools ist Teil des Projekts." },
       { question: "Muss alles auf einmal gebaut werden?", answer: "Nein, ein modularer Aufbau mit Kernmodulen zuerst reduziert Risiko und Kosten." },
       { question: "Wie werden Zugriffe geregelt?", answer: "Über ein Rollen- und Rechtemodell, das jeder Rolle genau die passende Sicht gibt." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Prozesse, Module und den Projektkorridor klärt." },
     ],
-    relatedPaths: ["/leistungen/crm-system-entwicklung", "/leistungen/admin-panel-entwicklung", "/leistungen/api-entwicklung", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/wissen/erp-schnittstellen-systemintegration-planen", "/leistungen/crm-system-entwicklung", "/leistungen/admin-panel-entwicklung", "/leistungen/api-entwicklung", "/systemanalyse", "/kontakt"],
     tags: ["ERP", "Architektur", "Betrieb"],
     approved: true,
     manualIndexApproval: true,
@@ -538,6 +541,7 @@ const AGI_PAGES: MoneyPage[] = [
       { title: "Betrieb", description: "Monitoring aufsetzen und stabil halten." },
     ],
     faq: [
+      { question: "Wie werden API-Aufrufe gegen doppelte Verarbeitung abgesichert?", answer: "Über Idempotenzschlüssel, sichere Wiederholungen und ein überprüfbares Fehlerprotokoll." },
       { question: "Wie funktioniert eine ERP-Integration ohne doppelte Buchungen?", answer: "Durch eindeutige Vorgangs-IDs, idempotente Verarbeitung, geprüfte Datenzuordnung und überwachte Wiederholungen lassen sich doppelte Aktionen und unbemerkte Übertragungsfehler reduzieren." },
       { question: "Was ist eine Integration?", answer: "Eine kontrollierte Verbindung zwischen Systemen, über die Daten automatisch und zuverlässig ausgetauscht werden." },
       { question: "Was passiert bei Fehlern?", answer: "Die Schnittstellen haben ein definiertes Fehler-Handling mit automatischer Wiederholung und Alarmierung." },
@@ -545,7 +549,7 @@ const AGI_PAGES: MoneyPage[] = [
       { question: "Welche Dienste lassen sich anbinden?", answer: "Zahlungsanbieter, CRM/ERP, Kalender, E-Mail und beliebige Systeme mit API oder Webhook." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Datenflüsse und den Projektkorridor klärt." },
     ],
-    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/systemanalyse", "/beratung"],
+    relatedPaths: ["/wissen/erp-schnittstellen-systemintegration-planen", "/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/systemanalyse", "/beratung"],
     tags: ["API", "Integration", "Schnittstellen"],
     approved: true,
     manualIndexApproval: true,
@@ -671,6 +675,7 @@ const AGI_PAGES: MoneyPage[] = [
       { title: "Launch & Betrieb", description: "Ausrollen, überwachen und weiterentwickeln." },
     ],
     faq: [
+      { question: "Welche Abnahmekriterien braucht Individualsoftware?", answer: "Prüfbare fachliche Ergebnisse, Rollen- und Rechteprüfungen sowie definierte Integrations- und Sicherheitsanforderungen." },
       { question: "Was kostet es, individuelle Software entwickeln zu lassen?", answer: "Das hängt vor allem von Umfang, Datenmodell, Anzahl der Integrationen, Rollen und Anforderungen an Sicherheit und Betrieb ab. Nach Klärung dieser Punkte lässt sich ein nachvollziehbarer Projektkorridor ableiten." },
       { question: "Wann lohnt sich individuelle Software?", answer: "Wenn Standardsoftware Ihre Prozesse nicht abbildet oder mehrere Systeme sauber zusammenspielen müssen." },
       { question: "Wie behalten wir Kosten im Griff?", answer: "Durch einen klar geschnittenen ersten Ausbaustand und iterative Lieferung statt Big-Bang." },
@@ -678,7 +683,7 @@ const AGI_PAGES: MoneyPage[] = [
       { question: "Wird die Software gewartet?", answer: "Betrieb, Monitoring und Wartung können Teil der Zusammenarbeit sein." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Umfang, Architektur und Projektkorridor bestimmt." },
     ],
-    relatedPaths: ["/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/beratung", "/systemanalyse"],
+    relatedPaths: ["/wissen/softwareprojekt-anforderungen-vorbereiten", "/leistungen/web-app-entwicklung", "/leistungen/saas-entwicklung", "/leistungen/erp-system-entwicklung", "/beratung", "/systemanalyse"],
     tags: ["Software", "Architektur", "Engineering"],
     approved: true,
     manualIndexApproval: true,
@@ -746,6 +751,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Optimierung", description: "Regeln und Modelle nachschärfen." },
     ],
     faq: [
+      { question: "Wie wird die Sicherheit eines KI-Systems vor dem Betrieb geprüft?", answer: "Mit Datenflussanalyse, Rollenmodell, adversarialen Tests, überprüften Modellzugriffen und dokumentierten Risiken." },
       { question: "Was ist bei KI-Beratung im Mittelstand besonders wichtig?", answer: "Entscheidend sind ein kleiner, wirtschaftlich prüfbarer Einstieg, die Nutzung bestehender Systeme, klare Zuständigkeiten, Datenschutz und eine nachvollziehbare Entscheidung darüber, welche Schritte Menschen freigeben müssen." },
       { question: "Was umfasst eine KI-Beratung für Unternehmen?", answer: "Zunächst werden Ziele, Prozesse, Datenquellen und Risiken geprüft. Danach folgen Priorisierung der Anwendungsfälle, Entscheidung über Automatisierung oder Assistenz, ein begrenzter Pilot und eine Bewertung anhand vereinbarter Qualitätskriterien." },
       { question: "Ersetzt KI meine Mitarbeitenden?", answer: "Nein, das Ziel ist Entlastung: Routine wird automatisiert, Entscheidungen bleiben beim Menschen." },
@@ -754,7 +760,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { question: "Wie messen wir den Nutzen?", answer: "Über konkrete, vorab definierte Ziele statt pauschaler Versprechen." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Potenziale bewertet und einen ersten Anwendungsfall abgrenzt." },
     ],
-    relatedPaths: ["/loesungen/automatisierung", "/loesungen/ki-agenten", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/beratung"],
+    relatedPaths: ["/wissen/ki-projekte-datenschutz-sicherheit-planen", "/loesungen/automatisierung", "/loesungen/ki-agenten", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/beratung"],
     tags: ["KI", "Automatisierung", "Prozess"],
     approved: true,
     manualIndexApproval: true,
@@ -814,6 +820,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Betrieb", description: "Überwachen und nachschärfen." },
     ],
     faq: [
+      { question: "Welche Freigaben braucht ein KI-Agent im Unternehmen?", answer: "Risikoreiche Aktionen benötigen serverseitig durchgesetzte Berechtigungen und definierte menschliche Freigaben." },
       { question: "Wie werden KI-Agenten gegen unbefugte Aktionen abgesichert?", answer: "Mit minimalen Werkzeugberechtigungen, serverseitiger Prüfung, menschlichen Freigaben für riskante Aktionen, Protokollierung und definierten Eskalations- und Abbruchregeln." },
       { question: "Was kostet ein KI-Agent für Unternehmen?", answer: "Der Aufwand hängt von den eingebundenen Werkzeugen, dem Berechtigungsmodell, erforderlichen Tests, Modellnutzung und laufendem Monitoring ab. Eine erste Schätzung setzt eine klar eingegrenzte Aufgabe voraus." },
       { question: "Was ist ein KI-Agent?", answer: "Eine KI, die eine klar definierte Aufgabe eigenständig ausführt, innerhalb festgelegter Regeln und Grenzen." },
@@ -822,7 +829,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { question: "Was passiert bei unklaren Fällen?", answer: "Unklare oder kritische Fälle werden an eine zuständige Person eskaliert." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die eine geeignete Aufgabe und den Projektkorridor bestimmt." },
     ],
-    relatedPaths: ["/loesungen/ki-systeme", "/loesungen/automatisierung", "/loesungen/ki-fuer-vertrieb", "/systemanalyse", "/beratung"],
+    relatedPaths: ["/wissen/ki-agenten-im-unternehmen-einfuehren", "/loesungen/ki-systeme", "/loesungen/automatisierung", "/loesungen/ki-fuer-vertrieb", "/systemanalyse", "/beratung"],
     tags: ["KI-Agent", "Automatisierung", "Kontrolle"],
     approved: true,
     manualIndexApproval: true,
@@ -883,6 +890,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Ausbau", description: "Weitere Abläufe ergänzen." },
     ],
     faq: [
+      { question: "Wann sollte ein Prozess ohne KI automatisiert werden?", answer: "Wenn eindeutige Regeln ausreichen; KI ist erst nötig, wenn unstrukturierte Eingaben oder flexible Einordnung hinzukommen." },
       { question: "Wann braucht Prozessautomatisierung überhaupt KI?", answer: "Regelbasierte Abläufe sollten zuerst ohne KI umgesetzt werden. KI ist vor allem dann sinnvoll, wenn unstrukturierte Texte, Dokumente oder Anfragen verstanden werden müssen; kritische Entscheidungen bleiben kontrollierbar." },
       { question: "Was lässt sich automatisieren?", answer: "Wiederkehrende, regelbasierte Abläufe wie Datenübertragung, Benachrichtigungen und Aufgabenerstellung." },
       { question: "Verliere ich die Kontrolle?", answer: "Nein, sensible Schritte behalten eine menschliche Kontrolle, und Sie können jederzeit eingreifen." },
@@ -890,7 +898,7 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { question: "Werden bestehende Tools eingebunden?", answer: "Ja, vorhandene Systeme werden über Schnittstellen sinnvoll verkettet." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die die lohnendsten Automatisierungen und den Projektkorridor bestimmt." },
     ],
-    relatedPaths: ["/loesungen/ki-systeme", "/loesungen/lead-automation", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/beratung"],
+    relatedPaths: ["/wissen/ki-agenten-im-unternehmen-einfuehren", "/loesungen/ki-systeme", "/loesungen/lead-automation", "/loesungen/digitale-betriebssysteme", "/systemanalyse", "/beratung"],
     tags: ["Automatisierung", "Prozess", "Effizienz"],
     approved: true,
     manualIndexApproval: true,
@@ -950,13 +958,14 @@ const NEXCEL_PAGES: MoneyPage[] = [
       { title: "Steuerung", description: "Fortschritt an Etappenzielen messen." },
     ],
     faq: [
+      { question: "Wie vermeidet man neue Datensilos?", answer: "Mit klarer Datenverantwortung, standardisierten Schnittstellen und einer gemeinsamen Integrationsarchitektur." },
       { question: "Was ist ein digitales Betriebssystem?", answer: "Ein zusammenhängendes System aus Prozessen, Daten und Kommunikation, das Insellösungen ablöst." },
       { question: "Müssen wir alles auf einmal umstellen?", answer: "Nein, die Umsetzung erfolgt etappenweise entlang einer priorisierten Roadmap." },
       { question: "Was passiert mit bestehenden Tools?", answer: "Sinnvolle Tools werden eingebunden, überflüssige schrittweise abgelöst." },
       { question: "Wie wird der Fortschritt gemessen?", answer: "Über konkrete Etappenziele statt eines vagen Gesamtversprechens." },
       { question: "Wie starten wir?", answer: "Mit einer Systemanalyse, die Ist-Zustand, Zielbild und Projektkorridor klärt." },
     ],
-    relatedPaths: ["/loesungen/automatisierung", "/loesungen/ki-systeme", "/loesungen/customer-experience-systeme", "/systemanalyse", "/kontakt"],
+    relatedPaths: ["/wissen/ki-projekte-datenschutz-sicherheit-planen", "/loesungen/automatisierung", "/loesungen/ki-systeme", "/loesungen/customer-experience-systeme", "/systemanalyse", "/kontakt"],
     tags: ["Betriebssystem", "Systemdesign", "Prozess"],
     approved: true,
     manualIndexApproval: true,

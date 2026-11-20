@@ -483,7 +483,291 @@ const NEXCEL_KNOWLEDGE: KnowledgePage[] = [
   },
 ];
 
-export const KNOWLEDGE_PAGES: KnowledgePage[] = [...AGI_KNOWLEDGE, ...NEXCEL_KNOWLEDGE];
+// SEO_TOPIC_AUTHORITY_V2_20261120 — new guides stay noindex until explicit human approval.
+const SEO_TOPIC_V2_GUIDES: KnowledgePage[] = [
+{
+    "brand": "nexcel",
+    "slug": "ki-agenten-im-unternehmen-einfuehren",
+    "topic": "KI-Agenten einführen",
+    "title": "KI-Agenten im Unternehmen einführen | NEXCEL AI",
+    "description": "KI-Agenten im Unternehmen einführen: geeignete Prozesse auswählen, Berechtigungen begrenzen, Pilotprojekt planen und Betrieb absichern.",
+    "h1": "KI-Agenten im Unternehmen kontrolliert einführen",
+    "heroIntro": "Von der ersten Prozessauswahl bis zum abgesicherten Pilotbetrieb: ein praxistauglicher Fahrplan für Unternehmen.",
+    "aeoAnswer": "Ein KI-Agent sollte zunächst genau eine überprüfbare Aufgabe übernehmen. Unternehmen definieren Ziel, Datenzugriffe, erlaubte Aktionen, menschliche Freigaben und Abbruchbedingungen, bevor sie einen Pilot starten. Erst nach Tests gegen Fehler, unerlaubte Werkzeugaufrufe und unklare Eingaben wird der Betrieb ausgeweitet.",
+    "takeaways": [
+        "Mit einem begrenzten, wiederkehrenden Anwendungsfall beginnen.",
+        "Werkzeugrechte und Datenzugriffe nach Least Privilege vergeben.",
+        "Kritische Aktionen erst nach menschlicher Freigabe ausführen.",
+        "Qualität, Fehler und tatsächlichen Aufwand im Pilot messen."
+    ],
+    "relatedPaths": [
+        "/loesungen/ki-agenten",
+        "/loesungen/automatisierung",
+        "/beratung",
+        "/systemanalyse"
+    ],
+    "tags": [
+        "KI-Agenten",
+        "Einführung",
+        "Governance"
+    ],
+    "id": "nexcel:/wissen/ki-agenten-im-unternehmen-einfuehren",
+    "path": "/wissen/ki-agenten-im-unternehmen-einfuehren",
+    "eyebrow": "Wissen",
+    "sections": [
+        {
+            "heading": "Geeigneten Pilotprozess auswählen",
+            "body": "Ein geeigneter Prozess hat ein wiederkehrendes Ziel, definierte Eingaben und eine eindeutige Ergebnisprüfung. Beispiele sind das Klassifizieren eingehender Anfragen oder das Erstellen interner Entwürfe.\n\nUngeeignet als erster Pilot sind Prozesse mit unklaren Verantwortlichkeiten, irreversiblen Transaktionen oder Zugriff auf besonders sensible Daten ohne Schutzkonzept."
+        },
+        {
+            "heading": "Agentenarchitektur und Sicherheitsgrenzen",
+            "body": "Trennen Sie Modellentscheidung, Werkzeugausführung und Freigabe. Ein serverseitiger Policy-Layer prüft jeden Werkzeugaufruf unabhängig vom Sprachmodell. Rollen, Geheimnisse und Systemzugänge bleiben außerhalb des Prompts.\n\nProtokollieren Sie Zweck, Freigabestatus, Werkzeugaufruf und Ergebnis in datensparsamer Form. Definieren Sie Laufzeit-, Budget- und Rate-Limits sowie einen sofortigen Abschaltweg."
+        },
+        {
+            "heading": "Pilot, Messung und Rollout",
+            "body": "Erstellen Sie einen Testsatz mit Normalfällen, Mehrdeutigkeiten, Prompt-Injection-Versuchen und unerlaubten Aktionen. Bewerten Sie Präzision, Korrekturbedarf, Fehlerquoten und Betriebsaufwand.\n\nEin Rollout erfolgt stufenweise mit Verantwortlichen, Monitoring, Rückfallprozess und regelmäßigem Review der Berechtigungen."
+        }
+    ],
+    "faq": [
+        {
+            "question": "Was ist ein sinnvoller erster KI-Agent?",
+            "answer": "Ein Agent für eine eng begrenzte, wiederkehrende Aufgabe mit klar prüfbarem Ergebnis und ohne unkontrollierte Außenwirkung."
+        },
+        {
+            "question": "Braucht jeder Agent Zugriff auf Unternehmenssysteme?",
+            "answer": "Nein. Nur die für die Aufgabe erforderlichen Werkzeuge und Daten sollten freigegeben werden."
+        },
+        {
+            "question": "Wie verhindert man unerwünschte Aktionen?",
+            "answer": "Durch serverseitige Berechtigungsprüfungen, Freigaben, begrenzte Werkzeuge, Tests und einen Abschaltmechanismus."
+        },
+        {
+            "question": "Wie misst man den Erfolg?",
+            "answer": "Mit vorab definierten Kennzahlen wie Ergebnisqualität, manueller Nacharbeit, Fehlerrate und Gesamtkosten."
+        },
+        {
+            "question": "Wann kann der Pilot produktiv gehen?",
+            "answer": "Erst nach dokumentierten Sicherheitstests, fachlicher Abnahme und einem belastbaren Betriebs- und Eskalationskonzept."
+        }
+    ],
+    "datePublished": "2026-11-20",
+    "dateModified": "2026-11-20",
+    "approved": false,
+    "manualIndexApproval": false
+},
+{
+    "brand": "nexcel",
+    "slug": "ki-projekte-datenschutz-sicherheit-planen",
+    "topic": "KI-Sicherheit und Datenschutz",
+    "title": "KI-Projekte sicher und datenschutzbewusst planen | NEXCEL AI",
+    "description": "KI-Projekte planen: Datenklassifizierung, DSGVO-Prüfung, Modellbetrieb, Zugriffsschutz und Nachweise vor dem produktiven Einsatz klären.",
+    "h1": "KI-Projekte mit Datenschutz und Sicherheit planen",
+    "heroIntro": "Eine belastbare Entscheidungsgrundlage für KI-Vorhaben mit personenbezogenen Daten, Unternehmenswissen und externen Modellen.",
+    "aeoAnswer": "Vor einem KI-Projekt werden Zweck, Datenkategorien, Rechtsgrundlage und Systemgrenzen dokumentiert. Die Architektur muss Zugriffsrechte, Datenflüsse, Aufbewahrung, Anbieterbedingungen und Angriffsszenarien berücksichtigen. Ob eine Datenschutz-Folgenabschätzung erforderlich ist, hängt vom konkreten Verarbeitungsvorgang und dessen Risiko ab.",
+    "takeaways": [
+        "Dateninventar und Zweckbindung vor dem Modellvergleich.",
+        "Anbieter, Übermittlungen, Verträge und Löschkonzepte prüfen.",
+        "Prompt Injection und Datenabfluss in der Bedrohungsanalyse berücksichtigen.",
+        "Technische Maßnahmen und organisatorische Verantwortlichkeiten nachweisen."
+    ],
+    "relatedPaths": [
+        "/loesungen/ki-systeme",
+        "/loesungen/ki-agenten",
+        "/beratung",
+        "/kontakt"
+    ],
+    "tags": [
+        "KI-Sicherheit",
+        "Datenschutz",
+        "DSGVO"
+    ],
+    "id": "nexcel:/wissen/ki-projekte-datenschutz-sicherheit-planen",
+    "path": "/wissen/ki-projekte-datenschutz-sicherheit-planen",
+    "eyebrow": "Wissen",
+    "sections": [
+        {
+            "heading": "Datenflüsse und Rechtsgrundlagen",
+            "body": "Kartieren Sie Eingaben, Dokumente, Modellanfragen, Vektorspeicher, Protokolle und Ausgaben. Klassifizieren Sie personenbezogene, vertrauliche und öffentlich nutzbare Informationen.\n\nFür jede Verarbeitung sind Zweck, Rechtsgrundlage, Verantwortlichkeiten, Speicherfristen und Empfänger zu klären. Erforderliche Verträge und mögliche Drittlandübermittlungen müssen gesondert geprüft werden."
+        },
+        {
+            "heading": "Bedrohungsmodell und Schutzmaßnahmen",
+            "body": "KI-Systeme benötigen klassische Sicherheitskontrollen und zusätzliche Schutzmaßnahmen gegen Prompt Injection, unerwartete Werkzeugaufrufe und die Offenlegung vertraulicher Inhalte.\n\nGeeignet sind Zugangstrennung, minimaler Datenzugriff, isolierte Tool-Ausführung, Ausgabefilter, sichere Geheimnisverwaltung und nachvollziehbare menschliche Freigaben."
+        },
+        {
+            "heading": "Prüfung vor dem Betrieb",
+            "body": "Prüfen Sie das System anhand realitätsnaher Szenarien, dokumentieren Sie verbleibende Risiken und benennen Sie Verantwortliche. Sicherheitskontrollen müssen auch bei Modellwechseln und neuen Datenquellen funktionieren.\n\nDatenschutzrechtliche Bewertungen, einschließlich einer gegebenenfalls nötigen DSFA, erfolgen bezogen auf den konkreten Anwendungsfall; allgemeine DSGVO-Konformitätsversprechen sind ungeeignet."
+        }
+    ],
+    "faq": [
+        {
+            "question": "Ist die Nutzung eines europäischen Modells automatisch DSGVO-konform?",
+            "answer": "Nein. Entscheidend sind Zweck, Rechtsgrundlage, konkrete Datenflüsse, Verträge und technische Schutzmaßnahmen."
+        },
+        {
+            "question": "Braucht jedes KI-Projekt eine Datenschutz-Folgenabschätzung?",
+            "answer": "Nein. Ob sie erforderlich ist, richtet sich nach dem Risiko der geplanten Verarbeitung."
+        },
+        {
+            "question": "Was ist Prompt Injection?",
+            "answer": "Der Versuch, ein KI-System über nicht vertrauenswürdige Eingaben zu unerwünschtem Verhalten zu bewegen."
+        },
+        {
+            "question": "Können vertrauliche Dokumente für RAG verwendet werden?",
+            "answer": "Nur mit geregelten Zugriffen, Datenminimierung, überprüfter Rechtsgrundlage und geeigneter Speicher- und Löscharchitektur."
+        },
+        {
+            "question": "Welche Nachweise sind vor dem Start wichtig?",
+            "answer": "Datenflussübersicht, Risikobewertung, Rollenmodell, Testprotokolle und dokumentierte Freigaben."
+        }
+    ],
+    "datePublished": "2026-11-20",
+    "dateModified": "2026-11-20",
+    "approved": false,
+    "manualIndexApproval": false
+},
+{
+    "brand": "agiworks",
+    "slug": "softwareprojekt-anforderungen-vorbereiten",
+    "topic": "Software-Anforderungsanalyse",
+    "title": "Softwareprojekt und Anforderungen vorbereiten | AGI Works",
+    "description": "Softwareprojekte richtig vorbereiten: Anforderungen, fachliche Prozesse, Architekturentscheidungen, Abnahme und Projektumfang systematisch klären.",
+    "h1": "Softwareprojekte und Anforderungen strukturiert vorbereiten",
+    "heroIntro": "Von der ersten Problemdefinition bis zu testbaren Akzeptanzkriterien und einer belastbaren technischen Umsetzung.",
+    "aeoAnswer": "Vor einer individuellen Softwareentwicklung müssen Problem, Nutzergruppen, fachliche Abläufe und Systemgrenzen feststehen. Gute Anforderungen beschreiben überprüfbare Ergebnisse statt nur eine Liste gewünschter Funktionen. Schnittstellen, Datenmodell, Sicherheitsanforderungen und Abnahmekriterien werden früh geklärt, damit Aufwand und Architektur realistisch bewertet werden können.",
+    "takeaways": [
+        "Geschäftsziel und betroffene Prozesse zuerst dokumentieren.",
+        "Anforderungen als prüfbare Nutzungsszenarien formulieren.",
+        "Nichtfunktionale Anforderungen und Integrationen früh erfassen.",
+        "Abnahme, Priorität und Änderungsprozess vor Entwicklung definieren."
+    ],
+    "relatedPaths": [
+        "/leistungen/softwareentwicklung",
+        "/leistungen/web-app-entwicklung",
+        "/beratung",
+        "/systemanalyse"
+    ],
+    "tags": [
+        "Softwareentwicklung",
+        "Anforderungen",
+        "Projektplanung"
+    ],
+    "id": "agiworks:/wissen/softwareprojekt-anforderungen-vorbereiten",
+    "path": "/wissen/softwareprojekt-anforderungen-vorbereiten",
+    "eyebrow": "Wissen",
+    "sections": [
+        {
+            "heading": "Problemrahmen und Systemgrenzen",
+            "body": "Erfassen Sie Nutzerrollen, heutige Arbeitsschritte, Fehlerquellen und das erwartete Ergebnis. Beschreiben Sie, welche Systeme Daten liefern und welche Funktionen ausdrücklich nicht Teil des Projekts sind.\n\nEine priorisierte Liste aus Must-haves und späteren Erweiterungen verhindert, dass der erste Release zu groß und unprüfbar wird."
+        },
+        {
+            "heading": "Prüfbare Anforderungen und Architektur",
+            "body": "Formulieren Sie Anforderungen mit Vorbedingung, Aktion und erwartbarem Ergebnis. Legen Sie Datenverantwortung, Rollenmodell, Lastannahmen, Integrationen, Verfügbarkeit, Auditierbarkeit und Datenschutz fest.\n\nArchitekturentscheidungen werden anhand dieser Qualitätsattribute getroffen und als nachvollziehbare Entscheidungen dokumentiert."
+        },
+        {
+            "heading": "Abnahme und kontrollierte Umsetzung",
+            "body": "Definieren Sie für jede wichtige Funktion überprüfbare Akzeptanzkriterien. Ergänzen Sie Integrations- und Sicherheitstests, Migrationsstrategie sowie einen Rückfallplan für produktive Änderungen.\n\nDer Projektumfang wird mit Meilensteinen, Abhängigkeiten und einem geregelten Änderungsprozess geführt."
+        }
+    ],
+    "faq": [
+        {
+            "question": "Welche Unterlagen braucht ein Softwareprojekt zum Start?",
+            "answer": "Mindestens Ziele, Nutzerrollen, Kernprozesse, Schnittstellenliste, Datenanforderungen und priorisierte Akzeptanzkriterien."
+        },
+        {
+            "question": "Muss jedes Detail vorab feststehen?",
+            "answer": "Nein. Kritische Randbedingungen müssen klar sein; offene Punkte werden priorisiert und im Projekt kontrolliert geklärt."
+        },
+        {
+            "question": "Was unterscheidet Wunschliste und Anforderung?",
+            "answer": "Eine Anforderung ist nachvollziehbar und mit einem eindeutigen Ergebnis prüfbar."
+        },
+        {
+            "question": "Wie werden Änderungen im Projekt behandelt?",
+            "answer": "Über eine dokumentierte Bewertung von Aufwand, Risiko, Abhängigkeiten und Auswirkungen auf Zeitplan und Abnahme."
+        },
+        {
+            "question": "Wann ist ein MVP sinnvoll?",
+            "answer": "Wenn ein eng umrissener Kernprozess früh mit echten Nutzern geprüft werden kann, ohne essenzielle Sicherheitsanforderungen zu verschieben."
+        }
+    ],
+    "datePublished": "2026-11-20",
+    "dateModified": "2026-11-20",
+    "approved": false,
+    "manualIndexApproval": false
+},
+{
+    "brand": "agiworks",
+    "slug": "erp-schnittstellen-systemintegration-planen",
+    "topic": "ERP-Integration",
+    "title": "ERP-Schnittstellen und Systemintegration planen | AGI Works",
+    "description": "ERP-Schnittstellen planen: Datenverantwortung, API-Verträge, Synchronisation, Fehlerbehandlung, Migration und Sicherheit systematisch gestalten.",
+    "h1": "ERP-Schnittstellen und Systemintegration richtig planen",
+    "heroIntro": "Ein technischer Leitfaden für stabile Datenflüsse zwischen ERP, CRM, Shop, Buchhaltung und individuellen Anwendungen.",
+    "aeoAnswer": "Eine belastbare ERP-Integration beginnt mit einer eindeutigen Datenverantwortung und verbindlichen Schnittstellenverträgen. Ereignisse, Datenformate, Idempotenz, Wiederholungsversuche, Fehlerqueues und Monitoring werden vor der Implementierung definiert. Sicherheit und Testdaten sind ebenso wichtig wie eine kontrollierte Migration ohne Datenverlust.",
+    "takeaways": [
+        "Für jedes Datenobjekt genau ein führendes System bestimmen.",
+        "Schnittstellen mit Versionierung und Fehlersemantik spezifizieren.",
+        "Synchronisation idempotent und beobachtbar gestalten.",
+        "Reconciliation und Rückfall vor Go-live testen."
+    ],
+    "relatedPaths": [
+        "/leistungen/erp-system-entwicklung",
+        "/leistungen/api-entwicklung",
+        "/beratung",
+        "/kontakt"
+    ],
+    "tags": [
+        "ERP",
+        "API",
+        "Systemintegration"
+    ],
+    "id": "agiworks:/wissen/erp-schnittstellen-systemintegration-planen",
+    "path": "/wissen/erp-schnittstellen-systemintegration-planen",
+    "eyebrow": "Wissen",
+    "sections": [
+        {
+            "heading": "Datenmodell und System-of-Record",
+            "body": "Ordnen Sie Stammdaten, Aufträge, Rechnungen und Statusänderungen dem jeweils führenden System zu. Dokumentieren Sie Mapping, Identifikatoren, Zeitstempel, Konfliktregeln und Aufbewahrung.\n\nOhne klare Verantwortung entstehen Dubletten und widersprüchliche Zustände, auch wenn jede API technisch erreichbar ist."
+        },
+        {
+            "heading": "Schnittstellenvertrag und Ausfallsicherheit",
+            "body": "Definieren Sie Authentifizierung, Berechtigungen, Eingabevalidierung, API-Versionen, Rate-Limits, Timeouts und Retry-Regeln. Wiederholte Nachrichten dürfen keine doppelten Buchungen auslösen.\n\nAsynchrone Verarbeitung benötigt stabile Event-IDs, Dead-Letter-Queues, Monitoring und kontrollierte Wiederanläufe. Eventual Consistency muss fachlich akzeptiert und sichtbar sein."
+        },
+        {
+            "heading": "Einführung und Betriebsnachweise",
+            "body": "Testen Sie fachliche Integritätsregeln, Teilausfälle, fehlerhafte Eingaben und Wiederanläufe. Planen Sie Backfill, Cutover, Parallelbetrieb und Rückfall.\n\nEin Reconciliation-Prozess prüft regelmäßig, ob Datenbestände und Geschäftsvorfälle zwischen den Systemen übereinstimmen."
+        }
+    ],
+    "faq": [
+        {
+            "question": "Wann ist eine API besser als ein CSV-Export?",
+            "answer": "Wenn zeitnahe, automatisierte und nachvollziehbare Datenübertragung mit klarer Fehlerbehandlung benötigt wird."
+        },
+        {
+            "question": "Wie verhindert man doppelte ERP-Buchungen?",
+            "answer": "Mit Idempotenzschlüsseln, eindeutigen Geschäfts-IDs und serverseitiger Duplikatprüfung."
+        },
+        {
+            "question": "Was passiert, wenn ein Zielsystem ausfällt?",
+            "answer": "Der Ablauf benötigt begrenzte Wiederholungsversuche, Fehlerablage, Alarmierung und definierte Nachverarbeitung."
+        },
+        {
+            "question": "Wer ist für Datenkonflikte verantwortlich?",
+            "answer": "Das muss je Datenobjekt über ein führendes System und dokumentierte Konfliktregeln festgelegt sein."
+        },
+        {
+            "question": "Wie prüft man eine Integration vor Go-live?",
+            "answer": "Mit Vertrags-, Integrations-, Last- und Ausfalltests sowie einem getesteten Datenabgleich und Rückfallplan."
+        }
+    ],
+    "datePublished": "2026-11-20",
+    "dateModified": "2026-11-20",
+    "approved": false,
+    "manualIndexApproval": false
+}
+];
+
+export const KNOWLEDGE_PAGES: KnowledgePage[] = [...AGI_KNOWLEDGE, ...NEXCEL_KNOWLEDGE, ...SEO_TOPIC_V2_GUIDES];
 
 export function getKnowledgePagesForBrand(brand: BrandKey): KnowledgePage[] {
   return KNOWLEDGE_PAGES.filter((p) => p.brand === brand);
