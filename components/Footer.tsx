@@ -484,9 +484,9 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
               Systeme
-            </h4>
+            </h2>
             <ul className="space-y-2 sm:space-y-3">
               {footer.links.products.map((link) => (
                 <li key={link.label}>
@@ -519,9 +519,9 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
               Unternehmen
-            </h4>
+            </h2>
             <ul className="space-y-2 sm:space-y-3">
               {footer.links.company.map((link) => (
                 <li key={link.label}>
@@ -544,9 +544,9 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
               Ressourcen
-            </h4>
+            </h2>
             <ul className="space-y-2 sm:space-y-3">
               {footer.links.solutions.map((link) => (
                 <li key={link.label}>
@@ -569,9 +569,9 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
               Rechtliches
-            </h4>
+            </h2>
             <ul className="space-y-2 sm:space-y-3">
               {footer.links.legal.map((link) => (
                 <li key={link.label}>
@@ -632,9 +632,9 @@ export default function Footer() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-5">
+          <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-5">
             Alle Systeme
-          </h4>
+          </h2>
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
             {FOOTER_SYSTEM_GROUPS.map((group) => (
               <div key={group.category}>
@@ -667,9 +667,9 @@ export default function Footer() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h4 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-5">
+          <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-5">
             Standorte
-          </h4>
+          </h2>
           <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
             {(FOOTER_LOCATIONS[brand.id] ?? FOOTER_LOCATIONS.nexcel).map((location) => (
               <div key={location.slug}>

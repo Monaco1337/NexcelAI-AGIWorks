@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ConsultationBooking from "@/components/consultations/ConsultationBooking";
 import Footer from "@/components/Footer";
+import ConsultationIntentLinks from "@/components/seo/ConsultationIntentLinks";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
 import { serviceSchema, webPageForUrl } from "@/lib/seo/jsonld";
 import { generateSeoMetadata } from "@/lib/seo/metadata";
@@ -18,6 +19,7 @@ export default function BeratungPage() {
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">Wählen Sie einen Termin und erzählen Sie uns kurz, wobei wir Sie unterstützen können.</p>
       </header>
       <ConsultationBooking brand="nexcel" />
+      <ConsultationIntentLinks brand="nexcel" />
       <section className="mx-auto max-w-2xl px-2 pb-20 pt-16 text-center sm:pt-20" aria-label="Persönliche Rückmeldung">
         <p className="text-xs font-semibold uppercase tracking-[.2em] text-violet-300">PERSÖNLICH. DIREKT. UNKOMPLIZIERT.</p>
         <h2 className="mt-4 text-2xl font-medium tracking-tight text-white sm:text-3xl">Wir freuen uns darauf, Sie kennenzulernen.</h2>
