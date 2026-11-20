@@ -17,8 +17,8 @@ const initialSelection: QuoteInput = {
 };
 const euro = (value: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-const surface = 'rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_14px_50px_-30px_rgba(27,48,79,.20)] sm:p-7';
-const field = 'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[15px] font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10';
+const surface = 'sales-light-surface rounded-[24px] border border-[#dfe6ef] bg-white p-5 shadow-[0_12px_40px_-30px_rgba(16,36,65,.22)] sm:p-7';
+const field = 'w-full rounded-2xl border border-[#ced8e5] bg-white px-4 py-3 text-[15px] font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10';
 const primary = 'inline-flex min-h-[46px] items-center justify-center rounded-2xl bg-[#165dce] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_#165dce] transition hover:bg-[#0d4eb7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40';
 const secondary = 'inline-flex min-h-[46px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40';
 const badge = 'inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600';
@@ -175,7 +175,45 @@ export default function InternalPricingWorkbench() {
   const validNet = manualNet.trim() !== '' && Number.isFinite(net) && net > 0 && net <= 5000000;
   const vat = rules?.vatRate ?? 0.19;
 
-  return <div className="space-y-6 text-slate-900">
+  return <div className="sales-calm-ui space-y-6 rounded-[26px] bg-[#f5f7fa] p-3 text-[#1c293d] sm:p-5 lg:p-6">
+    <style jsx global>
+      {`
+      .sales-calm-ui {
+        color-scheme: light;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-body), "Segoe UI", sans-serif;
+        color: #1c293d;
+        -webkit-font-smoothing: antialiased;
+      }
+      :where(.sales-calm-ui .sales-light-surface) :is(h1,h2,h3,h4,h5,h6) {
+        color: #142238 !important;
+        text-shadow: none !important;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-headline), sans-serif;
+        line-height: 1.27;
+        letter-spacing: -0.025em;
+      }
+      :where(.sales-calm-ui .sales-light-surface) :is(p,span,div,label,li,strong,small,summary,td,th) {
+        color: #344256;
+        text-shadow: none;
+      }
+      :where(.sales-calm-ui .sales-light-surface) :is(input,textarea,select) {
+        color: #19273d;
+        background-color: #ffffff;
+      }
+      :where(.sales-calm-ui .sales-light-surface) :is(input,textarea)::placeholder { color: #67768b; opacity: 1; }
+      :where(.sales-calm-ui .sales-light-surface) :is(button,a,input,textarea,select):focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+      }
+      :where(.sales-calm-ui .sales-light-surface) [class~="text-slate-400"] { color: #64748b; }
+      :where(.sales-calm-ui .sales-light-surface) input[type="checkbox"] {
+        accent-color: #2563eb;
+        color-scheme: light;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .sales-calm-ui :is(button,a,input,textarea,select) { transition-duration: 0.01ms !important; }
+      }
+      `}
+    </style>
     <div className={surface + ' flex flex-wrap items-center justify-between gap-4'}>
       <div>
         <p className="text-xs font-semibold uppercase tracking-[.2em] text-blue-600">Mandant auswählen</p>
@@ -191,7 +229,7 @@ export default function InternalPricingWorkbench() {
       </div>
     </div>
 
-    <nav className="grid grid-cols-3 gap-2 rounded-[24px] bg-slate-200/60 p-1.5" aria-label="Kalkulationsbereich">
+    <nav className="grid grid-cols-3 gap-2 rounded-[20px] border border-[#dfe6ef] bg-[#e9eef5] p-1.5" aria-label="Kalkulationsbereich">
       {(['consult', 'catalog', 'approval'] as const).map((key, index) =>
         <button key={key} type="button" aria-current={panel === key ? 'step' : undefined} onClick={() => setPanel(key)}
           className={'min-h-[50px] rounded-[18px] px-2 text-xs font-semibold transition sm:text-sm ' + (panel === key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:bg-white/60')}>
@@ -244,16 +282,16 @@ export default function InternalPricingWorkbench() {
           </section>
         </div>
         <aside className="space-y-5 lg:sticky lg:top-6">
-          <section className="overflow-hidden rounded-[28px] bg-[#102441] p-6 text-white shadow-[0_20px_55px_-22px_rgba(16,36,65,.5)] sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[.2em] text-blue-200">Interne Live-Kalkulation</p>
-            <h2 className="mt-2 text-xl font-semibold">Budgetrahmen</h2>
-            <p className="mt-4 text-xs text-slate-300">Netto · Unverbindliche Orientierung</p>
-            <div className="mt-2 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{quote ? euro(quote.projectNet.min) : previewBusy ? 'Berechne …' : '–'}</div>
-            {quote && <p className="mt-1 text-lg text-blue-200 tabular-nums">bis {euro(quote.projectNet.max)}</p>}
-            <p className="mt-3 text-xs text-slate-300">{quote ? `Inkl. USt.: ${euro(quote.projectGross.min)} bis ${euro(quote.projectGross.max)}` : 'Preise lassen sich im Reiter „Preise festlegen“ eingeben.'}</p>
-            <button type="button" className="mt-6 w-full rounded-2xl bg-white px-4 py-3.5 text-sm font-bold text-slate-900 transition hover:bg-blue-50 disabled:opacity-40" onClick={preview} disabled={busy || invalidRanges > 0}>{busy ? 'Berechne …' : 'Budget jetzt berechnen'}</button>
-            {quote && <details className="mt-5 text-sm text-slate-200"><summary className="cursor-pointer font-semibold">Positionen anzeigen</summary><div className="mt-3 space-y-2">{quote.items.map((item, index) => <div key={index} className="flex items-start justify-between gap-3 border-b border-white/10 py-2 text-xs"><span>{item.label}</span><span className="whitespace-nowrap text-right tabular-nums">{euro(item.min)}–{euro(item.max)}</span></div>)}</div></details>}
-            {quote && <p className="mt-4 text-xs leading-5 text-slate-300">{quote.disclaimer}</p>}
+          <section className="sales-light-surface overflow-hidden rounded-[24px] border border-[#c7daf6] bg-[#eaf2ff] p-6 text-slate-900 shadow-[0_12px_38px_-26px_rgba(30,74,142,.24)] sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[.2em] text-blue-700">Interne Live-Kalkulation</p>
+            <h2 className="mt-2 text-xl font-semibold text-[#142238]">Budgetrahmen</h2>
+            <p className="mt-4 text-xs text-slate-600">Netto · Unverbindliche Orientierung</p>
+            <div className="mt-2 text-3xl font-semibold tracking-tight text-[#153d79] tabular-nums sm:text-4xl">{quote ? euro(quote.projectNet.min) : previewBusy ? 'Berechne …' : '–'}</div>
+            {quote && <p className="mt-1 text-lg text-blue-700 tabular-nums">bis {euro(quote.projectNet.max)}</p>}
+            <p className="mt-3 text-xs text-slate-600">{quote ? `Inkl. USt.: ${euro(quote.projectGross.min)} bis ${euro(quote.projectGross.max)}` : 'Preise lassen sich im Reiter „Preise festlegen“ eingeben.'}</p>
+            <button type="button" className="mt-6 w-full rounded-2xl bg-[#1859c9] px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#124ba9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-40" onClick={preview} disabled={busy || invalidRanges > 0}>{busy ? 'Berechne …' : 'Budget jetzt berechnen'}</button>
+            {quote && <details className="mt-5 text-sm text-slate-700"><summary className="cursor-pointer font-semibold">Positionen anzeigen</summary><div className="mt-3 space-y-2">{quote.items.map((item, index) => <div key={index} className="flex items-start justify-between gap-3 border-b border-slate-200 py-2 text-xs"><span>{item.label}</span><span className="whitespace-nowrap text-right tabular-nums">{euro(item.min)}–{euro(item.max)}</span></div>)}</div></details>}
+            {quote && <p className="mt-4 text-xs leading-5 text-slate-600">{quote.disclaimer}</p>}
           </section>
           <section className={surface}>
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Direkten Angebotspreis notieren</p>
