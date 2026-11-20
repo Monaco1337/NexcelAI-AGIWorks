@@ -4418,3 +4418,235 @@ section[data-nxl-process-premium="true"]
 }
 
 /* NXL_PROCESS_CLEAN_V2_END */
+
+
+/* SEO_PREMIUM_DESIGN_STAGE3_V5_20261120
+ * Scope: SEO editorial, commercial, knowledge and authority marketing routes;
+ * global branded footer. Never alter admin, consent, forms, API or indexing.
+ */
+
+/* Typographic correction: preserve authored sizing, fix clipping and word overflow. */
+:is(main,section).seo-premium-v5 {
+  --premium-v5-highlight: var(--brand-primary, #a78bfa);
+  color: rgba(245, 247, 255, .94);
+  text-rendering: optimizeLegibility;
+}
+:is(main,section).seo-premium-v5 :is(h1, h2, h3, h4) {
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  line-height: 1.17 !important;
+  letter-spacing: -.035em;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: balance;
+  text-shadow: none !important;
+}
+:is(main,section).seo-premium-v5 h1 { line-height: 1.12 !important; letter-spacing: -.047em; }
+:is(main,section).seo-premium-v5 :is(p, li) {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  line-height: 1.75;
+}
+:is(main,section).seo-premium-v5 :is(section, header) { min-width: 0; }
+:is(main,section).seo-premium-v5 :is(section, header) > div { min-width: 0; }
+:is(main,section).seo-premium-v5 :is(section, article) { border-color: transparent !important; }
+
+/* Open editorial surfaces, not cards. Focus on reading and conversion. */
+:is(main,section).seo-premium-v5 article,
+:is(main,section).seo-premium-v5 .seo-premium-v5-surface {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:is(main,section).seo-premium-v5 article {
+  min-width: 0;
+  transition: color 200ms ease;
+}
+:is(main,section).seo-premium-v5 article:hover { transform: none !important; }
+:is(main,section).seo-premium-v5 .seo-premium-v5-surface { padding: clamp(1.1rem, 2.25vw, 2.25rem) 0; }
+:is(main,section).seo-premium-v5 section[class*="rounded-["] {
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+:is(main,section).seo-premium-v5 section[class*="rounded-["]:not([data-keep-surface]) {
+  background: radial-gradient(ellipse at 50% 65%, color-mix(in srgb, var(--premium-v5-highlight) 10%, transparent), transparent 72%) !important;
+}
+/* Hero illustrations remain legible, but their bounding boxes disappear. */
+:is(main,section).seo-premium-v5 .seo-premium-v5-illustration {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-illustration > :is(div, section) { border-color: transparent !important; }
+
+/* Consistent interactive controls: visually soft pills and centered content. */
+:is(main,section).seo-premium-v5 a[class*="rounded"],
+:is(main,section).seo-premium-v5 button[class*="rounded"] {
+  min-height: 44px;
+  max-width: 100%;
+  border-radius: 999px !important;
+  border-color: transparent !important;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  line-height: 1.4;
+  box-shadow: none !important;
+}
+:is(main,section).seo-premium-v5 a[class*="rounded"]:focus-visible,
+:is(main,section).seo-premium-v5 button[class*="rounded"]:focus-visible {
+  outline: 2px solid var(--premium-v5-highlight);
+  outline-offset: 4px;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-cta,
+:is(main,section).seo-premium-v5 a.seo-premium-v5-cta {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 14px clamp(22px, 3.5vw, 38px);
+  background: var(--brand-gradient, linear-gradient(110deg, #6543ac, #9275df)) !important;
+  color: #fff !important;
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 10px 34px color-mix(in srgb, var(--premium-v5-highlight) 16%, transparent) !important;
+  transition: transform .22s ease, filter .22s ease;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-cta:hover { transform: translateY(-2px); filter: brightness(1.08); }
+:is(main,section).seo-premium-v5 .seo-premium-v5-cta:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+:is(main,section).seo-premium-v5 a.seo-premium-v5-secondary {
+  background: color-mix(in srgb, var(--premium-v5-highlight) 9%, transparent) !important;
+  color: rgba(245, 248, 255, .9) !important;
+  padding: 12px 22px;
+}
+
+/* V4 buyer section: airy, left-to-right explanation; no card chrome. */
+:is(main,section).seo-premium-v5 .seo-premium-v5-commercial {
+  background: transparent !important;
+  padding-block: clamp(60px, 8vw, 120px);
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-commercial-grid {
+  display: grid;
+  gap: clamp(32px, 3vw, 58px);
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-commercial-grid > article { padding: 0 !important; min-height: 0 !important; }
+:is(main,section).seo-premium-v5 .seo-premium-v5-commercial-grid h3 { margin-top: 1rem; }
+:is(main,section).seo-premium-v5 .seo-premium-v5-commercial-grid p { margin-top: 1rem; }
+:is(main,section).seo-premium-v5 .seo-premium-v5-section-heading {
+  margin-inline: auto;
+  max-width: 850px;
+  text-align: center;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-section-heading h2 { max-width: 100%; }
+:is(main,section).seo-premium-v5 .seo-premium-v5-commercial-cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.15rem;
+  text-align: center;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-editorial-grid {
+  gap: clamp(32px, 4vw, 70px);
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-editorial-grid > article { padding: 0 !important; }
+
+/* Template CTAs and FAQ sections share one calm alignment standard. */
+:is(main,section).seo-premium-v5 .seo-premium-v5-template-cta {
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-template-cta > * { margin-inline: auto; }
+:is(main,section).seo-premium-v5 :is(details, summary) { scroll-margin-top: 115px; }
+
+/* Knowledge/FAQ/trust content needs readable rhythm without framed boxes. */
+:is(main,section).seo-premium-v5 :is(
+  .seo-premium-v5-open,
+  .seo-premium-v5-faq-row,
+  .seo-premium-v5-trust
+) {
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-faq-row + .seo-premium-v5-faq-row {
+  margin-top: 1.25rem;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-faq-row button {
+  text-align: left;
+  min-height: 56px;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-faq-row button:focus-visible {
+  outline: 2px solid var(--premium-v5-highlight);
+  outline-offset: -2px;
+}
+:is(main,section).seo-premium-v5 .seo-premium-v5-trust { padding-inline: .5rem; }
+
+/* Layout repair is global to the brand footer, across every public page. */
+footer.seo-premium-footer-v5 {
+  border-top: 0 !important;
+  overflow: clip;
+}
+footer.seo-premium-footer-v5 .seo-premium-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(28px, 3.3vw, 48px) clamp(20px, 2.3vw, 36px);
+  align-items: start;
+}
+footer.seo-premium-footer-v5 .seo-premium-footer-grid > * { min-width: 0; }
+footer.seo-premium-footer-v5 .seo-premium-footer-grid h2 {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  font-size: clamp(11px, .78vw, 12px) !important;
+  font-weight: 600 !important;
+  letter-spacing: .065em !important;
+  line-height: 1.55 !important;
+  text-shadow: none !important;
+}
+footer.seo-premium-footer-v5 .seo-premium-footer-grid ul { min-width: 0; }
+footer.seo-premium-footer-v5 .seo-premium-footer-grid li,
+footer.seo-premium-footer-v5 .seo-premium-footer-grid a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+footer.seo-premium-footer-v5 .seo-premium-footer-grid a:hover { text-decoration: none; }
+footer.seo-premium-footer-v5 .seo-premium-footer-grid .seo-premium-footer-ghost-arrow { display: none !important; }
+footer.seo-premium-footer-v5 details.seo-premium-footer-directory {
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+footer.seo-premium-footer-v5 details.seo-premium-footer-directory > div { border-top-color: rgba(255,255,255,.06); }
+footer.seo-premium-footer-v5 :is(a,button):focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 3px; }
+@media (min-width: 1024px) {
+  footer.seo-premium-footer-v5 .seo-premium-footer-grid {
+    grid-template-columns: minmax(210px, 1.7fr) repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  :is(main,section).seo-premium-v5 :is(h1,h2) { overflow-wrap: break-word; }
+  :is(main,section).seo-premium-v5 h1 { font-size: clamp(2.15rem, 9vw, 3.35rem) !important; }
+  :is(main,section).seo-premium-v5 .seo-premium-v5-commercial-grid { gap: 30px; }
+  :is(main,section).seo-premium-v5 .seo-premium-v5-cta { width: 100%; }
+  footer.seo-premium-footer-v5 .seo-premium-footer-grid h2 { letter-spacing: .045em !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(main,section).seo-premium-v5 .seo-premium-v5-cta { transition: none; }
+  :is(main,section).seo-premium-v5 .seo-premium-v5-cta:hover { transform: none; }
+}

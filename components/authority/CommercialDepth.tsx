@@ -12,45 +12,63 @@ type CommercialContent = {
 };
 const CONTENT: Record<string, CommercialContent> = commercialJson;
 
-/** The buying-decision layer is only rendered for the eight highest-priority intent pages. */
+/** Procurement-facing depth on the eight highest-intent service pages. */
 export default function CommercialDepth({ page }: { page: MoneyPage }) {
   const entry = CONTENT[`${page.brand}:${page.path}`];
   if (!entry) return null;
   const agi = page.brand === "agiworks";
+
+  const decisions = [
+    { label: "01 / Systemarchitektur", heading: "Technische Grenzen transparent machen", body: entry.architecture },
+    { label: "02 / Projektumfang", heading: "Den Leistungsumfang präzise definieren", body: entry.deliverable },
+    { label: "03 / Qualitätssicherung", heading: "Ein belastbares Ergebnis nachweisen", body: entry.acceptance },
+  ];
+
   return (
-    <section aria-labelledby="commercial-depth" className="bg-[#080b12] px-5 py-20 text-white sm:px-8 lg:py-28">
+    <section aria-labelledby="premium-commercial-heading" className="seo-premium-v5 seo-premium-v5-commercial relative px-5 text-white sm:px-8">
       <div className="mx-auto max-w-[1160px]">
-        <p className="text-[11px] font-semibold uppercase tracking-[.2em] text-[var(--brand-primary)]">
-          {agi ? "TECHNISCHE ENTSCHEIDUNGSGRUNDLAGE" : "INVESTITIONS- UND UMSETZUNGSENTSCHEIDUNG"}
-        </p>
-        <h2 id="commercial-depth" className="mt-6 max-w-[950px] text-[clamp(2.1rem,3.4vw,3.9rem)] font-medium leading-[1.1] tracking-[-.045em]">
-          Woran Sie eine belastbare Umsetzung erkennen.
-        </h2>
-        <p className="mt-7 max-w-[830px] text-[16px] leading-8 text-slate-300">{entry.intent}</p>
-        <div className="mt-12 grid gap-4 md:grid-cols-2">
-          {[
-            {label:"01 / Architektur",heading:"Systemdesign und Grenzen",text:entry.architecture},
-            {label:"02 / Projektumfang",heading:"Was konkret geliefert werden muss",text:entry.deliverable},
-            {label:"03 / Abnahme",heading:"Woran die Lösung gemessen wird",text:entry.acceptance},
-          ].map((item,index)=>(
-            <article key={item.label} className={`rounded-[24px] border border-white/10 p-7 sm:p-9 ${index===2?"md:col-span-2 bg-[#142033]":"bg-[#101925]"}`}>
-              <p className="text-[11px] uppercase tracking-[.15em] text-[var(--brand-primary)]">{item.label}</p>
-              <h3 className="mt-5 text-[21px] font-medium tracking-[-.02em]">{item.heading}</h3>
-              <p className="mt-5 max-w-[870px] text-[15px] leading-8 text-slate-300">{item.text}</p>
+        <header className="seo-premium-v5-section-heading">
+          <p className="text-[11px] font-semibold uppercase tracking-[.19em] text-[var(--brand-primary)]">
+            {agi ? "ENGINEERING & BESCHAFFUNG" : "INVESTITIONS- & UMSETZUNGSENTSCHEIDUNG"}
+          </p>
+          <h2 id="premium-commercial-heading" className="mt-6 text-[clamp(2rem,3.5vw,3.8rem)] font-medium tracking-[-.045em] text-white">
+            Woran Sie eine belastbare Umsetzung erkennen.
+          </h2>
+          <p className="mx-auto mt-6 max-w-[780px] text-[16px] leading-8 text-slate-300">{entry.intent}</p>
+        </header>
+
+        <div className="seo-premium-v5-commercial-grid mt-16 lg:grid-cols-3">
+          {decisions.map((item) => (
+            <article key={item.label} className="min-w-0">
+              <p className="text-[12px] font-semibold uppercase tracking-[.15em] text-[var(--brand-primary)]">{item.label}</p>
+              <h3 className="mt-5 text-[clamp(1.25rem,1.8vw,1.65rem)] font-medium tracking-[-.025em] text-white">{item.heading}</h3>
+              <p className="mt-5 text-[15px] leading-8 text-slate-300">{item.body}</p>
             </article>
           ))}
         </div>
-        <div className="mt-12 border-t border-white/10 pt-10">
-          <h3 className="text-[18px] font-medium">Verwandte technische Schwerpunkte</h3>
-          <div className="mt-5 flex flex-wrap gap-3">
-            {entry.related.map(path => (
-              <Link key={path} href={path} className="rounded-xl border border-white/15 px-5 py-3 text-[13px] text-white/85 transition-colors hover:border-white/40 hover:bg-white/[.05]">
-                {AUTHORITY_PAGES.find(p => p.brand === page.brand && p.path === path)?.headline ?? path} <span aria-hidden="true">↗</span>
-              </Link>
-            ))}
-          </div>
-          <p className="mt-8 text-[13px] leading-7 text-slate-400">Ein Projekt wird nach dokumentierten Anforderungen bewertet. Referenznachweise, konkrete Kosten und Leistungszusagen werden nur projektspezifisch vereinbart.</p>
-          <Link href="/beratung" className="mt-6 inline-flex min-h-[48px] items-center rounded-xl bg-white px-6 text-sm font-medium text-[#080b12] transition-colors hover:bg-slate-200">
+
+        <div className="mt-20 text-center">
+          <h3 className="text-[clamp(1.35rem,2vw,2rem)] font-medium tracking-[-.025em] text-white">Vertiefende technische Schwerpunkte</h3>
+          <p className="mx-auto mt-4 max-w-[660px] text-[14px] leading-7 text-slate-400">
+            Ergänzende Anwendungsfälle und die fachlichen Entscheidungen dahinter.
+          </p>
+          <nav aria-label="Weiterführende Fachseiten" className="seo-premium-v5-commercial-cta mt-8">
+            {entry.related.map((path) => {
+              const topic = AUTHORITY_PAGES.find((p) => p.brand === page.brand && p.path === path);
+              return (
+                <Link key={path} href={path} className="seo-premium-v5-secondary inline-flex min-h-[46px] items-center justify-center rounded-full px-6 py-3 text-center text-[13px] text-white/85 transition-colors hover:text-white">
+                  {topic?.headline ?? path} <span aria-hidden="true" className="ml-2">↗</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="seo-premium-v5-commercial-cta mt-16 flex-col">
+          <p className="max-w-[780px] text-[13px] leading-7 text-slate-400">
+            Leistungszusagen, Kosten und Referenzen werden ausschließlich anhand des jeweiligen Projekts konkretisiert.
+          </p>
+          <Link href="/beratung" className="seo-premium-v5-cta inline-flex items-center justify-center rounded-full px-9 py-4 text-center text-[14px] font-semibold text-white">
             Projektrahmen und nächste Schritte klären <span aria-hidden="true" className="ml-3">↗</span>
           </Link>
         </div>

@@ -136,7 +136,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
             href="/beratung"
             className="mt-4 inline-block text-sm text-white/85 underline underline-offset-4"
           >
-            Projektumfang besprechen
+            Projektumfang im Erstgespräch klären
           </Link>
         </GlassCard>
       </TemplateSection>
@@ -177,7 +177,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
       )}
 
       {/* Proof constraints */}
-      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Transparenz" heading="Was wir zusichern — und was nicht">
+      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Transparenz" heading="Transparenz von Anfang an">
         <p className="max-w-3xl text-sm leading-relaxed text-white/60">{MONEY_PROOF_CONSTRAINTS}</p>
       </TemplateSection>
     </TemplateFrame>

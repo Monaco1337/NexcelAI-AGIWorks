@@ -57,7 +57,7 @@ export default function TemplateFrame({
   ];
 
   return (
-    <main className="ds-app min-h-screen text-white">
+    <main className="ds-app seo-premium-v5 min-h-screen text-white">
       <Breadcrumbs items={base.breadcrumbs} />
 
       <header className="px-4 pt-10 sm:px-6 md:pt-16">
@@ -86,7 +86,7 @@ export default function TemplateFrame({
       )}
 
       <section className="relative px-4 pb-24 sm:px-6">
-        <div className="mx-auto flex max-w-5xl flex-col items-start gap-4">
+        <div className="seo-premium-v5-template-cta mx-auto flex max-w-5xl flex-col items-center justify-center gap-4 text-center">
           <TemplateCta label={displayedCta.label} href={displayedCta.href} meta={{ page: base.canonicalUrl }} />
         </div>
       </section>

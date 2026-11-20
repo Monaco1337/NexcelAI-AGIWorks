@@ -76,7 +76,7 @@ export default function AgiWorksPremiumDetail({
   const sectionWidth = "mx-auto max-w-[1260px] px-5 sm:px-8 lg:px-10";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#080c13] text-white">
+    <main className="seo-premium-v5 relative min-h-screen overflow-hidden bg-[#080c13] text-white">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[860px] bg-[radial-gradient(ellipse_at_78%_25%,rgba(37,112,172,.21),transparent_45%),linear-gradient(180deg,#0b1320_0%,#080c13_94%)]"
@@ -132,7 +132,7 @@ export default function AgiWorksPremiumDetail({
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link
               href="/kontakt"
-              className="group inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-gradient-to-r from-[#244a68] to-[#17314b] px-6 text-[14px] font-medium text-white shadow-[0_12px_42px_rgba(21,109,175,.17)] transition-colors hover:border-sky-200/75 hover:from-[#30648c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
+              className="seo-premium-v5-cta group inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-gradient-to-r from-[#244a68] to-[#17314b] px-6 text-[14px] font-medium text-white shadow-[0_12px_42px_rgba(21,109,175,.17)] transition-colors hover:border-sky-200/75 hover:from-[#30648c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
             >
               Softwareprojekt besprechen
               <Arrow className="text-[#91d2ff]" />
@@ -140,7 +140,7 @@ export default function AgiWorksPremiumDetail({
 
             <a
               href="#umfang"
-              className="inline-flex min-h-[54px] items-center justify-center gap-4 rounded-[13px] border border-white/15 px-6 text-[14px] text-slate-200 transition-colors hover:border-white/35 hover:bg-white/[.045] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
+              className="seo-premium-v5-secondary inline-flex min-h-[54px] items-center justify-center gap-4 rounded-[13px] border border-white/15 px-6 text-[14px] text-slate-200 transition-colors hover:border-white/35 hover:bg-white/[.045] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
             >
               Funktionsumfang ansehen
               <span aria-hidden="true">↓</span>
@@ -161,7 +161,7 @@ export default function AgiWorksPremiumDetail({
             className="absolute -inset-5 rounded-[36px] bg-sky-400/[.075] blur-3xl"
           />
 
-          <div className="relative overflow-hidden rounded-[28px] border border-sky-300/20 bg-[#101a28] shadow-[0_30px_90px_rgba(0,0,0,.42)]">
+          <div className="seo-premium-v5-illustration relative overflow-hidden rounded-[28px] border border-sky-300/20 bg-[#101a28] shadow-[0_30px_90px_rgba(0,0,0,.42)]">
             <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
               <span className="text-[10px] font-semibold uppercase tracking-[.19em] text-sky-300">
                 Systemvisualisierung

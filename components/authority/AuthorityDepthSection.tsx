@@ -4,39 +4,40 @@ import depthJson from "@/data/authorityDepth.json";
 type Depth = { decision: string; validation: string };
 const DEPTH: Record<string, Depth> = depthJson;
 
-/**
- * V4: additional topic-specific decision and verification material.
- * Every entry is an authored technical statement; no synthetic testimonials,
- * ROI figures, success guarantees, or fabricated customer projects.
- */
+/** Per-topic technical evidence, rendered as open editorial columns. */
 export default function AuthorityDepthSection({ page }: { page: AuthorityPage }) {
   const depth = DEPTH[page.slug];
   if (!depth) return null;
   const isAgi = page.brand === "agiworks";
+
   return (
-    <section aria-labelledby="fachlicher-nachweis" className="border-t border-white/10 py-20 lg:py-24">
-      <div className="max-w-[800px]">
-        <p className="text-[11px] font-semibold uppercase tracking-[.2em] text-[var(--brand-primary)]">
-          {isAgi ? "ENGINEERING ENTSCHEIDUNG" : "FACHLICHE UMSETZUNG"}
+    <section aria-labelledby="fachlicher-nachweis" className="py-20 lg:py-28">
+      <div className="seo-premium-v5-section-heading">
+        <p className="text-[11px] font-semibold uppercase tracking-[.19em] text-[var(--brand-primary)]">
+          {isAgi ? "ENGINEERING-ENTSCHEIDUNG" : "FACHLICHE UMSETZUNG"}
         </p>
-        <h2 id="fachlicher-nachweis" className="mt-5 text-[clamp(2rem,3vw,3.3rem)] font-medium leading-[1.15] tracking-[-.045em]">
-          {isAgi ? "Technische Entscheidung. Prüffähiges Ergebnis." : "Ein konkreter Ansatz. Ein überprüfbarer Nutzen."}
+        <h2 id="fachlicher-nachweis" className="mt-5 text-[clamp(2rem,3.2vw,3.55rem)] font-medium tracking-[-.045em] text-white">
+          {isAgi ? "Technische Entscheidungen. Nachprüfbare Ergebnisse." : "Ein klarer Ansatz. Ein überprüfbares Ergebnis."}
         </h2>
-        <p className="mt-5 max-w-[700px] text-[15px] leading-8 text-slate-400">
+        <p className="mx-auto mt-6 max-w-[720px] text-[15px] leading-8 text-slate-400">
           {isAgi
-            ? "Die Umsetzung wird an Systemgrenzen, Fehlerverhalten und messbaren Anforderungen beurteilt – nicht an einem Architekturdiagramm allein."
-            : "Eine KI-Anwendung muss eine fachlich verantwortbare Entscheidung ermöglichen. Entscheidend sind die konkreten Grenzen und der Nachweis im realistischen Prozess."}
+            ? "Tragfähige Software entsteht durch geprüfte Systemgrenzen, verlässliches Fehlerverhalten und nachvollziehbare Abnahmekriterien."
+            : "Der Mehrwert einer KI-Anwendung zeigt sich in fachlich kontrollierbaren Entscheidungen und einem realistisch überprüften Prozess."}
         </p>
       </div>
-      <div className="mt-10 grid gap-4 lg:grid-cols-2">
-        <article className="rounded-[24px] border border-white/10 bg-[#101925] p-7 sm:p-9">
-          <p className="text-[11px] uppercase tracking-[.16em] text-[var(--brand-primary)]">01 / Abgrenzung und Architektur</p>
-          <h3 className="mt-5 text-[22px] font-medium tracking-[-.03em]">Was wirklich entschieden werden muss</h3>
+      <div className="seo-premium-v5-editorial-grid mt-16 grid md:grid-cols-2">
+        <article className="min-w-0">
+          <p className="text-[12px] font-medium uppercase tracking-[.18em] text-[var(--brand-primary)]">01 · Entscheidungsgrundlage</p>
+          <h3 className="mt-4 text-[clamp(1.3rem,1.9vw,1.75rem)] font-medium tracking-[-.03em] text-white">
+            Architektur und Abgrenzung
+          </h3>
           <p className="mt-5 text-[15px] leading-8 text-slate-300">{depth.decision}</p>
         </article>
-        <article className="rounded-[24px] border border-white/10 bg-[#101925] p-7 sm:p-9">
-          <p className="text-[11px] uppercase tracking-[.16em] text-[var(--brand-primary)]">02 / Prüf- und Abnahmeverfahren</p>
-          <h3 className="mt-5 text-[22px] font-medium tracking-[-.03em]">Wie sich Qualität belegen lässt</h3>
+        <article className="min-w-0">
+          <p className="text-[12px] font-medium uppercase tracking-[.18em] text-[var(--brand-primary)]">02 · Qualitätsnachweis</p>
+          <h3 className="mt-4 text-[clamp(1.3rem,1.9vw,1.75rem)] font-medium tracking-[-.03em] text-white">
+            Prüfung und Abnahme
+          </h3>
           <p className="mt-5 text-[15px] leading-8 text-slate-300">{depth.validation}</p>
         </article>
       </div>

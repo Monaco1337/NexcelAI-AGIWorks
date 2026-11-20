@@ -34,7 +34,7 @@ export default function FaqSection({
             return (
               <div
                 key={i}
-                className="overflow-hidden rounded-2xl"
+                className="seo-premium-v5-faq-row overflow-hidden rounded-2xl"
                 style={{
                   border: "1px solid var(--brand-card-border, rgba(255,255,255,0.10))",
                   background: "rgba(255,255,255,0.02)",

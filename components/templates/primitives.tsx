@@ -102,7 +102,7 @@ export function GlassCard({
 }) {
   return (
     <div
-      className={`rounded-2xl p-6 transition-colors ${className}`}
+      className={`seo-premium-v5-surface rounded-2xl p-6 transition-colors ${className}`}
       style={{
         border: "1px solid var(--brand-card-border, rgba(255,255,255,0.10))",
         background: "rgba(255,255,255,0.03)",
@@ -142,7 +142,7 @@ export function TemplateCta({
   variant?: "primary" | "ghost";
 }) {
   const base =
-    "inline-flex items-center justify-center rounded-xl px-8 py-4 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0f]";
+    "seo-premium-v5-cta inline-flex min-h-[50px] items-center justify-center rounded-full px-8 py-4 text-center text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0f]";
   const style =
     variant === "primary"
       ? {

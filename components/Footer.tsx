@@ -110,7 +110,7 @@ export default function Footer() {
     pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse");
 
   return (
-    <footer className="relative border-t border-white/[0.06] bg-gradient-to-b from-transparent to-[#0C0F1A]">
+    <footer className="seo-premium-footer-v5 relative border-t border-white/[0.06] bg-gradient-to-b from-transparent to-[#0C0F1A]">
       {/* CTA Section */}
       {/* AGI_HOMEPAGE_FINAL_CTA_V1 */}
       {isAgiHomepage && <AgiClosingCta />}
@@ -383,10 +383,10 @@ export default function Footer() {
 
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-12 lg:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-x-6 gap-y-8 sm:gap-6 md:gap-8 lg:gap-12 mb-8 sm:mb-10 md:mb-12">
+        <div className="seo-premium-footer-grid mb-8 sm:mb-10 md:mb-12">
           {/* Brand Column */}
           <motion.div
-            className="col-span-2 md:col-span-2 pb-6 border-b border-white/[0.06] md:pb-0 md:border-0"
+            className="col-span-2 min-w-0 pb-6 lg:col-span-1 lg:pb-0"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -484,7 +484,7 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-white font-semibold text-[11px] sm:text-[12px] uppercase tracking-[.065em] leading-relaxed mb-4">
               Systeme
             </h2>
             <ul className="space-y-2 sm:space-y-3">
@@ -494,7 +494,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-[#9CA3AF] transition-colors duration-300 text-xs sm:text-sm font-light group flex items-center gap-2 hover:text-[var(--accent)]"
                   >
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>→</span>
+                    <span className="seo-premium-footer-ghost-arrow hidden" style={{ color: accentColor }}>→</span>
                     <span>{link.label}</span>
                   </Link>
                 </li>
@@ -519,7 +519,7 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-white font-semibold text-[11px] sm:text-[12px] uppercase tracking-[.065em] leading-relaxed mb-4">
               Unternehmen
             </h2>
             <ul className="space-y-2 sm:space-y-3">
@@ -529,7 +529,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-[#9CA3AF] transition-colors duration-300 text-xs sm:text-sm font-light group flex items-center gap-2 hover:text-[var(--accent)]"
                   >
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>→</span>
+                    <span className="seo-premium-footer-ghost-arrow hidden" style={{ color: accentColor }}>→</span>
                     <span>{link.label}</span>
                   </Link>
                 </li>
@@ -544,7 +544,7 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-white font-semibold text-[11px] sm:text-[12px] uppercase tracking-[.065em] leading-relaxed mb-4">
               Ressourcen
             </h2>
             <ul className="space-y-2 sm:space-y-3">
@@ -554,7 +554,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-[#9CA3AF] transition-colors duration-300 text-xs sm:text-sm font-light group flex items-center gap-2 hover:text-[var(--accent)]"
                   >
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>→</span>
+                    <span className="seo-premium-footer-ghost-arrow hidden" style={{ color: accentColor }}>→</span>
                     <span>{link.label}</span>
                   </Link>
                 </li>
@@ -569,7 +569,7 @@ export default function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <h2 className="text-[#FFFFFF] font-semibold text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4">
+            <h2 className="text-white font-semibold text-[11px] sm:text-[12px] uppercase tracking-[.065em] leading-relaxed mb-4">
               Rechtliches
             </h2>
             <ul className="space-y-2 sm:space-y-3">
@@ -579,7 +579,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-[#9CA3AF] transition-colors duration-300 text-xs sm:text-sm font-light group flex items-center gap-2 hover:text-[var(--accent)]"
                   >
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>→</span>
+                    <span className="seo-premium-footer-ghost-arrow hidden" style={{ color: accentColor }}>→</span>
                     <span>{link.label}</span>
                   </Link>
                 </li>
@@ -589,7 +589,7 @@ export default function Footer() {
         </div>
 
         {/* COMPACT_SEO_DIRECTORY_V2 */}
-        <details className="group mb-7 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.015]">
+        <details className="seo-premium-footer-directory group mb-7 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.015]">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-5 py-4 outline-none transition-colors hover:bg-white/[0.035] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/45 sm:px-7 [&::-webkit-details-marker]:hidden">
             <span className="flex min-w-0 flex-col gap-1">
               <span
