@@ -3,6 +3,7 @@ import { toAbsoluteUrl } from "@/config/seo/domains";
 import type { AuthorityPage } from "@/data/authorityPortfolio";
 import { getAuthorityPages } from "@/data/authorityPortfolio";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
+import AuthorityDepthSection from "@/components/authority/AuthorityDepthSection";
 import { webPageForUrl } from "@/lib/seo/jsonld";
 
 function Accent({children}: {children: React.ReactNode}) {
@@ -58,6 +59,8 @@ export default function AuthorityDetail({page}: {page: AuthorityPage}) {
           <div className="space-y-7"><p className="text-[clamp(1.1rem,1.6vw,1.38rem)] leading-[1.8] text-white/85">{page.approach}</p><p className="text-[15px] leading-8 text-slate-400">{page.system}</p></div>
         </div>
       </section>
+      {/* SEO_INTENT_AUTHORITY_V4_20261120: per-topic decision and verifiable acceptance */}
+      <AuthorityDepthSection page={page} />
       <section className="grid gap-4 md:grid-cols-3">
         {[{n:"01",k:"Kontrollpunkt",h:"Sicherheit & Grenzen",p:page.risk},{n:"02",k:"Abnahmekriterium",h:"Messbare Qualität",p:page.metric},{n:"03",k:"Geschäftlicher Nutzen",h:"Wirkung im Betrieb",p:page.benefit}].map((b,i)=><article key={b.n} className={`group relative flex min-h-[285px] flex-col rounded-[24px] border border-white/10 p-7 transition-colors hover:border-white/25 ${i===1?"bg-[#172234]":"bg-[#101821]"}`}><span className={`text-[13px] ${accent}`}>{b.n} / {b.k}</span><h3 className="mt-8 text-[22px] font-medium tracking-[-.03em]">{b.h}</h3><p className="mt-4 text-[14px] leading-[1.8] text-slate-400">{b.p}</p></article>)}
       </section>

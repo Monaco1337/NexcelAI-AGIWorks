@@ -136,7 +136,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
             href="/beratung"
             className="mt-4 inline-block text-sm text-white/85 underline underline-offset-4"
           >
-            Zum Preiskalkulator
+            Projektumfang besprechen
           </Link>
         </GlassCard>
       </TemplateSection>

@@ -1,0 +1,402 @@
+{
+  "ki-einsatzpotenziale-priorisieren": {
+    "decision": "Ein priorisierter Use Case braucht einen fachlichen Prozess-Owner, eine bewertete Datengrundlage und einen dokumentierten Vergleich mit einer regelbasierten Lösung. Nicht jede wiederkehrende Aufgabe benötigt ein Sprachmodell.",
+    "validation": "Im Pilot werden Ausgangsaufwand, Fehlerklassen und Eingriffe durch Mitarbeitende vorab festgelegt und anhand identischer Beispieldaten verglichen. Ein schlechterer oder unprüfbarer Prozess bleibt außerhalb des Rollouts."
+  },
+  "ki-roadmap-mittelstand": {
+    "decision": "Abhängigkeiten bestimmen die Reihenfolge: zuerst Zugriffsregeln und Datenqualität, dann begrenzte Assistenzfunktionen, erst danach integrierte Automatisierung mit schreibendem Systemzugriff.",
+    "validation": "Jede Roadmap-Etappe erhält ein benanntes Ergebnis, einen verantwortlichen Fachbereich, Integrationsvoraussetzungen und einen Rückfallweg. Ohne abnehmbaren Nutzen wird die Folgeetappe nicht automatisch gestartet."
+  },
+  "ki-governance-unternehmen": {
+    "decision": "Ein nutzbares KI-Regelwerk trennt zugelassene Aufgaben, sensible Datenklassen, externe Anbieter und Aktionen mit fachlicher Wirkung. Schreibzugriffe benötigen eigene Richtlinien statt pauschaler Chat-Freigaben.",
+    "validation": "Stichproben prüfen Zugriff, Protokollierung, Löschung und menschliche Eskalation. Abweichungen werden einem Owner und einer Korrekturmaßnahme zugeordnet, nicht nur in einem unverbindlichen Policy-Dokument gesammelt."
+  },
+  "ki-make-or-buy": {
+    "decision": "Verglichen werden Gesamtkosten, Datenportabilität, Schnittstellen, Betrieb und Abhängigkeit vom Anbieter. Eine eigene Lösung lohnt sich nur, wenn differenzierende Fachlogik die höheren Betriebspflichten rechtfertigt.",
+    "validation": "Der Variantenvergleich enthält einen Exit-Test mit Datenexport, einen Integrations-Prototyp und einen Belastungstest der kritischen Anforderungen. Ohne reproduzierbaren Vorteil wird die einfachere Variante bevorzugt."
+  },
+  "ki-business-case": {
+    "decision": "Der wirtschaftliche Vergleich trennt Einrichtung, Betrieb, Qualitätssicherung und menschliche Nacharbeit. Zeitersparnis ist erst relevant, wenn der Prozess inklusive Fehlerkorrekturen und Ausnahmen betrachtet wird.",
+    "validation": "Vorher-Nachher-Messungen verwenden gleiche Vorgangsklassen und dokumentieren Durchlaufzeit, Nachbearbeitung und Gesamtkosten pro korrekt abgeschlossenem Fall. Schätzungen werden ausdrücklich als Annahmen ausgewiesen."
+  },
+  "ki-reifegrad-prozesse": {
+    "decision": "Zuerst werden Prozessvarianten, Ausnahmen, Datenhoheit und verbindliche Entscheidungen erfasst. Ein hoher Automatisierungsgrad ist kein Ziel, wenn Eingaben inkonsistent und Zuständigkeiten ungeklärt sind.",
+    "validation": "Die Reifegradprüfung endet mit einer priorisierten Maßnahmenliste und einem kleinen Kontrollprozess, an dem Datenvollständigkeit, Fehlerraten und wiederholbare Durchführung demonstriert werden."
+  },
+  "ai-first-prozessdesign": {
+    "decision": "Fachabläufe werden um eindeutige Ereignisse, kontrollierte Entscheidungsstellen und eine definierte Übergabe zwischen Mensch und System gestaltet. KI übernimmt keine verdeckten Fachentscheidungen.",
+    "validation": "Ein Prozessdurchlauf wird für Normalfall, fehlerhafte Eingabe und Eskalation getestet. Für jeden Schritt muss erkennbar sein, wer den Zustand ändern darf und wo der Nachweis gespeichert wird."
+  },
+  "ki-risikobewertung": {
+    "decision": "Das Risikomodell umfasst Eingabedaten, Retrieval-Quellen, Modellantworten, Tool-Aufrufe und betroffene Geschäftsprozesse. Eintrittswahrscheinlichkeit und Schadenshöhe werden getrennt bewertet.",
+    "validation": "Adversariale Testfälle prüfen unzulässige Datenabfragen, Prompt-Injection und falsche Handlungsempfehlungen. Der Testbericht dokumentiert bekannte Restrisiken und die verantwortliche Risikoakzeptanz."
+  },
+  "ki-ausschreibung-lastenkonzept": {
+    "decision": "Eine belastbare Ausschreibung beschreibt Eingangsdaten, zulässige Aktionen, Schnittstellenverträge und nichtfunktionale Anforderungen. Hersteller- oder Modellnamen sind keine Abnahmekriterien.",
+    "validation": "Die Leistungsbeschreibung enthält prüfbare Muss-/Kann-Kriterien, Beispieldaten und ein Abnahmeverfahren. Angebote werden an identischen Aufgaben und nicht an Marketingaussagen verglichen."
+  },
+  "ki-einfuehrung-change-management": {
+    "decision": "Die Einführung wird entlang realer Rollen geplant: Ausführende, Freigabeverantwortliche, Administratoren und Support. Schulung muss Ausnahmen und Fehlermeldungen einschließen, nicht nur die Idealbedienung.",
+    "validation": "Ein begrenzter Nutzerkreis testet die neue Prozessführung und meldet Fehlgriffe, Workarounds und offene Verantwortlichkeiten. Die Breitenfreigabe folgt erst nach dokumentierter Betriebsübergabe."
+  },
+  "ki-agenten-fuer-support": {
+    "decision": "Ein Support-Agent darf Informationen bereitstellen und Fälle vorbereiten; Vertragsänderungen, Kulanzentscheidungen und sensible Kontodaten werden durch Richtlinien und Freigaben geschützt.",
+    "validation": "Anhand echter anonymisierter Tickettypen werden Trefferqualität, sichere Eskalation und korrekte Identitätsprüfung bewertet. Ein unbekannter Fall muss kontrolliert an Menschen zurückgegeben werden."
+  },
+  "ki-agenten-fuer-innendienst": {
+    "decision": "Vertriebsagenten verbinden CRM-Kontext, Aufgabenpriorität und Kommunikationsentwürfe. Kundendaten werden nur aus autorisierten Quellen gelesen; Angebote und Zusagen bleiben freigabepflichtig.",
+    "validation": "Tests prüfen veraltete CRM-Daten, Dubletten, fehlende Einwilligungen und widersprüchliche Kundenhistorien. Die Übergabe muss den genutzten Datenstand und den menschlichen Prüfer sichtbar machen."
+  },
+  "ki-agenten-fuer-terminorganisation": {
+    "decision": "Der Agent liest verfügbare Zeitfenster, darf aber Termine erst über ein transaktionales Buchungssystem verbindlich setzen. Sprachliche Zusagen ohne erfolgreiche Buchung sind ausgeschlossen.",
+    "validation": "Parallelbuchungen, Zeitzonenwechsel, kurzfristige Absagen und doppelte Anfragen werden automatisiert getestet. Jede bestätigte Buchung benötigt eine eindeutige Buchungskennung und einen nachvollziehbaren Status."
+  },
+  "ki-agenten-fuer-dokumenteneingang": {
+    "decision": "Der Eingang wird in Dateisicherheit, Klassifikation, Extraktion und fachliche Verbuchung getrennt. Unklare Felder führen zu manueller Prüfung statt zu einer erfundenen Ergänzung.",
+    "validation": "Der Testkorpus enthält schlechte Scans, Mischformate, fehlende Pflichtdaten und Duplikate. Bewertet wird der Anteil korrekt freigegebener Datensätze, nicht nur die reine Texterkennung."
+  },
+  "ki-agenten-fuer-projektkoordination": {
+    "decision": "Projektassistenten greifen auf freigegebene Aufgaben- und Dokumentenquellen zu und markieren unklare Projektstände. Aufgabenänderungen verlangen definierte Rollenrechte und eine nachvollziehbare Änderungshistorie.",
+    "validation": "Prüffälle enthalten veraltete Beschlüsse, widersprüchliche Statusmeldungen und geschützte Projekte. Der Assistent muss Quelle, Aktualität und offene Unsicherheiten anzeigen."
+  },
+  "ki-agenten-fuer-onboarding": {
+    "decision": "Onboarding-Antworten werden nach Rolle, Standort und Zugriffsfreigabe gefiltert. Personalunterlagen dürfen nicht allein aufgrund einer natürlichsprachigen Anfrage offengelegt werden.",
+    "validation": "Ein Test mit unterschiedlichen Mitarbeiterrollen prüft Sichtbarkeit, Fristen und Dokumentversionen. Nicht verfügbare Informationen müssen als fehlend ausgewiesen und an die zuständige Stelle geleitet werden."
+  },
+  "ki-agenten-fuer-einkauf": {
+    "decision": "Der Einkaufsagent darf Bestellungen vorbereiten und Lieferanteninformationen prüfen. Beschaffungsfreigaben bleiben an Budgetgrenzen, Vier-Augen-Regeln und das führende ERP gebunden.",
+    "validation": "Testfälle prüfen Preisabweichungen, doppelte Positionen, gesperrte Lieferanten und Überschreitungen des Budgets. Die Abschlussprüfung vergleicht den ERP-Beleg mit dem genehmigten Vorschlag."
+  },
+  "ki-agenten-fuer-qualitaetsmanagement": {
+    "decision": "Qualitätsereignisse werden erst nach festem Klassifikationsschema kategorisiert. Das Modell unterstützt die Einordnung, ersetzt aber keine Freigabe bei sicherheits- oder compliance-relevanten Abweichungen.",
+    "validation": "Die Evaluation trennt falsch positive und übersehene kritische Fälle. Jeder eskalierte Vorgang muss zum richtigen Owner und zur passenden Prüfprozedur führen."
+  },
+  "ki-agenten-multi-agent-workflows": {
+    "decision": "Mehrere Agenten erhalten getrennte Aufgaben und begrenzte Tool-Berechtigungen. Ein Orchestrator verwaltet Zustände, Kostenbudgets und freigabepflichtige Übergänge; freie rekursive Aufträge sind untersagt.",
+    "validation": "Tests erzwingen Timeout, Teilfehler, Endlosschleifen und widersprüchliche Zwischenergebnisse. Der Ablauf muss sicher abbrechen oder ab dem letzten bestätigten Zustand wiederaufgenommen werden."
+  },
+  "ki-agenten-mit-freigabeprozessen": {
+    "decision": "Ein Freigabe-Workflow benötigt einen unveränderlichen Vorschlag, einen berechtigten Prüfer und ein eindeutig dokumentiertes Ergebnis. Änderungen nach Freigabe machen eine erneute Zustimmung erforderlich.",
+    "validation": "Tests prüfen Rollenwechsel, abgelaufene Freigaben, doppelte Ausführungsversuche und Ablehnungen. Ohne gültige Freigabe darf keine zustandsändernde Aktion ausgeführt werden."
+  },
+  "customer-journey-automatisierung": {
+    "decision": "Journey-Automation basiert auf konsistenten Ereignissen und einer führenden Kundenzuordnung. Kanalwechsel werden nur dort zusammengeführt, wo Identität und Einwilligung tatsächlich geklärt sind.",
+    "validation": "Im Test werden Einstieg, Abbruch, erneuter Kontakt und Kanalwechsel vollständig verfolgt. Doppelte Nachrichten und widersprüchliche Zustände müssen sichtbar und korrigierbar sein."
+  },
+  "intelligente-anfragenqualifizierung": {
+    "decision": "Qualifizierung trennt Interessentenbedarf, Pflichtangaben und nachprüfbare Kaufabsicht. Ein Modell kann Antworten strukturieren; die finale CRM-Klassifikation folgt nachvollziehbaren Kriterien.",
+    "validation": "Testfälle enthalten unvollständige Anfragen, Spam, Mehrfachkontakte und ablehnende Antworten. Der CRM-Eintrag muss Herkunft, Einwilligungsstatus und nächste Aktion korrekt enthalten."
+  },
+  "ki-gestuetzte-kundenkommunikation": {
+    "decision": "Antwortentwürfe beziehen sich auf freigegebene Produktinformationen und dokumentierte Gesprächskontexte. Preiszusagen, rechtliche Aussagen und personenbezogene Details erhalten zusätzliche Kontrollstufen.",
+    "validation": "Blindprüfungen vergleichen fachliche Richtigkeit, Tonalität und Eskalation bei unklaren Fällen. Freigaben werden versioniert, damit spätere Änderungen nachvollziehbar bleiben."
+  },
+  "crm-lead-nurturing-prozesse": {
+    "decision": "Kontaktstrecken werden nach tatsächlichen Ereignissen gesteuert, nicht nur nach starren Wartezeiten. Einwilligung, Kanalpräferenz und Widerspruch müssen unmittelbar auf die weitere Kommunikation wirken.",
+    "validation": "Getestet werden Opt-out, Dubletten, Rückmeldungen und Wechsel in eine persönliche Beratung. Jeder Kontakt muss aus dem zugrunde liegenden CRM-Zustand begründbar sein."
+  },
+  "service-ticket-triage": {
+    "decision": "Triage bewertet fachliche Priorität, Vertragskontext und Dringlichkeit getrennt. Fehlende Angaben werden nachgefragt, statt Tickets ohne ausreichende Grundlage automatisch zu eskalieren.",
+    "validation": "Ein annotierter Ticketkorpus prüft Fehlklassifikationen und kritische Fälle. SLA-Verletzungen und manuelle Übersteuerungen erscheinen im Monitoring mit Ursachenbezug."
+  },
+  "omnichannel-serviceprozesse": {
+    "decision": "Ein gemeinsames Vorgangsmodell verbindet E-Mail, Formular, Telefon und Chat, ohne unterschiedliche Identitäten vorschnell zusammenzuführen. Kanalereignisse bleiben einzeln nachvollziehbar.",
+    "validation": "Falltests prüfen überlappende Nachrichten, zeitversetzte Antworten und Identitätskonflikte. Am Ende darf nur ein fachlich gültiger Vorgangsstatus gelten."
+  },
+  "terminerinnerungen-automatisieren": {
+    "decision": "Erinnerungen werden aus verbindlichen Buchungsereignissen und Zustellregeln erzeugt. Stornierungen und Terminänderungen müssen ausstehende Nachrichten zuverlässig entwerten.",
+    "validation": "Testreihen simulieren fehlgeschlagene Zustellung, doppelte Webhooks und kurzfristige Umbuchungen. Die versendete Erinnerung muss zum aktuell gültigen Termin gehören."
+  },
+  "personalisierung-ohne-datenchaos": {
+    "decision": "Personalisierung beginnt mit einer zulässigen Datenquelle, Aktualitätsregeln und einem erkennbaren Nutzen. Fehlende Informationen dürfen nicht durch spekulative Profile ergänzt werden.",
+    "validation": "Kontrollen prüfen Datenherkunft, Einwilligung, Widerruf und Stale-Data-Fälle. Die Darstellung muss bei unvollständigem Profil auf eine neutrale Variante zurückfallen."
+  },
+  "after-sales-automatisierung": {
+    "decision": "After-Sales-Ereignisse werden an Kauf, Lieferung, Nutzung und Servicebedarf geknüpft. Kontaktstrecken respektieren bestehende Servicefälle und vermeiden widersprüchliche Nachfassaktionen.",
+    "validation": "Testfälle umfassen Retouren, Reklamationen und stillgelegte Konten. Kein automatischer Kontakt darf einen offenen Konflikt oder eine bestehende Sperre ignorieren."
+  },
+  "feedback-auswertung-ki": {
+    "decision": "Freitext-Feedback wird mit klaren Themenklassen und einer manuellen Stichprobe ausgewertet. Einzelne negative Rückmeldungen dürfen nicht ohne Kontext zu quantitativen Trends hochgerechnet werden.",
+    "validation": "Ergebnisse werden gegen einen annotierten Datensatz geprüft; unsichere Kategorien bleiben sichtbar. Maßnahmen werden nur aus ausreichend belastbaren Mustern abgeleitet."
+  },
+  "automatisierte-rechnungsverarbeitung": {
+    "decision": "Rechnungsdaten werden extrahiert, gegen Bestellungen und Stammdaten geprüft und erst nach definierten Regeln verbucht. Eine generative Antwort ersetzt keine buchhalterische Validierung.",
+    "validation": "Testfälle prüfen Mehrfachrechnungen, abweichende Steuersätze, fehlende Belege und unklare Lieferanten. Der Buchungsvorschlag muss mit Beleg und Prüfprotokoll verknüpft sein."
+  },
+  "automatisierte-angebotsvorbereitung": {
+    "decision": "Angebote entstehen aus einem versionierten Leistungs- und Preisregelwerk; freie Textgenerierung ergänzt nur freigegebene Beschreibungen. Abweichungen führen vor dem Versand zur Freigabe.",
+    "validation": "Anhand definierter Kundenfälle werden Mengen, Varianten, Nachlässe und Gültigkeitsdauer geprüft. Das endgültige Angebot muss die verwendete Kalkulationsversion referenzieren."
+  },
+  "aufgabenrouting-automatisieren": {
+    "decision": "Aufgaben werden anhand von Zuständigkeit, Fachgebiet und Kapazität verteilt. Der Routingdienst muss bei unbekannten Kategorien eine definierte manuelle Queue nutzen.",
+    "validation": "Tests prüfen Urlaub, Teamwechsel und konkurrierende Zuweisungen. Jede Aufgabe bekommt einen eindeutigen Owner oder einen sichtbar dokumentierten Eskalationsstatus."
+  },
+  "crm-datenpflege-automatisieren": {
+    "decision": "Stammdatenpflege trennt zuverlässige Quellen, Dublettenerkennung und zulässige Feldänderungen. Unsichere Ergänzungen werden als Vorschlag markiert und nicht stillschweigend übernommen.",
+    "validation": "Verglichen werden Fehlzuordnungen, Dubletten und Datenüberschreibungen. Eine Änderung muss den ursprünglichen Wert, die Quelle und den auslösenden Vorgang nachvollziehbar halten."
+  },
+  "automatisierte-freigabeprozesse": {
+    "decision": "Freigaben werden als Zustandsmaschine mit Rollen, Betragsgrenzen und Fristen modelliert. Ein Freigabeschritt darf durch Wiederholungsanfragen nicht mehrfach wirksam werden.",
+    "validation": "Tests prüfen Delegation, Ablehnung, Fristüberschreitung und widersprüchliche Entscheidungen. Die Ausführung ist erst nach vollständigem gültigem Freigabepfad möglich."
+  },
+  "bestandsmeldungen-prozessautomation": {
+    "decision": "Bestandsereignisse werden aus einem führenden Warenwirtschaftssystem abgeleitet. Verzögerte oder mehrfach eintreffende Meldungen dürfen den aktuellen Bestand nicht zurücksetzen.",
+    "validation": "Eine Testserie prüft Ereignisreihenfolge, Reservierung und Storno. Bestand und ausgelöste Benachrichtigungen müssen nach Replay denselben Zustand liefern."
+  },
+  "interne-reporting-automation": {
+    "decision": "Kennzahlen bekommen eine eindeutige Definition, Datenquelle und Aktualisierungsfrequenz. Ein Dashboard darf widersprüchliche Fachdefinitionen nicht durch schöne Visualisierung verdecken.",
+    "validation": "Testberichte vergleichen Werte mit den Ursprungssystemen, einschließlich Nullwerten und Korrekturbuchungen. Abweichungen werden sichtbar dokumentiert und nicht still aufgefüllt."
+  },
+  "email-workflow-automation": {
+    "decision": "E-Mail-Prozesse trennen Auslöser, Vorlagenversion, Empfängerfreigabe und Zustellnachweis. Automatische Antworten berücksichtigen bestehende Vorgänge und dokumentierte Kommunikationspräferenzen.",
+    "validation": "Tests prüfen doppelte Ereignisse, Bounce, Rückantworten und Abmeldungen. Wiederholungen dürfen keine zusätzlichen, fachlich unerwünschten E-Mails erzeugen."
+  },
+  "proaktive-ausnahmebehandlung": {
+    "decision": "Ausnahmen werden als erkennbare Zustände statt als unsichtbare Fehler definiert. Jeder Fall braucht Schweregrad, Verantwortlichkeit und eine sichere Wiederaufnahmeprozedur.",
+    "validation": "Fehlerfälle werden durch gezielte Ausfälle von Schnittstellen und Datenquellen reproduziert. Alarmierung und manueller Eingriff müssen vor der Produktivsetzung nachgewiesen werden."
+  },
+  "betriebssystem-fuer-serviceunternehmen": {
+    "decision": "Ein zentrales Service-System braucht konsistente Auftrags-, Kunden- und Ressourcenobjekte. Einzelne Automatisierungen dürfen keinen parallelen Schatten-Datenbestand erzeugen.",
+    "validation": "End-to-End-Tests verfolgen einen Auftrag vom Eingang bis zur Abrechnung über alle Rollen. Datenkorrekturen müssen in den verbundenen Teilsystemen konsistent bleiben."
+  },
+  "unternehmenswissen-mit-ki": {
+    "decision": "Wissensantworten dürfen nur auf freigegebenen Dokumentversionen beruhen. Quellverweise, Aktualitätsregeln und Berechtigungen werden Bestandteil der Antwortlogik.",
+    "validation": "Ein Testsatz enthält veraltete, widersprüchliche und nicht berechtigte Dokumente. Das System muss Quellen belegen und bei unzureichender Evidenz die Antwort verweigern."
+  },
+  "rag-fuer-fachabteilungen": {
+    "decision": "Retrieval wird nach Rollen und Dokumentquellen gefiltert, bevor Text an das Modell geht. Indexierung und Berechtigungsaktualisierung müssen getrennt versionierbar bleiben.",
+    "validation": "Tests bewerten Retrieval-Treffer, Quellzitate und Rechte-Isolation. Ein Nutzer darf über semantische Suche keine Dokumente anderer Fachbereiche sehen."
+  },
+  "ki-wissensmanagement-versionierung": {
+    "decision": "Dokumentänderungen lösen nachvollziehbare Neuindizierung und Cache-Invalidierung aus. Veraltete Textabschnitte dürfen nicht unbegrenzt in KI-Antworten weiterleben.",
+    "validation": "Nach einer Dokumentänderung wird geprüft, wann neue Antworten die aktuelle Quelle verwenden und ob alte Quellen nachweisbar deaktiviert wurden."
+  },
+  "datenqualitaet-fuer-ki": {
+    "decision": "Datenqualität wird feld- und prozessbezogen bewertet: Vollständigkeit, Aktualität, Eindeutigkeit und erlaubte Nutzung. Einheitliche Scores ohne fachlichen Kontext sind wenig aussagekräftig.",
+    "validation": "Die Prüfung verwendet definierte Testdatensätze mit fehlenden und widersprüchlichen Feldern. Qualitätsgrenzen entscheiden verbindlich, ob ein Datensatz automatisch genutzt werden darf."
+  },
+  "ki-datenzugriffe-rollen": {
+    "decision": "Zugriffsregeln werden auf Dokument-, Feld- und Tool-Ebene umgesetzt. Der Assistent darf keine Rechte erfinden, die im führenden Identitäts- und Berechtigungssystem fehlen.",
+    "validation": "Rollenwechsel, Widerruf und indirekte Datenabfragen werden getestet. Jede Antwort und jeder Tool-Aufruf muss an den gültigen Nutzerkontext gebunden bleiben."
+  },
+  "private-ki-im-unternehmen": {
+    "decision": "Private Inferenz braucht ein dokumentiertes Vertrauensmodell für Eingaben, Modellgewichte, Logs und Backups. Hosting allein beweist weder Datenschutzkonformität noch Sicherheitsniveau.",
+    "validation": "Der Nachweis umfasst Netzwerkpfade, Betreiberzugriffe, Datenaufbewahrung und eine realistische Lastprobe. Fehlende Isolation ist vor dem Einsatz zu beheben."
+  },
+  "ki-dokumentensuche": {
+    "decision": "Dokumentensuche kombiniert Schlagwort- und semantische Suche mit Rechteregeln. Treffer müssen Dokument, Version und relevante Fundstelle eindeutig anzeigen.",
+    "validation": "Ein fachlich annotierter Suchsatz prüft Trefferqualität und Berechtigungsgrenzen. Falsche oder veraltete Fundstellen werden als messbarer Fehler ausgewiesen."
+  },
+  "ki-gestuetzte-datenanalyse": {
+    "decision": "Analysen benötigen ein festes semantisches Datenmodell und nachvollziehbare Abfragegrenzen. Freie Modellinterpretation darf keine unkontrollierten Datenbankänderungen auslösen.",
+    "validation": "Für definierte Geschäftsfragen werden generierte Abfragen gegen Referenzantworten geprüft. Filter, Aggregationen und Datumsbereiche müssen vollständig nachvollziehbar sein."
+  },
+  "ki-modell-evaluation": {
+    "decision": "Modelle werden anhand realer Aufgaben, Fehlerklassen und geschützter Testsätze verglichen. Ein allgemeiner Benchmark reicht nicht zur Auswahl für einen konkreten Geschäftsprozess.",
+    "validation": "Die Evaluation trennt Genauigkeit, Kosten, Latenz und Sicherheitsfehler. Ein Modellwechsel wird erst nach regressionssicheren Vergleichstests freigegeben."
+  },
+  "llm-betriebskosten-steuern": {
+    "decision": "Kosten entstehen aus Tokenverbrauch, Retrieval, Tool-Aufrufen, Caching, Ausfällen und menschlicher Nacharbeit. Optimierung muss Qualität und Geschäftsrisiko berücksichtigen.",
+    "validation": "Ein Kostenprofil misst Ausgaben pro erfolgreich abgeschlossenem Vorgang, nicht nur pro Anfrage. Budgetgrenzen und Fallbacks werden unter realistischer Last getestet."
+  },
+  "software-architektur-review": {
+    "decision": "Ein Review prüft Systemgrenzen, Kopplung, Datenflüsse, Sicherheitsannahmen und Betriebsfolgen am vorhandenen Code. Ein Architekturdiagramm allein ersetzt keinen technischen Befund.",
+    "validation": "Befunde werden nach Risiko, Änderungsaufwand und Wirkung priorisiert. Für kritische Punkte gibt es eine reproduzierbare Analyse oder einen konkreten Testnachweis."
+  },
+  "modulare-softwarearchitektur": {
+    "decision": "Modulgrenzen folgen fachlicher Verantwortlichkeit und stabilen Schnittstellen. Gemeinsame Tabellen oder versteckte Querverweise dürfen die Trennung nicht nur im Diagramm existieren lassen.",
+    "validation": "Ein Änderungsfall wird end-to-end durchgespielt: Welche Module müssen angepasst und neu getestet werden? Unerwartete Kettenänderungen machen Kopplung sichtbar."
+  },
+  "legacy-software-modernisierung": {
+    "decision": "Modernisierung beginnt mit Abhängigkeiten, Datenmigration und einem strangulierenden Übergangsplan. Ein Komplettneubau ist nur bei überprüfter Wirtschaftlichkeit vertretbar.",
+    "validation": "Parallelbetrieb, Rückfall und Datenvergleich werden für konkrete Transaktionen getestet. Jede Migrationsetappe muss einen abnehmbaren Teilnutzen liefern."
+  },
+  "domain-driven-design": {
+    "decision": "Bounded Contexts werden anhand fachlicher Sprache, Zuständigkeit und Datenhoheit definiert. Domänenereignisse dürfen nicht als unkontrollierte gemeinsame Datenbank missverstanden werden.",
+    "validation": "Akzeptanzbeispiele prüfen Fachbegriffe, Zustandsübergänge und Kontextgrenzen. Ein Konflikt zwischen zwei Kontextmodellen muss bewusst übersetzt werden."
+  },
+  "event-driven-architecture": {
+    "decision": "Ereignisse benötigen eindeutige Verträge, Versionierung und Regeln für Wiederholungen und Reihenfolge. Eventual Consistency darf nicht als starke Transaktion verkauft werden.",
+    "validation": "Tests erzwingen Duplicate Delivery, verspätete Ereignisse und Consumer-Neustarts. Der fachliche Endzustand muss innerhalb dokumentierter Grenzen konsistent werden."
+  },
+  "multi-tenant-saas-architektur": {
+    "decision": "Tenant-Isolation muss in Authentifizierung, Datenabfragen, Hintergrundjobs und Telemetrie erzwungen werden. Nur eine `tenantId` im Frontend ist kein Sicherheitsmodell.",
+    "validation": "Cross-Tenant-Tests prüfen ID-Manipulation, Report-Exports und Worker-Kontexte. Kein Pfad darf Daten fremder Mandanten zugänglich machen."
+  },
+  "webapp-architektur-enterprise": {
+    "decision": "Enterprise-Webapps trennen Browserzustand, API-Verträge und dauerhaftes Datenmodell. Rollen und fachliche Berechtigungen werden serverseitig geprüft.",
+    "validation": "End-to-End-Tests decken kritische Aktionen, Rollenwechsel und fehlerhafte Netzanbindung ab. Die Anwendung muss auf Fehler verständlich reagieren."
+  },
+  "backend-architektur-skalierung": {
+    "decision": "Skalierung beginnt mit realen Lastprofilen, Datenbankengpässen und zustandslosen Diensten. Horizontale Replikation löst keine fehlerhaften Datenzugriffsmuster.",
+    "validation": "Lasttests erfassen p95-Latenz, Fehlerrate und Datenbanklast unter definierter Konkurrenz. Verbesserungen werden gegen eine reproduzierbare Baseline gemessen."
+  },
+  "frontend-performance-architektur": {
+    "decision": "Performance wird an tatsächlichen Navigationspfaden, Bundle-Größe, Rendering und Datenabhängigkeiten optimiert. Einzelne Lighthouse-Scores sind kein Ersatz für echte Nutzererfahrung.",
+    "validation": "Geprüft werden LCP, INP und CLS auf repräsentativen Geräten sowie JavaScript- und API-Budgets. Regressionen blockieren den Release bei vereinbarten Schwellen."
+  },
+  "software-technische-schulden": {
+    "decision": "Technische Schulden werden nach Änderungsrisiko, Wiederholungskosten und Betriebsfolgen priorisiert. Eine reine Aufzählung von Code-Smells hilft nicht bei der Investitionsentscheidung.",
+    "validation": "Für jede Maßnahme wird eine messbare Folgeänderung oder Fehlerklasse definiert. Verbesserungen sollen künftige Änderungen nachweisbar sicherer oder schneller machen."
+  },
+  "api-integration-unternehmen": {
+    "decision": "Eine Integration braucht API-Verträge, Autorisierung, Fehlersemantik und einen klaren System-of-Record. Fehlerhafte Wiederholungen dürfen keine Doppelbuchungen auslösen.",
+    "validation": "Contract-Tests prüfen Versionierung, Timeouts, 429er, Teilfehler und idempotente Wiederholungen. Der Fachprozess muss nach jeder Störung wiederherstellbar sein."
+  },
+  "erp-crm-schnittstelle": {
+    "decision": "ERP und CRM haben unterschiedliche Verantwortlichkeiten für Stammdaten und Geschäftsvorgänge. Feldzuordnungen, Konfliktregeln und Synchronisationsrichtung müssen explizit sein.",
+    "validation": "Prüffälle mit Dubletten, Storno, Statuswechsel und widersprüchlichen Kontakten verifizieren die Abstimmung. Jeder Datensatz besitzt eine nachvollziehbare Quellzuordnung."
+  },
+  "api-gateway-berechtigungen": {
+    "decision": "Ein Gateway ersetzt keine fachliche Autorisierung. Tokenprüfung, Ratenbegrenzung und Routing werden mit dienstspezifischen Objekt- und Rollenrechten kombiniert.",
+    "validation": "Negative Tests versuchen fremde Objekt-IDs, überprivilegierte Tokens und wiederholte Anfragen. Zugriffsfehler müssen vor dem Fachhandler wirksam blockiert werden."
+  },
+  "webhook-verarbeitung-zuverlaessig": {
+    "decision": "Webhook-Empfang verlangt Signaturprüfung, Duplikaterkennung und Entkopplung der Verarbeitung. Antworten an den Sender dürfen nicht von langen Geschäftsprozessen abhängen.",
+    "validation": "Tests wiederholen dieselbe Nachricht, verändern die Reihenfolge und simulieren Consumer-Ausfälle. Die Verarbeitung darf denselben Fachvorgang nicht zweimal ausführen."
+  },
+  "datenmigration-ohne-ausfall": {
+    "decision": "Migrationen brauchen eine referenzierte Ausgangsdatenbasis, Mapping-Regeln und einen klaren Umschaltpunkt. Datenkonsistenz ist wichtiger als ein optimistisches Zeitfenster.",
+    "validation": "Vor und nach dem Cutover werden Counts, Summen, Beziehungen und Stichproben verglichen. Fehler führen zu einem definierten Rollback- oder Reparaturpfad."
+  },
+  "schnittstellen-monitoring": {
+    "decision": "Integrationsmonitoring muss fachliche Zustellung und technische Verfügbarkeit getrennt messen. HTTP 200 sagt nichts über den korrekten Endzustand im Zielsystem aus.",
+    "validation": "Synthetische Transaktionen und Dead-Letter-Auswertungen entdecken stille Datenverluste. Alarme werden an den verantwortlichen Prozess und eine Wiederanlaufanleitung gekoppelt."
+  },
+  "message-queue-integration": {
+    "decision": "Nachrichtenverarbeitung berücksichtigt at-least-once Delivery, Idempotenz und Backpressure. Eine Queue garantiert weder Reihenfolge noch transaktionale End-to-End-Verarbeitung.",
+    "validation": "Replay-Tests prüfen Wiederholungen, Poison Messages und Worker-Neustarts. Die fachlichen Zustände müssen nach einer Störung konsistent rekonstruierbar sein."
+  },
+  "identity-sso-integration": {
+    "decision": "SSO integriert Identität, nicht automatisch Berechtigungen. JIT-Provisioning, Deprovisioning und Session-Invalidierung benötigen eigene fachliche Regeln.",
+    "validation": "Tests prüfen deaktivierte Accounts, Rollenwechsel und fremde Tenants. Entzogene Rechte müssen auch in bestehenden Sessions wirksam werden."
+  },
+  "payment-provider-schnittstellen": {
+    "decision": "Zahlungsstatus wird anhand signierter Provider-Ereignisse und eigener Transaktionsregeln verwaltet. Ein Browser-Redirect ist kein Zahlungsnachweis.",
+    "validation": "Tests simulieren verspätete Webhooks, Mehrfachzustellung, Rückerstattung und Abbruch. Eine Bestellung darf nur gegen den tatsächlich bestätigten Provider-Zustand finalisiert werden."
+  },
+  "legacy-api-adapter": {
+    "decision": "Adapter kapseln alte Protokolle und Fehlercodes in einen stabilen neuen Vertrag. Die Integration darf die fachlichen Inkonsistenzen des Altsystems nicht ungeprüft übernehmen.",
+    "validation": "Contract-Tests prüfen veraltete Felder, Timeout und Fehlerübersetzung. Änderungen am Legacy-System werden durch Adaptertests erkannt, bevor sie Kernprozesse treffen."
+  },
+  "individuelle-erp-module": {
+    "decision": "ERP-Erweiterungen müssen in vorhandene Stamm- und Bewegungsdaten integrieren, statt parallele Schattenbestände zu erzeugen. Upgradefähigkeit und Mandantengrenzen sind Architekturentscheidungen.",
+    "validation": "Ein Geschäftsfall wird über Kern-ERP, Erweiterung und Reporting verifiziert. Ein Update des Hauptsystems darf das Erweiterungsmodul nicht unbemerkt brechen."
+  },
+  "crm-individualentwicklung": {
+    "decision": "Ein CRM-Datenmodell braucht klare Identitäten, Historie und Berechtigungen. Automatisierte Leadprozesse müssen Einwilligungsstatus und Datenherkunft berücksichtigen.",
+    "validation": "Tests prüfen Zusammenführung, Löschung, Rollenrechte und unterschiedliche Kontaktkanäle. Ein Lead kann nicht gleichzeitig widersprüchliche Zustände besitzen."
+  },
+  "kundenportal-self-service": {
+    "decision": "Self-Service-Portale schützen objektbezogene Daten über serverseitige Berechtigungen. Downloads und Hintergrundjobs unterliegen denselben Rechtegrenzen wie die Oberfläche.",
+    "validation": "Tests prüfen fremde Kundennummern, abgelaufene Freigaben und veraltete Kontostände. Aktionen erscheinen nachvollziehbar im führenden Fachsystem."
+  },
+  "admin-dashboard-entwicklung": {
+    "decision": "Adminoberflächen brauchen getrennte Rollen für Einsicht, Bearbeitung und kritische Freigaben. Eine versteckte Schaltfläche stellt keine Zugriffssperre dar.",
+    "validation": "Autorisierungs-Tests prüfen direkte API-Aufrufe, Massenaktionen und Änderungsprotokolle. Kritische Änderungen erfordern einen überprüfbaren Verantwortlichen."
+  },
+  "saas-abrechnung-mandanten": {
+    "decision": "Abrechnung berücksichtigt Mandantenkontext, Tarifversionen, Nutzungsereignisse und Korrekturen. Eine UI-Preisänderung darf rückwirkende Rechnungen nicht verändern.",
+    "validation": "Tests verifizieren Tarifwechsel, Proration, doppelte Nutzungsereignisse und Storno. Rechnungsstände werden aus versionierten Regeln reproduzierbar erzeugt."
+  },
+  "workflow-engine-unternehmen": {
+    "decision": "Eine Workflow-Engine benötigt explizite Zustände, Übergänge und Rollenberechtigungen. Retry ist ein technischer Mechanismus und darf keine zweite fachliche Genehmigung erzeugen.",
+    "validation": "Tests simulieren Parallelfreigaben, Timeout und Neustart. Ein Vorgang muss deterministisch fortgesetzt oder sicher gestoppt werden können."
+  },
+  "dokumentenmanagement-freigaben": {
+    "decision": "Dokumente werden versioniert, berechtigt und an einen nachvollziehbaren Freigabezustand gebunden. Neue Versionen dürfen alte Genehmigungen nicht stillschweigend erben.",
+    "validation": "Tests prüfen konkurrierende Änderungen, Widerruf und Linkfreigaben. Die aufgerufene Datei muss exakt zur freigegebenen Version gehören."
+  },
+  "buchungsplattform-entwicklung": {
+    "decision": "Buchungsplattformen benötigen reservierbare Ressourcen, eindeutige Verfügbarkeitsregeln und konfliktfreie Transaktionen. Kalenderdarstellung ohne Backend-Konsistenz reicht nicht aus.",
+    "validation": "Parallelanfragen, Storno und Zeitzonenwechsel werden gegen den gleichen Ressourcenbestand getestet. Keine Ressource darf gleichzeitig widersprüchlich gebucht sein."
+  },
+  "partnerportal-b2b": {
+    "decision": "Partnerportale trennen Organisationen, Rollen, Vertragsrechte und gemeinsam bearbeitete Vorgänge. Mandantenübergreifende Freigaben müssen explizit und zeitlich begrenzt sein.",
+    "validation": "Cross-Tenant-Tests prüfen Dokumentdownload, Listenfilter und API-Zugriff. Jeder geteilte Vorgang bleibt seinem Eigentümer und seiner Freigabe zugeordnet."
+  },
+  "operations-dashboard-echtzeit": {
+    "decision": "Echtzeit-Anzeigen müssen Herkunft, Frische und Konsistenz der Daten offenlegen. Ein WebSocket löst keine Probleme mit verspäteten Ereignissen oder Quellsystem-Ausfällen.",
+    "validation": "Tests injizieren verlorene Ereignisse, Netzwerkabbrüche und verspätete Updates. Das Dashboard muss veraltete Werte eindeutig markieren und neu synchronisieren."
+  },
+  "devsecops-pipeline": {
+    "decision": "Eine sichere Pipeline trennt Codeprüfung, Dependency-Risiko, Secrets, Artefaktsignatur und Deploymentfreigabe. Ein einzelner Scanner ersetzt keinen kontrollierten Releaseprozess.",
+    "validation": "Ein Testrelease provoziert fehlerhafte Abhängigkeiten und verbotene Geheimnisse. Der Build muss reproduzierbar stoppen und das Ergebnis auditierbar dokumentieren."
+  },
+  "security-review-webapps": {
+    "decision": "Ein Review kombiniert Threat Modeling, Authentifizierung, Objektberechtigungen, Eingabevalidierung und Abhängigkeitsanalyse. Automatische Scans decken keine vollständige Geschäftslogik ab.",
+    "validation": "Negative Tests prüfen IDOR, Rolleneskalation, CSRF und missbräuchliche Workflows. Jeder kritische Befund enthält betroffenen Pfad, Reproduktion und wirksame Gegenmaßnahme."
+  },
+  "rollen-rechte-konzept": {
+    "decision": "Berechtigungen werden aus Fachaktionen und Datenobjekten abgeleitet, nicht aus pauschalen UI-Rollen. Standardverhalten bei fehlenden Rechten ist Ablehnung.",
+    "validation": "Tests versuchen jede kritische Aktion mit unberechtigter Rolle und fremdem Objekt. Die serverseitige Policy muss auch ohne Frontend-Logik greifen."
+  },
+  "audit-logging-compliance": {
+    "decision": "Audit-Logs benötigen verbindliche Ereignisdefinitionen, Zeitbezug und manipulationserschwerende Speicherung. Sensible Inhalte dürfen nicht unkontrolliert im Log repliziert werden.",
+    "validation": "Ein Prüfpfad rekonstruiert relevante Änderungen anhand korrelierter Ereignisse. Zugriff und Aufbewahrung des Logs werden getrennt vom Anwendungskonto verwaltet."
+  },
+  "backup-recovery-strategie": {
+    "decision": "Backupkonzepte werden von Wiederherstellungszielen und Datenabhängigkeiten abgeleitet. Ein vorhandenes Backup ist ohne erfolgreichen Restore-Test kein ausreichender Nachweis.",
+    "validation": "Regelmäßige Wiederherstellungstests messen Datenverlustfenster und Wiederanlaufzeit. Abweichungen werden mit klaren Verantwortlichkeiten und Korrekturmaßnahmen behandelt."
+  },
+  "observability-produktionssysteme": {
+    "decision": "Observability verbindet technische Signale mit fachlichen SLOs. Metriken, Traces und Logs müssen korrelierbar sein, ohne unberechtigte personenbezogene Daten preiszugeben.",
+    "validation": "Ein Testfall provoziert Latenz, Fehler und Datenstau. Das Monitoring muss Ursache und betroffene Fachfunktion erkennbar machen."
+  },
+  "blue-green-deployments": {
+    "decision": "Blue-Green erfordert rückwärtskompatible Datenbankänderungen und einen kontrollierten Umschaltpunkt. Ein schneller Traffic-Switch ist kein Rollback, wenn das Schema inkompatibel wurde.",
+    "validation": "Ein Rollback-Drill prüft Datenkompatibilität, Session-Verhalten und laufende Jobs. Die vorherige Version muss in einem definierten Fenster wieder arbeitsfähig werden."
+  },
+  "secrets-management": {
+    "decision": "Secrets erhalten begrenzte Gültigkeit, minimale Rechte und eindeutige Ausführungsidentitäten. Der Buildprozess darf Produktionsgeheimnisse nicht in Artefakte oder Logs schreiben.",
+    "validation": "Tests prüfen Rotation, Widerruf, Berechtigungsfehler und versehentliche Protokollierung. Ein kompromittiertes Geheimnis muss ohne Anwendungsausfall ersetzbar sein."
+  },
+  "performance-load-testing": {
+    "decision": "Lasttests simulieren reale Nutzerprofile, Schreibkonflikte und Datengrößen. Ein einmaliger Maximaldurchsatz sagt wenig über stabile Antwortzeiten unter Dauerlast aus.",
+    "validation": "Gemessen werden p95-Latenz, Fehlerrate und Ressourcenverbrauch unter definierter Last. Ein Testprotokoll dokumentiert Warmup, Datenstand und Bottlenecks."
+  },
+  "business-continuity-it": {
+    "decision": "Business-Continuity plant Prozesse, Menschen, Systeme und Abhängigkeiten gemeinsam. Nicht jede Anwendung erhält denselben Wiederanlaufvorrang.",
+    "validation": "Ein Übungen-Szenario prüft Teilbetrieb, Kommunikationswege und Wiederherstellungsreihenfolge. Rollen, Eskalation und messbare Wiederanlaufziele müssen funktionieren."
+  },
+  "rag-system-architektur": {
+    "decision": "Ein RAG-System trennt Ingestion, Berechtigungsfilter, Retrieval, Re-Ranking und Antwortgenerierung. Semantische Ähnlichkeit darf keine Zugriffsrechte außer Kraft setzen.",
+    "validation": "Ein Testset mit berechtigten und unberechtigten Anfragen misst Recall, Quellentreue und sichere Antwortverweigerung. Modellantworten ohne tragfähige Quelle gelten als Fehler."
+  },
+  "llm-inferenz-infrastruktur": {
+    "decision": "Inferenzkapazität richtet sich nach Promptlänge, Ausgabeprofil, gleichzeitiger Nutzung und Latenzziel. Modellgröße allein bestimmt weder Kosten noch Antwortqualität.",
+    "validation": "Lastprofile prüfen Time-to-First-Token, Durchsatz, Tail-Latenz und GPU-Auslastung. Fallback- und Überlastverhalten werden vor dem Rollout getestet."
+  },
+  "llm-evaluation-pipeline": {
+    "decision": "Evaluationsdatensätze werden versioniert und nach realen Fehlerklassen aufgebaut. Ein neues Modell darf nicht allein wegen eines besseren Durchschnittsscores produktiv gehen.",
+    "validation": "Regressionstests prüfen kritische Sicherheitsfälle separat von Qualitätsmittelwerten. Ein Release wird an definierte Schwellwerte und reproduzierbare Evaluationsläufe gebunden."
+  },
+  "agent-tool-security": {
+    "decision": "Tool-Zugriffe benötigen serverseitige Autorisierung, begrenzte Eingabeschemata und separate Ausführungsidentitäten. Modelltext ist niemals eine Berechtigungsentscheidung.",
+    "validation": "Tests versuchen Prompt-Injection, fremde Objekt-IDs und unzulässige Aktionen. Der Enforcement-Point muss jede Zustandsänderung unabhängig vom Modell blockieren können."
+  },
+  "private-llm-deployment": {
+    "decision": "Private Modelle benötigen einen definierten Betreiberkreis, Netzwerkgrenzen, Datenhaltung und dokumentierte Lizenzprüfung. Private Bereitstellung ist keine pauschale Garantie für Compliance.",
+    "validation": "Penetrations- und Lasttests prüfen Modellendpunkt, Auditierung, Zugriff und Löschpfade. Das Deployment wird erst nach dokumentierter Risikoentscheidung freigegeben."
+  },
+  "model-routing-architektur": {
+    "decision": "Routing bewertet Aufgabe, Sensibilität, Latenz, Kosten und bekannte Fehlerklassen. Fallbacks dürfen nicht heimlich auf weniger geschützte Anbieter wechseln.",
+    "validation": "Tests erzwingen Modellfehler, Budgetüberschreitung und Qualitätsabfall. Für jeden Fallback bleiben Datenklasse und Antwortvalidierung erhalten."
+  },
+  "vector-search-architektur": {
+    "decision": "Vektorsuche benötigt eine begründete Chunking-Strategie, Hybrid Search und Berechtigungsfilter. Embedding-Ähnlichkeit allein ist kein zuverlässiger Fachnachweis.",
+    "validation": "Ein annotierter Retrieval-Test misst Trefferabdeckung und relevante Rangpositionen. Unterschiedliche Rollen dürfen denselben Index nur durch gefilterte Sichten verwenden."
+  },
+  "llm-observability": {
+    "decision": "LLM-Telemetrie verbindet Promptversion, Retrieval-Quellen, Tool-Calls, Kosten und fachliche Ergebnisqualität. Vollständige Rohprompts können selbst ein Datenschutzrisiko darstellen.",
+    "validation": "Ein Fehlerfall lässt sich bis zum genutzten Modell und Datenstand nachvollziehen. Zugriffe auf Traces und Aufbewahrung werden nach Datenklasse begrenzt."
+  },
+  "fine-tuning-strategie": {
+    "decision": "Fine-Tuning wird gegen Prompting und RAG anhand echter Fehlertypen verglichen. Ein Modelltraining kann veraltete Fakten oder fehlende Zugriffsrechte nicht sinnvoll ersetzen.",
+    "validation": "Ein Blindtest auf unveränderten Aufgaben misst Qualität, Wartungsaufwand und Kosten der Varianten. Nur ein reproduzierbarer Mehrwert rechtfertigt den zusätzlichen Trainingsbetrieb."
+  },
+  "agent-orchestrierung-workflows": {
+    "decision": "Agenten-Orchestrierung verwendet definierte Zustände, Idempotenzschlüssel, Deadline und menschliche Freigaben für wirksame Aktionen. Unbegrenzte Selbstdelegation ist im Produktivbetrieb nicht zulässig.",
+    "validation": "Abbruch, Replay, Toolfehler und widersprüchliche Agentenantworten werden als eigene Tests ausgeführt. Der fachliche Zustand muss auch nach einem Neustart konsistent bleiben."
+  }
+}
