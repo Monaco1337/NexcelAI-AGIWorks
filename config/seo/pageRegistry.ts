@@ -19,6 +19,8 @@ import { cleanAgiPath, type BrandKey } from "./brands";
 import { AGI_INTERNAL_PREFIX } from "./domains";
 import { MONEY_PAGES } from "@/data/moneyPages";
 import { LOCATION_PAGES } from "@/data/locationPages";
+// SEO_ENTERPRISE_AUTHORITY_100_V3_20261120
+import { AUTHORITY_PAGES } from "@/data/authorityPortfolio";
 import { KNOWLEDGE_PAGES } from "@/data/knowledgePages";
 import { SYSTEM_PAGES } from "@/data/systemPages";
 import { REFERENCE_PAGES } from "@/data/referencePages";
@@ -373,6 +375,38 @@ function buildRegistry(): SeoPage[] {
       quality: { index: true, score: 100 },
       changefreq: "monthly",
       priority: 0.5,
+    });
+  });
+
+  // SEO_ENTERPRISE_AUTHORITY_100_V3_20261120: 100 curated candidates and 2 hubs; no auto-indexing.
+  AUTHORITY_PAGES.forEach((ap) => pages.push({
+    id: `${ap.brand}:${ap.path}`,
+    brand: ap.brand,
+    path: ap.path,
+    internalPath: internalPathFor(ap.brand, ap.path),
+    type: "content",
+    title: ap.title,
+    description: ap.description,
+    breadcrumbLabel: ap.headline,
+    approved: ap.approved,
+    manualIndexApproval: ap.manualIndexApproval,
+    quality: { index: false },
+    changefreq: "monthly",
+    priority: 0.4,
+  }));
+  (["nexcel", "agiworks"] as BrandKey[]).forEach((brand) => {
+    const path = brand === "nexcel" ? "/anwendungen" : "/engineering";
+    pages.push({
+      id: `${brand}:${path}`, brand, path,
+      internalPath: internalPathFor(brand, path),
+      type: "content",
+      title: brand === "nexcel" ? "KI-Anwendungsbereiche | NEXCEL AI" : "Engineering-Schwerpunkte | AGI Works",
+      description: brand === "nexcel"
+        ? "KI-Agenten, Automatisierung, Kundenerlebnis und Unternehmenswissen: konkrete KI-Einsatzfelder für Geschäftsprozesse von NEXCEL AI."
+        : "Softwarearchitektur, Systemintegration, Plattformen und KI-Engineering: technische Schwerpunkte von AGI Works für Unternehmen.",
+      breadcrumbLabel: brand === "nexcel" ? "Anwendungen" : "Engineering",
+      approved: false, manualIndexApproval: false,
+      quality: { index: false }, changefreq: "monthly", priority: 0.4,
     });
   });
 

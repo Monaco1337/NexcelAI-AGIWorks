@@ -146,6 +146,8 @@ export const nexcelBrand: BrandConfig = {
       solutions: [
         { label: "KI-Agenten", href: "/loesungen/ki-agenten" },
         { label: "Wissen", href: "/wissen" },
+        // SEO_ENTERPRISE_AUTHORITY_100_V3_20261120
+        { label: "Anwendungen", href: "/anwendungen" },
         { label: "Preiskalkulator", href: "/beratung" },
       ],
       // Spalte „Unternehmen"

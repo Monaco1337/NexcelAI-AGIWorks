@@ -157,6 +157,8 @@ export const agiworksBrand: BrandConfig = {
       solutions: [
         { label: "Systemanalyse", href: "/systemanalyse" },
         { label: "Wissen", href: "/wissen" },
+        // SEO_ENTERPRISE_AUTHORITY_100_V3_20261120
+        { label: "Engineering", href: "/engineering" },
         { label: "Preiskalkulator", href: "/beratung" },
       ],
       // Spalte „Unternehmen"
