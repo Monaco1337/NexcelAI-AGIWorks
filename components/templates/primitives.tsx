@@ -1,29 +1,12 @@
 "use client";
 
-/**
- * Shared, brand-aware primitives for the Phase 4 template components.
- * Keep templates DRY: section shells, headings, glass cards and the conversion
- * CTA all live here and inherit the active brand's CSS variables.
- */
-
-import { motion } from "framer-motion";
-import Link from "@/components/BrandAwareLink";
 import type { ReactNode } from "react";
+import Link from "@/components/BrandAwareLink";
 import { track } from "@/lib/track";
 
-const reveal = {
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-};
-
+/** Brand-aware typographic primitives. No aggressive scroll-reveal motion. */
 export function Eyebrow({ children }: { children: ReactNode }) {
-  return (
-    <span className="block text-[11px] uppercase tracking-[0.22em] text-white/45 mb-3">
-      {children}
-    </span>
-  );
+  return <span className="v6-label">{children}</span>;
 }
 
 export function GradientHeading({
@@ -36,26 +19,9 @@ export function GradientHeading({
   className?: string;
 }) {
   const Tag = as;
-  const size =
-    as === "h1"
-      ? "text-4xl md:text-5xl lg:text-6xl"
-      : as === "h2"
-      ? "text-3xl md:text-4xl"
-      : "text-xl md:text-2xl";
-  return (
-    <Tag
-      className={`font-light tracking-tight text-white/95 ${size} ${className}`}
-      style={{
-        backgroundImage:
-          "var(--brand-headline-gradient, linear-gradient(to right, #F1E9FF, #C6A8FF, #8A5CFF))",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
-      }}
-    >
-      {children}
-    </Tag>
-  );
+  return <Tag className={`${as === "h1" ? "v6-h1" : as === "h2" ? "v6-h2" : "v6-h3"} ${className}`}>
+    {children}
+  </Tag>;
 }
 
 export function TemplateSection({
@@ -64,7 +30,6 @@ export function TemplateSection({
   intro,
   children,
   id,
-  compact = false,
 }: {
   eyebrow?: ReactNode;
   heading?: ReactNode;
@@ -73,26 +38,19 @@ export function TemplateSection({
   id?: string;
   compact?: boolean;
 }) {
-  return (
-    <section id={id} className={compact ? "relative px-4 py-10 sm:px-6 md:py-12" : "relative px-4 py-16 sm:px-6 md:py-20"}>
-      <div className="mx-auto max-w-5xl">
-        {(eyebrow || heading || intro) && (
-          <motion.div className={compact ? "mb-7 max-w-3xl" : "mb-10 max-w-3xl"} {...reveal}>
-            {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-            {heading && typeof heading === "string" ? (
-              <GradientHeading>{heading}</GradientHeading>
-            ) : (
-              heading
-            )}
-            {intro && <p className="mt-4 text-base leading-relaxed text-white/70">{intro}</p>}
-          </motion.div>
-        )}
-        {children}
-      </div>
-    </section>
-  );
+  return <section id={id} className="v6-template-section">
+    <div className="v6-template-container mx-auto px-5 sm:px-8">
+      {(eyebrow || heading || intro) && <div className="v6-template-head">
+        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+        {typeof heading === "string" ? <GradientHeading>{heading}</GradientHeading> : heading}
+        {intro && <p className="mt-5 text-base leading-[1.8] text-white/75">{intro}</p>}
+      </div>}
+      <div className="v6-template-content">{children}</div>
+    </div>
+  </section>;
 }
 
+/** Accessible unboxed content surface; no decorative card chrome. */
 export function GlassCard({
   children,
   className = "",
@@ -100,34 +58,16 @@ export function GlassCard({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={`seo-premium-v5-surface rounded-2xl p-6 transition-colors ${className}`}
-      style={{
-        border: "1px solid var(--brand-card-border, rgba(255,255,255,0.10))",
-        background: "rgba(255,255,255,0.03)",
-      }}
-    >
-      {children}
-    </div>
-  );
+  return <div className={`v6-open-card ${className}`}>{children}</div>;
 }
 
-export function CardGrid({
-  children,
-  cols = 3,
-}: {
-  children: ReactNode;
-  cols?: 2 | 3;
-}) {
-  const grid = cols === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3";
-  return <div className={`grid grid-cols-1 gap-4 ${grid}`}>{children}</div>;
+export function CardGrid({ children, cols = 3 }: { children: ReactNode; cols?: 2 | 3 }) {
+  return <div className={`v6-card-grid grid grid-cols-1 ${cols === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+    {children}
+  </div>;
 }
 
-/**
- * Brand-aware conversion CTA. Fires a tracked event (respecting the existing
- * analytics pipeline) and links to an internal route.
- */
+/** Existing analytics event + internal route preserved. */
 export function TemplateCta({
   label,
   href,
@@ -141,28 +81,9 @@ export function TemplateCta({
   meta?: Record<string, unknown>;
   variant?: "primary" | "ghost";
 }) {
-  const base =
-    "seo-premium-v5-cta inline-flex min-h-[50px] items-center justify-center rounded-full px-8 py-4 text-center text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0f]";
-  const style =
-    variant === "primary"
-      ? {
-          background: "var(--brand-wash, rgba(138,92,255,0.16))",
-          border: "1px solid var(--brand-line-mid, rgba(180,140,255,0.45))",
-          color: "rgba(255,255,255,0.95)",
-        }
-      : {
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid var(--brand-card-border, rgba(255,255,255,0.10))",
-          color: "rgba(255,255,255,0.85)",
-        };
-  return (
-    <Link
-      href={href}
-      onClick={() => track(eventName, { meta: { href, ...meta } })}
-      className={base}
-      style={style}
-    >
-      {label}
-    </Link>
-  );
+  return <Link
+    href={href}
+    onClick={() => track(eventName, { meta: { href, ...meta } })}
+    className={`v6-button ${variant === "primary" ? "v6-button-primary" : "v6-button-secondary"}`}
+  >{label}</Link>;
 }

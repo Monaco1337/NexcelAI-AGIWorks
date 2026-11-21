@@ -110,7 +110,7 @@ export default function Footer() {
     pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse");
 
   return (
-    <footer className="seo-premium-footer-v5 relative border-t border-white/[0.06] bg-gradient-to-b from-transparent to-[#0C0F1A]">
+    <footer className="premium-v6-footer relative border-t border-white/[0.06] bg-gradient-to-b from-transparent to-[#0C0F1A]">
       {/* CTA Section */}
       {/* AGI_HOMEPAGE_FINAL_CTA_V1 */}
       {isAgiHomepage && <AgiClosingCta />}
@@ -383,7 +383,7 @@ export default function Footer() {
 
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-12 lg:py-16">
-        <div className="seo-premium-footer-grid mb-8 sm:mb-10 md:mb-12">
+        <div className="premium-v6-footer-grid mb-8 sm:mb-10 md:mb-12">
           {/* Brand Column */}
           <motion.div
             className="col-span-2 min-w-0 pb-6 lg:col-span-1 lg:pb-0"

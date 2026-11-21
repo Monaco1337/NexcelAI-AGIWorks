@@ -11,6 +11,7 @@
 
 import Link from "@/components/BrandAwareLink";
 import TemplateFrame from "./TemplateFrame";
+import CommercialDepth from "@/components/authority/CommercialDepth";
 import { TemplateSection, GlassCard, CardGrid } from "./primitives";
 import { serviceSchema } from "@/lib/seo/jsonld";
 import { toAbsoluteUrl } from "@/config/seo/domains";
@@ -143,16 +144,14 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
 
       {/* Process */}
       <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ablauf" heading="Wie ein Projekt läuft">
-        <ol className="space-y-4">
+        <ol className="v6-steps">
           {page.process.map((step, i) => (
-            <li key={i}>
-              <GlassCard>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-sm text-white/40">{String(i + 1).padStart(2, "0")}</span>
-                  <h3 className="text-base font-medium text-white/95">{step.title}</h3>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-white/65">{step.description}</p>
-              </GlassCard>
+            <li key={`${i}-${step.title}`}>
+              <div className="v6-step-head">
+                <span className="v6-label">{String(i + 1).padStart(2, "0")}</span>
+                <h3>{step.title}</h3>
+              </div>
+              <p>{step.description}</p>
             </li>
           ))}
         </ol>
@@ -166,8 +165,7 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
               <Link
                 key={i}
                 href={href}
-                className="rounded-xl px-4 py-2 text-sm text-white/80"
-                style={{ border: "1px solid var(--brand-card-border, rgba(255,255,255,0.10))" }}
+                className="text-sm leading-relaxed text-white/80 underline decoration-white/20 underline-offset-8 hover:decoration-white/70"
               >
                 {linkLabel(page.brand, href)}
               </Link>
@@ -175,6 +173,8 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
           </div>
         </TemplateSection>
       )}
+
+      <CommercialDepth page={page} />
 
       {/* Proof constraints */}
       <TemplateSection compact={page.brand === "agiworks"} eyebrow="Transparenz" heading="Transparenz von Anfang an">

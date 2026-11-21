@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * Shared page chrome for all Phase 4 templates: breadcrumbs, hero, body,
- * FAQ, trust block, conversion CTA and WebPage JSON-LD. Templates supply only
- * their unique body + any type-specific structured data.
- */
-
 import type { ReactNode } from "react";
 import { webPageForUrl } from "@/lib/seo/jsonld";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
@@ -17,17 +11,16 @@ import { GradientHeading, Eyebrow, TemplateCta } from "@/components/templates/pr
 import type { TemplateBase } from "@/lib/templates/types";
 
 type JsonLdObject = Record<string, unknown>;
-
 interface TemplateFrameProps {
   base: TemplateBase;
   children: ReactNode;
-  /** Type-specific structured data (Service, Article, …). */
   extraSchema?: JsonLdObject | JsonLdObject[];
   cta?: { label: string; href: string };
   showAuthor?: boolean;
   emitAuthorSchema?: boolean;
 }
 
+/** Shared visual and semantic frame; exactly one final conversion CTA. */
 export default function TemplateFrame({
   base,
   children,
@@ -36,62 +29,39 @@ export default function TemplateFrame({
   showAuthor = true,
   emitAuthorSchema = false,
 }: TemplateFrameProps) {
-  const isAgiWorks = base.brand === "agiworks";
-
-  const displayedCta = isAgiWorks
-    ? {
-        label: "Softwareprojekt besprechen",
-        href: "/kontakt",
-      }
-    : cta;
-
-  const webPage = webPageForUrl({
-    brand: base.brand,
-    url: base.canonicalUrl,
-    name: base.title,
-    description: base.intro,
-  });
+  const agi = base.brand === "agiworks";
+  const finalCta = agi ? { label: "Softwareprojekt besprechen", href: "/kontakt" } : cta;
   const schema: JsonLdObject[] = [
-    webPage,
+    webPageForUrl({ brand: base.brand, url: base.canonicalUrl, name: base.title, description: base.intro }),
     ...(extraSchema ? (Array.isArray(extraSchema) ? extraSchema : [extraSchema]) : []),
   ];
 
-  return (
-    <main className="ds-app seo-premium-v5 min-h-screen text-white">
-      <Breadcrumbs items={base.breadcrumbs} />
+  return <main className="ds-app premium-v6 v6-template min-h-screen" data-v6-brand={base.brand}>
+    <Breadcrumbs items={base.breadcrumbs} />
+    <header className="v6-template-hero">
+      <div>
+        {base.eyebrow && <Eyebrow>{base.eyebrow}</Eyebrow>}
+        <GradientHeading as="h1">{base.title}</GradientHeading>
+        <p className="mt-6 max-w-3xl text-[17px] leading-[1.8] text-white/75">{base.intro}</p>
+      </div>
+    </header>
 
-      <header className="px-4 pt-10 sm:px-6 md:pt-16">
-        <div className="mx-auto max-w-5xl">
-          {base.eyebrow && <Eyebrow>{base.eyebrow}</Eyebrow>}
-          <GradientHeading as="h1">{base.title}</GradientHeading>
-          <p className="mt-5 max-w-3xl text-lg leading-relaxed text-white/70">{base.intro}</p>
-        </div>
-      </header>
+    {children}
+    <FaqSection items={base.faq} />
 
-      {children}
+    {!agi && <section className="mx-auto max-w-[1080px] px-5 py-12 sm:px-8">
+      <TrustStrip />
+      {showAuthor && <div className="mx-auto mt-9 max-w-md"><AuthorByline emitSchema={emitAuthorSchema} /></div>}
+    </section>}
 
-      <FaqSection items={base.faq} />
-
-      {!isAgiWorks && (
-      <section className="relative px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-5xl space-y-6">
-          <TrustStrip />
-          {showAuthor && (
-            <div className="max-w-md">
-              <AuthorByline emitSchema={emitAuthorSchema} />
-            </div>
-          )}
-        </div>
-      </section>
-      )}
-
-      <section className="relative px-4 pb-24 sm:px-6">
-        <div className="seo-premium-v5-template-cta mx-auto flex max-w-5xl flex-col items-center justify-center gap-4 text-center">
-          <TemplateCta label={displayedCta.label} href={displayedCta.href} meta={{ page: base.canonicalUrl }} />
-        </div>
-      </section>
-
-      <SeoJsonLd schema={schema} />
-    </main>
-  );
+    <section className="v6-final v6-template-cta" aria-label="Projekt besprechen">
+      <div className="v6-shell">
+        <Eyebrow>Gemeinsam weiterdenken</Eyebrow>
+        <h2 className="v6-h2">Lassen Sie uns Ihren konkreten Bedarf klären.</h2>
+        <p>Eine nachvollziehbare Entscheidung beginnt mit Anforderungen, Datenlage und einem klar abgegrenzten Projektrahmen.</p>
+        <TemplateCta label={finalCta.label} href={finalCta.href} meta={{ page: base.canonicalUrl }} />
+      </div>
+    </section>
+    <SeoJsonLd schema={schema} />
+  </main>;
 }

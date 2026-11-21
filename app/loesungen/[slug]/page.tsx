@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import MoneyPageTemplate from "@/components/templates/MoneyPageTemplate";
-import CommercialDepth from "@/components/authority/CommercialDepth";
 import { getMoneyPage, getMoneyPagesForBrand } from "@/data/moneyPages";
 import { generateSeoMetadata } from "@/lib/seo/metadata";
 
@@ -25,7 +24,6 @@ export default function NexcelLoesungPage({ params }: PageProps) {
     <div className="relative min-h-screen overflow-x-hidden">
       <div className="pt-[76px] sm:pt-[88px]">
         <MoneyPageTemplate page={page} />
-        <CommercialDepth page={page} />
       </div>
       <Footer />
     </div>

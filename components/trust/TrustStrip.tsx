@@ -34,7 +34,7 @@ export default function TrustStrip() {
       {signals.map((s) => (
         <div
           key={s.label}
-          className="seo-premium-v5-trust rounded-2xl px-5 py-4"
+          className="v6-trust rounded-2xl px-5 py-4"
           style={{
             border: "1px solid var(--brand-card-border, rgba(255,255,255,0.10))",
             background: "rgba(255,255,255,0.02)",
