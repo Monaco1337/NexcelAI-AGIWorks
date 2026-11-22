@@ -4720,3 +4720,79 @@ footer.premium-v6-footer details.seo-premium-footer-directory { border: 0; backg
   .premium-v6 .v6-button { transition: none; }
   .premium-v6 .v6-button:hover { transform: none; }
 }
+
+/* SEO_HEADER_PHASE1_V7_20261121
+ * Phase 1 only: site navigation and shared V6 editorial canvas.
+ * Do not change SEO, checkout, admin, consent, service content or canonical data.
+ */
+.premium-nav-phase1 {
+  --nav-v7-ink: 17,19,33;
+  isolation: isolate;
+  overflow: visible;
+}
+html[data-brand="agiworks"] .premium-nav-phase1 {
+  --nav-v7-ink: 15,27,43;
+}
+/* An ambient scrim fades past the nav's lower edge; no hard horizontal strip. */
+.premium-nav-phase1 .premium-nav-phase1-ambient {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 0;
+  height: clamp(176px, 17vw, 245px);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--nav-v7-ink), .97) 0%,
+    rgba(var(--nav-v7-ink), .91) 36%,
+    rgba(var(--nav-v7-ink), .66) 60%,
+    rgba(var(--nav-v7-ink), 0) 100%
+  );
+}
+.premium-nav-phase1 > .relative { position: relative; z-index: 1; }
+.premium-nav-phase1 .premium-nav-phase1-glass {
+  border-radius: 30px;
+  will-change: auto;
+  contain: paint;
+}
+/* Use the SAME authored gradient as V6 as the document canvas.
+ * Move it above route-specific top spacers so the navbar backdrop blends
+ * seamlessly into the hero, instead of starting at an artificial y-offset. */
+html:has(.premium-v6) .app-content-surface {
+  background:
+    radial-gradient(ellipse 78% 32% at 52% 6%, rgba(94,61,149,.24), transparent 75%),
+    radial-gradient(ellipse 70% 22% at 93% 43%, rgba(83,63,140,.13), transparent 85%),
+    linear-gradient(180deg,#111321 0%,#111425 31%,#0e1421 65%,#101320 100%) !important;
+}
+html[data-brand="agiworks"]:has(.premium-v6) .app-content-surface {
+  background:
+    radial-gradient(ellipse 78% 32% at 52% 6%, rgba(30,93,156,.27), transparent 74%),
+    radial-gradient(ellipse 62% 28% at 90% 52%, rgba(27,103,159,.13), transparent 83%),
+    linear-gradient(180deg,#0f1b2b 0%,#101b2b 38%,#101726 100%) !important;
+}
+/* Avoid a second full-page background starting below the fixed navbar. */
+html:has(.premium-v6) .app-content-surface .premium-v6 {
+  background: transparent !important;
+}
+/* Existing fixed header remains visible, but fragment targets land below it. */
+html:has(.premium-v6) { scroll-padding-top: 136px; }
+html:has(.premium-v6) .premium-v6 :is([id], section[id]) {
+  scroll-margin-top: 136px;
+}
+@media (max-width: 1279px) {
+  .premium-nav-phase1 .premium-nav-phase1-glass {
+    border-radius: 24px;
+  }
+}
+@media (max-width: 639px) {
+  .premium-nav-phase1 .premium-nav-phase1-ambient {
+    height: 168px;
+  }
+  .premium-nav-phase1 .premium-nav-phase1-glass {
+    border-radius: 22px;
+  }
+  html:has(.premium-v6) { scroll-padding-top: 112px; }
+  html:has(.premium-v6) .premium-v6 :is([id], section[id]) { scroll-margin-top: 112px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .premium-nav-phase1 .premium-nav-phase1-glass { transition: none !important; }
+}

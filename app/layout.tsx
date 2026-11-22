@@ -294,6 +294,7 @@ export default function RootLayout({
           
           {/* Content */}
           <div
+            className="app-content-surface"
             style={{
               minHeight: "100vh",
               position: "relative",
