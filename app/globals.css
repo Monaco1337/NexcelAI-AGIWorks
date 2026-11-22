@@ -4796,3 +4796,171 @@ html:has(.premium-v6) .premium-v6 :is([id], section[id]) {
 @media (prefers-reduced-motion: reduce) {
   .premium-nav-phase1 .premium-nav-phase1-glass { transition: none !important; }
 }
+
+/* SEO_PREMIUM_CONSULTATION_V8_20261122 */
+/* Scoped to two consultation routes. No global header, admin, or SEO overrides. */
+.consultation-v8-page {
+  --cv8-accent: 183, 140, 255;
+  --cv8-paper: 14, 17, 30;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 75% 31% at 49% 7%, rgba(121, 78, 186, .21), transparent 79%),
+    radial-gradient(ellipse 45% 24% at 86% 55%, rgba(75, 54, 130, .12), transparent 85%),
+    linear-gradient(180deg, #101322 0%, #0e1320 39%, #0c111d 100%);
+}
+.consultation-v8-page[data-consultation-brand="agiworks"] {
+  --cv8-accent: 104, 187, 255;
+  background:
+    radial-gradient(ellipse 75% 31% at 49% 7%, rgba(35, 113, 190, .22), transparent 79%),
+    radial-gradient(ellipse 45% 24% at 86% 55%, rgba(27, 109, 164, .13), transparent 85%),
+    linear-gradient(180deg, #0d1b2b 0%, #101b2b 42%, #0c1724 100%);
+}
+.consultation-v8-page :is(.consultation-v8-hero, .consultation-v8-intent) { position: relative; z-index: 1; }
+.consultation-v8-page .consultation-v8-hero-title {
+  font-size: clamp(2.15rem, 4.3vw, 3.8rem);
+  line-height: 1.12;
+  letter-spacing: -.038em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.consultation-v8-page .consultation-v8-hero > p:last-child {
+  font-size: clamp(1rem, 1.35vw, 1.125rem);
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+.consultation-v8-page .consultation-v8-booking {
+  --cv8-panel-surface: rgba(18, 24, 41, .80);
+  max-width: 1160px;
+  border: 1px solid rgba(199, 201, 236, .11);
+  border-radius: clamp(24px, 3vw, 36px);
+  background:
+    radial-gradient(ellipse 70% 52% at 50% 0%, rgba(var(--cv8-accent), .085), transparent 80%),
+    linear-gradient(145deg, rgba(23, 29, 47, .85), rgba(13, 19, 34, .86));
+  box-shadow: 0 24px 88px rgba(0, 0, 0, .20), inset 0 1px rgba(255,255,255,.035);
+  scroll-margin-top: 160px;
+}
+.consultation-v8-page[data-consultation-brand="agiworks"] .consultation-v8-booking {
+  background:
+    radial-gradient(ellipse 70% 52% at 50% 0%, rgba(var(--cv8-accent), .085), transparent 80%),
+    linear-gradient(145deg, rgba(17, 35, 55, .87), rgba(12, 25, 43, .89));
+}
+.consultation-v8-booking .consultation-v8-step {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  color: rgba(232, 234, 245, .58);
+  background: rgba(255,255,255,.028);
+  white-space: nowrap;
+}
+.consultation-v8-booking .consultation-v8-step[data-active="true"] {
+  border-color: rgba(var(--cv8-accent), .52);
+  background: rgba(var(--cv8-accent), .10);
+  box-shadow: inset 0 0 0 1px rgba(var(--cv8-accent), .08), 0 0 24px rgba(var(--cv8-accent), .08);
+}
+.consultation-v8-booking .consultation-v8-stage > h2 {
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  line-height: 1.22;
+  letter-spacing: -.028em;
+  text-wrap: balance;
+}
+.consultation-v8-booking .consultation-v8-stage > p:not(:first-child) {
+  text-wrap: pretty;
+}
+.consultation-v8-booking .consultation-v8-slots { text-align: center; }
+.consultation-v8-booking .consultation-v8-slots button {
+  border-radius: 999px;
+  min-height: 48px;
+  min-width: 110px;
+  background: rgba(255,255,255,.044);
+}
+.consultation-v8-booking .consultation-v8-empty {
+  background: linear-gradient(140deg, rgba(var(--cv8-accent), .075), rgba(255,255,255,.018));
+  border-radius: 22px;
+  border: 1px solid rgba(var(--cv8-accent), .13);
+}
+.consultation-v8-booking .consultation-v8-link { color: rgb(var(--cv8-accent)); }
+.consultation-v8-booking .consultation-v8-actions { border-top: 1px solid rgba(255,255,255,.08); }
+.consultation-v8-booking .consultation-v8-actions button {
+  transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+}
+.consultation-v8-booking .consultation-v8-actions button:not(:disabled):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 12px 32px rgba(var(--cv8-accent), .20);
+}
+.consultation-v8-booking .consultation-v8-actions button:disabled {
+  opacity: .48;
+  filter: saturate(.60);
+}
+.consultation-v8-booking .consultation-v8-selected {
+  background: rgba(var(--cv8-accent), .06);
+  border: 1px solid rgba(var(--cv8-accent), .18);
+}
+.consultation-v8-booking .consultation-v8-form :is(input, select, textarea):focus-visible {
+  border-color: rgba(var(--cv8-accent), .74);
+  outline: 2px solid rgba(var(--cv8-accent), .36);
+  outline-offset: 2px;
+}
+.consultation-v8-booking .consultation-v8-form > p:last-child {
+  max-width: 62ch;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.consultation-v8-page .consultation-v8-intent-title {
+  font-size: clamp(1.9rem, 3.1vw, 2.85rem);
+  line-height: 1.18;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.consultation-v8-page .consultation-v8-topic {
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.055);
+  background:
+    radial-gradient(ellipse 100% 85% at 50% -42%, rgba(var(--cv8-accent), .15), transparent 83%),
+    linear-gradient(165deg, rgba(255,255,255,.048), rgba(255,255,255,.015));
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+  text-decoration: none;
+}
+.consultation-v8-page .consultation-v8-topic::before {
+  content: "";
+  position: absolute;
+  width: 42px;
+  height: 2px;
+  left: calc(50% - 21px);
+  top: 21px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(var(--cv8-accent), .9), transparent);
+}
+.consultation-v8-page .consultation-v8-topic:hover,
+.consultation-v8-page .consultation-v8-topic:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(var(--cv8-accent), .30);
+  background:
+    radial-gradient(ellipse 100% 85% at 50% -42%, rgba(var(--cv8-accent), .20), transparent 83%),
+    linear-gradient(165deg, rgba(255,255,255,.06), rgba(255,255,255,.023));
+  box-shadow: 0 20px 50px rgba(0,0,0,.15), 0 8px 30px rgba(var(--cv8-accent), .07);
+}
+.consultation-v8-page .consultation-v8-topic-title { margin-top: 14px; text-wrap: balance; }
+.consultation-v8-page .consultation-v8-topic-link { text-underline-offset: 5px; }
+.consultation-v8-page .consultation-v8-topic:hover .consultation-v8-topic-link,
+.consultation-v8-page .consultation-v8-topic:focus-visible .consultation-v8-topic-link { text-decoration: underline; }
+@media (max-width: 639px) {
+  .consultation-v8-page .consultation-v8-booking { padding: 24px 18px; scroll-margin-top: 122px; }
+  .consultation-v8-booking .consultation-v8-step-divider { display: none; }
+  .consultation-v8-booking .consultation-v8-step { min-height: 40px; padding-inline: 11px; font-size: 10px; letter-spacing: .04em; }
+  .consultation-v8-booking .consultation-v8-actions { flex-direction: column; }
+  .consultation-v8-booking .consultation-v8-actions button { width: 100%; max-width: 340px; }
+  .consultation-v8-booking .consultation-v8-form :is(input, select, textarea) { font-size: 16px; }
+  .consultation-v8-page .consultation-v8-topic { min-height: 208px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .consultation-v8-page .consultation-v8-topic,
+  .consultation-v8-booking .consultation-v8-actions button { transition: none !important; }
+  .consultation-v8-page .consultation-v8-topic:hover,
+  .consultation-v8-booking .consultation-v8-actions button:not(:disabled):hover { transform: none; }
+}

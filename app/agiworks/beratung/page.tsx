@@ -11,12 +11,12 @@ const url = "https://www.agiworks.de/beratung";
 const title = "Softwareberatung und Architekturgespräch für Unternehmen";
 const description = "Technisches Erstgespräch zu Softwareentwicklung, ERP, CRM, SaaS, Web-Apps und Systemintegration. Ziele, Bestandssysteme und Projektrahmen strukturiert klären.";
 export default function AgiWorksBeratungPage() {
-  return <main className="ds-app min-h-screen bg-[#080c15] pt-40 text-white sm:pt-44 lg:pt-48">
+  return <main className="ds-app consultation-v8-page min-h-screen pt-40 text-white sm:pt-44 lg:pt-48" data-consultation-brand="agiworks">
     <section className="mx-auto max-w-6xl px-5 sm:px-8">
-      <header className="mx-auto mb-11 max-w-3xl text-center sm:mb-14">
+      <header className="consultation-v8-hero mx-auto mb-12 max-w-4xl text-center sm:mb-16">
         <p className="text-xs font-semibold uppercase tracking-[.23em] text-sky-300">AGI WORKS · BERATUNGSTERMIN</p>
-        <h1 className="mx-auto mt-5 max-w-3xl text-3xl font-medium leading-tight tracking-tight sm:text-5xl">Sprechen wir über Ihr Softwareprojekt.</h1>
-        <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">Wählen Sie einen Termin und geben Sie uns einen kurzen Einblick in Ihr Unternehmen und Ihr Vorhaben.</p>
+        <h1 className="consultation-v8-hero-title mx-auto mt-5 max-w-3xl font-medium tracking-tight text-white">Sprechen wir über Ihr Softwareprojekt.</h1>
+        <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/75">Wählen Sie einen Termin und geben Sie uns einen kurzen Einblick in Ihr Unternehmen und Ihr Vorhaben.</p>
       </header>
       <ConsultationBooking brand="agiworks" />
       <ConsultationIntentLinks brand="agiworks" />
