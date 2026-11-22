@@ -5318,3 +5318,110 @@ html:has(.premium-v6) .premium-v6 :is([id], section[id]) {
   .consultation-v10-picker .consultation-v10-month-button { transition: none !important; }
   .consultation-v10-picker .consultation-v10-date[data-available="true"]:hover { transform: none; }
 }
+
+/* SEO_PREMIUM_CALENDAR_V11_20261122 */
+/* Local booking-only styling: two consecutive months, no past dates. */
+.consultation-v8-page .consultation-v11-picker { max-width: 1060px; }
+.consultation-v11-picker .consultation-v11-months {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(12px, 1.6vw, 22px);
+  margin-inline: auto;
+}
+.consultation-v11-picker .consultation-v11-month {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: clamp(13px, 1.5vw, 20px);
+}
+.consultation-v11-picker .consultation-v11-month-title {
+  margin: 0 auto 16px;
+  padding: 5px 0;
+  font-size: clamp(1.04rem, 1.65vw, 1.28rem);
+  line-height: 1.4;
+  text-align: center;
+}
+.consultation-v11-picker .consultation-v11-month .consultation-v10-weekdays,
+.consultation-v11-picker .consultation-v11-month .consultation-v10-days { gap: clamp(3px, .42vw, 6px); }
+.consultation-v11-picker .consultation-v11-month .consultation-v10-weekdays > span {
+  font-size: .62rem;
+  letter-spacing: .055em;
+}
+.consultation-v11-picker .consultation-v11-month .consultation-v10-date,
+.consultation-v11-picker .consultation-v11-month .consultation-v10-blank {
+  min-height: clamp(47px, 4.3vw, 62px);
+}
+.consultation-v11-picker .consultation-v11-month .consultation-v10-date {
+  border-radius: clamp(8px, .8vw, 12px);
+  gap: 4px;
+}
+.consultation-v11-picker .consultation-v11-month .consultation-v10-date-number { font-size: clamp(.78rem, .96vw, 1.02rem); }
+.consultation-v11-picker .consultation-v11-month .consultation-v10-date-state { font-size: clamp(.52rem, .68vw, .66rem); }
+.consultation-v11-picker .consultation-v11-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 23px auto 0;
+  padding: 10px 22px;
+  border: 1px solid rgba(var(--v10-accent), .32);
+  border-radius: 999px;
+  background: rgba(var(--v10-accent), .085);
+  color: rgba(249,245,255,.9);
+  font-size: .88rem;
+  font-weight: 600;
+  transition: border-color .18s ease, background .18s ease;
+}
+.consultation-v11-picker .consultation-v11-expand:hover {
+  border-color: rgba(var(--v10-accent), .7);
+  background: rgba(var(--v10-accent), .19);
+}
+.consultation-v11-picker .consultation-v11-expand:focus-visible {
+  outline: 3px solid rgba(var(--v10-accent), .9);
+  outline-offset: 4px;
+}
+.consultation-v11-picker .consultation-v11-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 19px auto 0;
+  color: rgba(233,230,249,.65);
+  font-size: .78rem;
+  line-height: 1.5;
+}
+.consultation-v11-picker .consultation-v11-legend > span {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgb(var(--v10-accent));
+  box-shadow: 0 0 10px rgba(var(--v10-accent), .43);
+}
+@media (max-width: 820px) {
+  .consultation-v11-picker .consultation-v11-months {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 520px;
+  }
+  .consultation-v11-picker .consultation-v11-month { padding: 15px; }
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-date,
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-blank { min-height: 56px; }
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-date-number { font-size: .96rem; }
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-date-state { font-size: .64rem; }
+}
+@media (max-width: 420px) {
+  .consultation-v11-picker .consultation-v11-month { padding: 12px 8px; }
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-weekdays,
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-days { gap: 3px; }
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-date,
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-blank { min-height: 49px; }
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-date-number { font-size: .86rem; }
+  .consultation-v11-picker .consultation-v11-month .consultation-v10-date-state { font-size: .53rem; }
+  .consultation-v11-picker .consultation-v11-legend { font-size: .7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .consultation-v11-picker .consultation-v11-expand { transition: none !important; }
+}
