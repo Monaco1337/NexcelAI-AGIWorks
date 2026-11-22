@@ -2,14 +2,56 @@ import Link from "@/components/BrandAwareLink";
 import { getAuthorityPages } from "@/data/authorityPortfolio";
 import type { BrandKey } from "@/config/seo/domains";
 
-export default function AuthorityHub({brand}: {brand:BrandKey}) {
-  const isAgi=brand === "agiworks";
-  const pages=getAuthorityPages(brand);
-  const categories=Array.from(new Set(pages.map(p=>p.category)));
-  return <main className="min-h-screen bg-[#080b12] text-white"><div className="mx-auto max-w-[1240px] px-5 pb-28 pt-10 sm:px-8 lg:px-10">
-    <nav className="text-xs text-white/50"><Link href="/" className="hover:text-white">Start</Link> / {isAgi?"Engineering":"Anwendungen"}</nav>
-    <header className="border-b border-white/10 pb-16 pt-20 lg:pb-24 lg:pt-28"><p className="text-[11px] font-semibold uppercase tracking-[.22em] text-[var(--brand-primary)]">{isAgi?"AGI WORKS / ENGINEERING":"NEXCEL AI / ANWENDUNGEN"}</p><h1 className="mt-6 max-w-[1000px] text-[clamp(2.9rem,5.4vw,6rem)] font-medium leading-[1.05] tracking-[-.06em]">{isAgi?"Software, die im Betrieb trägt.":"Unternehmensprozesse neu denken."}</h1><p className="mt-7 max-w-[730px] text-[17px] leading-8 text-white/65">{isAgi?"Architektur, Integration, Plattformen, Sicherheit und KI-Engineering. Konkrete technische Entscheidungen für langlebige Unternehmenssysteme.":"KI-Agenten, Automatisierung, Customer Experience und Unternehmenswissen. Konkrete Anwendungsszenarien statt austauschbarer Technologieversprechen."}</p><div className="mt-9 flex flex-wrap gap-2">{categories.map((c,i)=><a href={`#feld-${i}`} key={c} className="rounded-full border border-white/15 px-4 py-2 text-[12px] text-white/75 transition-colors hover:border-white/40">{c}</a>)}</div></header>
-    {categories.map((cat,index)=><section id={`feld-${index}`} key={cat} className="scroll-mt-28 border-b border-white/10 py-16 lg:py-20"><div className="mb-9 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs tracking-[.16em] text-[var(--brand-primary)]">0{index+1} / 05</p><h2 className="mt-3 text-[clamp(2rem,3.1vw,3.4rem)] font-medium tracking-[-.045em]">{cat}</h2></div><span className="text-xs text-white/35">{pages.filter(p=>p.category===cat).length} Schwerpunkte</span></div><div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{pages.filter(p=>p.category===cat).map(p=><Link href={p.path} key={p.slug} className="group flex min-h-[240px] flex-col justify-between rounded-[22px] border border-white/10 bg-[#111925] p-7 transition-colors hover:border-white/30 hover:bg-[#172235]"><div><h3 className="text-[20px] font-medium leading-tight tracking-[-.03em] text-white">{p.headline}</h3><p className="mt-4 line-clamp-4 text-[13px] leading-[1.8] text-white/55">{p.problem}</p></div><span className="mt-5 flex items-center justify-between text-[12px] text-white/65">Systemansatz ansehen <span aria-hidden="true" className="text-[var(--brand-primary)]">↗</span></span></Link>)}</div></section>)}
-    <section className="mt-20 rounded-[28px] border border-white/10 bg-gradient-to-br from-[#17253a] to-[#141024] px-8 py-14 sm:px-12"><p className="text-xs uppercase tracking-[.15em] text-[var(--brand-primary)]">Individuelle Zusammenarbeit</p><h2 className="mt-5 max-w-[800px] text-[clamp(2rem,3.2vw,3.5rem)] tracking-[-.045em]">Ein konkreter Ablauf verlangt eine konkrete Lösung.</h2><p className="mt-5 max-w-[680px] text-[15px] leading-7 text-white/65">Schildern Sie Ihre Ausgangslage. Wir klären den Projektrahmen, die verantwortlichen Systeme und die nächsten prüfbaren Schritte.</p><Link href="/kontakt" className="mt-8 inline-flex rounded-[12px] bg-white px-7 py-4 text-sm font-medium text-[#10121a]">Projekt besprechen ↗</Link></section>
-  </div></main>;
+/** Shared category index: five editorial groups per brand, no decorative cards. */
+export default function AuthorityHub({ brand }: { brand: BrandKey }) {
+  const isAgi = brand === "agiworks";
+  const pages = getAuthorityPages(brand);
+  const categories = Array.from(new Set(pages.map((page) => page.category)));
+
+  return (
+    <main className="premium-v6 v6-hub" data-v6-brand={brand}>
+      <div className="v6-shell">
+        <nav aria-label="Breadcrumb" className="v6-breadcrumb">
+          <Link href="/">Start</Link><span aria-hidden="true">/</span>
+          <span aria-current="page">{isAgi ? "Engineering" : "Anwendungen"}</span>
+        </nav>
+        <header className="v6-hero">
+          <span className="v6-label">{isAgi ? "AGI Works / Engineering" : "NEXCEL AI / Anwendungen"}</span>
+          <h1 className="v6-h1">{isAgi ? "Software, die im Betrieb trägt." : "Unternehmensprozesse neu denken."}</h1>
+          <p className="v6-lead">{isAgi
+            ? "Architektur, Integration, Plattformen, Sicherheit und KI-Engineering. Technische Entscheidungen für langlebige Unternehmenssysteme."
+            : "KI-Agenten, Automatisierung, Customer Experience und Unternehmenswissen. Konkrete Anwendungsszenarien statt austauschbarer Technologieversprechen."}</p>
+          <nav aria-label="Fachgebiete" className="v6-category-nav">
+            {categories.map((category, index) => <a href={`#feld-${index}`} key={category}>{category} <span aria-hidden="true">↗</span></a>)}
+          </nav>
+        </header>
+        {categories.map((category, index) => {
+          const items = pages.filter((page) => page.category === category);
+          return (
+            <section className="v6-section v6-hub-group" key={category} id={`feld-${index}`} aria-labelledby={`feld-title-${index}`}>
+              <div className="v6-section-head">
+                <span className="v6-label">{String(index + 1).padStart(2, "0")} / {categories.length} · {items.length} Fachthemen</span>
+                <h2 className="v6-h2" id={`feld-title-${index}`}>{category}</h2>
+              </div>
+              <div className="v6-hub-links">
+                {items.map((page) => (
+                  <Link href={page.path} key={page.slug}>
+                    <h3>{page.headline}</h3>
+                    <p>{page.problem}</p>
+                    <span aria-hidden="true" className="v6-link-arrow">↗</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+        <section className="v6-final" aria-labelledby="v6-hub-final">
+          <span className="v6-label">Individuelle Zusammenarbeit</span>
+          <h2 id="v6-hub-final" className="v6-h2">Ein konkreter Bedarf verlangt eine konkrete Lösung.</h2>
+          <p>Wir klären Projektrahmen, verantwortliche Systeme und die nächsten überprüfbaren Schritte.</p>
+          <Link className="v6-button v6-button-primary" href="/kontakt">Projekt besprechen <span aria-hidden="true">↗</span></Link>
+        </section>
+      </div>
+    </main>
+  );
 }

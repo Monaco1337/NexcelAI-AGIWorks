@@ -75,7 +75,7 @@ export interface MoneyPage {
   manualIndexApproval: boolean;
 }
 
-const PROOF = "Kein Erfolgsversprechen, keine Ranking-Garantie: Der Projektkorridor hängt vom Umfang ab, Optimierung wird messbar gemacht statt pauschal behauptet.";
+const PROOF = "Wir klären vor der Umsetzung Leistungsumfang, Zuständigkeiten und Abnahmekriterien. Aufwand und Kosten richten sich nach Integrationen, Datenlage und Betriebsvorgaben. Die nächsten Schritte werden nachvollziehbar vereinbart.";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * AGI WORKS — /leistungen/* (technische Umsetzung, Architektur, Engineering)

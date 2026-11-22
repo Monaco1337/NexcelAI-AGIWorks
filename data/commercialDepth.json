@@ -1,0 +1,90 @@
+{
+  "nexcel:/loesungen/ki-systeme": {
+    "intent": "KI-Beratung für Unternehmen mit konkreter Umsetzung: Der Käufer muss entscheiden, welcher Geschäftsprozess einen belastbaren KI-Einsatz rechtfertigt und welche Daten- und Freigabegrenzen bestehen.",
+    "architecture": "Die Systemskizze trennt Fachprozess, Identitäts- und Zugriffsregeln, Datenquellen, Modell-/Agentenlaufzeit sowie kontrollierte Anbindung an CRM, ERP oder Service-Plattform. Unklare Entscheidungspunkte verbleiben im Fachbereich. So lassen sich Anforderungen und Betriebspflichten vor einem Entwicklungsauftrag überprüfen.",
+    "deliverable": "Ein belastbares Erstkonzept enthält priorisierte Einsatzfälle, Datenverantwortliche, Architekturvarianten, Integrationsrisiken, Qualitätsmessung und einen kleinsten abnehmbaren Pilot. Die technische Empfehlung muss auch erklären, wann eine Regelautomatisierung oder Standardsoftware sinnvoller ist als ein eigenes KI-System.",
+    "acceptance": "Vor dem Rollout prüfen repräsentative Geschäftsfälle Antwortqualität, Datenabgrenzung, Fehlverhalten, Kosten pro abgeschlossenem Vorgang und menschliche Korrekturschritte. Für schreibende Aktionen werden serverseitige Freigaben, Protokollierung und Rückfallverfahren nachgewiesen.",
+    "related": [
+      "/anwendungen/ki-einsatzpotenziale-priorisieren",
+      "/anwendungen/ki-make-or-buy",
+      "/anwendungen/ki-business-case"
+    ]
+  },
+  "nexcel:/loesungen/ki-agenten": {
+    "intent": "KI-Agenten entwickeln lassen: Der entscheidende Unterschied zu einem Chatbot ist der kontrollierte Zugriff auf Werkzeuge, Daten und Aktionen in vorhandenen Geschäftsprozessen.",
+    "architecture": "Ein produktiver Agent erhält ein explizites Tool-Schema mit minimalen Rechten. Die Ausführung validiert Parameter, prüft Objektberechtigungen und trennt Modellvorschlag von der tatsächlichen Aktion. Kontextfenster, Speicherdauer, Budgetgrenze und Eskalationsfall sind Bestandteil der Architektur, nicht nachträgliche Optionen.",
+    "deliverable": "Die technische Konzeption umfasst Agenten-Aufgabenprofil, Tool-Verzeichnis, Datenquellen, Policy-Enforcement, Freigabestufen und einen versionierten Evaluationssatz. Komplexe Aufgaben werden in begrenzte Workflows aufgeteilt, damit Wiederholungen und fehlerhafte Teilresultate keinen unkontrollierten Systemzustand erzeugen.",
+    "acceptance": "Die Abnahme umfasst missbräuchliche Prompts, unzulässige Tool-Aufrufe, falsche Objekt-IDs, Timeout, Retry und menschlichen Widerspruch. Ein Agent gilt erst dann als produktionsfähig, wenn risikoreiche Aktionen zuverlässig blockiert und alle erlaubten Aktionen nachvollziehbar protokolliert werden.",
+    "related": [
+      "/anwendungen/ki-agenten-mit-freigabeprozessen",
+      "/anwendungen/ki-agenten-multi-agent-workflows",
+      "/anwendungen/ki-agenten-fuer-support"
+    ]
+  },
+  "nexcel:/loesungen/automatisierung": {
+    "intent": "Prozesse automatisieren lassen: Entscheidend ist nicht die Zahl automatisierter Schritte, sondern ein fehlerrobuster End-to-End-Prozess mit eindeutiger Datenhoheit.",
+    "architecture": "Wir unterscheiden deterministische Regeln, Ereignisverarbeitung und KI-Unterstützung. Der Fachzustand liegt im führenden System; Webhooks, Queues und Wiederholungen müssen idempotent sein. Manuelle Klärfälle erhalten eine eigene Oberfläche, statt als technische Ausnahmen liegenzubleiben.",
+    "deliverable": "Ein gutes Angebot beschreibt Prozessereignisse, beteiligte Systeme, fachliche Statuswerte, Berechtigungen, Ausnahmen und messbare Durchlaufzeiten. Das Zielbild enthält bewusst auch den manuellen Fallback bei ausfallender Integration oder unzureichender Datenqualität.",
+    "acceptance": "Die Tests decken Doppelzustellung, abgebrochene Arbeitsschritte, ungültige Stammdaten und Konkurrenz bei Freigaben ab. Gemessen wird der Anteil korrekt abgeschlossener Vorgänge mitsamt Nachbearbeitung, nicht bloß die Zahl ausgelöster Automationen.",
+    "related": [
+      "/anwendungen/automatisierte-freigabeprozesse",
+      "/anwendungen/proaktive-ausnahmebehandlung",
+      "/anwendungen/aufgabenrouting-automatisieren"
+    ]
+  },
+  "nexcel:/loesungen/ki-fuer-vertrieb": {
+    "intent": "KI im Vertrieb soll kaufrelevante Abläufe verbessern, ohne die Qualität von Kundenbeziehungen oder rechtliche Kommunikationsgrenzen zu beschädigen.",
+    "architecture": "Ein Vertriebsassistent kombiniert CRM-Daten, hinterlegte Leistungsbeschreibungen und einen regelbasierten Qualifizierungsprozess. Die KI kann Gespräche strukturieren und Entwürfe erstellen; Preiszusagen, Angebote und versendete Kommunikation bleiben an Rollen, Freigaben und Einwilligungen gebunden.",
+    "deliverable": "Die Umsetzung benötigt eine klare Lead-Definition, CRM-Feldzuordnung, Quellenpriorität, Kommunikationsvorlagen und ein Übergabemodell zum persönlichen Vertrieb. Dubletten, Widersprüche und fehlende Pflichtdaten sind Bestandteil des Konzepts, nicht Restaufgaben nach dem Start.",
+    "acceptance": "Messpunkte sind vollständig qualifizierte Anfragen, manuelle Nachbearbeitung, Datenkorrekturen und sichere Übergaben. Tests prüfen Widerruf, falsche Kontaktdaten, unzulässige Preisversprechen und unpassende Follow-ups, bevor Nachrichten automatisiert versendet werden.",
+    "related": [
+      "/anwendungen/intelligente-anfragenqualifizierung",
+      "/anwendungen/crm-lead-nurturing-prozesse",
+      "/anwendungen/ki-agenten-fuer-innendienst"
+    ]
+  },
+  "agiworks:/leistungen/softwareentwicklung": {
+    "intent": "Individualsoftware entwickeln lassen: Auftraggeber benötigen eine belastbare Entscheidung über fachliche Passung, Erweiterbarkeit, Betrieb und langfristige Gesamtkosten.",
+    "architecture": "Die Softwarearchitektur wird aus Domänenmodellen, Systemgrenzen und realen Änderungsfällen abgeleitet. Datenhoheit, Autorisierung, API-Verträge, Deployment und Observability werden vor der Umsetzung kritischer Geschäftsprozesse definiert. Ein generisches Framework ist keine Architekturentscheidung.",
+    "deliverable": "Die Projektbasis umfasst priorisierte Anforderungen, nachvollziehbare Architekturentscheidungen, Kern-Datenmodell, Integrationsinventar, Sicherheitsanforderungen und inkrementelle Liefergegenstände. Standardsoftware und Erweiterung werden ausdrücklich als Alternative geprüft, bevor Eigenentwicklung empfohlen wird.",
+    "acceptance": "Relevante Geschäftsabläufe werden durch Integrations- und End-to-End-Tests nachgewiesen. Für kritische Funktionen werden Fehlerverhalten, Berechtigungsgrenzen, Wiederherstellbarkeit und Betriebszuständigkeit dokumentiert. Eine reine Demo ersetzt keine betriebliche Abnahme.",
+    "related": [
+      "/engineering/software-architektur-review",
+      "/engineering/modulare-softwarearchitektur",
+      "/engineering/software-technische-schulden"
+    ]
+  },
+  "agiworks:/leistungen/web-app-entwicklung": {
+    "intent": "Web-App entwickeln lassen: Wer eine browserbasierte Fachanwendung beauftragt, muss Rollen, Datenmodell, Integrationsumfang und Betrieb klarer definieren als bei einer normalen Website.",
+    "architecture": "Die Architektur trennt zugängliche Benutzeroberfläche, serverseitige Fachlogik, Authentifizierung, Autorisierung und Datenhaltung. API-Endpunkte validieren Eingaben und Objektberechtigungen unabhängig vom Frontend. Die Performance orientiert sich an realen Nutzerwegen und Datenmengen.",
+    "deliverable": "Zum Scope gehören Rollen-/Rechtematrix, Nutzeraktionen, Datenzustände, Integrationsverträge, Akzeptanzszenarien und ein abgestufter Produktumfang. Admin-Funktionen und Mandantenfähigkeit werden nur dann eingeplant, wenn ihre tatsächlichen Anforderungen dokumentiert sind.",
+    "acceptance": "Tests simulieren widersprüchliche Daten, parallele Änderungen, unberechtigte API-Zugriffe und mobile Nutzung. Für die Abnahme zählen korrekte Fachprozesse, verständliche Fehlermeldungen, messbare Ladezeiten und ein nachvollziehbarer Deployment-/Rollback-Prozess.",
+    "related": [
+      "/engineering/webapp-architektur-enterprise",
+      "/engineering/frontend-performance-architektur",
+      "/engineering/rollen-rechte-konzept"
+    ]
+  },
+  "agiworks:/leistungen/api-entwicklung": {
+    "intent": "Schnittstellen und APIs entwickeln lassen: Kaufentscheidend sind langlebige Verträge zwischen Systemen, korrekte Fachzustände und ein beherrschbarer Fehlerbetrieb.",
+    "architecture": "API-Design berücksichtigt Authentifizierung, Autorisierung, Datenverträge, Versionierung, Idempotenz und Rate Limits. Asynchrone Vorgänge nutzen definierte Retry-Regeln und Dead-Letter-Behandlung. Ein API-Gateway ersetzt weder Datenmodell noch fachliche Berechtigungsprüfung.",
+    "deliverable": "Das Schnittstellenkonzept listet führende Systeme, Mappingregeln, Datenklassen, Fehlercodes, Synchronisationsrichtung und Eigentümer. Vertragstests und Beispielpayloads werden Bestandteil der Lieferung, damit spätere Änderungen nicht nur beim Endkunden auffallen.",
+    "acceptance": "Abnahmefälle prüfen Timeout, Netzwerkunterbrechung, doppelte Zustellung, inkompatible Payloads und Rollenverletzungen. Eine Integration ist erst vollständig, wenn verlorene Vorgänge erkannt, sicher wiederholt und fachlich abgeglichen werden können.",
+    "related": [
+      "/engineering/api-integration-unternehmen",
+      "/engineering/webhook-verarbeitung-zuverlaessig",
+      "/engineering/schnittstellen-monitoring"
+    ]
+  },
+  "agiworks:/leistungen/erp-system-entwicklung": {
+    "intent": "ERP-Systeme entwickeln oder erweitern: Unternehmen müssen entscheiden, welche Prozesse Standardsoftware abdeckt und wo individuelle Module wirklich wirtschaftlichen Nutzen stiften.",
+    "architecture": "Eine ERP-Erweiterung respektiert Stamm- und Bewegungsdaten des führenden Systems. Ein separates Modul kapselt spezifische Fachlogik über versionierte Schnittstellen statt unkontrollierter Direktzugriffe auf Tabellen. Berechtigungen, Auditierung und Updatefähigkeit bleiben Teil des Designs.",
+    "deliverable": "Die Projektdefinition enthält Prozessabbildung, führendes Datenmodell, Integrationsmatrix, Migrationsstrategie und einen klaren funktionalen Kern. Der Make-or-Buy-Vergleich prüft ausdrücklich die Risiken von Customizing, Middleware und vollständiger Eigenentwicklung.",
+    "acceptance": "Tests decken Buchungs- und Bestandskonsistenz, Rollenrechte, Paralleländerungen, Migrationsabweichungen und ERP-Updates ab. Fachlich kritische Zahlen werden gegen das führende System abgeglichen; ein grüner HTTP-Status reicht nicht aus.",
+    "related": [
+      "/engineering/individuelle-erp-module",
+      "/engineering/erp-crm-schnittstelle",
+      "/engineering/datenmigration-ohne-ausfall"
+    ]
+  }
+}

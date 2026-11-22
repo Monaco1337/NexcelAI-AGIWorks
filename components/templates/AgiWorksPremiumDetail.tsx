@@ -3,6 +3,7 @@ import Link from "@/components/BrandAwareLink";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import type { ReactNode } from "react";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
+import CommercialDepth from "@/components/authority/CommercialDepth";
 import {
   breadcrumbSchema,
   faqSchema,
@@ -76,7 +77,7 @@ export default function AgiWorksPremiumDetail({
   const sectionWidth = "mx-auto max-w-[1260px] px-5 sm:px-8 lg:px-10";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#080c13] text-white">
+    <main className="premium-v6 v6-agi-detail relative min-h-screen overflow-hidden bg-[#080c13] text-white" data-v6-brand="agiworks">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[860px] bg-[radial-gradient(ellipse_at_78%_25%,rgba(37,112,172,.21),transparent_45%),linear-gradient(180deg,#0b1320_0%,#080c13_94%)]"
@@ -84,7 +85,7 @@ export default function AgiWorksPremiumDetail({
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[800px] opacity-[.045] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:80px_80px]"
+        className="pointer-events-none absolute inset-x-0 top-0 hidden"
       />
 
       {/* BREADCRUMB */}
@@ -132,7 +133,7 @@ export default function AgiWorksPremiumDetail({
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link
               href="/kontakt"
-              className="group inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-gradient-to-r from-[#244a68] to-[#17314b] px-6 text-[14px] font-medium text-white shadow-[0_12px_42px_rgba(21,109,175,.17)] transition-colors hover:border-sky-200/75 hover:from-[#30648c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
+              className="v6-button v6-button-primary group inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-gradient-to-r from-[#244a68] to-[#17314b] px-6 text-[14px] font-medium text-white shadow-[0_12px_42px_rgba(21,109,175,.17)] transition-colors hover:border-sky-200/75 hover:from-[#30648c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
             >
               Softwareprojekt besprechen
               <Arrow className="text-[#91d2ff]" />
@@ -140,7 +141,7 @@ export default function AgiWorksPremiumDetail({
 
             <a
               href="#umfang"
-              className="inline-flex min-h-[54px] items-center justify-center gap-4 rounded-[13px] border border-white/15 px-6 text-[14px] text-slate-200 transition-colors hover:border-white/35 hover:bg-white/[.045] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
+              className="v6-button v6-button-secondary inline-flex min-h-[54px] items-center justify-center gap-4 rounded-[13px] border border-white/15 px-6 text-[14px] text-slate-200 transition-colors hover:border-white/35 hover:bg-white/[.045] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
             >
               Funktionsumfang ansehen
               <span aria-hidden="true">↓</span>
@@ -161,7 +162,7 @@ export default function AgiWorksPremiumDetail({
             className="absolute -inset-5 rounded-[36px] bg-sky-400/[.075] blur-3xl"
           />
 
-          <div className="relative overflow-hidden rounded-[28px] border border-sky-300/20 bg-[#101a28] shadow-[0_30px_90px_rgba(0,0,0,.42)]">
+          <div className="seo-premium-v5-illustration relative overflow-hidden rounded-[28px] border border-sky-300/20 bg-[#101a28] shadow-[0_30px_90px_rgba(0,0,0,.42)]">
             <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
               <span className="text-[10px] font-semibold uppercase tracking-[.19em] text-sky-300">
                 Systemvisualisierung
@@ -254,7 +255,7 @@ export default function AgiWorksPremiumDetail({
           </p>
         </div>
 
-        <div className="mt-10 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="v6-agi-modules mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {page.modules.map((module, i) => (
             <article
               key={`${module.title}-${i}`}
@@ -346,7 +347,7 @@ export default function AgiWorksPremiumDetail({
       </section>
 
       {/* ENTSCHEIDUNGSHILFE */}
-      <section className="border-y border-white/[.07] bg-[#0c121e]">
+      <section className="v6-agi-compare border-y border-white/[.07] bg-[#0c121e]">
         <div className={`${sectionWidth} py-20 lg:py-24`}>
           <Kicker>ENTSCHEIDUNGSHILFE</Kicker>
           <h2 className="mt-5 text-[clamp(2rem,3.2vw,3.15rem)] font-medium tracking-[-.04em]">
@@ -413,7 +414,7 @@ export default function AgiWorksPremiumDetail({
       </section>
 
       {/* KOSTEN UND ANGEBOT */}
-      <section className={`${sectionWidth} py-20 lg:py-28`}>
+      <section className={`v6-agi-price ${sectionWidth} py-20 lg:py-28`}>
         <div className="grid gap-8 rounded-[28px] border border-sky-300/20 bg-[linear-gradient(135deg,#142b42,#0d1624_65%)] p-8 sm:p-12 lg:grid-cols-[.95fr_1.05fr] lg:gap-16">
           <div>
             <Kicker>PROJEKTUMFANG & KOSTEN</Kicker>
@@ -434,7 +435,7 @@ export default function AgiWorksPremiumDetail({
                 href="/beratung"
                 className="inline-flex min-h-[48px] items-center gap-3 rounded-xl border border-sky-300/30 px-5 text-[13px] font-medium text-white transition-colors hover:border-sky-200/70"
               >
-                Projektkorridor berechnen <Arrow />
+                Projektumfang besprechen <Arrow />
               </Link>
               <Link
                 href="/kontakt"
@@ -482,7 +483,7 @@ export default function AgiWorksPremiumDetail({
 
       {/* WEITERE LEISTUNGEN */}
       {related.length > 0 && (
-        <section className="border-t border-white/[.07] bg-[#0c1420]">
+        <section className="v6-agi-related border-t border-white/[.07] bg-[#0c1420]">
           <div className={`${sectionWidth} py-16`}>
             <Kicker>WEITERE MÖGLICHKEITEN</Kicker>
             <h2 className="mt-5 text-[clamp(1.8rem,2.8vw,2.7rem)] font-medium tracking-[-.035em]">
@@ -505,8 +506,10 @@ export default function AgiWorksPremiumDetail({
         </section>
       )}
 
+      <CommercialDepth page={page} />
+
       {/* FINALER KONTAKTBEREICH */}
-      <section className="relative overflow-hidden border-t border-white/[.075] bg-[#0b1726]">
+      <section className="v6-agi-final relative overflow-hidden border-t border-white/[.075] bg-[#0b1726]">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_120%,rgba(59,143,210,.25),transparent_65%)]"
@@ -525,7 +528,7 @@ export default function AgiWorksPremiumDetail({
           </p>
           <Link
             href="/kontakt"
-            className="mt-9 inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-[#234c6d] px-7 text-[14px] font-medium transition-colors hover:bg-[#30688e]"
+            className="v6-button v6-button-primary mt-9 inline-flex min-h-[54px] items-center justify-center gap-5 rounded-[13px] border border-sky-300/40 bg-[#234c6d] px-7 text-[14px] font-medium transition-colors hover:bg-[#30688e]"
           >
             Softwareprojekt besprechen <Arrow />
           </Link>

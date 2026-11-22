@@ -315,29 +315,21 @@ export default function Navigation() {
    */
   const heroMode = !scrolled;
 
-  const navGlassBaseStyle: React.CSSProperties = heroMode
-    ? {
-        background: "transparent",
-        backdropFilter: "none",
-        WebkitBackdropFilter: "none",
-        border: "1px solid transparent",
-        boxShadow: "none",
-      }
-    : {
-        background:
-          "linear-gradient(180deg, rgba(10,10,18,0.42) 0%, rgba(10,10,18,0.34) 100%)",
-        backdropFilter: "blur(44px) saturate(190%)",
-        WebkitBackdropFilter: "blur(44px) saturate(190%)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow:
-          "inset 0 1px 0 rgba(255,255,255,0.07), 0 22px 60px rgba(0,0,0,0.32), 0 0 70px color-mix(in srgb, var(--brand-glow) 60%, transparent)",
-      };
+  // V7: Same optical material at scrollY=0 and while scrolling.
+  // Avoid a sudden dark strip / transparent-to-glass transition over the hero.
+  const navGlassBaseStyle: React.CSSProperties = {
+    background: "linear-gradient(145deg, rgba(24,25,43,0.80), rgba(14,16,31,0.79))",
+    backdropFilter: "blur(26px) saturate(145%)",
+    WebkitBackdropFilter: "blur(26px) saturate(145%)",
+    border: "1px solid rgba(219,212,255,0.12)",
+    boxShadow: "0 12px 38px rgba(3,6,17,0.18), inset 0 1px rgba(255,255,255,0.06)",
+  };
 
   // Client-side mounting check
   useEffect(() => {
     setMounted(true);
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+      setIsMobile(window.innerWidth < 1280);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -649,20 +641,18 @@ export default function Navigation() {
     <>
       <motion.nav
         ref={navRef}
-        className="fixed top-0 left-0 right-0 z-[100] group/nav"
+        className="premium-nav-phase1 fixed top-0 left-0 right-0 z-[100] group/nav"
         initial={{ y: 0, opacity: 1 }}
         animate={{ y: navVisible ? 0 : -120, opacity: navVisible ? 1 : 0.92 }}
         transition={{ duration: 0.24, ease: "easeOut" }}
         style={{ pointerEvents: navVisible ? "auto" : "none" }}
       >
+        {/* Seamless ambient scrim: extends BELOW the glass navbar and fades into the page. */}
+        <div className="premium-nav-phase1-ambient" aria-hidden="true" />
         {/* Ultra High-End Navigation Container */}
         <div
           className="relative w-full px-4 sm:px-6 md:px-8 lg:px-9 xl:px-10 transition-[padding] duration-300 ease-out"
-          style={{
-            paddingTop: scrolled
-              ? "max(0.7rem, env(safe-area-inset-top, 0.7rem))"
-              : "max(1rem, env(safe-area-inset-top, 1rem))",
-          }}
+          style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))" }}
         >
           {/* Main Navigation Bar - Apple Intelligence Style */}
           <motion.div
@@ -675,11 +665,7 @@ export default function Navigation() {
                 Kompaktiert beim Scrollen um ~12% Höhe (Padding), damit mehr
                 Platz für Content bleibt, ohne je Inhalte zu verdecken. */}
             <div
-              className={`relative rounded-[32px] md:rounded-[36px] lg:rounded-[40px] px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 transition-all duration-300 ease-out overflow-hidden ${
-                scrolled
-                  ? "py-2 sm:py-2.5 md:py-3 lg:py-3.5"
-                  : "py-2.5 sm:py-3 md:py-4 lg:py-5"
-              }`}
+              className="premium-nav-phase1-glass relative overflow-hidden rounded-[28px] px-3 py-2.5 sm:px-4 sm:py-3 xl:px-7 xl:py-3.5"
               style={navGlassBaseStyle}
             >
               {/* Top Highlight - Ultra Refined (hidden in heroMode) */}
@@ -689,7 +675,7 @@ export default function Navigation() {
                   background:
                     "linear-gradient(90deg, transparent, rgba(255,255,255,0.42), rgba(124,92,255,0.52), rgba(255,255,255,0.42), transparent)",
                   boxShadow: "0 0 18px rgba(124,92,255,0.26)",
-                  opacity: heroMode ? 0 : 0.6,
+                  opacity: 0.36,
                 }}
               />
 
@@ -709,7 +695,7 @@ export default function Navigation() {
                 style={{
                   background:
                     "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 55%, transparent 100%)",
-                  opacity: heroMode ? 0 : 0.75,
+                  opacity: 0.4,
                 }}
               />
 
@@ -731,10 +717,10 @@ export default function Navigation() {
                   Pill bleibt damit in beiden States visuell an exakt derselben x-Position.
               */}
               <div
-                className="nav-shell relative z-10 flex flex-col lg:grid items-stretch lg:items-center gap-3 sm:gap-4 md:gap-5 lg:gap-5 xl:gap-6 lg:grid-cols-[auto_minmax(0,1fr)]"
+                className="nav-shell relative z-10 flex flex-col items-stretch gap-3 sm:gap-4 xl:grid xl:grid-cols-[auto_minmax(0,1fr)] xl:items-center xl:gap-5"
               >
                 {/* Mobile: Top Row - Logo + Burger Menu - Sichtbar bei <= 1024px */}
-                <div className="flex items-center justify-between lg:hidden gap-3 sm:gap-4 w-full min-h-[52px] sm:min-h-[56px]">
+                <div className="flex w-full min-h-[52px] items-center justify-between gap-3 sm:min-h-[56px] xl:hidden">
                   {/* Mobile: Logo - Premium */}
                   <div className="flex items-center flex-shrink-0">
                     <Link href={brand.navigation.baseHref} prefetch={true} className="block" onClick={handleLogoClick}>
@@ -941,7 +927,7 @@ export default function Navigation() {
                 </div>
 
                 {/* Desktop: Left Section - Logo */}
-                <div className="hidden lg:flex items-center gap-2 lg:gap-3 xl:gap-4 2xl:gap-5 justify-start">
+                <div className="hidden xl:flex items-center justify-start gap-4 2xl:gap-5">
                   {/* Logo */}
                   <div className="flex-shrink-0">
                   <Link href={brand.navigation.baseHref} className="block" onClick={handleLogoClick}>
@@ -1037,7 +1023,7 @@ export default function Navigation() {
                   auch nachdem die Glass-Bar darunter eingefadet ist.
                 */}
                 <div
-                  className="nav-center hidden nav-mobile:hidden lg:flex items-center w-full justify-end"
+                  className="nav-center hidden w-full items-center justify-end xl:flex"
                   style={{ minWidth: 0 }}
                 >
                   {/* Pill Container - Gemeinsame Glassmorphism-Pill für alle Nav-Links */}
@@ -1234,7 +1220,7 @@ export default function Navigation() {
         <AnimatePresence>
           {megaMenuOpen && (
             <motion.div
-              className="fixed z-[9999] hidden lg:block"
+              className="fixed z-[9999] hidden xl:block"
               style={{ top: megaMenuPosition.top, left: megaMenuPosition.left }}
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1671,7 +1657,7 @@ export default function Navigation() {
         {mobileMenuOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-[120] lg:hidden overflow-y-auto"
+              className="fixed inset-0 z-[120] overflow-y-auto xl:hidden"
               style={{
                 background: theme === "dark"
                   ? "linear-gradient(160deg, rgba(12,10,28,0.97) 0%, rgba(18,14,40,0.98) 40%, rgba(8,6,20,0.99) 100%)"

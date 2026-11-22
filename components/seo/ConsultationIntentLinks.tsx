@@ -35,22 +35,22 @@ export default function ConsultationIntentLinks({ brand }: { brand: Brand }) {
   const accent = brand === "nexcel" ? "text-violet-300" : "text-sky-300";
   const id = `consultation-topics-${brand}`;
   return (
-    <section aria-labelledby={id} className="mx-auto max-w-6xl px-1 pb-4 pt-16 sm:pt-20">
-      <div className="max-w-3xl">
+    <section aria-labelledby={id} className="consultation-v8-intent mx-auto max-w-6xl px-1 pb-6 pt-20 sm:pt-24">
+      <div className="mx-auto max-w-3xl text-center">
         <p className={`text-[11px] font-semibold uppercase tracking-[.2em] ${accent}`}>{content.eyebrow}</p>
-        <h2 id={id} className="mt-4 text-2xl font-medium tracking-tight text-white sm:text-3xl">{content.heading}</h2>
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 sm:text-base">{content.intro}</p>
+        <h2 id={id} className="consultation-v8-intent-title mx-auto mt-5 max-w-3xl text-center font-medium tracking-tight text-white">{content.heading}</h2>
+        <p className="mx-auto mt-5 max-w-2xl text-center text-base leading-8 text-white/70">{content.intro}</p>
       </div>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="consultation-v8-topics mt-11 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {content.topics.map((topic) => (
           <Link
             key={topic.href}
             href={topic.href}
-            className="group flex min-h-[195px] flex-col rounded-[22px] border border-white/10 bg-white/[.035] p-6 transition-colors hover:border-white/30 hover:bg-white/[.065] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            className="consultation-v8-topic group relative flex h-full min-h-[240px] flex-col items-center rounded-[24px] p-6 text-center transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:p-7"
           >
-            <h3 className="text-base font-medium leading-snug text-white">{topic.title}</h3>
-            <p className="mt-3 flex-1 text-sm leading-6 text-white/60">{topic.description}</p>
-            <span aria-hidden="true" className={`mt-5 text-sm font-medium ${accent}`}>Leistungsbereich ansehen →</span>
+            <h3 className="consultation-v8-topic-title max-w-[18rem] text-lg font-semibold leading-snug text-white">{topic.title}</h3>
+            <p className="mt-4 max-w-[22rem] flex-1 text-[15px] leading-7 text-white/70">{topic.description}</p>
+            <span aria-hidden="true" className={`consultation-v8-topic-link mt-7 inline-flex items-center justify-center text-sm font-semibold ${accent}`}>Leistungsbereich ansehen →</span>
           </Link>
         ))}
       </div>

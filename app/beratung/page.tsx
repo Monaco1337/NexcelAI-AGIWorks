@@ -11,12 +11,12 @@ const url = "https://www.nexcelai.de/beratung";
 const title = "KI-Beratung und Automatisierung für Unternehmen";
 const description = "Beratung für KI-Agenten, Unternehmensautomatisierung und eigene LLM-Systeme: Projektziel, Ausgangslage und mögliche Umsetzung gemeinsam klären.";
 export default function BeratungPage() {
-  return <main className="ds-app min-h-screen bg-[#080c15] pt-40 text-white sm:pt-44 lg:pt-48">
+  return <main className="ds-app consultation-v8-page min-h-screen pt-40 text-white sm:pt-44 lg:pt-48" data-consultation-brand="nexcel">
     <section className="mx-auto max-w-6xl px-5 sm:px-8">
-      <header className="mx-auto mb-11 max-w-3xl text-center sm:mb-14">
+      <header className="consultation-v8-hero mx-auto mb-12 max-w-4xl text-center sm:mb-16">
         <p className="text-xs font-semibold uppercase tracking-[.23em] text-violet-300">NEXCEL AI · BERATUNGSTERMIN</p>
-        <h1 className="mx-auto mt-5 max-w-3xl text-3xl font-medium leading-tight tracking-tight sm:text-5xl">Lassen Sie uns über Ihr Vorhaben sprechen.</h1>
-        <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">Wählen Sie einen Termin und erzählen Sie uns kurz, wobei wir Sie unterstützen können.</p>
+        <h1 className="consultation-v8-hero-title mx-auto mt-5 max-w-3xl font-medium tracking-tight text-white">Lassen Sie uns über Ihr Vorhaben sprechen.</h1>
+        <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/75">Wählen Sie einen Termin und erzählen Sie uns kurz, wobei wir Sie unterstützen können.</p>
       </header>
       <ConsultationBooking brand="nexcel" />
       <ConsultationIntentLinks brand="nexcel" />
