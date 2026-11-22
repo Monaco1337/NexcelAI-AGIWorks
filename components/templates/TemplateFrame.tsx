@@ -54,7 +54,7 @@ export default function TemplateFrame({
       {showAuthor && <div className="mx-auto mt-9 max-w-md"><AuthorByline emitSchema={emitAuthorSchema} /></div>}
     </section>}
 
-    <section className="v6-final v6-template-cta" aria-label="Projekt besprechen">
+    <section className="v6-final v6-template-cta v12-service-final" aria-label="Projekt besprechen">
       <div className="v6-shell">
         <Eyebrow>Gemeinsam weiterdenken</Eyebrow>
         <h2 className="v6-h2">Lassen Sie uns Ihren konkreten Bedarf klären.</h2>

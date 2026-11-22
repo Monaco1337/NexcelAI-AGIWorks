@@ -1,4 +1,5 @@
 import Link from "@/components/BrandAwareLink";
+import { ServiceGlyph } from "@/components/templates/ServiceExperienceV12";
 
 type Brand = "nexcel" | "agiworks";
 type Topic = { href: string; title: string; description: string };
@@ -35,19 +36,20 @@ export default function ConsultationIntentLinks({ brand }: { brand: Brand }) {
   const accent = brand === "nexcel" ? "text-violet-300" : "text-sky-300";
   const id = `consultation-topics-${brand}`;
   return (
-    <section aria-labelledby={id} className="consultation-v8-intent mx-auto max-w-6xl px-1 pb-6 pt-20 sm:pt-24">
+    <section aria-labelledby={id} className="consultation-v8-intent consultation-v12-intent mx-auto max-w-6xl px-1 pb-6 pt-20 sm:pt-24">
       <div className="mx-auto max-w-3xl text-center">
         <p className={`text-[11px] font-semibold uppercase tracking-[.2em] ${accent}`}>{content.eyebrow}</p>
         <h2 id={id} className="consultation-v8-intent-title mx-auto mt-5 max-w-3xl text-center font-medium tracking-tight text-white">{content.heading}</h2>
         <p className="mx-auto mt-5 max-w-2xl text-center text-base leading-8 text-white/70">{content.intro}</p>
       </div>
       <div className="consultation-v8-topics mt-11 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {content.topics.map((topic) => (
+        {content.topics.map((topic, i) => (
           <Link
             key={topic.href}
             href={topic.href}
-            className="consultation-v8-topic group relative flex h-full min-h-[240px] flex-col items-center rounded-[24px] p-6 text-center transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:p-7"
+            className="consultation-v8-topic consultation-v12-topic group relative flex h-full min-h-[240px] flex-col items-center rounded-[24px] p-6 text-center transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:p-7"
           >
+            <span className="consultation-v12-topic-symbol" aria-hidden="true"><ServiceGlyph index={i}/></span>
             <h3 className="consultation-v8-topic-title max-w-[18rem] text-lg font-semibold leading-snug text-white">{topic.title}</h3>
             <p className="mt-4 max-w-[22rem] flex-1 text-[15px] leading-7 text-white/70">{topic.description}</p>
             <span aria-hidden="true" className={`consultation-v8-topic-link mt-7 inline-flex items-center justify-center text-sm font-semibold ${accent}`}>Leistungsbereich ansehen →</span>

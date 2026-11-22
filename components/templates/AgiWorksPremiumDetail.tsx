@@ -4,6 +4,7 @@ import { resolveBrandNavHref } from "@/lib/brandNav";
 import type { ReactNode } from "react";
 import SeoJsonLd from "@/components/seo/SeoJsonLd";
 import CommercialDepth from "@/components/authority/CommercialDepth";
+import ServiceExperienceV12 from "./ServiceExperienceV12";
 import {
   breadcrumbSchema,
   faqSchema,
@@ -238,113 +239,8 @@ export default function AgiWorksPremiumDetail({
         </div>
       </section>
 
-      {/* LEISTUNGSUMFANG - BENTO */}
-      <section
-        id="umfang"
-        className={`relative scroll-mt-28 py-20 lg:py-28 ${sectionWidth}`}
-      >
-        <Kicker>DER FUNKTIONSUMFANG</Kicker>
-
-        <div className="mt-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <h2 className="max-w-[760px] text-[clamp(2rem,3.6vw,3.7rem)] font-medium leading-tight tracking-[-.045em]">
-            Alles greift ineinander.
-          </h2>
-          <p className="max-w-[330px] text-[14px] leading-6 text-slate-400">
-            Die konkreten Bausteine richten sich nach Ihrem Projekt,
-            nicht nach einem starren Paket.
-          </p>
-        </div>
-
-        <div className="v6-agi-modules mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {page.modules.map((module, i) => (
-            <article
-              key={`${module.title}-${i}`}
-              className={`group relative flex min-h-[215px] flex-col justify-between overflow-hidden rounded-[22px] border border-white/10 bg-[#111a26] p-7 transition-colors hover:border-sky-300/30 hover:bg-[#162235] ${
-                i === 0 ? "lg:col-span-2" : ""
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className="text-[12px] font-medium tracking-widest text-[#77b8e8]"
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-
-              <div>
-                <h3 className="text-[20px] font-medium tracking-[-.025em] text-white">
-                  {module.title}
-                </h3>
-                {module.description && (
-                  <p className="mt-3 max-w-[610px] text-[14px] leading-7 text-slate-400">
-                    {module.description}
-                  </p>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* TECHNISCHER ANSATZ */}
-      <section className="border-y border-white/[.07] bg-[#0b1421]">
-        <div
-          className={`grid gap-10 py-20 lg:grid-cols-[.8fr_1.2fr] lg:gap-20 lg:py-24 ${sectionWidth}`}
-        >
-          <div>
-            <Kicker>UNSER ANSATZ</Kicker>
-            <h2 className="mt-5 text-[clamp(2rem,3.1vw,3rem)] font-medium leading-tight tracking-[-.04em]">
-              Für Ihre Realität.
-              <span className="block text-[#81bdeb]">
-                Nicht für eine Demo.
-              </span>
-            </h2>
-            <p className="mt-6 max-w-[430px] text-[15px] leading-7 text-slate-400">
-              Wir verbinden technische Qualität mit den Anforderungen
-              Ihres täglichen Betriebs.
-            </p>
-          </div>
-
-          <ol className="divide-y divide-white/10 border-t border-white/10">
-            {page.approach.map((item, i) => (
-              <li
-                key={i}
-                className="grid grid-cols-[42px_1fr] gap-4 py-5"
-              >
-                <span className="text-[12px] text-[#83bfe8]">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <p className="text-[15px] leading-7 text-slate-200">
-                  {item}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* PROJEKTABLAUF */}
-      <section className={`${sectionWidth} py-20 lg:py-28`}>
-        <Kicker>VON DER IDEE ZUM BETRIEB</Kicker>
-        <h2 className="mt-5 text-[clamp(2rem,3.2vw,3.15rem)] font-medium tracking-[-.04em]">
-          So läuft Ihr Projekt.
-        </h2>
-
-        <ol className="mt-12 grid gap-7 border-t border-white/15 pt-8 sm:grid-cols-2 lg:grid-cols-5">
-          {page.process.map((step, i) => (
-            <li key={`${i}-${step.title}`}>
-              <span className="text-[12px] font-medium tracking-[.18em] text-sky-300">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h3 className="mt-6 text-[17px] font-medium tracking-tight">
-                {step.title}
-              </h3>
-              <p className="mt-3 text-[13px] leading-6 text-slate-400">
-                {step.description}
-              </p>
-            </li>
-          ))}
-        </ol>
-      </section>
+      {/* VISUAL ENGINEERING JOURNEY V12 */}
+      <ServiceExperienceV12 page={page} />
 
       {/* ENTSCHEIDUNGSHILFE */}
       <section className="v6-agi-compare border-y border-white/[.07] bg-[#0c121e]">
@@ -509,7 +405,7 @@ export default function AgiWorksPremiumDetail({
       <CommercialDepth page={page} />
 
       {/* FINALER KONTAKTBEREICH */}
-      <section className="v6-agi-final relative overflow-hidden border-t border-white/[.075] bg-[#0b1726]">
+      <section className="v6-agi-final v12-service-final relative overflow-hidden border-t border-white/[.075] bg-[#0b1726]">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_120%,rgba(59,143,210,.25),transparent_65%)]"
