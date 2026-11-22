@@ -23,6 +23,15 @@ function formatDate(start: string) {
 function formatTime(start: string) {
   return new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" }).format(new Date(start));
 }
+// Group by the user's booking timezone, not the browser's timezone or a display string.
+// YYYY-MM-DD avoids cross-year collisions and daylight-saving boundary errors.
+function berlinDayKey(start: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date(start));
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
 export default function ConsultationBooking({ brand }: { brand: ConsultationBrand }) {
   const isAgi = brand === "agiworks";
   const accent = isAgi ? "#6ab9ff" : "#b68aff";
@@ -34,7 +43,9 @@ export default function ConsultationBooking({ brand }: { brand: ConsultationBran
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [requested, setRequested] = useState<ConsultationSlot | null>(null);
-  const [allDates, setAllDates] = useState(false);
+  // Day and time are separate user choices: no time is shown until a day is picked.
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [dayPage, setDayPage] = useState(0);
   const [website, setWebsite] = useState("");
   const root = useRef<HTMLElement>(null);
   const refresh = useCallback(async () => {
@@ -45,6 +56,7 @@ export default function ConsultationBooking({ brand }: { brand: ConsultationBran
       if (!response.ok || !Array.isArray(json.slots)) throw new Error("Verfügbarkeit derzeit nicht abrufbar.");
       setSlots(json.slots);
       setSelected((prev) => prev && json.slots.some((s: ConsultationSlot) => s.startsAt === prev.startsAt) ? prev : null);
+      setSelectedDay((prev) => prev && json.slots.some((s: ConsultationSlot) => berlinDayKey(s.startsAt) === prev) ? prev : null);
       setError("");
     } catch { setSlots([]); setError("Der Terminplaner ist derzeit nicht erreichbar. Bitte nutzen Sie das Kontaktformular."); }
     finally { setLoading(false); }
@@ -53,15 +65,32 @@ export default function ConsultationBooking({ brand }: { brand: ConsultationBran
   useEffect(() => {
     if (step === 2 || requested) root.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [step, requested]);
-  const shown = useMemo(() => allDates ? slots : slots.slice(0, 16), [slots, allDates]);
   const groups = useMemo(() => {
-    const map = new Map<string, ConsultationSlot[]>();
-    for (const slot of shown) {
-      const key = formatDate(slot.startsAt);
-      map.set(key, [...(map.get(key) || []), slot]);
+    const byDate = new Map<string, ConsultationSlot[]>();
+    // Preserve chronological order even if the availability endpoint returns unsorted slots.
+    for (const slot of [...slots].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))) {
+      const key = berlinDayKey(slot.startsAt);
+      const daySlots = byDate.get(key);
+      if (daySlots) daySlots.push(slot);
+      else byDate.set(key, [slot]);
     }
-    return [...map.entries()];
-  }, [shown]);
+    return Array.from(byDate.entries());
+  }, [slots]);
+  const pageCount = Math.ceil(groups.length / 2);
+  const currentPage = Math.min(dayPage, Math.max(0, pageCount - 1));
+  const visibleDays = groups.slice(currentPage * 2, currentPage * 2 + 2);
+  const selectedDaySlots = groups.find(([key]) => key === selectedDay)?.[1] ?? [];
+  const activeDay = selectedDaySlots.length > 0 ? selectedDay : null;
+  const activeDayLabel = selectedDaySlots.length ? formatDate(selectedDaySlots[0].startsAt) : "";
+  function chooseDay(key: string) {
+    if (key !== selectedDay) setSelected(null);
+    setSelectedDay(key);
+  }
+  function navigateDays(page: number) {
+    setDayPage(page);
+    setSelectedDay(null);
+    setSelected(null);
+  }
   const input = "w-full min-h-[48px] rounded-xl border border-white/15 bg-[#101726] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-white/60";
   const label = "mb-2 block text-sm text-white/80";
   const action = "inline-flex min-h-[48px] items-center justify-center rounded-full px-7 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-35";
@@ -103,19 +132,51 @@ export default function ConsultationBooking({ brand }: { brand: ConsultationBran
       <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/70">Wählen Sie einen verfügbaren Beratungstermin. 45 Minuten · Online · Zeitzone Europe/Berlin. Die freien Zeiten gelten für beide Marken gemeinsam.</p>
       {loading && <div className="mt-7 space-y-3" role="status"><div className="h-12 animate-pulse rounded-xl bg-white/5"/><div className="h-12 animate-pulse rounded-xl bg-white/5"/></div>}
       {!loading && !slots.length && !error && <div className="consultation-v8-empty mx-auto mt-8 max-w-2xl px-5 py-7 text-center text-base leading-8 text-white/75" role="status">Derzeit sind keine Termine freigeschaltet. Bitte schreiben Sie uns über das <a href="/kontakt" className="consultation-v8-link font-semibold underline underline-offset-4">Kontaktformular</a>.</div>}
-      {!loading && groups.length > 0 && <div className="consultation-v8-slots mx-auto mt-8 max-w-3xl space-y-8">
-        {groups.map(([date, daySlots]) => <div key={date}>
-          <h3 className="mb-4 text-center text-sm font-semibold capitalize text-white/85">{date}</h3>
-          <div className="flex flex-wrap justify-center gap-3" role="group" aria-label={date}>
-            {daySlots.map((slot) => <button key={slot.startsAt} type="button" aria-pressed={selected?.startsAt === slot.startsAt} onClick={() => setSelected(slot)} className={`min-w-24 rounded-xl border px-5 py-3 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${selected?.startsAt === slot.startsAt ? "border-white/70 bg-white/15 text-white" : "border-white/15 bg-white/[.035] text-white/70 hover:border-white/45"}`} style={selected?.startsAt === slot.startsAt ? {borderColor:accent,backgroundColor:`${accent}20`} : undefined}>{formatTime(slot.startsAt)} Uhr</button>)}
-          </div>
-        </div>)}
-        {slots.length > 16 && <button type="button" className="consultation-v8-link text-sm font-medium underline underline-offset-4" style={{color:accent}} onClick={()=>setAllDates((v)=>!v)}>{allDates ? "Weniger Termine anzeigen" : "Weitere Termine anzeigen"}</button>}
+      {!loading && groups.length > 0 && <div className="consultation-v9-picker mx-auto mt-9 max-w-3xl">
+        <div className="consultation-v9-picker-heading">
+          <p className="consultation-v9-eyebrow" style={{ color: accent }}>01 / VERFÜGBARE TAGE</p>
+          <h3 className="consultation-v9-section-title">Wählen Sie einen Tag</h3>
+          <p className="consultation-v9-hint">Die Uhrzeiten erscheinen, sobald Sie ein Datum auswählen.</p>
+        </div>
+        <div className="consultation-v9-day-grid" role="group" aria-label="Verfügbare Beratungstage">
+          {visibleDays.map(([key, daySlots]) => <button
+            key={key}
+            type="button"
+            className="consultation-v9-day"
+            aria-pressed={activeDay === key}
+            aria-controls={`consultation-v9-times-${brand}`}
+            onClick={() => chooseDay(key)}
+          >
+            <span className="consultation-v9-day-top" aria-hidden="true">TERMINOPTION <span className="consultation-v9-day-arrow">↗</span></span>
+            <span className="consultation-v9-day-date">{formatDate(daySlots[0].startsAt)}</span>
+            <span className="consultation-v9-day-count">{daySlots.length} {daySlots.length === 1 ? "Uhrzeit verfügbar" : "Uhrzeiten verfügbar"}</span>
+          </button>)}
+        </div>
+        {pageCount > 1 && <nav className="consultation-v9-pagination" aria-label="Weitere verfügbare Tage">
+          <button type="button" className="consultation-v9-page-button" disabled={currentPage === 0} onClick={() => navigateDays(currentPage - 1)} aria-label="Vorherige Tage">← <span>Vorherige Tage</span></button>
+          <span className="consultation-v9-page-counter" aria-live="polite">{currentPage + 1} / {pageCount}</span>
+          <button type="button" className="consultation-v9-page-button" disabled={currentPage >= pageCount - 1} onClick={() => navigateDays(currentPage + 1)} aria-label="Nächste Tage"><span>Nächste Tage</span> →</button>
+        </nav>}
+        <div id={`consultation-v9-times-${brand}`} className="consultation-v9-time-area" aria-live="polite">
+          {activeDay && <>
+            <p className="consultation-v9-eyebrow" style={{ color: accent }}>02 / VERFÜGBARE UHRZEITEN</p>
+            <h3 className="consultation-v9-section-title">Uhrzeit für {activeDayLabel} auswählen</h3>
+            <div className="consultation-v9-time-grid" role="group" aria-label={`Uhrzeiten am ${activeDayLabel}`}>
+              {selectedDaySlots.map((slot) => <button
+                key={slot.startsAt}
+                type="button"
+                aria-pressed={selected?.startsAt === slot.startsAt}
+                onClick={() => setSelected(slot)}
+                className="consultation-v9-time"
+              >{formatTime(slot.startsAt)} Uhr</button>)}
+            </div>
+          </>}
+        </div>
       </div>}
       {error && <p className="mx-auto mt-6 max-w-2xl rounded-xl border border-red-400/35 bg-red-950/25 p-4 text-center text-sm text-red-200" role="alert">{error}</p>}
       {(loading || slots.length > 0) && <div className="consultation-v8-actions mx-auto mt-10 flex max-w-2xl flex-col items-center justify-center gap-3 pt-7 sm:flex-row sm:gap-5">
         <button type="button" disabled={!selected || loading} onClick={() => {setError("");setStep(2);}} className={`${action} text-[#0b1020]`} style={{backgroundColor:accent}}>Weiter zum Projektbriefing →</button>
-        <span className="text-sm text-white/60">{selected ? `${formatDate(selected.startsAt)}, ${formatTime(selected.startsAt)} Uhr` : "Bitte zuerst einen Termin wählen"}</span>
+        <span className="text-sm text-white/60">{selected ? `${formatDate(selected.startsAt)}, ${formatTime(selected.startsAt)} Uhr` : activeDay ? "Bitte eine Uhrzeit auswählen" : "Bitte zuerst einen Tag auswählen"}</span>
       </div>}
     </div> : <div className="consultation-v8-stage mx-auto max-w-4xl text-center">
       <p className="text-xs font-semibold uppercase tracking-[.17em]" style={{color:accent}}>Schritt 2 von 2</p>

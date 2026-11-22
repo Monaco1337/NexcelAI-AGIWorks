@@ -4964,3 +4964,189 @@ html:has(.premium-v6) .premium-v6 :is([id], section[id]) {
   .consultation-v8-page .consultation-v8-topic:hover,
   .consultation-v8-booking .consultation-v8-actions button:not(:disabled):hover { transform: none; }
 }
+
+/* SEO_PREMIUM_DATE_SELECTOR_V9_20261122 */
+/* Only consultation booking day/time picker; no global nav or admin changes. */
+.consultation-v8-page .consultation-v9-picker {
+  --v9-accent: var(--cv8-accent, 183, 140, 255);
+  color: rgba(246, 245, 255, .94);
+  text-align: center;
+}
+.consultation-v9-picker .consultation-v9-picker-heading { margin-bottom: 24px; }
+.consultation-v9-picker .consultation-v9-eyebrow {
+  font-size: .69rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  line-height: 1.65;
+}
+.consultation-v9-picker .consultation-v9-section-title {
+  margin: 10px auto 0;
+  max-width: 650px;
+  font-size: clamp(1.22rem, 2.2vw, 1.8rem);
+  line-height: 1.24;
+  font-weight: 550;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.consultation-v9-picker .consultation-v9-hint {
+  margin: 12px auto 0;
+  max-width: 520px;
+  color: rgba(235, 233, 247, .66);
+  font-size: .92rem;
+  line-height: 1.7;
+}
+.consultation-v9-picker .consultation-v9-day-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+.consultation-v9-picker .consultation-v9-day {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-width: 0;
+  min-height: 144px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  overflow: hidden;
+  border: 1px solid rgba(227, 219, 255, .14);
+  border-radius: 22px;
+  padding: 20px 22px;
+  text-align: center;
+  background: linear-gradient(155deg, rgba(255, 255, 255, .065), rgba(255, 255, 255, .016));
+  color: rgba(249, 247, 255, .94);
+  box-shadow: inset 0 1px rgba(255,255,255,.035), 0 12px 38px rgba(0,0,0,.12);
+  cursor: pointer;
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.consultation-v9-picker .consultation-v9-day::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 85% 80% at 50% -20%, rgba(var(--v9-accent), .13), transparent 85%);
+  opacity: .7;
+  transition: opacity .2s ease;
+}
+.consultation-v9-picker .consultation-v9-day-top {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: rgba(231,224,248,.55);
+  font-size: .66rem;
+  font-weight: 650;
+  letter-spacing: .12em;
+}
+.consultation-v9-picker .consultation-v9-day-arrow {
+  font-size: .98rem;
+  color: rgba(var(--v9-accent), .92);
+}
+.consultation-v9-picker .consultation-v9-day-date {
+  font-size: clamp(1rem, 1.35vw, 1.17rem);
+  font-weight: 625;
+  line-height: 1.45;
+  letter-spacing: -.012em;
+  text-wrap: balance;
+}
+.consultation-v9-picker .consultation-v9-day-count {
+  color: rgba(232, 230, 245, .62);
+  font-size: .82rem;
+  line-height: 1.4;
+}
+.consultation-v9-picker .consultation-v9-day:is(:hover, :focus-visible),
+.consultation-v9-picker .consultation-v9-day[aria-pressed="true"] {
+  border-color: rgba(var(--v9-accent), .66);
+  background: linear-gradient(150deg, rgba(var(--v9-accent), .16), rgba(var(--v9-accent), .04));
+  box-shadow: inset 0 1px rgba(255,255,255,.095), 0 10px 35px rgba(var(--v9-accent), .12);
+}
+.consultation-v9-picker .consultation-v9-day[aria-pressed="true"]::before { opacity: 1; }
+.consultation-v9-picker .consultation-v9-pagination {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 3vw, 32px);
+  margin: 16px auto 0;
+}
+.consultation-v9-picker .consultation-v9-page-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  padding: 9px 16px;
+  background: rgba(255,255,255,.028);
+  color: rgba(242,237,255,.78);
+  font-size: .83rem;
+  font-weight: 550;
+  transition: border-color .2s ease, color .2s ease;
+}
+.consultation-v9-picker .consultation-v9-page-button:not(:disabled):hover {
+  border-color: rgba(var(--v9-accent), .5);
+  color: white;
+}
+.consultation-v9-picker .consultation-v9-page-button:disabled { opacity: .34; cursor: not-allowed; }
+.consultation-v9-picker .consultation-v9-page-counter {
+  min-width: 44px;
+  color: rgba(236,232,252,.62);
+  font-size: .81rem;
+  font-variant-numeric: tabular-nums;
+}
+.consultation-v9-picker .consultation-v9-time-area:not(:empty) {
+  margin-top: 26px;
+  border-top: 1px solid rgba(255,255,255,.09);
+  padding-top: 26px;
+}
+.consultation-v9-picker .consultation-v9-time-grid {
+  display: flex;
+  max-width: 680px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  margin: 21px auto 0;
+}
+.consultation-v9-picker .consultation-v9-time {
+  display: inline-flex;
+  min-width: 112px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  padding: 10px 19px;
+  background: rgba(255,255,255,.035);
+  color: rgba(248,246,255,.85);
+  font-size: .88rem;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.consultation-v9-picker .consultation-v9-time:hover,
+.consultation-v9-picker .consultation-v9-time[aria-pressed="true"] {
+  color: #fff;
+  border-color: rgba(var(--v9-accent), .78);
+  background: rgba(var(--v9-accent), .17);
+}
+.consultation-v9-picker :is(.consultation-v9-day, .consultation-v9-time, .consultation-v9-page-button):focus-visible {
+  outline: 2px solid rgba(var(--v9-accent), .96);
+  outline-offset: 4px;
+}
+@media (max-width: 640px) {
+  .consultation-v9-picker .consultation-v9-day-grid { grid-template-columns: 1fr; gap: 11px; }
+  .consultation-v9-picker .consultation-v9-day { min-height: 121px; padding: 16px 18px; gap: 8px; }
+  .consultation-v9-picker .consultation-v9-page-button { padding: 8px 12px; font-size: .76rem; }
+  .consultation-v9-picker .consultation-v9-time { min-width: 102px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .consultation-v9-picker :is(.consultation-v9-day, .consultation-v9-time, .consultation-v9-page-button),
+  .consultation-v9-picker .consultation-v9-day::before { transition: none !important; }
+}
