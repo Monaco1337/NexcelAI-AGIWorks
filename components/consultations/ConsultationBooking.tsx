@@ -45,9 +45,10 @@ export default function ConsultationBooking({ brand }: { brand: ConsultationBran
   const [requested, setRequested] = useState<ConsultationSlot | null>(null);
   // Day and time are separate user choices: no time is shown until a day is picked.
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [dayPage, setDayPage] = useState(0);
+  const [monthPage, setMonthPage] = useState(0);
   const [website, setWebsite] = useState("");
   const root = useRef<HTMLElement>(null);
+  const timesRef = useRef<HTMLDivElement>(null);
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
@@ -76,21 +77,53 @@ export default function ConsultationBooking({ brand }: { brand: ConsultationBran
     }
     return Array.from(byDate.entries());
   }, [slots]);
-  const pageCount = Math.ceil(groups.length / 2);
-  const currentPage = Math.min(dayPage, Math.max(0, pageCount - 1));
-  const visibleDays = groups.slice(currentPage * 2, currentPage * 2 + 2);
-  const selectedDaySlots = groups.find(([key]) => key === selectedDay)?.[1] ?? [];
+  // Render the entire month (not two days at a time). The API remains the only
+  // authority for bookable dates; all other calendar days are disabled.
+  const months = useMemo(() => [...new Set(groups.map(([key]) => key.slice(0, 7)))], [groups]);
+  const currentMonthPage = Math.min(monthPage, Math.max(0, months.length - 1));
+  const currentMonth = months[currentMonthPage] ?? "";
+  const slotsByDay = useMemo(() => new Map(groups), [groups]);
+  const calendarCells = useMemo<(string | null)[]>(() => {
+    if (!currentMonth) return [];
+    const [year, month] = currentMonth.split("-").map(Number);
+    const firstWeekday = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const cellCount = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+    return Array.from({ length: cellCount }, (_, index) => {
+      const day = index - firstWeekday + 1;
+      return day < 1 || day > daysInMonth ? null : `${currentMonth}-${String(day).padStart(2, "0")}`;
+    });
+  }, [currentMonth]);
+  const monthLabel = currentMonth ? new Intl.DateTimeFormat("de-DE", {
+    month: "long", year: "numeric", timeZone: "UTC",
+  }).format(new Date(`${currentMonth}-01T12:00:00Z`)) : "";
+  const selectedDaySlots = selectedDay ? (slotsByDay.get(selectedDay) ?? []) : [];
   const activeDay = selectedDaySlots.length > 0 ? selectedDay : null;
   const activeDayLabel = selectedDaySlots.length ? formatDate(selectedDaySlots[0].startsAt) : "";
   function chooseDay(key: string) {
+    if (!slotsByDay.has(key)) return;
     if (key !== selectedDay) setSelected(null);
     setSelectedDay(key);
   }
-  function navigateDays(page: number) {
-    setDayPage(page);
+  function navigateMonths(page: number) {
+    if (page < 0 || page >= months.length) return;
+    setMonthPage(page);
     setSelectedDay(null);
     setSelected(null);
   }
+  // Scroll after React has committed the newly revealed time choices.
+  // Respect reduced-motion and the fixed header's scroll-margin-top.
+  useEffect(() => {
+    if (step !== 1 || !activeDay || loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      const target = timesRef.current;
+      if (!target) return;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      target.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeDay, loading, step]);
   const input = "w-full min-h-[48px] rounded-xl border border-white/15 bg-[#101726] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-white/60";
   const label = "mb-2 block text-sm text-white/80";
   const action = "inline-flex min-h-[48px] items-center justify-center rounded-full px-7 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-35";
@@ -132,35 +165,48 @@ export default function ConsultationBooking({ brand }: { brand: ConsultationBran
       <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/70">Wählen Sie einen verfügbaren Beratungstermin. 45 Minuten · Online · Zeitzone Europe/Berlin. Die freien Zeiten gelten für beide Marken gemeinsam.</p>
       {loading && <div className="mt-7 space-y-3" role="status"><div className="h-12 animate-pulse rounded-xl bg-white/5"/><div className="h-12 animate-pulse rounded-xl bg-white/5"/></div>}
       {!loading && !slots.length && !error && <div className="consultation-v8-empty mx-auto mt-8 max-w-2xl px-5 py-7 text-center text-base leading-8 text-white/75" role="status">Derzeit sind keine Termine freigeschaltet. Bitte schreiben Sie uns über das <a href="/kontakt" className="consultation-v8-link font-semibold underline underline-offset-4">Kontaktformular</a>.</div>}
-      {!loading && groups.length > 0 && <div className="consultation-v9-picker mx-auto mt-9 max-w-3xl">
+      {!loading && groups.length > 0 && <div className="consultation-v9-picker consultation-v10-picker mx-auto mt-9 w-full max-w-4xl">
         <div className="consultation-v9-picker-heading">
-          <p className="consultation-v9-eyebrow" style={{ color: accent }}>01 / VERFÜGBARE TAGE</p>
-          <h3 className="consultation-v9-section-title">Wählen Sie einen Tag</h3>
-          <p className="consultation-v9-hint">Die Uhrzeiten erscheinen, sobald Sie ein Datum auswählen.</p>
+          <p className="consultation-v9-eyebrow" style={{ color: accent }}>01 / VERF&Uuml;GBARE TAGE</p>
+          <h3 className="consultation-v9-section-title">W&auml;hlen Sie Ihren Wunschtermin</h3>
+          <p className="consultation-v9-hint">W&auml;hlen Sie einen verf&uuml;gbaren Kalendertag. Die passenden Uhrzeiten &ouml;ffnen sich automatisch.</p>
         </div>
-        <div className="consultation-v9-day-grid" role="group" aria-label="Verfügbare Beratungstage">
-          {visibleDays.map(([key, daySlots]) => <button
-            key={key}
-            type="button"
-            className="consultation-v9-day"
-            aria-pressed={activeDay === key}
-            aria-controls={`consultation-v9-times-${brand}`}
-            onClick={() => chooseDay(key)}
-          >
-            <span className="consultation-v9-day-top" aria-hidden="true">TERMINOPTION <span className="consultation-v9-day-arrow">↗</span></span>
-            <span className="consultation-v9-day-date">{formatDate(daySlots[0].startsAt)}</span>
-            <span className="consultation-v9-day-count">{daySlots.length} {daySlots.length === 1 ? "Uhrzeit verfügbar" : "Uhrzeiten verfügbar"}</span>
-          </button>)}
+        <div className="consultation-v10-calendar" role="group" aria-label="Kalender zur Tagesauswahl">
+          <div className="consultation-v10-month-bar">
+            <button type="button" className="consultation-v10-month-button" onClick={() => navigateMonths(currentMonthPage - 1)} disabled={currentMonthPage === 0} aria-label={"Vorheriger Monat"}>&larr;</button>
+            <div className="consultation-v10-month-title" aria-live="polite">{monthLabel}</div>
+            <button type="button" className="consultation-v10-month-button" onClick={() => navigateMonths(currentMonthPage + 1)} disabled={currentMonthPage >= months.length - 1} aria-label={"Nächster Monat"}>&rarr;</button>
+          </div>
+          <div className="consultation-v10-weekdays" aria-hidden="true">
+            {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => <span key={day}>{day}</span>)}
+          </div>
+          <div className="consultation-v10-days" role="group" aria-label={"Verfügbare Termine im " + monthLabel}>
+            {calendarCells.map((key, index) => {
+              if (!key) return <span key={`blank-${index}`} className="consultation-v10-blank" aria-hidden="true" />;
+              const daySlots = slotsByDay.get(key) ?? [];
+              const hasSlots = daySlots.length > 0;
+              const label = hasSlots ? formatDate(daySlots[0].startsAt) : key;
+              return <button key={key} type="button"
+                className="consultation-v10-date"
+                data-available={hasSlots}
+                aria-pressed={activeDay === key}
+                aria-controls={`consultation-v9-times-${brand}`}
+                aria-label={hasSlots ? `${label}, ${daySlots.length} freie Uhrzeiten` : `${label}, nicht verfügbar`}
+                disabled={!hasSlots}
+                onClick={() => chooseDay(key)}
+              >
+                <span className="consultation-v10-date-number">{Number(key.slice(8, 10))}</span>
+                <span className="consultation-v10-date-state" aria-hidden="true">{hasSlots ? `${daySlots.length} frei` : "-"}</span>
+              </button>;
+            })}
+          </div>
+          <div className="consultation-v10-calendar-legend"><span aria-hidden="true" /> Farbige Tage sind buchbar</div>
         </div>
-        {pageCount > 1 && <nav className="consultation-v9-pagination" aria-label="Weitere verfügbare Tage">
-          <button type="button" className="consultation-v9-page-button" disabled={currentPage === 0} onClick={() => navigateDays(currentPage - 1)} aria-label="Vorherige Tage">← <span>Vorherige Tage</span></button>
-          <span className="consultation-v9-page-counter" aria-live="polite">{currentPage + 1} / {pageCount}</span>
-          <button type="button" className="consultation-v9-page-button" disabled={currentPage >= pageCount - 1} onClick={() => navigateDays(currentPage + 1)} aria-label="Nächste Tage"><span>Nächste Tage</span> →</button>
-        </nav>}
-        <div id={`consultation-v9-times-${brand}`} className="consultation-v9-time-area" aria-live="polite">
+        <div ref={timesRef} tabIndex={-1} id={`consultation-v9-times-${brand}`} className="consultation-v9-time-area consultation-v10-times" aria-live="polite">
           {activeDay && <>
-            <p className="consultation-v9-eyebrow" style={{ color: accent }}>02 / VERFÜGBARE UHRZEITEN</p>
-            <h3 className="consultation-v9-section-title">Uhrzeit für {activeDayLabel} auswählen</h3>
+            <p className="consultation-v9-eyebrow" style={{ color: accent }}>02 / VERF&Uuml;GBARE UHRZEITEN</p>
+            <h3 className="consultation-v9-section-title">{activeDayLabel}</h3>
+            <p className="consultation-v9-hint">W&auml;hlen Sie jetzt die passende Uhrzeit.</p>
             <div className="consultation-v9-time-grid" role="group" aria-label={`Uhrzeiten am ${activeDayLabel}`}>
               {selectedDaySlots.map((slot) => <button
                 key={slot.startsAt}
