@@ -9,12 +9,11 @@ type Solution = { href: string; title: string; description?: string };
 export function NexcelSolutionsHero({ title, intro }: { title: string; intro: string }) {
   return (
     <header className="nxl-solutions-hero" aria-labelledby="nxl-solutions-title">
-      <div className="nxl-solutions-hero-atmosphere" aria-hidden="true">
-        <span className="nxl-solutions-mesh nxl-solutions-mesh-a" />
-        <span className="nxl-solutions-mesh nxl-solutions-mesh-b" />
-        <span className="nxl-solutions-halo nxl-solutions-halo-outer" />
-        <span className="nxl-solutions-halo nxl-solutions-halo-inner" />
-        <span className="nxl-solutions-beam" />
+      <div className="nxl-solutions-hero-atmosphere nxl-v14-scene" aria-hidden="true">
+        <span className="nxl-v14-engineering-grid" />
+        <span className="nxl-v14-architecture" />
+        <span className="nxl-v14-ribbon nxl-v14-ribbon-a" />
+        <span className="nxl-v14-ribbon nxl-v14-ribbon-b" />
       </div>
       <div className="nxl-solutions-hero-inner">
         <p className="nxl-solutions-eyebrow"><span aria-hidden="true" /> NEXCEL AI <span className="nxl-solutions-eyebrow-divider">/</span> INTELLIGENTE SYSTEME</p>

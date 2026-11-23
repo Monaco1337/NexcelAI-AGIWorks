@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 900" fill="none" role="presentation">
+  <defs>
+    <linearGradient id="panel" x1="220" y1="102" x2="820" y2="760" gradientUnits="userSpaceOnUse"><stop stop-color="#E6D0FF" stop-opacity=".37"/><stop offset=".24" stop-color="#7559C9" stop-opacity=".34"/><stop offset=".57" stop-color="#23295E" stop-opacity=".67"/><stop offset="1" stop-color="#071731" stop-opacity=".91"/></linearGradient>
+    <linearGradient id="front" x1="284" y1="140" x2="775" y2="718" gradientUnits="userSpaceOnUse"><stop stop-color="#F8EDFF" stop-opacity=".71"/><stop offset=".16" stop-color="#BD9BFF" stop-opacity=".49"/><stop offset=".45" stop-color="#6B5AC8" stop-opacity=".36"/><stop offset=".78" stop-color="#438ADA" stop-opacity=".33"/><stop offset="1" stop-color="#091E3E" stop-opacity=".9"/></linearGradient>
+    <linearGradient id="rim" x1="290" y1="166" x2="813" y2="749" gradientUnits="userSpaceOnUse"><stop stop-color="#DFBAFF"/><stop offset=".27" stop-color="#AB71FF"/><stop offset=".57" stop-color="#83A9FF"/><stop offset=".88" stop-color="#57C9FF"/><stop offset="1" stop-color="#E8F1FF"/></linearGradient>
+    <linearGradient id="slab" x1="195" y1="215" x2="870" y2="770" gradientUnits="userSpaceOnUse"><stop stop-color="#B586FF" stop-opacity=".22"/><stop offset=".5" stop-color="#374C95" stop-opacity=".13"/><stop offset="1" stop-color="#19B6FF" stop-opacity=".12"/></linearGradient>
+    <linearGradient id="line" x1="105" y1="810" x2="1060" y2="190" gradientUnits="userSpaceOnUse"><stop stop-color="#7A67D2" stop-opacity="0"/><stop offset=".28" stop-color="#AC8FFF" stop-opacity=".32"/><stop offset=".63" stop-color="#7EA9F7" stop-opacity=".55"/><stop offset="1" stop-color="#91D6FF" stop-opacity="0"/></linearGradient>
+    <radialGradient id="aura" cx="0" cy="0" r="1" gradientTransform="translate(571 487) rotate(90) scale(368 383)" gradientUnits="userSpaceOnUse"><stop stop-color="#7650D9" stop-opacity=".3"/><stop offset=".5" stop-color="#4C47AE" stop-opacity=".14"/><stop offset="1" stop-color="#232668" stop-opacity="0"/></radialGradient>
+    <filter id="blur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="34"/></filter>
+    <filter id="glow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="edge" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    <filter id="shadow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="34"/></filter>
+    <pattern id="guides" width="88" height="88" patternUnits="userSpaceOnUse"><path d="M88 0H0V88" stroke="#A6B6F4" stroke-width=".7" stroke-opacity=".08"/></pattern>
+    <clipPath id="nclip"><path d="M308 201L400 168L400 701L308 733Z M397 170L466 154L689 624L634 686Z M633 177L734 211L734 741L633 700Z"/></clipPath>
+  </defs>
+
+  <ellipse cx="548" cy="483" rx="403" ry="370" fill="url(#aura)"/>
+  <path d="M130 768L812 107L1080 287M72 564L729 49L1079 450M50 824L916 182" stroke="url(#line)" stroke-opacity=".3" stroke-width="1"/>
+  <path d="M135 743L824 93M140 562L920 151M153 821L1038 276" stroke="#B5A0FA" stroke-opacity=".11" stroke-width=".7" stroke-dasharray="7 13"/>
+  <path d="M109 602L890 127L1054 273M198 806L973 324M206 334L958 563" stroke="url(#line)" stroke-opacity=".46" stroke-width="1.2"/>
+  <path d="M240 190L912 190L1016 264L1016 756L936 818L260 818L171 724L171 285Z" stroke="#A3A6EB" stroke-opacity=".14" stroke-width="1"/>
+  <path d="M217 245L890 245L960 313L960 730L911 778L222 778L204 746L204 284Z" stroke="#D0C1FD" stroke-opacity=".06" stroke-width="1"/>
+  <path d="M148 140H947M86 807H1067" stroke="url(#line)" stroke-opacity=".29"/>
+  <path d="M251 172L251 744M803 120V789" stroke="#A98DFA" stroke-opacity=".12" stroke-dasharray="2 10"/>
+
+  <!-- Floating floor architecture: slim refractive slabs, no orbital sphere. -->
+  <path d="M192 736L506 648L857 733L539 822Z" fill="#120E38" fill-opacity=".36" filter="url(#shadow)"/>
+  <path d="M172 731L490 636L907 745L571 840Z" fill="url(#slab)" stroke="#A88BFF" stroke-opacity=".2" stroke-width="1.2"/>
+  <path d="M211 727L495 650L856 741L566 820Z" stroke="#9CB6FF" stroke-opacity=".19" stroke-width="1"/>
+  <path d="M178 732L573 837L904 744" stroke="url(#rim)" stroke-opacity=".48" stroke-width="1.4"/>
+  <path d="M292 736L571 801L797 744" stroke="#CBAAFF" stroke-opacity=".18"/>
+  <path d="M370 737L560 781L703 740" stroke="#79A1FF" stroke-opacity=".15"/>
+
+  <!-- Back refractive edge planes, visually extruded into the depth. -->
+  <path d="M308 201L343 174L435 141L400 168Z" fill="#DAB7FF" fill-opacity=".35"/>
+  <path d="M400 168L435 141L435 668L400 701Z" fill="#424C99" fill-opacity=".38" stroke="#BDD4FF" stroke-opacity=".2"/>
+  <path d="M633 177L666 141L767 174L734 211Z" fill="#DAEAFF" fill-opacity=".32"/>
+  <path d="M734 211L767 174L767 709L734 741Z" fill="#2469AC" fill-opacity=".31" stroke="#9CD9FF" stroke-opacity=".3"/>
+  <path d="M397 170L429 140L501 123L466 154Z" fill="#F1CEFF" fill-opacity=".28"/>
+  <path d="M466 154L501 123L723 591L689 624Z" fill="#6189C8" fill-opacity=".38" stroke="#ACD1FF" stroke-opacity=".25"/>
+
+  <!-- Custom N-shaped prismatic monolith, brand-specific, not a stock icon. -->
+  <g filter="url(#shadow)" opacity=".58"><path d="M308 201L400 168L400 701L308 733Z M397 170L466 154L689 624L634 686Z M633 177L734 211L734 741L633 700Z" fill="#825AF6"/></g>
+  <path d="M308 201L400 168L400 701L308 733Z" fill="url(#panel)" stroke="url(#rim)" stroke-width="1.9"/>
+  <path d="M633 177L734 211L734 741L633 700Z" fill="url(#panel)" stroke="url(#rim)" stroke-width="1.9"/>
+  <path d="M397 170L466 154L689 624L634 686Z" fill="url(#front)" stroke="url(#rim)" stroke-width="2.4"/>
+  <path d="M310 205L355 186L355 715M637 180L678 195L678 716M401 173L436 165L656 654" stroke="#F6E6FF" stroke-opacity=".41" stroke-width="1"/>
+  <path d="M320 717L393 692M649 692L718 721M414 176L635 666" stroke="#9CD1FF" stroke-opacity=".38" stroke-width="1"/>
+
+  <!-- Internal precision lines are clipped to the N structural panels. -->
+  <g clip-path="url(#nclip)" opacity=".73">
+    <path d="M270 276L775 143M270 366L775 233M270 456L775 323M270 546L775 413M270 636L775 503M270 726L775 593" stroke="#F4E3FF" stroke-width="1" stroke-opacity=".24"/>
+    <path d="M316 145L316 780M360 145L360 780M416 145L416 780M664 145L664 780M703 145L703 780" stroke="#90CBFF" stroke-width=".7" stroke-opacity=".2"/>
+    <path d="M235 306L797 692M235 260L797 646M235 214L797 600" stroke="#CEB5FF" stroke-opacity=".32"/>
+  </g>
+  <!-- Intentional restrained glints instead of particles. -->
+  <path d="M309 201L400 168M397 170L466 154M633 177L734 211" stroke="#F7E9FF" stroke-width="3" stroke-opacity=".37" filter="url(#edge)"/>
+  <path d="M397 170L466 154L689 624" stroke="#D0ACFF" stroke-width="4.5" stroke-opacity=".44" filter="url(#glow)"/>
+  <path d="M634 686L689 624L734 741" stroke="#62C6FF" stroke-width="3.5" stroke-opacity=".48" filter="url(#glow)"/>
+  <path d="M308 201L308 733M633 177L633 700" stroke="#D5B1FF" stroke-opacity=".8" stroke-width="1.15"/>
+  <path d="M734 211L734 741" stroke="#70C4FF" stroke-opacity=".54" stroke-width="1.4"/>
+
+  <path d="M163 744L233 744M899 747L966 747M249 136H314M797 138H858M209 813H269" stroke="url(#rim)" stroke-opacity=".55" stroke-width="1.4"/>
+  <rect x="161" y="742" width="4" height="4" fill="#E6CFFF" fill-opacity=".74"/>
+  <rect x="964" y="745" width="4" height="4" fill="#7DE2FF" fill-opacity=".74"/>
+  <path d="M842 472L956 472M889 417V528" stroke="#C1BAFF" stroke-opacity=".13"/>
+</svg>
