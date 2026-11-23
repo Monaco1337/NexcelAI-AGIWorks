@@ -14,6 +14,7 @@ type JsonLdObject = Record<string, unknown>;
 interface TemplateFrameProps {
   base: TemplateBase;
   children: ReactNode;
+  hero?: ReactNode;
   extraSchema?: JsonLdObject | JsonLdObject[];
   cta?: { label: string; href: string };
   showAuthor?: boolean;
@@ -24,6 +25,7 @@ interface TemplateFrameProps {
 export default function TemplateFrame({
   base,
   children,
+  hero,
   extraSchema,
   cta = { label: "Projekt besprechen", href: "/kontakt" },
   showAuthor = true,
@@ -36,15 +38,15 @@ export default function TemplateFrame({
     ...(extraSchema ? (Array.isArray(extraSchema) ? extraSchema : [extraSchema]) : []),
   ];
 
-  return <main className="ds-app premium-v6 v6-template min-h-screen" data-v6-brand={base.brand}>
+  return <main className={`ds-app premium-v6 v6-template min-h-screen${hero ? " nxl-solutions-shell" : ""}`} data-v6-brand={base.brand}>
     <Breadcrumbs items={base.breadcrumbs} />
-    <header className="v6-template-hero">
+    {hero ? hero : <header className="v6-template-hero">
       <div>
         {base.eyebrow && <Eyebrow>{base.eyebrow}</Eyebrow>}
         <GradientHeading as="h1">{base.title}</GradientHeading>
         <p className="mt-6 max-w-3xl text-[17px] leading-[1.8] text-white/75">{base.intro}</p>
       </div>
-    </header>
+    </header>}
 
     {children}
     <FaqSection items={base.faq} />
@@ -54,7 +56,7 @@ export default function TemplateFrame({
       {showAuthor && <div className="mx-auto mt-9 max-w-md"><AuthorByline emitSchema={emitAuthorSchema} /></div>}
     </section>}
 
-    <section className="v6-final v6-template-cta v12-service-final" aria-label="Projekt besprechen">
+    <section className="v6-final v6-template-cta" aria-label="Projekt besprechen">
       <div className="v6-shell">
         <Eyebrow>Gemeinsam weiterdenken</Eyebrow>
         <h2 className="v6-h2">Lassen Sie uns Ihren konkreten Bedarf klären.</h2>
