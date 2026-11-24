@@ -7,6 +7,9 @@ import dynamicImport from "next/dynamic";
 import LogoManager from "@/components/admin/LogoManager";
 import ReferenceManager from "@/components/admin/ReferenceManager";
 import SystemsManager from "@/components/admin/SystemsManager";
+import CommandCenterHome from "@/components/admin/command/CommandCenterHome";
+import CommandNav from "@/components/admin/command/CommandNav";
+import CommandNotifications from "@/components/admin/command/CommandNotifications";
 
 // Das Ticket Control Center wird erst beim Öffnen des Reiters geladen. Fest
 // eingebunden würde es den Start des gesamten Dashboards verlangsamen, obwohl
@@ -400,6 +403,7 @@ export default function AdminDashboard() {
   // Zeitraum-Filter: wählt nur, welcher bestehende Analytics-Bucket angezeigt wird.
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [createTaskNonce, setCreateTaskNonce] = useState(0);
   const [openTickets, setOpenTickets] = useState(0);
   // Vorauswahl beim Sprung aus der Projektübersicht ins Ticketsystem.
   const [ticketProjectFilter, setTicketProjectFilter] = useState<string | null>(null);
@@ -417,6 +421,7 @@ export default function AdminDashboard() {
   });
 
   const sessionBrandKey: "nexcel" | "agiworks" =
+    brandFilter === "agiworks" ? "agiworks" : brandFilter === "nexcel" ? "nexcel" :
     user?.brand === "agiworks" ? "agiworks" : "nexcel";
   const sessionBrand = BRAND_META[sessionBrandKey];
 
@@ -643,29 +648,8 @@ export default function AdminDashboard() {
     setActiveTab(id);
   };
 
-  const navItems: { id: TabId; label: string; badge?: number }[] = [
-    { id: "overview", label: "Command Center" },
-    { id: "analysen", label: "Analysen" },
-    { id: "contacts", label: "Leads / Kontakte", badge: unreadContacts },
-    { id: "pipeline", label: "Pipeline" },
-    { id: "unternehmen", label: "Unternehmen" },
-    { id: "vertrieb", label: "Vertrieb" },
-    { id: "kalkulation", label: "Interne Kalkulation" },
-    { id: "demo", label: "Demo-Anfragen", badge: unreadDemos },
-    { id: "termine", label: "Termine / Buchungen" },
-    { id: "projekte", label: "Projekte" },
-    { id: "tickets", label: "Tickets", badge: openTickets },
-    { id: "rechnungen", label: "Rechnungen" },
-    { id: "automationen", label: "Automationen" },
-    { id: "analytics", label: "Analytics" },
-    { id: "logos", label: "Logos / Slider" },
-    { id: "referenzen", label: "Referenzen" },
-    { id: "systeme", label: "Systeme" },
-    { id: "settings", label: "Einstellungen" },
-  ];
-
   const TAB_TITLE: Record<TabId, string> = {
-    overview: "Command Center",
+    overview: "Dashboard",
     analysen: "Analysen",
     contacts: "Leads / Kontakte",
     pipeline: "Pipeline",
@@ -859,45 +843,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-            {navItems.map((item) => {
-              const active = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => openTab(item.id)}
-                  className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                  style={{
-                    background: active ? `${sessionBrand.accent}1A` : "transparent",
-                    color: active ? "#FFFFFF" : "#9CA3AF",
-                    border: `1px solid ${active ? `${sessionBrand.accent}33` : "transparent"}`,
-                  }}
-                >
-                  {active && (
-                    <span
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full"
-                      style={{ background: sessionBrand.accent, boxShadow: `0 0 12px ${sessionBrand.accent}` }}
-                    />
-                  )}
-                  <span
-                    className="flex-shrink-0 transition-colors group-hover:text-white"
-                    style={{ color: active ? sessionBrand.accent : "#6B7280" }}
-                  >
-                    <NavIcon name={item.id} />
-                  </span>
-                  <span className="flex-1 text-left truncate">{item.label}</span>
-                  {item.badge != null && item.badge > 0 && (
-                    <span
-                      className="px-1.5 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
-                      style={{ background: `${sessionBrand.accent}26`, color: sessionBrand.accent }}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          <CommandNav activeTab={activeTab} accent={sessionBrand.accent} badges={{ contacts: unreadContacts, demo: unreadDemos, tickets: openTickets }} onNavigate={(id) => openTab(id as TabId)} />
 
           <div className="px-3 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3 px-2 mb-3">
@@ -953,38 +899,7 @@ export default function AdminDashboard() {
                   ×
                 </button>
               </div>
-              <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-                {navItems.map((item) => {
-                  const active = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        openTab(item.id);
-                        setMobileNavOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium"
-                      style={{
-                        background: active ? `${sessionBrand.accent}1A` : "transparent",
-                        color: active ? "#FFFFFF" : "#9CA3AF",
-                      }}
-                    >
-                      <span style={{ color: active ? sessionBrand.accent : "#6B7280" }}>
-                        <NavIcon name={item.id} />
-                      </span>
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {item.badge != null && item.badge > 0 && (
-                        <span
-                          className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
-                          style={{ background: `${sessionBrand.accent}26`, color: sessionBrand.accent }}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
+              <CommandNav activeTab={activeTab} accent={sessionBrand.accent} badges={{ contacts: unreadContacts, demo: unreadDemos, tickets: openTickets }} onNavigate={(id) => { openTab(id as TabId); setMobileNavOpen(false); }} />
             </aside>
           </div>
         )}
@@ -1016,12 +931,15 @@ export default function AdminDashboard() {
                 </h1>
                 {activeTab === "overview" && (
                   <p className="text-xs sm:text-sm text-[#9CA3AF] truncate">
-                    Willkommen zurück, {greetingName}.
+                    Dein Arbeitsbereich, {greetingName}.
                   </p>
                 )}
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
+                <CommandNotifications accent={sessionBrand.accent} onNavigate={(id) => openTab(id as TabId)} />
+                {(activeTab === "analysen" || activeTab === "analytics" || activeTab === "contacts") && (
+                  <>
                 <div
                   className="hidden sm:flex items-center gap-1 p-1 rounded-xl"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
@@ -1053,8 +971,10 @@ export default function AdminDashboard() {
                   </svg>
                   Exportieren
                 </button>
+                  </>
+                )}
                 <button
-                  onClick={handleNewAnalysis}
+                  onClick={() => { setActiveTab("overview"); setCreateTaskNonce(n => n + 1); }}
                   className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white transition-all"
                   style={{
                     background: `linear-gradient(135deg, ${sessionBrand.accent}, ${sessionBrand.accent}CC)`,
@@ -1064,7 +984,7 @@ export default function AdminDashboard() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  Neue Analyse
+                  + Aufgabe
                 </button>
               </div>
             </div>
@@ -1114,183 +1034,14 @@ export default function AdminDashboard() {
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* ─── COMMAND CENTER ─────────────────────────────────────────── */}
         {activeTab === "overview" && (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-              <KpiTile
-                label="Neue Analysen"
-                sub={TIME_RANGE_LABEL[timeRange]}
-                value={bucket?.pricingStarts ?? 0}
-                accent="#A45CFF"
-                trend={trendPct(a?.last24h.pricingStarts, a?.last7d.pricingStarts)}
-                emptyHint="Noch keine Analysen"
-              />
-              <KpiTile
-                label="Neue Leads"
-                sub={`${stats?.contacts.unread ?? 0} ungelesen`}
-                value={bucket?.contacts ?? 0}
-                accent="#22C55E"
-                trend={trendPct(a?.last24h.contacts, a?.last7d.contacts)}
-                emptyHint="Noch keine Leads"
-              />
-              <KpiTile
-                label="Demo-Anfragen"
-                sub={`${stats?.demoRequests.pending ?? 0} offen`}
-                value={bucket?.demoRequests ?? 0}
-                accent="#FBBF24"
-                trend={trendPct(a?.last24h.demoRequests, a?.last7d.demoRequests)}
-                emptyHint="Keine Anfragen"
-              />
-              <KpiTile
-                label="Pipeline aktiv"
-                sub="offene Vorgänge"
-                value={activeLeads.filter((c) => !c.read).length + (stats?.demoRequests.pending ?? 0)}
-                accent="#5BB8FF"
-                emptyHint="Pipeline leer"
-              />
-              <KpiTile
-                label="Conversion Rate"
-                sub={`${pipelineSteps[0].value} Analysen`}
-                value={conversionRate}
-                suffix="%"
-                accent="#C6A8FF"
-                emptyHint="Noch keine Daten"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-              <GlassCard
-                title="Hot Leads"
-                action={
-                  activeLeads.length > 0 ? (
-                    <button
-                      onClick={() => setActiveTab("contacts")}
-                      className="text-xs text-[#9CA3AF] hover:text-white transition-colors"
-                    >
-                      Alle anzeigen →
-                    </button>
-                  ) : null
-                }
-              >
-                {hotLeads.length === 0 ? (
-                  <EmptyState text="Sobald Kontakte eingehen, erscheinen die wichtigsten hier." />
-                ) : (
-                  <div className="space-y-2">
-                    {hotLeads.map(({ c, score }) => (
-                      <HotLeadRow
-                        key={c.id}
-                        contact={c}
-                        score={score}
-                        onOpen={() => setActiveTab("contacts")}
-                      />
-                    ))}
-                  </div>
-                )}
-              </GlassCard>
-
-              <GlassCard
-                title="Analyse-Pipeline"
-                action={<span className="text-[10px] text-[#6B7280]">{TIME_RANGE_LABEL[timeRange]}</span>}
-              >
-                <PipelineFunnel steps={pipelineSteps} conversionRate={conversionRate} accent={sessionBrand.accent} />
-              </GlassCard>
-
-              <GlassCard
-                title="Live Aktivität"
-                action={activity.length > 0 ? <span className="text-[10px] text-[#6B7280]">{activity.length} Ereignisse</span> : null}
-              >
-                {activity.length === 0 ? (
-                  <EmptyState text="Noch keine Aktivität erfasst." />
-                ) : (
-                  <div className="space-y-0.5">
-                    {activity.map((it) => (
-                      <ActivityRow key={it.id} item={it} />
-                    ))}
-                  </div>
-                )}
-              </GlassCard>
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-              <GlassCard title="Markenübersicht">
-                <div className="grid grid-cols-2 gap-3">
-                  <BrandStatCard brandKey="nexcel" stat={brandStat("nexcel")} />
-                  <BrandStatCard brandKey="agiworks" stat={brandStat("agiworks")} />
-                </div>
-              </GlassCard>
-
-              <GlassCard
-                title="KI-Priorisierung"
-                action={
-                  activeLeads.length > 0 ? (
-                    <button onClick={() => setActiveTab("contacts")} className="text-xs text-[#9CA3AF] hover:text-white transition-colors">
-                      Leads →
-                    </button>
-                  ) : null
-                }
-              >
-                {activeLeads.length === 0 ? (
-                  <EmptyState text="Priorisierung erscheint, sobald Leads vorliegen." />
-                ) : (
-                  <div className="space-y-2.5">
-                    <PriorityRow tier="A" label="Sofort kontaktieren" desc="Hohe Abschlusswahrscheinlichkeit" count={prio.A} color="#22C55E" />
-                    <PriorityRow tier="B" label="Diese Woche" desc="Gute Abschlusswahrscheinlichkeit" count={prio.B} color="#FBBF24" />
-                    <PriorityRow tier="C" label="Niedrige Priorität" desc="Langfristiges Potenzial" count={prio.C} color="#6B7280" />
-                  </div>
-                )}
-              </GlassCard>
-
-              <GlassCard title="Lead-Herkunft / Quellen">
-                {leadOrigins.length === 0 ? (
-                  <EmptyState text="Quellen erscheinen, sobald Traffic erfasst wird." />
-                ) : (
-                  <div className="space-y-2.5">
-                    {leadOrigins.map((r) => {
-                      const total = leadOrigins.reduce((s, x) => s + x.count, 0) || 1;
-                      const pct = Math.round((r.count / total) * 100);
-                      return (
-                        <div key={r.referrer} className="space-y-1">
-                          <div className="flex justify-between text-xs">
-                            <span className="text-white truncate max-w-[70%]">{r.referrer}</span>
-                            <span className="text-[#9CA3AF] tabular-nums">{r.count}</span>
-                          </div>
-                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: sessionBrand.accent }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </GlassCard>
-            </div>
-
-            <GlassCard title="Analyse-Insights · häufige Themen">
-              {topTopics.length === 0 ? (
-                <EmptyState text="Sobald Anfragen mit Betreff eingehen, erscheinen hier die häufigsten Themen." />
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                  {topTopics.map((t) => {
-                    const max = topTopics[0].count || 1;
-                    const pct = Math.round((t.count / max) * 100);
-                    return (
-                      <div
-                        key={t.label}
-                        className="rounded-xl p-3"
-                        style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}
-                      >
-                        <div className="text-xs text-white font-medium truncate mb-2">{t.label}</div>
-                        <div className="text-2xl font-bold text-white tabular-nums leading-none mb-2">{t.count}</div>
-                        <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: sessionBrand.accent }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </GlassCard>
-          </div>
+          <CommandCenterHome
+            name={greetingName}
+            brand={brandFilter}
+            onNavigate={(id) => openTab(id as TabId)}
+            createTaskNonce={createTaskNonce}
+          />
         )}
+
 
         {/* ─── ANALYSEN ───────────────────────────────────────────────── */}
         {activeTab === "analysen" && (

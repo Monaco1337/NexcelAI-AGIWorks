@@ -18,6 +18,7 @@
 import { db } from "@/lib/pg";
 import type { Tx } from "@/lib/db/migrationRunner";
 import { writeAuditTx, type AuditActor } from "@/lib/audit/auditLog";
+import { recordCommandEventTx } from "@/lib/command-center/events";
 import {
   canTransition,
   isOpenStatus,
@@ -532,6 +533,13 @@ export async function createTicket(
       },
       ...meta,
     });
+    await recordCommandEventTx(tx, {
+      key: `ticket.created:${id}`, type: "ticket.created",
+      brand: input.brand === "agiworks" ? "agiworks" : "nexcel",
+      entityType: "ticket", entityId: id, actorId: actor.id,
+      recipientId: assigneeId, title: `Ticket ${key} zugewiesen`,
+      detail: title, targetTab: "tickets", payload: { priority: input.priority ?? "normal" },
+    });
   });
 
   return getTicket(id);
@@ -665,6 +673,18 @@ export async function updateTicket(
       await writeAuditTx(tx, {
         actor, action, entityType: "ticket", entityId: id, before, after, ...meta,
       });
+      if ("assigneeId" in after && next.assignee_id) {
+        const [metaTicket] = await tx<{ brand: string; key: string }[]>`
+          SELECT brand, key FROM tickets WHERE id = ${id}
+        `;
+        await recordCommandEventTx(tx, {
+          key: `ticket.assigned:${id}:${current.version + 1}`,
+          type: "ticket.assigned", brand: metaTicket?.brand === "agiworks" ? "agiworks" : "nexcel",
+          entityType: "ticket", entityId: id, actorId: actor.id,
+          recipientId: next.assignee_id, title: `Ticket ${metaTicket?.key ?? ""} zugewiesen`,
+          detail: next.title, targetTab: "tickets", payload: { priority: next.priority },
+        });
+      }
     }
   });
 
