@@ -119,6 +119,11 @@ export default function Footer() {
       pathname === "/agiworks/engineering" ||
       pathname?.startsWith("/agiworks/engineering/"));
 
+  // AGI services pages already provide their own closing contact CTA.
+  // Suppress only the duplicate generic footer CTA on these routes.
+  const isAgiServicesPage =
+    isAgiWorks && /^\/(?:agiworks\/)?leistungen(?:\/|$)/.test(pathname ?? "");
+
   // NEXCEL_FOOTER_CTA_REPAIR_V11: TemplateFrame owns the sole detail-page closing CTA.
   const isNexcelSolutionDetail =
     brand.id === "nexcel" && /^\/loesungen\/[^/]+\/?$/.test(pathname ?? "");
@@ -128,7 +133,7 @@ export default function Footer() {
       {/* CTA Section */}
       {/* AGI_HOMEPAGE_FINAL_CTA_V1 */}
       {isAgiHomepage && <AgiClosingCta />}
-      {!isAgiHomepage && !isConsultationPage && !isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && !isAgiEngineeringPage && !isNexcelSolutionDetail && (
+      {!isAgiHomepage && !isConsultationPage && !isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && !isAgiEngineeringPage && !isAgiServicesPage && !isNexcelSolutionDetail && (
         isAgiWorks ? (
 
 <section
