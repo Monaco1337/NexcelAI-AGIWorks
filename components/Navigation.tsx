@@ -840,8 +840,9 @@ export default function Navigation() {
                             : "linear-gradient(180deg, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0.10) 100%)",
                         }}
                         whileTap={{ scale: 0.96 }}
-                        aria-label="Menü öffnen"
+                        aria-label={mobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
                         aria-expanded={mobileMenuOpen}
+                        aria-controls="nexcel-mobile-navigation-dialog"
                       >
                         {/* Hamburger Icon Lines - Premium Animation */}
                         <motion.div
@@ -1653,11 +1654,12 @@ export default function Navigation() {
       )}
 
       {/* Mobile Menu — Vollbild-Overlay */}
-      <AnimatePresence>
+      {mounted && createPortal(
+        <AnimatePresence>
         {mobileMenuOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-[120] overflow-y-auto xl:hidden"
+              className="nxl-mobile-navigation-dialog fixed inset-0 z-[300] overflow-y-auto overscroll-contain xl:hidden"
               style={{
                 background: theme === "dark"
                   ? "linear-gradient(160deg, rgba(12,10,28,0.97) 0%, rgba(18,14,40,0.98) 40%, rgba(8,6,20,0.99) 100%)"
@@ -1669,6 +1671,7 @@ export default function Navigation() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              id="nexcel-mobile-navigation-dialog"
               role="dialog"
               aria-modal="true"
               aria-label="Navigation menu"
@@ -1943,7 +1946,9 @@ export default function Navigation() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }

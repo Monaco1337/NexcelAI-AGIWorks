@@ -16,6 +16,7 @@ interface TemplateFrameProps {
   children: ReactNode;
   extraSchema?: JsonLdObject | JsonLdObject[];
   cta?: { label: string; href: string };
+  heroAside?: ReactNode;
   showAuthor?: boolean;
   emitAuthorSchema?: boolean;
 }
@@ -26,6 +27,7 @@ export default function TemplateFrame({
   children,
   extraSchema,
   cta = { label: "Projekt besprechen", href: "/kontakt" },
+  heroAside,
   showAuthor = true,
   emitAuthorSchema = false,
 }: TemplateFrameProps) {
@@ -38,18 +40,19 @@ export default function TemplateFrame({
 
   return <main className="ds-app premium-v6 v6-template min-h-screen" data-v6-brand={base.brand}>
     <Breadcrumbs items={base.breadcrumbs} />
-    <header className="v6-template-hero">
+    <header className={heroAside ? "v6-template-hero nxl-detail-hero" : "v6-template-hero"}>
       <div>
         {base.eyebrow && <Eyebrow>{base.eyebrow}</Eyebrow>}
         <GradientHeading as="h1">{base.title}</GradientHeading>
         <p className="mt-6 max-w-3xl text-[17px] leading-[1.8] text-white/75">{base.intro}</p>
       </div>
+      {heroAside && <div className="nxl-detail-hero-aside">{heroAside}</div>}
     </header>
 
     {children}
     <FaqSection items={base.faq} />
 
-    {!agi && <section className="mx-auto max-w-[1080px] px-5 py-12 sm:px-8">
+    {!agi && !(base.brand === "nexcel" && base.canonicalUrl.endsWith("/loesungen")) && <section className="mx-auto max-w-[1080px] px-5 py-12 sm:px-8">
       <TrustStrip />
       {showAuthor && <div className="mx-auto mt-9 max-w-md"><AuthorByline emitSchema={emitAuthorSchema} /></div>}
     </section>}

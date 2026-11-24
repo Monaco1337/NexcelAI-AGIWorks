@@ -1,0 +1,255 @@
+/* AGI_FUNCTIONS_PREMIUM_V11: Scoped exclusively to AgiWorksPremiumDetail */
+.scope {
+  position: relative;
+  isolation: isolate;
+  padding-top: clamp(76px, 7vw, 112px);
+  padding-bottom: clamp(78px, 8vw, 120px);
+}
+
+.scope::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 85% 72% at 50% 50%, rgba(20, 90, 145, 0.105), transparent 80%);
+}
+
+.headingRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  align-items: end;
+  gap: clamp(26px, 6vw, 82px);
+}
+
+.heading {
+  margin: 18px 0 0;
+  max-width: 18ch;
+  color: #f6f9ff;
+  font-size: clamp(2.1rem, 3.55vw, 3.65rem);
+  font-weight: 500;
+  line-height: 1.13;
+  letter-spacing: -0.048em;
+  text-wrap: balance;
+}
+
+.context {
+  margin: 0 0 3px;
+  padding: 4px 0 4px clamp(22px, 3.5vw, 42px);
+  max-width: 45ch;
+  border-left: 1px solid rgba(100, 183, 241, 0.44);
+  color: #b3c4d7;
+  font-size: clamp(0.93rem, 1.15vw, 1rem);
+  line-height: 1.75;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 1.5vw, 20px);
+  margin: clamp(34px, 4.5vw, 54px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 182px;
+  padding: clamp(21px, 2.25vw, 29px);
+  overflow: hidden;
+  border: 1px solid rgba(113, 176, 219, 0.37);
+  border-radius: 20px;
+  background: linear-gradient(155deg, #132c43 0%, #10263b 46%, #0d1d30 100%);
+  box-shadow: inset 0 1px 0 rgba(220, 242, 255, 0.045), 0 16px 45px rgba(0, 2, 12, 0.10);
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(106, 208, 254, 0.95), transparent);
+  box-shadow: 0 0 18px 4px rgba(69, 178, 239, 0.15);
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 90% 80% at 50% -35%, rgba(67, 151, 215, 0.15), transparent 75%);
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card:hover {
+  border-color: rgba(128, 209, 255, 0.62);
+  box-shadow: inset 0 1px 0 rgba(218, 243, 255, 0.09), 0 19px 48px rgba(0, 4, 16, 0.15);
+}
+
+.ordinal {
+  display: block;
+  margin-bottom: 13px;
+  color: #70d6ff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardTitle {
+  margin: 0;
+  color: #f3f8fe;
+  font-size: clamp(1.13rem, 1.52vw, 1.42rem);
+  line-height: 1.22;
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  overflow-wrap: anywhere;
+}
+
+.cardDescription {
+  margin: 11px 0 0;
+  color: #b4c4d7;
+  font-size: clamp(0.87rem, 1.05vw, 0.965rem);
+  line-height: 1.64;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: clamp(35px, 5.2vw, 57px);
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  gap: 16px;
+  padding: 13px 26px;
+  border-radius: 999px;
+  color: #f7fbff;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.45;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.primary {
+  border: 1px solid rgba(113, 215, 255, 0.66);
+  background: linear-gradient(105deg, #0878b7 0%, #156da8 50%, #115a96 100%);
+  box-shadow: 0 10px 30px rgba(13, 122, 190, 0.22), inset 0 1px 0 rgba(230, 248, 255, 0.16);
+}
+
+.secondary {
+  border: 1px solid rgba(154, 198, 229, 0.64);
+  background: rgba(15, 38, 61, 0.64);
+}
+
+.primary:hover {
+  background: linear-gradient(105deg, #0c89cf 0%, #1979b8 100%);
+  border-color: rgba(154, 231, 255, 0.91);
+  box-shadow: 0 12px 35px rgba(25, 137, 203, 0.27);
+  transform: translateY(-1px);
+}
+
+.secondary:hover {
+  background: rgba(27, 65, 95, 0.75);
+  border-color: #a7d5f3;
+  transform: translateY(-1px);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 2px solid #9be1ff;
+  outline-offset: 4px;
+}
+
+@media (max-width: 1023px) {
+  .headingRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .context {
+    max-width: 62ch;
+    padding-left: 22px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .card {
+    min-height: 177px;
+  }
+}
+
+@media (max-width: 639px) {
+  .scope {
+    padding-top: 65px;
+    padding-bottom: 77px;
+  }
+  .heading {
+    font-size: clamp(2rem, 8.9vw, 2.75rem);
+    max-width: 100%;
+  }
+  .context {
+    max-width: none;
+    border-left: 0;
+    border-top: 1px solid rgba(100, 183, 241, 0.3);
+    padding: 16px 0 0;
+  }
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 30px;
+    gap: 14px;
+  }
+  .card {
+    min-height: 0;
+    padding: 23px 23px 25px;
+    border-radius: 18px;
+  }
+  .cardTitle {
+    font-size: 1.2rem;
+  }
+  .cardDescription {
+    font-size: 0.92rem;
+  }
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .primary,
+  .secondary {
+    width: 100%;
+    min-height: 52px;
+    padding: 13px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .primary,
+  .secondary { transition: none; }
+  .primary:hover,
+  .secondary:hover { transform: none; }
+}

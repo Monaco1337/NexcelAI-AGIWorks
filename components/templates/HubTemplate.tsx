@@ -10,6 +10,8 @@ import { usePathname } from "next/navigation";
 import Link from "@/components/BrandAwareLink";
 import TemplateFrame from "./TemplateFrame";
 import { TemplateSection, GlassCard, CardGrid } from "./primitives";
+import NexcelSolutionsCatalog from "@/components/sections/NexcelSolutionsCatalog";
+import NexcelTaskClusters from "@/components/sections/NexcelTaskClusters";
 import type { BrandKey } from "@/config/seo/domains";
 import type { TemplateBase } from "@/lib/templates/types";
 
@@ -184,6 +186,10 @@ const SEO_CLUSTERS: Record<BrandKey, SeoCluster[]> = {
   ]
 };
 
+function showAgiSeoClusters(brand: BrandKey, canonicalUrl: string): boolean {
+  return brand === "agiworks" && canonicalUrl.endsWith("/leistungen");
+}
+
 export default function HubTemplate(props: HubTemplateProps) {
   const pathname = usePathname() || "";
   const isLocalAgi = props.brand === "agiworks" && (pathname === "/agiworks" || pathname.startsWith("/agiworks/"));
@@ -210,6 +216,9 @@ export default function HubTemplate(props: HubTemplateProps) {
 
   return (
     <TemplateFrame base={base} extraSchema={schema} showAuthor={false} cta={{ label: "Systemanalyse starten", href: "/systemanalyse" }}>
+      {props.brand === "nexcel" && props.canonicalUrl.endsWith("/loesungen") ? (
+        <NexcelSolutionsCatalog items={props.items} />
+      ) : (
       <TemplateSection eyebrow={props.eyebrow} heading={props.itemsHeading}>
         <CardGrid>
           {props.items.map((item, i) => (
@@ -225,9 +234,13 @@ export default function HubTemplate(props: HubTemplateProps) {
           ))}
         </CardGrid>
       </TemplateSection>
+      )}
+      {/* NEXCEL_PREMIUM_TASK_CLUSTERS_V11 */}
+      {props.brand === "nexcel" && props.canonicalUrl.endsWith("/loesungen") && (
+        <NexcelTaskClusters clusters={SEO_CLUSTERS.nexcel} />
+      )}
       {/* SEO_COMMERCIAL_CLUSTERS_V2 */}
-      {((props.brand === "nexcel" && props.canonicalUrl.endsWith("/loesungen")) ||
-        (props.brand === "agiworks" && props.canonicalUrl.endsWith("/leistungen"))) && (
+      {showAgiSeoClusters(props.brand, props.canonicalUrl) && (
         <TemplateSection
           eyebrow="Themencluster"
           heading={props.brand === "nexcel" ? "KI-Lösungen nach Geschäftsaufgabe" : "Software nach Systemanforderung"}

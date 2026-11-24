@@ -1,4 +1,5 @@
 import Image from "next/image";
+import functionStyles from "./AgiWorksPremiumDetailFunctions.module.css";
 import Link from "@/components/BrandAwareLink";
 import { resolveBrandNavHref } from "@/lib/brandNav";
 import type { ReactNode } from "react";
@@ -238,50 +239,48 @@ export default function AgiWorksPremiumDetail({
         </div>
       </section>
 
-      {/* LEISTUNGSUMFANG - BENTO */}
+      {/* AGI_FUNKTIONSUMFANG_PREMIUM_V11 */}
       <section
         id="umfang"
-        className={`relative scroll-mt-28 py-20 lg:py-28 ${sectionWidth}`}
+        aria-labelledby="umfang-heading"
+        className={`${sectionWidth} ${functionStyles.scope} scroll-mt-28`}
       >
-        <Kicker>DER FUNKTIONSUMFANG</Kicker>
-
-        <div className="mt-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <h2 className="max-w-[760px] text-[clamp(2rem,3.6vw,3.7rem)] font-medium leading-tight tracking-[-.045em]">
-            Alles greift ineinander.
-          </h2>
-          <p className="max-w-[330px] text-[14px] leading-6 text-slate-400">
+        <div className={functionStyles.headingRow}>
+          <div>
+            <Kicker>DER FUNKTIONSUMFANG</Kicker>
+            <h2 id="umfang-heading" className={functionStyles.heading}>
+              Alles greift ineinander.
+            </h2>
+          </div>
+          <p className={functionStyles.context}>
             Die konkreten Bausteine richten sich nach Ihrem Projekt,
             nicht nach einem starren Paket.
           </p>
         </div>
 
-        <div className="v6-agi-modules mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ol className={functionStyles.grid} aria-label="Funktionsbausteine">
           {page.modules.map((module, i) => (
-            <article
-              key={`${module.title}-${i}`}
-              className={`group relative flex min-h-[215px] flex-col justify-between overflow-hidden rounded-[22px] border border-white/10 bg-[#111a26] p-7 transition-colors hover:border-sky-300/30 hover:bg-[#162235] ${
-                i === 0 ? "lg:col-span-2" : ""
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className="text-[12px] font-medium tracking-widest text-[#77b8e8]"
-              >
+            <li key={`${module.title}-${i}`} className={functionStyles.card}>
+              <span className={functionStyles.ordinal} aria-hidden="true">
                 {String(i + 1).padStart(2, "0")}
               </span>
-
-              <div>
-                <h3 className="text-[20px] font-medium tracking-[-.025em] text-white">
-                  {module.title}
-                </h3>
-                {module.description && (
-                  <p className="mt-3 max-w-[610px] text-[14px] leading-7 text-slate-400">
-                    {module.description}
-                  </p>
-                )}
-              </div>
-            </article>
+              <h3 className={functionStyles.cardTitle}>{module.title}</h3>
+              {module.description && (
+                <p className={functionStyles.cardDescription}>
+                  {module.description}
+                </p>
+              )}
+            </li>
           ))}
+        </ol>
+
+        <div className={functionStyles.actions}>
+          <Link href="/kontakt" className={functionStyles.primary}>
+            Softwareprojekt besprechen <Arrow />
+          </Link>
+          <Link href="/leistungen" className={functionStyles.secondary}>
+            Leistungsbereich ansehen <Arrow />
+          </Link>
         </div>
       </section>
 

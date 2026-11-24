@@ -1,0 +1,236 @@
+/* NEXCEL_TASK_CLUSTERS_PREMIUM_V11 - route-scoped; no global selectors. */
+.root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(60px, 7vw, 108px) 0 clamp(72px, 8vw, 118px);
+  color: #f6f3ff;
+  background: transparent;
+}
+.ambient {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 31% at 50% 12%, rgba(147, 94, 237, .13), transparent 85%),
+    radial-gradient(ellipse 35% 44% at 3% 69%, rgba(94, 66, 179, .06), transparent 85%),
+    linear-gradient(180deg, rgba(17, 18, 37, .22), rgba(13, 15, 28, .03));
+}
+.wrap {
+  position: relative;
+  width: min(100% - 44px, 1190px);
+  margin-inline: auto;
+}
+.header {
+  margin: 0 auto clamp(34px, 4vw, 52px);
+  max-width: 850px;
+  text-align: center;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: .23em;
+  color: #c4a4fb;
+}
+.pin {
+  display: inline-block;
+  flex: none;
+  height: 5px;
+  width: 5px;
+  border-radius: 999px;
+  background: #cbaaff;
+  box-shadow: 0 0 14px rgba(200, 157, 255, .54);
+}
+.root .heading {
+  margin: 20px 0 0;
+  font-size: clamp(31px, 4.1vw, 56px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -.047em;
+  color: #f6f1ff;
+  text-wrap: balance;
+}
+.root .heading span {
+  color: #c8aae9;
+  background: linear-gradient(102deg, #f5edff, #cdb3ef 60%, #a889e9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.intro {
+  margin: 19px auto 0;
+  max-width: 670px;
+  font-size: clamp(14px, 1.22vw, 16px);
+  line-height: 1.78;
+  color: #b9b3c9;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(15px, 1.7vw, 22px);
+}
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 345px;
+  overflow: hidden;
+  padding: clamp(25px, 2.65vw, 34px);
+  border: 1px solid rgba(187, 153, 233, .22);
+  border-radius: 25px;
+  background:
+    radial-gradient(ellipse 67% 73% at 96% -6%, rgba(125, 83, 193, .11), transparent 80%),
+    linear-gradient(145deg, rgba(36, 32, 57, .91), rgba(16, 21, 36, .96));
+  box-shadow: 0 17px 54px rgba(5, 5, 18, .2), inset 0 1px 0 rgba(250, 239, 255, .035);
+  transition: border-color .22s ease, background .22s ease, transform .22s ease;
+}
+.card:hover {
+  border-color: rgba(198, 162, 255, .52);
+  transform: translateY(-3px);
+}
+.featured {
+  background:
+    radial-gradient(ellipse 60% 77% at 100% 0%, rgba(161, 109, 230, .15), transparent 78%),
+    linear-gradient(140deg, rgba(47, 38, 75, .97), rgba(21, 22, 41, .97));
+  border-color: rgba(199, 159, 250, .36);
+}
+.topLight {
+  position: absolute;
+  inset: 0 13% auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(216, 177, 255, .81), transparent);
+  box-shadow: 0 0 22px 1px rgba(157, 106, 248, .2);
+  pointer-events: none;
+}
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.number {
+  color: #d7baff;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .16em;
+}
+.overline {
+  color: rgba(201, 188, 228, .56);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .15em;
+}
+.root .cardTitle {
+  margin: 19px 0 0;
+  font-size: clamp(22px, 2.3vw, 31px);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+  color: #f5f1ff;
+}
+.description {
+  margin: 11px 0 0;
+  max-width: 52ch;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #b7b2c9;
+}
+.linkList {
+  margin-top: auto;
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 45px;
+  gap: 18px;
+  border-top: 1px solid rgba(205, 184, 247, .12);
+  color: #e4dcf8;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: padding .22s ease, color .22s ease, background .22s ease;
+}
+.link:hover {
+  padding-inline-start: 7px;
+  color: #e1c5ff;
+  background: rgba(177, 124, 238, .035);
+}
+.link:focus-visible {
+  outline: 2px solid #cba9ff;
+  outline-offset: -2px;
+  border-radius: 5px;
+}
+.arrowIcon {
+  flex: none;
+  color: #d0adff;
+  transition: transform .22s ease;
+}
+.link:hover .arrowIcon { transform: translateX(3px); }
+.factRail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin-top: clamp(35px, 4vw, 60px);
+  padding-top: 23px;
+  border-top: 1px solid rgba(206, 182, 239, .19);
+}
+.fact {
+  min-width: 0;
+  padding: 3px clamp(10px, 1.8vw, 25px);
+  border-inline-start: 1px solid rgba(204, 182, 238, .12);
+}
+.fact:first-child { padding-inline-start: 0; border-inline-start: 0; }
+.factLabel {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .17em;
+  line-height: 1.6;
+  color: #aa96c6;
+  text-transform: uppercase;
+}
+.factValue {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-top: 7px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #e0dcea;
+}
+@media (max-width: 940px) {
+  .card { min-height: 360px; }
+  .factRail { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 20px; }
+  .fact:nth-child(3) { padding-inline-start: 0; border-inline-start: 0; }
+}
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; }
+  .card { min-height: 0; padding: 25px 23px 24px; }
+  .linkList { padding-top: 24px; }
+  .wrap { width: min(100% - 32px, 1190px); }
+  .root { padding-top: 52px; padding-bottom: 72px; }
+  .root .heading { font-size: clamp(29px, 8.4vw, 40px); }
+  .factRail { margin-top: 35px; }
+}
+@media (max-width: 380px) {
+  .root .heading { font-size: 28px; }
+  .card { padding-inline: 19px; border-radius: 20px; }
+  .fact { padding-inline: 12px; }
+  .factValue { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card, .link, .arrowIcon { transition: none; }
+  .card:hover { transform: none; }
+  .link:hover .arrowIcon { transform: none; }
+}

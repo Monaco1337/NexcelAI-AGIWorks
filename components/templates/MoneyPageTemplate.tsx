@@ -10,7 +10,10 @@
  */
 
 import Link from "@/components/BrandAwareLink";
+import Image from "next/image";
 import TemplateFrame from "./TemplateFrame";
+import NexcelProjectFlow from "@/components/sections/NexcelProjectFlow";
+import NexcelDecisionCost from "@/components/sections/NexcelDecisionCost";
 import CommercialDepth from "@/components/authority/CommercialDepth";
 import { TemplateSection, GlassCard, CardGrid } from "./primitives";
 import { serviceSchema } from "@/lib/seo/jsonld";
@@ -23,6 +26,39 @@ function linkLabel(brand: MoneyPage["brand"], href: string): string {
   const money = MONEY_PAGES.find((p) => p.brand === brand && p.path === href);
   if (money) return money.serviceName;
   return internalLinkLabel(brand, href);
+}
+
+// NXL_DETAIL_PREMIUM_V11_SCOPED — use the intrinsic 840:266 SVG ratio.
+const NEXCEL_DETAIL_VISUALS = [
+  { match: /lead|funnel|vertrieb|sales|akquise/i, src: "/images/nexcel/usecase-1.svg", alt: "Prozessschema zur Bearbeitung und Qualifizierung von Anfragen", caption: "Anfragen strukturiert bearbeiten und qualifizieren" },
+  { match: /agent|chat|voice|telefon|assist/i, src: "/images/nexcel/usecase-2.svg", alt: "Prozessschema eines KI-Agenten mit Freigabeschritten", caption: "KI-Agenten mit kontrollierten Freigaben einsetzen" },
+  { match: /kommunikation|mail|service|kontakt/i, src: "/images/nexcel/usecase-3.svg", alt: "Prozessschema strukturierter Kundenkommunikation", caption: "Kommunikation und Rückfragen übersichtlich verbinden" },
+  { match: /crm|erp|prozess|workflow|daten|integration|automatisierung/i, src: "/images/nexcel/usecase-4.svg", alt: "Prozessschema mit CRM, Status und Workflow-Hub", caption: "Systeme und Abläufe über definierte Schnittstellen verbinden" },
+] as const;
+
+function NexcelDetailVisual({ slug }: { slug: string }) {
+  const visual = NEXCEL_DETAIL_VISUALS.find((entry) => entry.match.test(slug)) ?? NEXCEL_DETAIL_VISUALS[3];
+  return (
+    <figure className="nxl-detail-visual" aria-label="Illustratives Anwendungsbeispiel">
+      <div className="nxl-detail-visual-top">
+        <span className="nxl-detail-visual-indicator" aria-hidden="true" />
+        <span>ANWENDUNGSBEISPIEL</span>
+        <span className="nxl-detail-visual-type">PROZESSSCHEMA</span>
+      </div>
+      <div className="nxl-detail-visual-imagebox">
+        <Image
+          src={visual.src}
+          alt={visual.alt}
+          width={840}
+          height={266}
+          sizes="(max-width: 820px) 92vw, (max-width: 1200px) 46vw, 520px"
+          className="nxl-detail-visual-image"
+          priority
+        />
+      </div>
+      <figcaption className="nxl-detail-visual-caption">{visual.caption}</figcaption>
+    </figure>
+  );
 }
 
 export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
@@ -52,32 +88,76 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
   });
 
   return (
-    <TemplateFrame base={base} extraSchema={schema} cta={{ label: "Systemanalyse starten", href: "/systemanalyse" }}>
-      {/* AEO direct answer */}
-      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Kurzantwort" heading="Das Wichtigste zuerst">
-        <GlassCard>
-          <p className="text-base leading-relaxed text-white/80">{page.aeoAnswer}</p>
-        </GlassCard>
-      </TemplateSection>
-
-      {/* Problem */}
-      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ausgangslage" heading="Das Problem">
-        <p className="max-w-3xl text-base leading-relaxed text-white/70">{page.problem}</p>
-      </TemplateSection>
-
-      {/* Solution + modules */}
-      <TemplateSection compact={page.brand === "agiworks"} eyebrow="Lösung" heading="Was gebaut wird" intro={page.solutionIntro}>
-        <CardGrid>
-          {page.modules.map((m, i) => (
-            <GlassCard key={i}>
-              <h3 className="text-base font-medium text-white/95">{m.title}</h3>
-              {m.description && (
-                <p className="mt-2 text-sm leading-relaxed text-white/65">{m.description}</p>
-              )}
+    <TemplateFrame base={base} extraSchema={schema} cta={{ label: "Systemanalyse starten", href: "/systemanalyse" }} heroAside={page.brand === "nexcel" ? <NexcelDetailVisual slug={page.slug} /> : undefined}>
+      {/* NEXCEL V11: combine the two factual sections to reduce scroll. */}
+      {page.brand === "nexcel" ? (
+        <section className="nxl-detail-summary" aria-label="Kurzantwort und Ausgangslage">
+          <div className="nxl-detail-summary-inner">
+            <article className="nxl-detail-summary-primary">
+              <p className="nxl-detail-kicker">KURZANTWORT</p>
+              <h2>Das Wichtigste zuerst.</h2>
+              <p>{page.aeoAnswer}</p>
+            </article>
+            <article className="nxl-detail-summary-secondary">
+              <p className="nxl-detail-kicker">AUSGANGSLAGE</p>
+              <h2>Das Problem.</h2>
+              <p>{page.problem}</p>
+            </article>
+          </div>
+        </section>
+      ) : (
+        <>
+          {/* AEO direct answer */}
+          <TemplateSection compact={page.brand === "agiworks"} eyebrow="Kurzantwort" heading="Das Wichtigste zuerst">
+            <GlassCard>
+              <p className="text-base leading-relaxed text-white/80">{page.aeoAnswer}</p>
             </GlassCard>
-          ))}
-        </CardGrid>
-      </TemplateSection>
+          </TemplateSection>
+
+          {/* Problem */}
+          <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ausgangslage" heading="Das Problem">
+            <p className="max-w-3xl text-base leading-relaxed text-white/70">{page.problem}</p>
+          </TemplateSection>
+        </>
+      )}
+
+      {/* NEXCEL-only premium modules; preserve registry content and order. */}
+      {page.brand === "nexcel" ? (
+        <section id="was-gebaut-wird" className="nxl-detail-build" data-nxl-build-section="true" aria-labelledby="nxl-detail-build-title">
+          <div className="nxl-detail-build-inner">
+            <header className="nxl-detail-build-header">
+              <p className="nxl-detail-kicker">LÖSUNG / FUNKTIONSUMFANG</p>
+              <h2 id="nxl-detail-build-title">Was gebaut wird.</h2>
+              <p>{page.solutionIntro}</p>
+            </header>
+            <ol className="nxl-detail-modules">
+              {page.modules.map((module, i) => (
+                <li className="nxl-detail-module" key={`${module.title}-${i}`}>
+                  <span className="nxl-detail-module-top">
+                    <span className="nxl-detail-module-index">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="nxl-detail-module-tag">FUNKTIONSBAUSTEIN</span>
+                  </span>
+                  <h3>{module.title}</h3>
+                  {module.description && <p>{module.description}</p>}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      ) : (
+        <TemplateSection compact={page.brand === "agiworks"} eyebrow="Lösung" heading="Was gebaut wird" intro={page.solutionIntro}>
+          <CardGrid>
+            {page.modules.map((m, i) => (
+              <GlassCard key={i}>
+                <h3 className="text-base font-medium text-white/95">{m.title}</h3>
+                {m.description && (
+                  <p className="mt-2 text-sm leading-relaxed text-white/65">{m.description}</p>
+                )}
+              </GlassCard>
+            ))}
+          </CardGrid>
+        </TemplateSection>
+      )}
 
       {/* Brand-specific approach */}
       <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ansatz" heading="Wie wir vorgehen">
@@ -106,6 +186,11 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
         </div>
       </TemplateSection>
 
+      {/* NXL_DECISION_COST_PREMIUM_V11: only NEXCEL gets the premium decision + cost view. */}
+      {page.brand === "nexcel" ? (
+        <NexcelDecisionCost decision={page.decision} costNote={page.costNote} />
+      ) : (
+        <>
       {/* Decision matrix */}
       <TemplateSection compact={page.brand === "agiworks"} eyebrow="Entscheidung" heading="Wann sinnvoll — und wann nicht">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -142,6 +227,14 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
         </GlassCard>
       </TemplateSection>
 
+        </>
+      )}
+
+      {/* NXL_WORKFLOW_PREMIUM_V11: NEXCEL-only; original AGI block remains untouched. */}
+      {page.brand === "nexcel" ? (
+        <NexcelProjectFlow steps={page.process} />
+      ) : (
+        <>
       {/* Process */}
       <TemplateSection compact={page.brand === "agiworks"} eyebrow="Ablauf" heading="Wie ein Projekt läuft">
         <ol className="v6-steps">
@@ -156,6 +249,9 @@ export default function MoneyPageTemplate({ page }: { page: MoneyPage }) {
           ))}
         </ol>
       </TemplateSection>
+
+        </>
+      )}
 
       {/* Internal links */}
       {page.relatedPaths.length > 0 && (

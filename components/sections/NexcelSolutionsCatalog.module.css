@@ -1,0 +1,178 @@
+/* Route-scoped NEXCEL catalog. Avoid global selectors and shared AGI tokens. */
+.section {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(54px, 6vw, 90px) 0 clamp(70px, 7vw, 112px);
+  color: #f6f3ff;
+}
+.section::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(117, 81, 179, .045), transparent 52%);
+}
+.frame { width: min(100% - 44px, 1190px); margin-inline: auto; }
+.headingRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, .5fr);
+  gap: clamp(25px, 4vw, 75px);
+  align-items: end;
+  margin-bottom: clamp(30px, 3.7vw, 44px);
+}
+.kicker {
+  margin: 0;
+  color: #ba9bf2;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: .21em;
+  text-transform: uppercase;
+}
+.heading {
+  margin: 14px 0 0;
+  font-size: clamp(32px, 3.8vw, 52px);
+  line-height: 1.11;
+  letter-spacing: -.045em;
+  font-weight: 500;
+}
+.heading span { color: #bca7e7; }
+.headingAside {
+  margin: 0 0 3px;
+  padding-left: 22px;
+  border-left: 1px solid rgba(197, 172, 246, .28);
+  font-size: 14px;
+  line-height: 1.75;
+  color: #b8b1cc;
+}
+.focusGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+  gap: 16px;
+}
+.featureCard, .secondaryCard, .moreCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: #f6f3ff;
+  text-decoration: none;
+  border: 1px solid rgba(187, 155, 241, .17);
+  border-radius: 22px;
+  transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+}
+.featureCard::before, .secondaryCard::before, .moreCard::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 25px;
+  height: 1px;
+  width: 83px;
+  background: linear-gradient(90deg, #bda0f8, transparent);
+  pointer-events: none;
+}
+.featureCard:hover, .secondaryCard:hover, .moreCard:hover {
+  border-color: rgba(197, 169, 251, .52);
+  transform: translateY(-2px);
+}
+.featureCard:focus-visible, .secondaryCard:focus-visible, .moreCard:focus-visible {
+  outline: 2px solid #c9aaff;
+  outline-offset: 4px;
+}
+.featureCard {
+  min-height: 404px;
+  justify-content: space-between;
+  padding: clamp(25px, 3.3vw, 40px);
+  background: linear-gradient(139deg, #26203e 0%, #1b1b32 48%, #111927 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+}
+.featureKicker, .cardIndex {
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: #b89ded;
+  font-weight: 600;
+}
+.featureBody { margin: 34px 0; }
+.featureEyebrow { margin: 0 0 18px; color: #d1c1ee; font-size: 10px; letter-spacing: .15em; font-weight: 600; }
+.featureHeading { margin: 0; max-width: 17ch; font-size: clamp(27px, 3.1vw, 42px); font-weight: 500; line-height: 1.16; letter-spacing: -.043em; }
+.featureCopy { max-width: 49ch; margin: 18px 0 0; color: #c2bacf; font-size: 15px; line-height: 1.75; }
+.featureFoot, .smallFoot, .moreFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid rgba(218, 198, 255, .16);
+  padding-top: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #d9c9f6;
+}
+.arrow { display: inline-flex; flex: none; align-items: center; color: #c9aaff; transition: transform .2s ease; }
+.featureCard:hover .arrow, .secondaryCard:hover .arrow, .moreCard:hover .arrow { transform: translateX(4px); }
+.featureStack { display: grid; grid-template-rows: 1fr 1fr; gap: 16px; min-width: 0; }
+.secondaryCard {
+  min-height: 194px;
+  padding: 22px 27px;
+  justify-content: space-between;
+  background: linear-gradient(125deg, rgba(40, 34, 60, .72), rgba(20, 24, 37, .96));
+}
+.secondaryHeading { margin: 8px 0 0; font-size: clamp(19px, 2vw, 23px); font-weight: 500; letter-spacing: -.025em; }
+.secondaryCopy { margin: 8px 0 0; max-width: 53ch; font-size: 13px; line-height: 1.65; color: #b9b2c7; }
+.smallFoot { padding-top: 10px; margin-top: 14px; font-size: 12px; }
+.moreSection { margin-top: clamp(62px, 6vw, 90px); }
+.moreHeader { border-top: 1px solid rgba(218, 198, 255, .13); padding-top: 30px; margin-bottom: 24px; }
+.moreHeader h3 { margin: 12px 0 0; font-size: clamp(27px, 3vw, 37px); font-weight: 500; line-height: 1.21; }
+.moreGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.moreCard {
+  padding: 24px 27px 20px;
+  min-height: 207px;
+  justify-content: space-between;
+  background: rgba(24, 25, 41, .68);
+}
+.moreContent h4 { font-size: clamp(18px, 1.7vw, 21px); margin: 10px 0 0; font-weight: 500; line-height: 1.3; }
+.moreContent p { margin: 8px 0 0; color: #b4b0c3; font-size: 13px; line-height: 1.65; }
+.moreFoot { margin-top: 18px; padding-top: 12px; font-size: 12px; }
+/* Keep an odd final item intentional: a wide editorial row, never an orphan card. */
+.moreCard:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 30px;
+  min-height: 155px;
+  background: linear-gradient(100deg, rgba(44,35,66,.63), rgba(21,24,40,.8));
+}
+.moreCard:last-child:nth-child(odd) .moreContent p { max-width: 67ch; }
+.moreCard:last-child:nth-child(odd) .moreFoot {
+  margin: 0;
+  padding: 12px 0 0 22px;
+  min-width: 160px;
+  border-top: 0;
+  border-left: 1px solid rgba(218, 198, 255, .16);
+}
+@media (max-width: 980px) {
+  .headingRow { grid-template-columns: 1fr; gap: 18px; }
+  .headingAside { max-width: 65ch; }
+  .focusGrid { grid-template-columns: 1fr; }
+  .featureCard { min-height: 328px; }
+  .featureStack { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
+  .secondaryCard { min-height: 222px; }
+}
+@media (max-width: 680px) {
+  .frame { width: min(100% - 32px, 1190px); }
+  .heading { font-size: clamp(30px, 8.5vw, 41px); }
+  .headingAside { font-size: 13px; }
+  .featureStack, .moreGrid { grid-template-columns: 1fr; }
+  .featureCard { min-height: 326px; padding: 26px; }
+  .featureHeading { font-size: clamp(27px, 7vw, 35px); }
+  .featureBody { margin: 28px 0; }
+  .secondaryCard { min-height: 195px; padding: 24px; }
+  .moreCard { min-height: 174px; padding: 23px; }
+  .moreCard:last-child:nth-child(odd) { display: flex; grid-column: auto; min-height: 174px; gap: 0; }
+  .moreCard:last-child:nth-child(odd) .moreFoot { margin-top: 18px; padding: 12px 0 0; min-width: 0; border: 0; border-top: 1px solid rgba(218, 198, 255, .16); width: 100%; }
+  .section { padding-top: 48px; padding-bottom: 65px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .featureCard, .secondaryCard, .moreCard, .arrow { transition: none; }
+  .featureCard:hover, .secondaryCard:hover, .moreCard:hover { transform: none; }
+}

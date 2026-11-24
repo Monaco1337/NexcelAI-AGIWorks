@@ -5,6 +5,7 @@ import Link from "@/components/BrandAwareLink";
 import AgiClosingCta from "@/components/sections/AgiClosingCta";
 import { usePathname } from "next/navigation";
 import { useBrand } from "@/contexts/BrandContext";
+import footerRepairStyles from "./NexcelFooterRepair.module.css";
 import { AgiWorksLogoMark } from "@/components/ui/AgiWorksLogoMark";
 import { AgiWorksLogo } from "@/components/ui/AgiWorksLogo";
 import { NexcelLogoMark } from "@/components/ui/NexcelLogoMark";
@@ -109,12 +110,25 @@ export default function Footer() {
   const isSystemanalysePage =
     pathname === "/systemanalyse" || pathname?.startsWith("/agiworks/systemanalyse");
 
+  // Engineering hub and detail pages already contain a page-level final CTA.
+  // Suppress only their duplicate AGI Works global footer CTA.
+  const isAgiEngineeringPage =
+    isAgiWorks &&
+    (pathname === "/engineering" ||
+      pathname?.startsWith("/engineering/") ||
+      pathname === "/agiworks/engineering" ||
+      pathname?.startsWith("/agiworks/engineering/"));
+
+  // NEXCEL_FOOTER_CTA_REPAIR_V11: TemplateFrame owns the sole detail-page closing CTA.
+  const isNexcelSolutionDetail =
+    brand.id === "nexcel" && /^\/loesungen\/[^/]+\/?$/.test(pathname ?? "");
+
   return (
-    <footer className="premium-v6-footer relative border-t border-white/[0.06] bg-gradient-to-b from-transparent to-[#0C0F1A]">
+    <footer className={`premium-v6-footer relative border-t border-white/[0.06] bg-gradient-to-b from-transparent to-[#0C0F1A] ${brand.id === "nexcel" ? footerRepairStyles.nexcelFooter : ""}`} data-nexcel-footer-repair={brand.id === "nexcel" ? "v11" : undefined}>
       {/* CTA Section */}
       {/* AGI_HOMEPAGE_FINAL_CTA_V1 */}
       {isAgiHomepage && <AgiClosingCta />}
-      {!isAgiHomepage && !isConsultationPage && !isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && (
+      {!isAgiHomepage && !isConsultationPage && !isContactPage && !isProjektePage && !isImpressumPage && !isCookieRichtliniePage && !isDemoPage && !isPreiskalkulatorPage && !isSystemanalysePage && !isAgiEngineeringPage && !isNexcelSolutionDetail && (
         isAgiWorks ? (
 
 <section

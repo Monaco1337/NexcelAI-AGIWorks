@@ -170,7 +170,7 @@ export default function AgiworksLeistungenHub() {
           <div className="mx-auto max-w-[1250px] px-5 sm:px-8 lg:px-10">
             <nav
               aria-label="Brotkrumennavigation"
-              className="flex gap-3 pt-8 text-[12px] text-slate-400 sm:pt-10"
+              className="flex justify-center gap-3 pt-8 text-[12px] text-slate-400 sm:pt-10"
             >
               <Link
                 href="/"
@@ -189,39 +189,39 @@ export default function AgiworksLeistungenHub() {
               </span>
             </nav>
 
-            <header className="grid items-end gap-8 pb-14 pt-14 lg:grid-cols-[1.4fr_.6fr] lg:gap-14 lg:pt-20">
-              <div>
+            <header className="flex flex-col items-center pb-14 pt-14 text-center lg:pt-20">
+              <div className="flex w-full flex-col items-center">
                 <p className="text-[11px] font-semibold uppercase tracking-[.23em] text-sky-400">
                   AGI Works / Softwareentwicklung
                 </p>
 
-                <h1 className="mt-5 max-w-[820px] text-[clamp(2.4rem,5.1vw,4.6rem)] font-semibold leading-[1.1] tracking-[-.045em]">
+                <h1 className="mt-5 max-w-[1050px] text-[clamp(2.4rem,5.1vw,4.6rem)] font-semibold leading-[1.1] tracking-[-.045em]">
                   Software, die zu Ihrem{" "}
                   <span className="bg-gradient-to-r from-[#d6e2ef] to-[#61a2e6] bg-clip-text text-transparent">
                     Unternehmen passt.
                   </span>
                 </h1>
 
-                <p className="mt-6 max-w-[630px] text-[16px] leading-[1.8] text-slate-400 sm:text-[18px]">
+                <p className="mt-6 max-w-[740px] text-[16px] leading-[1.8] text-slate-400 sm:text-[18px]">
                   Individuelle CRM-, ERP- und Unternehmensplattformen.
                   Wir verbinden Ihre Prozesse, Daten und bestehenden Systeme.
                 </p>
 
                 <Link
                   href="/kontakt"
-                  className="mt-8 inline-flex min-h-[52px] items-center gap-5 rounded-xl border border-sky-400/50 bg-[#244d70] px-6 text-[14px] font-medium shadow-[0_14px_44px_rgba(42,125,205,.17)] transition-colors hover:bg-[#32658f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+                  className="mt-8 inline-flex min-h-[52px] items-center justify-center gap-5 rounded-xl border border-sky-400/50 bg-[#244d70] px-6 text-[14px] font-medium shadow-[0_14px_44px_rgba(42,125,205,.17)] transition-colors hover:bg-[#32658f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                 >
                   Softwareprojekt besprechen
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
 
-              <div className="border-l border-sky-300/25 pl-6">
+              <div className="mt-12 w-full max-w-[640px] border-t border-sky-300/25 pt-7 sm:mt-14">
                 <p className="text-[11px] font-semibold uppercase tracking-[.2em] text-sky-400">
                   Unser Ansatz
                 </p>
 
-                <p className="mt-3 max-w-[350px] text-[19px] leading-[1.5] text-slate-200">
+                <p className="mx-auto mt-3 max-w-[500px] text-[19px] leading-[1.5] text-slate-200">
                   Nicht Ihre Abläufe an Software anpassen.
                   Sondern Software an Ihre Abläufe.
                 </p>

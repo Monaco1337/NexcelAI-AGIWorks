@@ -1,31 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import "./premium-detail-v11.css";
 import { useEffect, type ReactNode } from "react";
 
-const VISUALS = [
-  {
-    match: /lead|funnel|vertrieb|sales|akquise/i,
-    image: "/images/nexcel/usecase-1.svg",
-    caption: "Anfragen strukturiert zu qualifizierten Leads weiterfuehren",
-  },
-  {
-    match: /agent|chat|voice|telefon|assist/i,
-    image: "/images/nexcel/usecase-2.svg",
-    caption: "KI-Unterstuetzung mit klarer Freigabe durch Ihr Team",
-  },
-  {
-    match: /kommunikation|mail|service|kontakt/i,
-    image: "/images/nexcel/usecase-3.svg",
-    caption: "Kommunikation, Rueckfragen und Antworten sauber organisieren",
-  },
-  {
-    match: /crm|erp|prozess|workflow|daten|integration/i,
-    image: "/images/nexcel/usecase-4.svg",
-    caption: "Systeme, Status und Prozesse in einem Ablauf verbinden",
-  },
-] as const;
+// NXL_DETAIL_PREMIUM_V11_SCOPED: the preview visual is rendered in the real hero, not overlaid.
 
 function closestSection(el: Element | null): HTMLElement | null {
   if (!el) return null;
@@ -33,16 +11,11 @@ function closestSection(el: Element | null): HTMLElement | null {
 }
 
 export default function NexcelSolutionTemplate({ children }: { children: ReactNode }) {
-  const pathname = usePathname() ?? "";
-  const slug = pathname.split("/").filter(Boolean).pop() ?? "";
-  const visual = VISUALS.find((item) => item.match.test(slug)) ?? VISUALS[3];
-
   useEffect(() => {
     const root = document.querySelector(".nxl-premium-solution-route") as HTMLElement | null;
     if (!root) return;
 
-    const h1 = root.querySelector("h1");
-    closestSection(h1)?.setAttribute("data-nxl-solution-hero", "true");
+    root.querySelector(".v6-template-hero")?.setAttribute("data-nxl-solution-hero", "true");
 
     const markers: Array<[RegExp, string]> = [
       [/Das Problem/i, "data-nxl-problem-section"],
@@ -72,30 +45,7 @@ export default function NexcelSolutionTemplate({ children }: { children: ReactNo
   }, []);
 
   return (
-    <div className="nxl-premium-solution-route">
-      <aside className="nxl-premium-solution-visual" aria-label="Illustrativer Prozess fuer diesen Anwendungsbereich">
-        <div className="nxl-premium-solution-visual-top">
-          <span className="nxl-premium-visual-dot" aria-hidden />
-          ANWENDUNGSBEISPIEL
-        </div>
-
-        <div className="nxl-premium-solution-visual-frame">
-          <img
-            src={visual.image}
-            alt={visual.caption}
-            className="nxl-premium-solution-visual-image"
-            loading="eager"
-          />
-        </div>
-
-        <div className="nxl-premium-solution-visual-bottom">
-          <span>{visual.caption}</span>
-          <Link href="/kontakt?betreff=KI-Projekt%20besprechen">
-            Projekt besprechen <span aria-hidden>↗</span>
-          </Link>
-        </div>
-      </aside>
-
+    <div className="nxl-premium-solution-route nxl-detail-v11">
       {children}
     </div>
   );
